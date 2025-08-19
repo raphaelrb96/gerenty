@@ -9,7 +9,7 @@ import { Menu } from "lucide-react";
 export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between">
+      <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         <Logo />
         
         {/* Desktop Navigation */}
@@ -36,12 +36,12 @@ export function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right">
-              <div className="grid gap-4 py-6">
+              <div className="grid gap-4 p-6">
                 <Logo />
-                <Button variant="ghost" asChild className="justify-start">
+                <Button variant="ghost" asChild className="justify-start text-lg">
                   <Link href="/auth/login">Entrar</Link>
                 </Button>
-                <Button asChild style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="justify-start">
+                <Button asChild style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="justify-start text-lg">
                   <Link href="/auth/signup">Cadastre-se Gratuitamente</Link>
                 </Button>
               </div>
