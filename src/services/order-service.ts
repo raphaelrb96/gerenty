@@ -2,7 +2,7 @@
 'use server';
 
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, getDocs, query, where, addDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
 import type { Order } from "@/lib/types";
 
 const ordersCollection = collection(db, "orders");
@@ -33,26 +33,40 @@ export async function getOrders(vendorId: string): Promise<Order[]> {
 }
 
 // Add a new order
-export async function addOrder(orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt' | 'companyId'>, companyId: string): Promise<Order> {
+export async function addOrder(orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>): Promise<Order> {
     try {
         const docRef = await addDoc(ordersCollection, {
             ...orderData,
-            companyId: companyId,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
         });
         
-        return {
+        const newOrder = {
             id: docRef.id,
             ...orderData,
-            companyId,
             createdAt: new Date(),
             updatedAt: new Date()
         } as Order;
 
+        return newOrder;
+
     } catch (error) {
         console.error("Error adding order: ", error);
         throw new Error("Failed to add order.");
+    }
+}
+
+// Update an existing order (e.g., to change its status)
+export async function updateOrder(orderId: string, dataToUpdate: Partial<Order>): Promise<void> {
+    try {
+        const orderDoc = doc(db, "orders", orderId);
+        await updateDoc(orderDoc, {
+            ...dataToUpdate,
+            updatedAt: serverTimestamp(),
+        });
+    } catch (error) {
+        console.error("Error updating order: ", error);
+        throw new Error("Failed to update order.");
     }
 }
 

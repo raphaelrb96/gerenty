@@ -8,7 +8,7 @@ import * as z from "zod";
 import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { addOrder } from "@/services/order-service";
-import type { Product, OrderItem, OrderStatus, PaymentMethod, DeliveryMethod } from "@/lib/types";
+import type { Product, OrderItem, OrderStatus, PaymentMethod, DeliveryMethod, Order } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -27,11 +27,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { PlusCircle, Trash2, Loader2, User, Truck, CreditCard } from "lucide-react";
+import { PlusCircle, Trash2, Loader2, User, CreditCard } from "lucide-react";
 import { Separator } from "../ui/separator";
-import { Label } from "@/components/ui/label";
+import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
+import { useTranslation } from "@/context/i18n-context";
+
 
 const orderItemSchema = z.object({
   productId: z.string(),
@@ -40,6 +42,12 @@ const orderItemSchema = z.object({
   unitPrice: z.number(),
   totalPrice: z.number(),
   isDigital: z.boolean(),
+  productSlug: z.string().optional(),
+  variant: z.any().optional(),
+  imageUrl: z.string().optional(),
+  downloadLink: z.string().optional(),
+  externalLink: z.string().optional(),
+  notes: z.string().optional(),
 });
 
 const formSchema = z.object({
@@ -72,6 +80,7 @@ type PosFormProps = {
 };
 
 export function PosForm({ allProducts }: PosFormProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { toast } = useToast();
   const [cart, setCart] = useState<OrderItem[]>([]);
@@ -95,8 +104,11 @@ export function PosForm({ allProducts }: PosFormProps) {
     },
   });
 
-  const { control, setValue } = form;
-  const cartItems = useWatch({ control, name: 'items' });
+  const { control, setValue, getValues, watch } = form;
+
+  // Use watch to react to changes in discount and shippingCost for total calculation
+  const watchedDiscount = watch('discount', 0);
+  const watchedShippingCost = watch('shippingCost', 0);
 
   const handleAddProductToCart = () => {
     if (!selectedProduct) return;
@@ -110,7 +122,7 @@ export function PosForm({ allProducts }: PosFormProps) {
     if (existingItemIndex > -1) {
       updatedCart = cart.map((item, index) =>
         index === existingItemIndex
-          ? { ...item, quantity: item.quantity + 1, totalPrice: item.totalPrice + item.unitPrice }
+          ? { ...item, quantity: item.quantity + 1, totalPrice: (item.quantity + 1) * item.unitPrice }
           : item
       );
     } else {
@@ -120,7 +132,7 @@ export function PosForm({ allProducts }: PosFormProps) {
         quantity: 1,
         unitPrice: product.pricing[0].price,
         totalPrice: product.pricing[0].price,
-        isDigital: false, // Assuming not digital for now
+        isDigital: false, // This could be derived from product data if available
       };
       updatedCart = [...cart, newItem];
     }
@@ -136,9 +148,7 @@ export function PosForm({ allProducts }: PosFormProps) {
   }
 
   const subtotal = cart.reduce((acc, item) => acc + item.totalPrice, 0);
-  const discountValue = form.getValues('discount') || 0;
-  const shippingCostValue = form.getValues('shippingCost') || 0;
-  const total = subtotal - discountValue + shippingCostValue;
+  const total = subtotal - watchedDiscount + watchedShippingCost;
 
 
   async function onSubmit(values: PosFormValues) {
@@ -149,13 +159,13 @@ export function PosForm({ allProducts }: PosFormProps) {
     
     setIsSaving(true);
     
-    const orderData: Omit<any, 'id' | 'createdAt' | 'updatedAt' | 'companyId'> = {
+    const orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'> = {
+        companyId: user.uid,
         customer: {
             name: values.customerName,
             email: values.customerEmail,
             phone: values.customerPhone,
             document: values.customerDocument,
-            userId: '', // Can be linked later if customer is also a user
         },
         items: cart,
         status: 'completed' as OrderStatus, // POS orders are typically completed on creation
@@ -167,6 +177,8 @@ export function PosForm({ allProducts }: PosFormProps) {
         shipping: {
             method: values.deliveryMethod as DeliveryMethod,
             cost: values.shippingCost,
+            // These would need inputs if required, providing defaults for now
+            estimatedDelivery: { type: 'dias', value: 0 }, 
         },
         subtotal: subtotal,
         discount: values.discount,
@@ -176,7 +188,7 @@ export function PosForm({ allProducts }: PosFormProps) {
     };
 
     try {
-        await addOrder(orderData, user.uid);
+        await addOrder(orderData);
         toast({
             title: "Pedido Criado com Sucesso!",
             description: `Pedido para ${values.customerName} foi registrado.`,
@@ -335,18 +347,18 @@ export function PosForm({ allProducts }: PosFormProps) {
             {/* Totals & Notes */}
             <div className="space-y-4">
                  <h3 className="font-semibold text-lg">Resumo e Observações</h3>
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField control={form.control} name="shippingCost" render={({ field }) => (
-                        <FormItem><FormLabel>Custo do Frete</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Custo do Frete</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} /></FormControl><FormMessage /></FormItem>
                     )}/>
                     <FormField control={form.control} name="discount" render={({ field }) => (
-                        <FormItem><FormLabel>Desconto</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Desconto</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} /></FormControl><FormMessage /></FormItem>
                     )}/>
                  </div>
                  <div className="space-y-2 rounded-md border bg-muted p-4">
                     <div className="flex justify-between text-muted-foreground"><span>Subtotal</span><span>R$ {subtotal.toFixed(2)}</span></div>
-                    <div className="flex justify-between text-muted-foreground"><span>Frete</span><span>R$ {shippingCostValue.toFixed(2)}</span></div>
-                    <div className="flex justify-between text-muted-foreground"><span>Desconto</span><span className="text-red-500">- R$ {discountValue.toFixed(2)}</span></div>
+                    <div className="flex justify-between text-muted-foreground"><span>Frete</span><span>R$ {watchedShippingCost.toFixed(2)}</span></div>
+                    <div className="flex justify-between text-muted-foreground"><span>Desconto</span><span className="text-red-500">- R$ {watchedDiscount.toFixed(2)}</span></div>
                     <Separator className="my-2 bg-border" />
                     <div className="flex justify-between font-bold text-lg"><span>Total</span><span>R$ {total.toFixed(2)}</span></div>
                  </div>
