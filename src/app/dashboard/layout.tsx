@@ -14,7 +14,7 @@ export default function DashboardLayout({
         <SidebarInset>
           <Header />
           <main className="flex-1 w-full">
-            <div className="container mx-auto p-6 md:p-8">
+            <div className="p-6 md:p-8">
               {children}
             </div>
           </main>
