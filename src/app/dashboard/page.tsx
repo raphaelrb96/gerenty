@@ -47,7 +47,7 @@ export default function DashboardPage() {
     fetchData();
   }, [user]);
 
-  const totalRevenue = orders.reduce((acc, order) => acc + order.amount, 0);
+  const totalRevenue = orders.reduce((acc, order) => acc + order.total, 0);
   const totalSales = orders.length;
   const productsInStock = products.length;
 
@@ -102,13 +102,13 @@ export default function DashboardPage() {
           {orders.slice(0, 5).map(activity => (
             <div key={activity.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50">
                 <div className="grid gap-1">
-                    <p className="font-medium">{activity.customer}</p>
+                    <p className="font-medium">{activity.customer.name}</p>
                     <p className="text-sm text-muted-foreground">{activity.id.substring(0, 7)}</p>
                 </div>
                 <div className="text-right">
-                    <p className="font-semibold">R${activity.amount.toFixed(2)}</p>
-                     <Badge variant={activity.status === "Fulfilled" ? "default" : activity.status === "Processing" ? "secondary" : "outline"}
-                    className={activity.status === "Fulfilled" ? "bg-green-600/20 text-green-700 hover:bg-green-600/30" : activity.status === "Processing" ? "bg-blue-600/20 text-blue-700 hover:bg-blue-600/30" : ""}>
+                    <p className="font-semibold">R${activity.total.toFixed(2)}</p>
+                     <Badge variant={activity.status === "completed" ? "default" : activity.status === "processing" ? "secondary" : "outline"}
+                    className={activity.status === "completed" ? "bg-green-600/20 text-green-700 hover:bg-green-600/30" : activity.status === "processing" ? "bg-blue-600/20 text-blue-700 hover:bg-blue-600/30" : ""}>
                       {activity.status}
                     </Badge>
                 </div>
