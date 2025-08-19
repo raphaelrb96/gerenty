@@ -13,10 +13,10 @@ export function Header() {
           <ThemeToggle />
           <LanguageToggle />
           <Button variant="ghost" asChild>
-            <Link href="/auth/login">Login</Link>
+            <Link href="/auth/login">Entrar</Link>
           </Button>
           <Button asChild style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
-            <Link href="/auth/signup">Sign Up</Link>
+            <Link href="/auth/signup">Cadastre-se</Link>
           </Button>
         </div>
       </div>
