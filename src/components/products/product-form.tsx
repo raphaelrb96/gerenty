@@ -265,7 +265,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
             <Button type="button" variant="outline" onClick={onFinished}>{t('productForm.cancel')}</Button>
             <Button type="submit" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} disabled={isSaving}>
                 {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {product ? t('productForm.save') : t('productForm.createButton', 'Create Product')}
+                {product ? t('productForm.save') : t('productForm.createButton', {})}
             </Button>
         </div>
       </form>
