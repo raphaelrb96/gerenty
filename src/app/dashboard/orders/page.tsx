@@ -1,14 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,7 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { OrderDetails } from "@/components/orders/order-details";
-import { Search, Filter, File } from "lucide-react";
+import { Search, Filter, File, MoreVertical } from "lucide-react";
 
 const orders = [
   { id: "ORD001", customer: "John Doe", status: "Fulfilled", amount: "$250.00", date: "2023-11-23" },
@@ -93,26 +85,16 @@ export default function OrdersPage() {
         </SheetContent>
       </Sheet>
 
-      <Card>
-        <CardContent className="pt-6">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Order ID</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead><span className="sr-only">Actions</span></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {orders.map((order) => (
-                <TableRow key={order.id}>
-                  <TableCell className="font-medium">{order.id}</TableCell>
-                  <TableCell>{order.customer}</TableCell>
-                  <TableCell>
-                    <Badge variant={order.status === "Fulfilled" ? "default" : order.status === "Processing" ? "secondary" : "outline"}
+      <div className="space-y-4">
+        {orders.map((order) => (
+          <Card key={order.id}>
+            <CardContent className="p-4 grid grid-cols-2 md:grid-cols-5 items-center gap-4">
+              <div className="md:col-span-1">
+                <p className="font-medium">{order.id}</p>
+                <p className="text-sm text-muted-foreground">{order.customer}</p>
+              </div>
+              <div className="md:col-span-1 flex justify-start md:justify-center">
+                 <Badge variant={order.status === "Fulfilled" ? "default" : order.status === "Processing" ? "secondary" : "outline"}
                      className={
                         order.status === "Fulfilled" ? "bg-green-600/20 text-green-700 hover:bg-green-600/30" : 
                         order.status === "Processing" ? "bg-blue-600/20 text-blue-700 hover:bg-blue-600/30" :
@@ -120,18 +102,33 @@ export default function OrdersPage() {
                     }>
                       {order.status}
                     </Badge>
-                  </TableCell>
-                  <TableCell>{order.date}</TableCell>
-                  <TableCell className="text-right">{order.amount}</TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" onClick={() => handleViewDetails(order as any)}>Details</Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              </div>
+              <div className="md:col-span-1 text-left md:text-center text-sm text-muted-foreground">
+                {order.date}
+              </div>
+              <div className="md:col-span-1 text-left md:text-right font-semibold">
+                {order.amount}
+              </div>
+               <div className="flex md:col-span-1 justify-end items-center gap-2">
+                 <Button variant="outline" size="sm" onClick={() => handleViewDetails(order as any)}>Details</Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem>View Customer</DropdownMenuItem>
+                    <DropdownMenuItem>Send Invoice</DropdownMenuItem>
+                     <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-red-500 hover:text-red-500 focus:text-red-500">Cancel Order</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }

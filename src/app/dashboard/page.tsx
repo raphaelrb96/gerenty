@@ -5,14 +5,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DollarSign, Package, ShoppingCart, ArrowUpRight, PlusCircle } from "lucide-react";
@@ -71,34 +63,22 @@ export default function DashboardPage() {
                 <Link href="/dashboard/orders">View All <ArrowUpRight className="h-4 w-4" /></Link>
             </Button>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Order ID</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {recentActivities.map(activity => (
-                <TableRow key={activity.id}>
-                  <TableCell className="font-medium">{activity.id}</TableCell>
-                  <TableCell>{activity.customer}</TableCell>
-                  <TableCell>
-                    <Badge variant={activity.status === "Fulfilled" ? "default" : activity.status === "Processing" ? "secondary" : "outline"}
+        <CardContent className="space-y-4">
+          {recentActivities.map(activity => (
+            <div key={activity.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50">
+                <div className="grid gap-1">
+                    <p className="font-medium">{activity.customer}</p>
+                    <p className="text-sm text-muted-foreground">{activity.id}</p>
+                </div>
+                <div className="text-right">
+                    <p className="font-semibold">{activity.amount}</p>
+                     <Badge variant={activity.status === "Fulfilled" ? "default" : activity.status === "Processing" ? "secondary" : "outline"}
                     className={activity.status === "Fulfilled" ? "bg-green-600/20 text-green-700 hover:bg-green-600/30" : activity.status === "Processing" ? "bg-blue-600/20 text-blue-700 hover:bg-blue-600/30" : ""}>
                       {activity.status}
                     </Badge>
-                  </TableCell>
-                  <TableCell>{activity.date}</TableCell>
-                  <TableCell className="text-right">{activity.amount}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                </div>
+            </div>
+          ))}
         </CardContent>
       </Card>
     </div>

@@ -51,7 +51,7 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="mx-auto w-full max-w-sm">
+    <Card className="mx-auto w-full max-w-sm p-4 sm:p-6">
       <CardHeader className="text-center">
         <Logo className="mb-4 justify-center" />
         <CardTitle className="font-headline text-2xl">Welcome Back</CardTitle>
