@@ -18,6 +18,10 @@
         "alreadyAccount": "Already have an account?",
         "signUpLink": "Sign up",
         "loginLink": "Log in",
+        "loggedIn": {
+            "title": "You are already logged in",
+            "description": "To access this page, you need to log out first."
+        },
         "login": {
             "title": "Welcome Back",
             "description": "Enter your credentials to access your account.",
@@ -45,6 +49,7 @@
             "passwordLength": "Password must be at least 8 characters.",
             "loginFailed": "Login Failed",
             "signupFailed": "Signup Failed",
+            "resetPasswordFailed": "Password Reset Failed",
             "emailInUse": "This email address is already in use.",
             "invalidCredentials": "The email or password you entered is incorrect.",
             "generic": "An unexpected error occurred. Please try again."
@@ -68,9 +73,9 @@
         "pricing": {
             "title": "Find the Perfect Plan for You",
             "subtitle": "Start for free and scale as you grow. No credit card required.",
-            "free": { "name": "Free", "description": "For individuals and small teams just starting out.", "features": ["10 Products", "100 Orders/month", "Basic Analytics"], "cta": "Get Started" },
-            "pro": { "name": "Pro", "description": "For growing businesses that need more power.", "features": ["Unlimited Products", "Unlimited Orders", "Advanced Analytics", "AI Credits"], "cta": "Choose Pro" },
-            "enterprise": { "name": "Enterprise", "description": "For large-scale operations with custom needs.", "features": ["Everything in Pro", "Priority Support", "Custom Integrations"], "cta": "Contact Us" }
+            "free": { "name": "Free", "priceDescription": "/month", "description": "For individuals and small teams just starting out.", "features": ["10 Products", "100 Orders/month", "Basic Analytics"], "cta": "Get Started" },
+            "pro": { "name": "Pro", "priceDescription": "/month", "description": "For growing businesses that need more power.", "features": ["Unlimited Products", "Unlimited Orders", "Advanced Analytics", "AI Credits"], "cta": "Choose Pro" },
+            "enterprise": { "name": "Enterprise", "priceDescription": "/month", "description": "For large-scale operations with custom needs.", "features": ["Everything in Pro", "Priority Support", "Custom Integrations"], "cta": "Contact Us" }
         },
         "header": {
             "login": "Login",

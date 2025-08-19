@@ -18,6 +18,10 @@
         "alreadyAccount": "Já tem uma conta?",
         "signUpLink": "Cadastre-se",
         "loginLink": "Entrar",
+        "loggedIn": {
+            "title": "Você já está conectado",
+            "description": "Para acessar esta página, você precisa fazer logout primeiro."
+        },
         "login": {
             "title": "Bem-vindo de Volta",
             "description": "Insira suas credenciais para acessar sua conta.",
@@ -45,6 +49,7 @@
             "passwordLength": "A senha deve ter pelo menos 8 caracteres.",
             "loginFailed": "Falha no Login",
             "signupFailed": "Falha no Cadastro",
+            "resetPasswordFailed": "Falha ao Redefinir Senha",
             "emailInUse": "Este endereço de e-mail já está em uso.",
             "invalidCredentials": "O e-mail ou a senha que você inseriu estão incorretos.",
             "generic": "Ocorreu um erro inesperado. Por favor, tente novamente."

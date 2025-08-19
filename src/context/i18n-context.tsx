@@ -8,7 +8,7 @@ import en from '@/locales/en.json';
 import pt from '@/locales/pt.json';
 import es from '@/locales/es.json';
 
-type Language = 'en' | 'pt' | 'es';
+export type Language = 'en' | 'pt' | 'es';
 
 type TranslateOptions = {
     [key: string]: string | number;

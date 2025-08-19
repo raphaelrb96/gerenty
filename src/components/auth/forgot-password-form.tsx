@@ -29,10 +29,11 @@ import {
 } from "@/components/ui/card";
 import { Logo } from "../logo";
 import { Loader2 } from "lucide-react";
+import { getFirebaseAuthErrorMessage } from "@/lib/firebase-errors";
 
 
 export function ForgotPasswordForm() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -55,11 +56,12 @@ export function ForgotPasswordForm() {
     try {
       await resetPassword(values.email);
       setSubmitted(true);
-    } catch (error) {
+    } catch (error: any) {
         console.error(error);
         toast({
             variant: "destructive",
-            title: t("auth.error.generic"),
+            title: t("auth.error.resetPasswordFailed"),
+            description: getFirebaseAuthErrorMessage(error.code, language),
         })
     } finally {
         setIsLoading(false);

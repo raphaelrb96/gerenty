@@ -18,6 +18,10 @@
         "alreadyAccount": "¿Ya tienes una cuenta?",
         "signUpLink": "Regístrate",
         "loginLink": "Iniciar Sesión",
+        "loggedIn": {
+            "title": "Ya has iniciado sesión",
+            "description": "Para acceder a esta página, primero debes cerrar sesión."
+        },
         "login": {
             "title": "Bienvenido de Nuevo",
             "description": "Ingresa tus credenciales para acceder a tu cuenta.",
@@ -45,6 +49,7 @@
             "passwordLength": "La contraseña debe tener al menos 8 caracteres.",
             "loginFailed": "Error de Inicio de Sesión",
             "signupFailed": "Error de Registro",
+            "resetPasswordFailed": "Error al Restablecer la Contraseña",
             "emailInUse": "Esta dirección de correo electrónico ya está en uso.",
             "invalidCredentials": "El correo electrónico o la contraseña que ingresaste son incorrectos.",
             "generic": "Ocurrió un error inesperado. Por favor, inténtalo de nuevo."

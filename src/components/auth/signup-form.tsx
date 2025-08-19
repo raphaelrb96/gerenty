@@ -30,9 +30,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/context/i18n-context";
 import { signUpWithEmail } from "@/services/auth-service";
 import { Loader2, Eye, EyeOff } from "lucide-react";
+import { getFirebaseAuthErrorMessage } from "@/lib/firebase-errors";
 
 export function SignupForm() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -70,14 +71,10 @@ export function SignupForm() {
       router.push("/dashboard");
     } catch (error: any) {
         console.error(error)
-        let description = t("auth.error.generic");
-        if (error.code === 'auth/email-already-in-use') {
-            description = t("auth.error.emailInUse");
-        }
         toast({
             variant: "destructive",
             title: t("auth.error.signupFailed"),
-            description: description,
+            description: getFirebaseAuthErrorMessage(error.code, language),
         });
     } finally {
         setIsLoading(false);
