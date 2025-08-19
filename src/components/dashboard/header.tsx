@@ -14,8 +14,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 import { ThemeToggle } from "../theme-toggle";
 import { LanguageToggle } from "../language-toggle";
+import { useTranslation } from "@/context/i18n-context";
 
 export function Header() {
+  const { t } = useTranslation();
+
   return (
     <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 sm:px-6">
       <SidebarTrigger className="md:hidden" />
@@ -37,18 +40,18 @@ export function Header() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuLabel>{t('My Account')}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/dashboard/profile">Profile</Link>
+              <Link href="/dashboard/profile">{t('Profile')}</Link>
             </DropdownMenuItem>
              <DropdownMenuItem asChild>
-              <Link href="/dashboard/preferences">Preferences</Link>
+              <Link href="/dashboard/preferences">{t('Preferences')}</Link>
             </DropdownMenuItem>
-            <DropdownMenuItem>Support</DropdownMenuItem>
+            <DropdownMenuItem>{t('Support')}</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/auth/login">Logout</Link>
+              <Link href="/auth/login">{t('Logout')}</Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

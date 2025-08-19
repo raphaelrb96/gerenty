@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { Languages } from "lucide-react"
+import { useTranslation } from "@/context/i18n-context"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -12,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 export function LanguageToggle() {
+  const { setLanguage } = useTranslation();
 
   return (
     <DropdownMenu>
@@ -22,13 +24,13 @@ export function LanguageToggle() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setLanguage('en')}>
           English
         </DropdownMenuItem>
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setLanguage('pt')}>
           Português
         </DropdownMenuItem>
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setLanguage('es')}>
           Español
         </DropdownMenuItem>
       </DropdownMenuContent>

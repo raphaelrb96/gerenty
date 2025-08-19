@@ -20,17 +20,19 @@ import {
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-
-const menuItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/products", label: "Products", icon: Package },
-  { href: "/dashboard/orders", label: "Orders", icon: ShoppingCart },
-  { href: "/dashboard/profile", label: "Profile", icon: User },
-  { href: "/dashboard/preferences", label: "Preferences", icon: Settings },
-];
+import { useTranslation } from "@/context/i18n-context";
 
 export function MainSidebar() {
   const pathname = usePathname();
+  const { t } = useTranslation();
+
+  const menuItems = [
+    { href: "/dashboard", label: t("Dashboard"), icon: LayoutDashboard },
+    { href: "/dashboard/products", label: t("Products"), icon: Package },
+    { href: "/dashboard/orders", label: t("Orders"), icon: ShoppingCart },
+    { href: "/dashboard/profile", label: t("Profile"), icon: User },
+    { href: "/dashboard/preferences", label: t("Preferences"), icon: Settings },
+  ];
 
   return (
     <Sidebar>
@@ -58,10 +60,10 @@ export function MainSidebar() {
       <SidebarFooter>
         <SidebarMenu>
            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Logout">
+              <SidebarMenuButton asChild tooltip={t("Logout")}>
                 <Link href="/auth/login">
                   <LogOut />
-                  <span>Logout</span>
+                  <span>{t("Logout")}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
