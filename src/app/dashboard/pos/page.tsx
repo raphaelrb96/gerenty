@@ -9,8 +9,11 @@ import { PageHeader } from "@/components/common/page-header";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { PosForm } from "@/components/pos/pos-form";
 import { ProductList } from "@/components/pos/product-list";
+import { useTranslation } from "@/context/i18n-context";
+
 
 export default function PosPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,3 +58,5 @@ export default function PosPage() {
     </div>
   );
 }
+
+    
