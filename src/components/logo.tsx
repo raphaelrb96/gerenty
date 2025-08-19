@@ -12,7 +12,7 @@ export function Logo({ href = "/", className }: LogoProps) {
     <Link
       href={href}
       className={cn(
-        "flex items-center ml-2 mt-2 gap-2 text-foreground transition-colors hover:text-primary",
+        "flex items-center gap-2 text-foreground transition-colors hover:text-primary",
         className
       )}
     >
