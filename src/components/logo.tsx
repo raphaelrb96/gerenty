@@ -12,12 +12,12 @@ export function Logo({ href = "/", className }: LogoProps) {
     <Link
       href={href}
       className={cn(
-        "flex items-center gap-2 text-foreground transition-colors hover:text-primary",
+        "flex items-center ml-2 mt-2 gap-2 text-foreground transition-colors hover:text-primary",
         className
       )}
     >
       <Building2 className="h-6 w-6" />
-      <span className="font-headline text-lg font-bold">Enterprisy Lite</span>
+      <span className="font-headline text-2xl ml-1 font-bold">Enterprisy</span>
     </Link>
   );
 }
