@@ -18,6 +18,7 @@ import {
   User,
   LogOut,
   Settings,
+  PlusCircle,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -38,6 +39,7 @@ export function MainSidebar() {
     { href: "/dashboard", label: t("Dashboard"), icon: LayoutDashboard },
     { href: "/dashboard/products", label: t("Products"), icon: Package },
     { href: "/dashboard/orders", label: t("Orders"), icon: ShoppingCart },
+    { href: "/dashboard/pos", label: "PDV", icon: PlusCircle },
     { href: "/dashboard/profile", label: t("Profile"), icon: User },
     { href: "/dashboard/preferences", label: t("Preferences"), icon: Settings },
   ];
@@ -53,7 +55,7 @@ export function MainSidebar() {
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild
-                isActive={pathname === item.href}
+                isActive={pathname.startsWith(item.href) && item.href !== "/dashboard" ? pathname.startsWith(item.href) : pathname === item.href}
                 tooltip={item.label}
               >
                 <Link href={item.href}>
