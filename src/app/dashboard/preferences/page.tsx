@@ -1,3 +1,4 @@
+
 "use client"
 
 import {
@@ -10,32 +11,32 @@ import {
 import { Label } from "@/components/ui/label"
 import { LanguageToggle } from "@/components/language-toggle"
 import { ThemeToggle } from "@/components/theme-toggle"
-
+import { useTranslation } from "@/context/i18n-context";
 
 export default function PreferencesPage() {
-
+    const { t } = useTranslation();
     return (
         <div className="space-y-8">
             <div>
-                <h1 className="font-headline text-3xl font-bold">Preferences</h1>
+                <h1 className="font-headline text-3xl font-bold">{t('preferencesPage.title')}</h1>
                 <p className="text-muted-foreground">
-                    Customize your experience.
+                    {t('preferencesPage.description')}
                 </p>
             </div>
             <Card>
                 <CardHeader>
-                    <CardTitle>Appearance</CardTitle>
+                    <CardTitle>{t('preferencesPage.appearance')}</CardTitle>
                     <CardDescription>
-                        Change the look and feel of the application.
+                        {t('preferencesPage.appearanceDesc')}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="flex items-center justify-between">
-                        <Label>Theme</Label>
+                        <Label>{t('preferencesPage.theme')}</Label>
                         <ThemeToggle />
                     </div>
                     <div className="flex items-center justify-between">
-                        <Label>Language</Label>
+                        <Label>{t('preferencesPage.language')}</Label>
                         <LanguageToggle />
                     </div>
                 </CardContent>

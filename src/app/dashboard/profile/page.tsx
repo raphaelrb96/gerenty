@@ -1,28 +1,33 @@
+
+"use client";
+
 import { ProfileForm } from "@/components/profile/profile-form";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/context/i18n-context";
 
 export default function ProfilePage() {
+  const { t } = useTranslation();
+
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-headline text-3xl font-bold">Profile</h1>
+        <h1 className="font-headline text-3xl font-bold">{t('profilePage.title')}</h1>
         <p className="text-muted-foreground">
-          Manage your account settings and personal information.
+          {t('profilePage.description')}
         </p>
       </div>
       <div className="grid gap-8 md:grid-cols-2">
         <Card>
             <CardHeader>
-                <CardTitle>Personal Information</CardTitle>
-                <CardDescription>Update your name and email address.</CardDescription>
+                <CardTitle>{t('profilePage.personalInfo')}</CardTitle>
+                <CardDescription>{t('profilePage.personalInfoDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
                 <ProfileForm />
@@ -30,16 +35,19 @@ export default function ProfilePage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Manage Subscription</CardTitle>
+            <CardTitle>{t('profilePage.subscription')}</CardTitle>
             <CardDescription>
-              You are currently on the <strong>Pro Plan</strong>.
+              {t('profilePage.currentPlan')}{" "}
+              <strong>{t('profilePage.proPlan')}</strong>.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <p>Your plan renews on December 1, 2024.</p>
+            <p>{t('profilePage.renewal')}</p>
           </CardContent>
           <CardFooter className="border-t pt-4">
-            <Button style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>Manage in Stripe</Button>
+            <Button style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
+              {t('profilePage.manageButton')}
+            </Button>
           </CardFooter>
         </Card>
       </div>

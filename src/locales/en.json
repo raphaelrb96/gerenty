@@ -85,6 +85,34 @@
             "copy": "© {year} Enterprisy Lite. All rights reserved."
         }
     },
+    "dashboard": {
+        "totalRevenue": "Total Revenue",
+        "totalSales": "Total Sales",
+        "productsInStock": "Products in Stock",
+        "addProduct": "Add Product",
+        "recentActivity": "Recent Activity",
+        "recentActivityDesc": "An overview of the latest orders in your store.",
+        "viewAll": "View All"
+    },
+    "profilePage": {
+        "title": "Profile",
+        "description": "Manage your account settings and personal information.",
+        "personalInfo": "Personal Information",
+        "personalInfoDesc": "Update your name and email address.",
+        "subscription": "Manage Subscription",
+        "currentPlan": "You are currently on the",
+        "proPlan": "Pro Plan",
+        "renewal": "Your plan renews on December 1, 2024.",
+        "manageButton": "Manage in Stripe"
+    },
+    "preferencesPage": {
+        "title": "Preferences",
+        "description": "Customize your experience.",
+        "appearance": "Appearance",
+        "appearanceDesc": "Change the look and feel of the application.",
+        "theme": "Theme",
+        "language": "Language"
+    },
     "productsPage": {
         "title": "Products",
         "description": "Manage your product catalog.",
