@@ -11,13 +11,15 @@ import { Button } from "@/components/ui/button";
 
 export default function ProfilePage() {
   return (
-    <div className="grid gap-8 md:grid-cols-3">
-      <div className="md:col-span-2">
+    <div className="space-y-8">
+      <div>
         <h1 className="font-headline text-3xl font-bold">Profile</h1>
         <p className="text-muted-foreground">
           Manage your account settings and personal information.
         </p>
-        <Card className="mt-8">
+      </div>
+      <div className="grid gap-8 md:grid-cols-2">
+        <Card>
             <CardHeader>
                 <CardTitle>Personal Information</CardTitle>
                 <CardDescription>Update your name and email address.</CardDescription>
@@ -26,10 +28,6 @@ export default function ProfilePage() {
                 <ProfileForm />
             </CardContent>
         </Card>
-      </div>
-
-      <div className="space-y-8">
-        <h2 className="font-headline text-2xl font-bold">Subscription</h2>
         <Card>
           <CardHeader>
             <CardTitle>Manage Subscription</CardTitle>
