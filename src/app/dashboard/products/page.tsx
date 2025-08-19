@@ -102,18 +102,17 @@ export default function ProductsPage() {
             <Card key={product.id}>
                 <CardHeader className="p-0">
                     <Image
-                        src={product.imageUrl || "https://placehold.co/400x300.png"}
+                        src={product.images?.mainImage || "https://placehold.co/400x300.png"}
                         alt={product.name}
                         width={400}
                         height={300}
                         className="rounded-t-lg aspect-[4/3] object-cover"
-                        data-ai-hint={product.imageHint}
                     />
                 </CardHeader>
                 <CardContent className="p-4">
-                    <CardTitle className="text-lg">{product.name}</CardTitle>
-                    <p className="font-semibold text-primary">R${product.price.toFixed(2)}</p>
-                    <p className="text-sm text-muted-foreground">{t('productsPage.stock')}: {product.stock}</p>
+                    <h3 className="text-lg font-semibold">{product.name}</h3>
+                    <p className="font-semibold text-primary">R${product.pricing[0]?.price.toFixed(2)}</p>
+                    <p className="text-sm text-muted-foreground">{t('productsPage.stock')}: {typeof product.availableStock === 'number' ? product.availableStock : 'N/A'}</p>
                 </CardContent>
                 <CardFooter className="p-4 pt-0">
                     <Button variant="outline" className="w-full" onClick={() => handleEditProduct(product)}>

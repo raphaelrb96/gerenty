@@ -27,10 +27,11 @@ import { useTranslation } from "@/context/i18n-context";
 
 const formSchema = z.object({
   name: z.string().min(3, { message: "Product name must be at least 3 characters." }),
-  attributes: z.string().min(3, { message: "Please list some key attributes." }),
   description: z.string().optional(),
   price: z.preprocess((a) => parseFloat(z.string().parse(a).replace(",", ".")), z.number().positive()),
   stock: z.preprocess((a) => parseInt(z.string().parse(a), 10), z.number().int().nonnegative()),
+  // Added for the AI generation, not part of the Product model itself but useful for the form
+  attributes: z.string().min(3, { message: "Please list some key attributes." }),
 });
 
 type ProductFormValues = z.infer<typeof formSchema>;
@@ -62,11 +63,19 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
     if (product) {
         form.reset({
             name: product.name,
-            attributes: product.attributes || '',
             description: product.description || '',
-            price: product.price,
-            stock: product.stock
+            price: product.pricing?.[0]?.price || 0,
+            stock: typeof product.availableStock === 'number' ? product.availableStock : 0,
+            attributes: product.tags?.join(', ') || ''
         })
+    } else {
+        form.reset({
+            name: "",
+            attributes: "",
+            description: "",
+            price: 0,
+            stock: 0,
+        });
     }
   }, [product, form])
 
@@ -111,31 +120,45 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
     
     setIsSaving(true);
     
+    const productData = {
+        name: values.name,
+        slug: values.name.toLowerCase().replace(/\s+/g, '-'),
+        description: values.description || '',
+        pricing: [{
+            label: 'Varejo',
+            price: values.price,
+            minQuantity: 1,
+            currency: 'BRL',
+            quantityRule: 'perItem'
+        }],
+        availableStock: values.stock,
+        tags: values.attributes.split(',').map(attr => attr.trim()),
+        vendorId: user.uid,
+        isActive: true,
+        status: 'available',
+        visibility: 'public',
+        // Default empty values for required fields
+        attributes: [],
+        categories: [],
+        collections: [],
+        images: { mainImage: '', gallery: [] },
+        isVerified: false,
+        permissions: { canEdit: true, canDelete: true, allowedRoles: ['empresa'] },
+        reviews: { averageRating: 0, totalReviews: 0, ratings: [] },
+        versionHistory: { version: '1.0', updatedAt: new Date(), changes: ['Initial creation'] },
+    };
+
     try {
         if (product) {
             // Update existing product
-            await updateProduct(product.id, {
-                name: values.name,
-                attributes: values.attributes,
-                description: values.description,
-                price: values.price,
-                stock: values.stock,
-                userId: user.uid,
-            });
+            await updateProduct(product.id, productData);
             toast({
                 title: t('productForm.updateSuccess.title'),
                 description: `${values.name} ${t('productForm.updateSuccess.description')}`,
             });
         } else {
             // Create new product
-            await addProduct({
-                name: values.name,
-                attributes: values.attributes,
-                description: values.description,
-                price: values.price,
-                stock: values.stock,
-                userId: user.uid,
-            });
+            await addProduct(productData);
             toast({
                 title: t('productForm.createSuccess.title'),
                 description: `${values.name} ${t('productForm.createSuccess.description')}`,
@@ -242,7 +265,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
             <Button type="button" variant="outline" onClick={onFinished}>{t('productForm.cancel')}</Button>
             <Button type="submit" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} disabled={isSaving}>
                 {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {t('productForm.save')}
+                {product ? t('productForm.save') : t('productForm.createButton', 'Create Product')}
             </Button>
         </div>
       </form>

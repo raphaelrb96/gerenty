@@ -7,6 +7,7 @@ import type { Product } from "@/lib/types";
 
 const productsCollection = collection(db, "products");
 
+// The data passed here should match the Product type, omitting fields that are auto-generated.
 export async function addProduct(productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<Product> {
     try {
         const docRef = await addDoc(productsCollection, {
@@ -14,21 +15,23 @@ export async function addProduct(productData: Omit<Product, 'id' | 'createdAt' |
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
         });
+
+        // Construct the full product object to return, simulating the server-side timestamps.
         return { 
             id: docRef.id, 
             ...productData,
             createdAt: Timestamp.now(),
             updatedAt: Timestamp.now()
-        };
+        } as Product;
     } catch (error) {
         console.error("Error adding product: ", error);
         throw new Error("Failed to add product.");
     }
 }
 
-export async function getProducts(userId: string): Promise<Product[]> {
+export async function getProducts(vendorId: string): Promise<Product[]> {
     try {
-        const q = query(productsCollection, where("userId", "==", userId));
+        const q = query(productsCollection, where("vendorId", "==", vendorId));
         const querySnapshot = await getDocs(q);
         const products: Product[] = [];
         querySnapshot.forEach((doc) => {
