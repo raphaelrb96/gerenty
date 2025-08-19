@@ -4,47 +4,47 @@ import { BarChart, Package, ShoppingCart, Bot } from "lucide-react";
 const benefits = [
   {
     icon: <BarChart className="h-8 w-8 text-primary" />,
-    title: "Insightful Dashboard",
-    description: "Get a clear overview of your business performance with key metrics and analytics at a glance.",
+    title: "Dashboard Intuitivo",
+    description: "Visão clara do seu negócio com métricas e análises essenciais.",
   },
   {
     icon: <Package className="h-8 w-8 text-primary" />,
-    title: "Product Management",
-    description: "Easily add, edit, and organize your products. Keep your catalog up-to-date effortlessly.",
+    title: "Gestão de Produtos",
+    description: "Adicione, edite e organize seus produtos de forma simples e eficaz.",
   },
   {
     icon: <ShoppingCart className="h-8 w-8 text-primary" />,
-    title: "Order Tracking",
-    description: "Manage incoming orders, update their statuses, and keep track of your sales pipeline.",
+    title: "Controle de Pedidos",
+    description: "Gerencie pedidos, atualize status e acompanhe seu funil de vendas.",
   },
   {
     icon: <Bot className="h-8 w-8 text-primary" />,
-    title: "AI-Powered Descriptions",
-    description: "Save time by automatically generating compelling product descriptions with our AI assistant.",
+    title: "Descrições com IA",
+    description: "Poupe tempo gerando descrições de produtos atraentes com nossa IA.",
   },
 ];
 
 export function Benefits() {
   return (
-    <section className="bg-secondary py-12 md:py-24">
-      <div className="container">
-        <div className="mb-12 text-center">
-          <h2 className="font-headline text-3xl font-bold">
-            Everything You Need to Succeed
+    <section className="bg-secondary py-20 md:py-24">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center max-w-3xl mx-auto">
+          <h2 className="font-headline text-3xl md:text-4xl font-bold text-foreground">
+            Tudo o que Você Precisa para o Sucesso
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-            Our platform is designed to streamline your workflow and boost your productivity.
+          <p className="mt-4 text-lg text-muted-foreground">
+            Nossa plataforma foi projetada para otimizar seu fluxo de trabalho e impulsionar sua produtividade.
           </p>
         </div>
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
           {benefits.map((benefit) => (
-            <Card key={benefit.title} className="flex flex-col items-center text-center">
-              <CardHeader>
-                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 mx-auto">
+            <Card key={benefit.title} className="text-center transform hover:-translate-y-2 transition-transform duration-300">
+              <CardHeader className="items-center">
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
                   {benefit.icon}
                 </div>
-                <CardTitle className="font-headline">{benefit.title}</CardTitle>
-                <CardDescription>{benefit.description}</CardDescription>
+                <CardTitle className="font-headline text-xl">{benefit.title}</CardTitle>
+                <CardDescription className="mt-2">{benefit.description}</CardDescription>
               </CardHeader>
             </Card>
           ))}
