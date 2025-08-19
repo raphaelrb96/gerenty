@@ -103,7 +103,9 @@
         "currentPlan": "You are currently on the",
         "proPlan": "Pro Plan",
         "renewal": "Your plan renews on December 1, 2024.",
-        "manageButton": "Manage in Stripe"
+        "manageButton": "Manage Subscription",
+        "updateSuccess": { "title": "Profile Updated", "description": "Your information has been saved successfully." },
+        "updateError": { "title": "Update Error", "description": "Could not save your information. Please try again." }
     },
     "preferencesPage": {
         "title": "Preferences",

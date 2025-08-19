@@ -12,7 +12,7 @@ import {
   onAuthStateChanged,
   type User as FirebaseUser
 } from "firebase/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import type { User } from '@/lib/types';
 
 
@@ -64,6 +64,21 @@ export async function signOut(): Promise<void> {
         await firebaseSignOut(auth);
     } catch (error) {
         console.error("Error signing out: ", error);
+        throw error;
+    }
+}
+
+// --- Update Profile ---
+export async function updateUserProfile(user: FirebaseUser, data: { name: string }): Promise<void> {
+    try {
+        await updateProfile(user, { displayName: data.name });
+        const userDocRef = doc(db, "users", user.uid);
+        await updateDoc(userDocRef, {
+            name: data.name,
+            updatedAt: serverTimestamp(),
+        });
+    } catch (error) {
+        console.error("Error updating profile:", error);
         throw error;
     }
 }

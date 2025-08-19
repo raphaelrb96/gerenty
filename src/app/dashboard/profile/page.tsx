@@ -24,8 +24,8 @@ export default function ProfilePage() {
           {t('profilePage.description')}
         </p>
       </div>
-      <div className="grid gap-8 md:grid-cols-2">
-        <Card>
+      <div className="grid gap-8 md:grid-cols-3">
+        <Card className="md:col-span-2">
             <CardHeader>
                 <CardTitle>{t('profilePage.personalInfo')}</CardTitle>
                 <CardDescription>{t('profilePage.personalInfoDesc')}</CardDescription>
@@ -46,7 +46,7 @@ export default function ProfilePage() {
             <p>{t('profilePage.renewal')}</p>
           </CardContent>
           <CardFooter className="border-t pt-4">
-            <Button style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
+            <Button style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="w-full">
               {t('profilePage.manageButton')}
             </Button>
           </CardFooter>

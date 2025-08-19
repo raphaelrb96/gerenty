@@ -103,7 +103,9 @@
         "currentPlan": "Actualmente estás en el",
         "proPlan": "Plan Pro",
         "renewal": "Tu plan se renueva el 1 de diciembre de 2024.",
-        "manageButton": "Gestionar en Stripe"
+        "manageButton": "Gestionar Suscripción",
+        "updateSuccess": { "title": "Perfil Actualizado", "description": "Tu información ha sido guardada exitosamente." },
+        "updateError": { "title": "Error al Actualizar", "description": "No se pudo guardar tu información. Por favor, inténtalo de nuevo." }
     },
     "preferencesPage": {
         "title": "Preferencias",
