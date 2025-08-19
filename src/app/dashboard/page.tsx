@@ -34,7 +34,7 @@ const recentActivities = [
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       <div className="flex items-center justify-between space-y-2">
         <h1 className="font-headline text-3xl font-bold">Dashboard</h1>
         <div className="flex items-center space-x-2">

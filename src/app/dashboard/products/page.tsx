@@ -41,7 +41,7 @@ export default function ProductsPage() {
     }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-headline text-3xl font-bold">Products</h1>
