@@ -40,7 +40,7 @@ export function Benefits() {
           {benefits.map((benefit) => (
             <Card key={benefit.title} className="flex flex-col items-center text-center">
               <CardHeader>
-                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 mx-auto">
                   {benefit.icon}
                 </div>
                 <CardTitle className="font-headline">{benefit.title}</CardTitle>

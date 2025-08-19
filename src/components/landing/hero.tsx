@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
@@ -8,7 +6,7 @@ export function Hero() {
   return (
     <section className="container grid items-center gap-6 pb-8 pt-6 md:py-10">
       <div className="grid grid-cols-1 items-center gap-8 md:grid-cols-2">
-        <div className="flex flex-col items-start gap-4">
+        <div className="flex flex-col items-center gap-4 text-center md:items-start md:text-left">
           <h1 className="font-headline text-3xl font-bold leading-tight tracking-tighter md:text-5xl lg:text-6xl">
             Simplify Your Business Operations Today
           </h1>
