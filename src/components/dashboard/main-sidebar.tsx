@@ -16,16 +16,17 @@ import {
   ShoppingCart,
   User,
   LogOut,
+  Settings,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Button } from "../ui/button";
 
 const menuItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/products", label: "Products", icon: Package },
   { href: "/dashboard/orders", label: "Orders", icon: ShoppingCart },
   { href: "/dashboard/profile", label: "Profile", icon: User },
+  { href: "/dashboard/preferences", label: "Preferences", icon: Settings },
 ];
 
 export function MainSidebar() {
@@ -58,7 +59,7 @@ export function MainSidebar() {
         <SidebarMenu>
            <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Logout">
-                <Link href="/login">
+                <Link href="/auth/login">
                   <LogOut />
                   <span>Logout</span>
                 </Link>

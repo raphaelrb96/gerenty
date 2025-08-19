@@ -17,10 +17,10 @@ export function Hero() {
           </p>
           <div className="flex gap-4">
             <Button asChild size="lg" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
-              <Link href="/signup">Get Started for Free</Link>
+              <Link href="/auth/signup">Get Started for Free</Link>
             </Button>
             <Button variant="outline" size="lg" asChild>
-              <Link href="/login">View Dashboard</Link>
+              <Link href="/dashboard">View Dashboard</Link>
             </Button>
           </div>
         </div>

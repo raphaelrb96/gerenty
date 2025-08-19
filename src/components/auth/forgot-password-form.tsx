@@ -80,7 +80,7 @@ export function ForgotPasswordForm() {
           </Form>
         ) : null}
         <div className="mt-4 text-center text-sm">
-          <Link href="/login" className="font-medium text-primary hover:underline">
+          <Link href="/auth/login" className="font-medium text-primary hover:underline">
             Back to Login
           </Link>
         </div>

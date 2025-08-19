@@ -42,10 +42,13 @@ export function Header() {
             <DropdownMenuItem asChild>
               <Link href="/dashboard/profile">Profile</Link>
             </DropdownMenuItem>
+             <DropdownMenuItem asChild>
+              <Link href="/dashboard/preferences">Preferences</Link>
+            </DropdownMenuItem>
             <DropdownMenuItem>Support</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/login">Logout</Link>
+              <Link href="/auth/login">Logout</Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
