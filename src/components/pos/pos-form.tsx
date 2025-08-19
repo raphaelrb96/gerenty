@@ -28,6 +28,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { PlusCircle, Trash2, Loader2 } from "lucide-react";
 import { Separator } from "../ui/separator";
+import { Label } from "@/components/ui/label";
 
 const formSchema = z.object({
   customerName: z.string().min(2, "Nome do cliente é obrigatório."),
@@ -260,3 +261,5 @@ export function PosForm({ allProducts }: PosFormProps) {
     </Card>
   );
 }
+
+    
