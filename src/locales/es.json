@@ -49,5 +49,80 @@
             "invalidCredentials": "El correo electrónico o la contraseña que ingresaste son incorrectos.",
             "generic": "Ocurrió un error inesperado. Por favor, inténtalo de nuevo."
         }
+    },
+    "landing": {
+        "hero": {
+            "title": "Simplifica la Gestión de tu Negocio",
+            "subtitle": "Enterprisy Lite ofrece las herramientas que necesitas para gestionar productos, pedidos y clientes con facilidad. Enfócate en el crecimiento, nosotros nos encargamos del resto.",
+            "ctaPrimary": "Comenzar Gratis",
+            "ctaSecondary": "Ver el Panel"
+        },
+        "benefits": {
+            "title": "Todo lo que Necesitas para el Éxito",
+            "subtitle": "Nuestra plataforma está diseñada para optimizar tu flujo de trabajo e impulsar tu productividad.",
+            "benefit1": { "title": "Panel Intuitivo", "description": "Visión clara de tu negocio con métricas y análisis esenciales." },
+            "benefit2": { "title": "Gestión de Productos", "description": "Añade, edita y organiza tus productos de forma simple y eficaz." },
+            "benefit3": { "title": "Control de Pedidos", "description": "Gestiona pedidos, actualiza estados y sigue tu embudo de ventas." },
+            "benefit4": { "title": "Descripciones con IA", "description": "Ahorra tiempo generando descripciones de productos atractivas con nuestra IA." }
+        },
+        "pricing": {
+            "title": "Encuentra el Plan Perfecto para Ti",
+            "subtitle": "Empieza gratis y escala a medida que creces. No se requiere tarjeta de crédito.",
+            "free": { "name": "Gratis", "priceDescription": "/mes", "description": "Para individuos y pequeños equipos que están comenzando.", "features": ["10 Productos", "100 Pedidos/mes", "Análisis Básicos"], "cta": "Empieza Gratis" },
+            "pro": { "name": "Pro", "priceDescription": "/mes", "description": "Para negocios en crecimiento que necesitan más potencia.", "features": ["Productos Ilimitados", "Pedidos Ilimitados", "Análisis Avanzados", "Créditos de IA"], "cta": "Elegir Pro" },
+            "enterprise": { "name": "Enterprise", "priceDescription": "/mes", "description": "Para operaciones a gran escala con necesidades personalizadas.", "features": ["Todo en Pro", "Soporte Prioritario", "Integraciones Personalizadas"], "cta": "Contáctanos" }
+        },
+        "header": {
+            "login": "Iniciar Sesión",
+            "signup": "Regístrate Gratis"
+        },
+        "footer": {
+            "copy": "© {year} Enterprisy Lite. Todos los derechos reservados."
+        }
+    },
+    "productsPage": {
+        "title": "Productos",
+        "description": "Gestiona tu catálogo de productos.",
+        "addProduct": "Añadir Producto",
+        "editProduct": "Editar Producto",
+        "newProduct": "Añadir Nuevo Producto",
+        "stock": "Existencias",
+        "edit": "Editar",
+        "empty": {
+            "title": "Aún no hay productos",
+            "description": "Tus productos aparecerán aquí. Empieza añadiendo tu primer producto.",
+            "action": "Añadir Primer Producto"
+        }
+    },
+    "ordersPage": {
+        "title": "Pedidos",
+        "description": "Visualiza y gestiona los pedidos de los clientes.",
+        "export": "Exportar",
+        "orderDetails": "Detalles del Pedido",
+        "detailsButton": "Detalles",
+        "empty": {
+            "title": "No hay pedidos para mostrar",
+            "description": "Cuando recibas nuevos pedidos, aparecerán aquí."
+        }
+    },
+    "productForm": {
+        "name": { "label": "Nombre del Producto", "placeholder": "Ej: Silla de Oficina Ergonómica" },
+        "attributes": { "label": "Atributos Clave", "placeholder": "Ej: negra, malla, brazos ajustables" },
+        "description": { "label": "Descripción del Producto", "placeholder": "Una descripción detallada del producto..." },
+        "price": { "label": "Precio" },
+        "stock": { "label": "Existencias" },
+        "generateButton": "Generar con IA",
+        "cancel": "Cancelar",
+        "save": "Guardar Producto",
+        "generateError": { "title": "Falta Información", "description": "Por favor, introduce primero el nombre y los atributos del producto." },
+        "generateSuccess": { "title": "¡Descripción Generada!", "description": "La IA ha generado una nueva descripción para el producto." },
+        "generateFailed": { "title": "Fallo en la Generación", "description": "No se pudo generar la descripción. Por favor, inténtalo de nuevo." },
+        "error": {
+            "noUser": "Debes iniciar sesión para realizar esta acción.",
+            "genericTitle": "Ocurrió un Error",
+            "genericDescription": "No se pudo guardar el producto. Por favor, inténtalo de nuevo."
+        },
+        "updateSuccess": { "title": "Producto Actualizado", "description": "se ha guardado correctamente." },
+        "createSuccess": { "title": "Producto Creado", "description": "se ha guardado correctamente." }
     }
 }

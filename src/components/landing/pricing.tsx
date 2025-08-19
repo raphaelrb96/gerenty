@@ -1,51 +1,58 @@
+
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Check } from "lucide-react";
 import Link from "next/link";
-
-const tiers = [
-  {
-    name: "Gratuito",
-    price: "R$0",
-    priceDescription: "/mês",
-    description: "Para indivíduos e pequenos times que estão começando.",
-    features: ["10 Produtos", "100 Pedidos/mês", "Análises Básicas"],
-    cta: "Comece de Graça",
-    href: "/auth/signup",
-    isFeatured: false,
-  },
-  {
-    name: "Pro",
-    price: "R$29",
-    priceDescription: "/mês",
-    description: "Para negócios em crescimento que precisam de mais poder.",
-    features: ["Produtos Ilimitados", "Pedidos Ilimitados", "Análises Avançadas", "Créditos de IA"],
-    cta: "Escolher o Pro",
-    href: "/auth/signup",
-    isFeatured: true,
-  },
-  {
-    name: "Enterprise",
-    price: "R$99",
-    priceDescription: "/mês",
-    description: "Para operações de larga escala com necessidades customizadas.",
-    features: ["Tudo do Pro", "Suporte Prioritário", "Integrações Customizadas"],
-    cta: "Fale Conosco",
-    href: "/contact",
-    isFeatured: false,
-  },
-];
+import { useTranslation } from "@/context/i18n-context";
 
 export function Pricing() {
+  const { t } = useTranslation();
+
+  const tiers = [
+    {
+      name: t('landing.pricing.free.name'),
+      price: "R$0",
+      priceDescription: t('landing.pricing.free.priceDescription'),
+      description: t('landing.pricing.free.description'),
+      features: t('landing.pricing.free.features', { returnObjects: true }) as unknown as string[],
+      cta: t('landing.pricing.free.cta'),
+      href: "/auth/signup",
+      isFeatured: false,
+    },
+    {
+      name: t('landing.pricing.pro.name'),
+      price: "R$29",
+      priceDescription: t('landing.pricing.pro.priceDescription'),
+      description: t('landing.pricing.pro.description'),
+      features: t('landing.pricing.pro.features', { returnObjects: true }) as unknown as string[],
+      cta: t('landing.pricing.pro.cta'),
+      href: "/auth/signup",
+      isFeatured: true,
+    },
+    {
+      name: t('landing.pricing.enterprise.name'),
+      price: "R$99",
+      priceDescription: t('landing.pricing.enterprise.priceDescription'),
+      description: t('landing.pricing.enterprise.description'),
+      features: t('landing.pricing.enterprise.features', { returnObjects: true }) as unknown as string[],
+      cta: t('landing.pricing.enterprise.cta'),
+      href: "/contact",
+      isFeatured: false,
+    },
+  ];
+
+
   return (
     <section className="bg-background py-20 md:py-24">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto">
           <h2 className="font-headline text-3xl md:text-4xl font-bold text-foreground">
-            Encontre o Plano Perfeito para Você
+            {t('landing.pricing.title')}
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Comece de graça e escale conforme cresce. Sem necessidade de cartão de crédito.
+            {t('landing.pricing.subtitle')}
           </p>
         </div>
         <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 items-center">

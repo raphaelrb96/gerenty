@@ -1,3 +1,6 @@
+
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
@@ -5,26 +8,27 @@ import { ThemeToggle } from "../theme-toggle";
 import { LanguageToggle } from "../language-toggle";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
+import { useTranslation } from "@/context/i18n-context";
 
 export function Header() {
+  const { t } = useTranslation();
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between px-4 md:px-6">
+      <div className="container flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
         <Logo />
         
-        {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-4">
           <ThemeToggle />
           <LanguageToggle />
           <Button variant="ghost" asChild>
-            <Link href="/auth/login">Entrar</Link>
+            <Link href="/auth/login">{t('landing.header.login')}</Link>
           </Button>
           <Button asChild style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
-            <Link href="/auth/signup">Cadastre-se Gratuitamente</Link>
+            <Link href="/auth/signup">{t('landing.header.signup')}</Link>
           </Button>
         </nav>
 
-        {/* Mobile Navigation */}
         <div className="md:hidden flex items-center">
           <ThemeToggle />
           <LanguageToggle />
@@ -39,10 +43,10 @@ export function Header() {
               <div className="grid gap-4 p-6">
                 <Logo />
                 <Button variant="ghost" asChild className="justify-start text-lg">
-                  <Link href="/auth/login">Entrar</Link>
+                  <Link href="/auth/login">{t('landing.header.login')}</Link>
                 </Button>
                 <Button asChild style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="justify-start text-lg">
-                  <Link href="/auth/signup">Cadastre-se Gratuitamente</Link>
+                  <Link href="/auth/signup">{t('landing.header.signup')}</Link>
                 </Button>
               </div>
             </SheetContent>

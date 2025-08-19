@@ -49,5 +49,80 @@
             "invalidCredentials": "The email or password you entered is incorrect.",
             "generic": "An unexpected error occurred. Please try again."
         }
+    },
+    "landing": {
+        "hero": {
+            "title": "Simplify Your Business Management",
+            "subtitle": "Enterprisy Lite offers the tools you need to easily manage products, orders, and customers. Focus on growth, we'll handle the rest.",
+            "ctaPrimary": "Get Started for Free",
+            "ctaSecondary": "View Dashboard"
+        },
+        "benefits": {
+            "title": "Everything You Need for Success",
+            "subtitle": "Our platform is designed to optimize your workflow and boost your productivity.",
+            "benefit1": { "title": "Intuitive Dashboard", "description": "Clear view of your business with essential metrics and analysis." },
+            "benefit2": { "title": "Product Management", "description": "Add, edit, and organize your products simply and effectively." },
+            "benefit3": { "title": "Order Control", "description": "Manage orders, update statuses, and track your sales funnel." },
+            "benefit4": { "title": "AI-Powered Descriptions", "description": "Save time by generating attractive product descriptions with our AI." }
+        },
+        "pricing": {
+            "title": "Find the Perfect Plan for You",
+            "subtitle": "Start for free and scale as you grow. No credit card required.",
+            "free": { "name": "Free", "description": "For individuals and small teams just starting out.", "features": ["10 Products", "100 Orders/month", "Basic Analytics"], "cta": "Get Started" },
+            "pro": { "name": "Pro", "description": "For growing businesses that need more power.", "features": ["Unlimited Products", "Unlimited Orders", "Advanced Analytics", "AI Credits"], "cta": "Choose Pro" },
+            "enterprise": { "name": "Enterprise", "description": "For large-scale operations with custom needs.", "features": ["Everything in Pro", "Priority Support", "Custom Integrations"], "cta": "Contact Us" }
+        },
+        "header": {
+            "login": "Login",
+            "signup": "Sign Up Free"
+        },
+        "footer": {
+            "copy": "© {year} Enterprisy Lite. All rights reserved."
+        }
+    },
+    "productsPage": {
+        "title": "Products",
+        "description": "Manage your product catalog.",
+        "addProduct": "Add Product",
+        "editProduct": "Edit Product",
+        "newProduct": "Add New Product",
+        "stock": "Stock",
+        "edit": "Edit",
+        "empty": {
+            "title": "No products yet",
+            "description": "Your products will appear here. Get started by adding your first product.",
+            "action": "Add First Product"
+        }
+    },
+    "ordersPage": {
+        "title": "Orders",
+        "description": "View and manage customer orders.",
+        "export": "Export",
+        "orderDetails": "Order Details",
+        "detailsButton": "Details",
+        "empty": {
+            "title": "No orders to show",
+            "description": "When you receive new orders, they will appear here."
+        }
+    },
+    "productForm": {
+        "name": { "label": "Product Name", "placeholder": "e.g., Ergonomic Office Chair" },
+        "attributes": { "label": "Key Attributes", "placeholder": "e.g., black, mesh, adjustable arms" },
+        "description": { "label": "Product Description", "placeholder": "A detailed description of the product..." },
+        "price": { "label": "Price" },
+        "stock": { "label": "Stock" },
+        "generateButton": "Generate with AI",
+        "cancel": "Cancel",
+        "save": "Save Product",
+        "generateError": { "title": "Missing Information", "description": "Please enter a product name and attributes first." },
+        "generateSuccess": { "title": "Description Generated!", "description": "The AI has generated a new product description." },
+        "generateFailed": { "title": "Generation Failed", "description": "Could not generate description. Please try again." },
+        "error": {
+            "noUser": "You must be logged in to perform this action.",
+            "genericTitle": "An Error Occurred",
+            "genericDescription": "Could not save the product. Please try again."
+        },
+        "updateSuccess": { "title": "Product Updated", "description": "has been saved successfully." },
+        "createSuccess": { "title": "Product Created", "description": "has been saved successfully." }
     }
 }

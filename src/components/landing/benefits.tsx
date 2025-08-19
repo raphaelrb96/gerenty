@@ -1,39 +1,45 @@
+
+"use client";
+
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { BarChart, Package, ShoppingCart, Bot } from "lucide-react";
-
-const benefits = [
-  {
-    icon: <BarChart className="h-8 w-8 text-primary" />,
-    title: "Dashboard Intuitivo",
-    description: "Visão clara do seu negócio com métricas e análises essenciais.",
-  },
-  {
-    icon: <Package className="h-8 w-8 text-primary" />,
-    title: "Gestão de Produtos",
-    description: "Adicione, edite e organize seus produtos de forma simples e eficaz.",
-  },
-  {
-    icon: <ShoppingCart className="h-8 w-8 text-primary" />,
-    title: "Controle de Pedidos",
-    description: "Gerencie pedidos, atualize status e acompanhe seu funil de vendas.",
-  },
-  {
-    icon: <Bot className="h-8 w-8 text-primary" />,
-    title: "Descrições com IA",
-    description: "Poupe tempo gerando descrições de produtos atraentes com nossa IA.",
-  },
-];
+import { useTranslation } from "@/context/i18n-context";
 
 export function Benefits() {
+  const { t } = useTranslation();
+
+  const benefits = [
+    {
+      icon: <BarChart className="h-8 w-8 text-primary" />,
+      title: t('landing.benefits.benefit1.title'),
+      description: t('landing.benefits.benefit1.description'),
+    },
+    {
+      icon: <Package className="h-8 w-8 text-primary" />,
+      title: t('landing.benefits.benefit2.title'),
+      description: t('landing.benefits.benefit2.description'),
+    },
+    {
+      icon: <ShoppingCart className="h-8 w-8 text-primary" />,
+      title: t('landing.benefits.benefit3.title'),
+      description: t('landing.benefits.benefit3.description'),
+    },
+    {
+      icon: <Bot className="h-8 w-8 text-primary" />,
+      title: t('landing.benefits.benefit4.title'),
+      description: t('landing.benefits.benefit4.description'),
+    },
+  ];
+
   return (
     <section className="bg-secondary py-20 md:py-24">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto">
           <h2 className="font-headline text-3xl md:text-4xl font-bold text-foreground">
-            Tudo o que Você Precisa para o Sucesso
+            {t('landing.benefits.title')}
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Nossa plataforma foi projetada para otimizar seu fluxo de trabalho e impulsionar sua produtividade.
+            {t('landing.benefits.subtitle')}
           </p>
         </div>
         <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">

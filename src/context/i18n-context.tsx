@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
@@ -9,10 +10,15 @@ import es from '@/locales/es.json';
 
 type Language = 'en' | 'pt' | 'es';
 
+type TranslateOptions = {
+    [key: string]: string | number;
+} | { returnObjects: boolean };
+
+
 interface I18nContextType {
   language: Language;
   setLanguage: (language: Language) => void;
-  t: (key: string) => string;
+  t: (key: string, options?: TranslateOptions) => any;
 }
 
 const translations = { en, pt, es };
@@ -20,7 +26,7 @@ const translations = { en, pt, es };
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
 export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [language, setLanguage] = useState<Language>('en');
+  const [language, setLanguage] = useState<Language>('pt');
 
   useEffect(() => {
     // Tenta obter o idioma do navegador
@@ -30,7 +36,7 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  const t = (key: string): string => {
+  const t = (key: string, options?: TranslateOptions): any => {
     // Navega no objeto de tradução aninhado
     const keys = key.split('.');
     let result = translations[language] as any;
@@ -41,6 +47,17 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return key;
       }
     }
+
+    if (options && 'returnObjects' in options && options.returnObjects === true) {
+        return result;
+    }
+
+    if (typeof result === 'string' && options) {
+        return Object.entries(options).reduce((acc, [key, value]) => {
+            return acc.replace(`{${key}}`, String(value));
+        }, result);
+    }
+
     return result || key;
   };
   
