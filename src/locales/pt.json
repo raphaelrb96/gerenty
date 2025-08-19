@@ -158,5 +158,30 @@
         },
         "updateSuccess": { "title": "Produto Atualizado", "description": "foi salvo com sucesso." },
         "createSuccess": { "title": "Produto Criado", "description": "foi salvo com sucesso." }
+    },
+    "orderStatus": {
+        "pending": "Pendente",
+        "confirmed": "Confirmado",
+        "processing": "Processando",
+        "shipped": "Enviado",
+        "delivered": "Entregue",
+        "completed": "Concluído",
+        "cancelled": "Cancelado",
+        "refunded": "Reembolsado"
+    },
+    "orderDetails": {
+        "orderId": "Pedido #{id}",
+        "customerDetails": "Detalhes do Cliente",
+        "customer": "Cliente",
+        "email": "E-mail",
+        "phone": "Telefone",
+        "orderSummary": "Resumo do Pedido",
+        "subtotal": "Subtotal",
+        "shipping": "Frete",
+        "total": "Total",
+        "updateStatus": "Atualizar Status",
+        "selectStatus": "Selecione o status",
+        "close": "Fechar",
+        "updateOrder": "Atualizar Pedido"
     }
 }

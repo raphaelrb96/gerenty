@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -9,40 +10,43 @@ import {
 } from "@/components/ui/select";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
+import type { Order, OrderStatus } from "@/lib/types";
+import { useTranslation } from "@/context/i18n-context";
 
 type OrderDetailsProps = {
-    order?: { id: string, customer: string, status: string, amount: string, date: string } | null,
+    order?: Order | null,
     onFinished: () => void;
 }
 
-const statuses = ["Pending", "Processing", "Fulfilled", "Cancelled"];
+const statuses: OrderStatus[] = ["pending", "confirmed", "processing", "shipped", "delivered", "completed", "cancelled", "refunded"];
 
 export function OrderDetails({ order, onFinished }: OrderDetailsProps) {
+  const { t } = useTranslation();
   if (!order) return null;
 
   return (
     <div className="space-y-6 py-4">
         <div className="space-y-2">
-            <h3 className="font-semibold text-lg">{order.id}</h3>
-            <p className="text-muted-foreground">{order.date}</p>
+            <h3 className="font-semibold text-lg">{t('orderDetails.orderId', { id: order.id.substring(0,7) })}</h3>
+            <p className="text-muted-foreground">{new Date(order.createdAt as string).toLocaleString()}</p>
         </div>
       
         <Separator />
         
         <div className="grid gap-4">
-            <div className="font-semibold">Customer Details</div>
+            <div className="font-semibold">{t('orderDetails.customerDetails')}</div>
             <dl className="grid gap-2 text-sm">
                 <div className="flex items-center justify-between">
-                    <dt className="text-muted-foreground">Customer</dt>
-                    <dd>{order.customer}</dd>
+                    <dt className="text-muted-foreground">{t('orderDetails.customer')}</dt>
+                    <dd>{order.customer.name}</dd>
                 </div>
                  <div className="flex items-center justify-between">
-                    <dt className="text-muted-foreground">Email</dt>
-                    <dd><a href={`mailto:${order.customer.toLowerCase().replace(' ', '.')}@example.com`} className="text-primary hover:underline">{order.customer.toLowerCase().replace(' ', '.')}@example.com</a></dd>
+                    <dt className="text-muted-foreground">{t('orderDetails.email')}</dt>
+                    <dd><a href={`mailto:${order.customer.email}`} className="text-primary hover:underline">{order.customer.email}</a></dd>
                 </div>
                  <div className="flex items-center justify-between">
-                    <dt className="text-muted-foreground">Phone</dt>
-                    <dd>+1 234 567 890</dd>
+                    <dt className="text-muted-foreground">{t('orderDetails.phone')}</dt>
+                    <dd>{order.customer.phone || 'N/A'}</dd>
                 </div>
             </dl>
         </div>
@@ -50,23 +54,26 @@ export function OrderDetails({ order, onFinished }: OrderDetailsProps) {
         <Separator />
         
         <div className="grid gap-4">
-            <div className="font-semibold">Order Summary</div>
+            <div className="font-semibold">{t('orderDetails.orderSummary')}</div>
              <dl className="grid gap-2 text-sm">
+                {order.items.map(item => (
+                    <div key={item.productId} className="flex items-center justify-between">
+                        <dt className="text-muted-foreground">{item.quantity}x {item.productName}</dt>
+                        <dd>R${item.totalPrice.toFixed(2)}</dd>
+                    </div>
+                ))}
+                <Separator className="my-2" />
                 <div className="flex items-center justify-between">
-                    <dt className="text-muted-foreground">1x Ergonomic Chair</dt>
-                    <dd>$299.99</dd>
+                    <dt className="text-muted-foreground">{t('orderDetails.subtotal')}</dt>
+                    <dd>R${order.subtotal.toFixed(2)}</dd>
                 </div>
-                <div className="flex items-center justify-between">
-                    <dt className="text-muted-foreground">Subtotal</dt>
-                    <dd>$299.99</dd>
-                </div>
-                <div className="flex items-center justify-between">
-                    <dt className="text-muted-foreground">Tax</dt>
-                    <dd>$25.00</dd>
+                 <div className="flex items-center justify-between">
+                    <dt className="text-muted-foreground">{t('orderDetails.shipping')}</dt>
+                    <dd>R${(order.shippingCost || 0).toFixed(2)}</dd>
                 </div>
                 <div className="flex items-center justify-between font-semibold">
-                    <dt>Total</dt>
-                    <dd>{order.amount}</dd>
+                    <dt>{t('orderDetails.total')}</dt>
+                    <dd>R${order.total.toFixed(2)}</dd>
                 </div>
             </dl>
         </div>
@@ -74,22 +81,22 @@ export function OrderDetails({ order, onFinished }: OrderDetailsProps) {
         <Separator />
 
         <div className="grid gap-4">
-            <div className="font-semibold">Update Status</div>
+            <div className="font-semibold">{t('orderDetails.updateStatus')}</div>
              <Select defaultValue={order.status}>
                 <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
+                    <SelectValue placeholder={t('orderDetails.selectStatus')} />
                 </SelectTrigger>
                 <SelectContent>
                     {statuses.map(status => (
-                        <SelectItem key={status} value={status}>{status}</SelectItem>
+                        <SelectItem key={status} value={status}>{t(`orderStatus.${status}`)}</SelectItem>
                     ))}
                 </SelectContent>
             </Select>
         </div>
 
         <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={onFinished}>Close</Button>
-            <Button type="button" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} onClick={onFinished}>Update Order</Button>
+            <Button type="button" variant="outline" onClick={onFinished}>{t('orderDetails.close')}</Button>
+            <Button type="button" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} onClick={onFinished}>{t('orderDetails.updateOrder')}</Button>
         </div>
     </div>
   );

@@ -47,9 +47,29 @@ export default function OrdersPage() {
         setSelectedOrder(order);
         setIsSheetOpen(true);
     }
+    
+    const getStatusVariant = (status: Order['status']) => {
+        switch (status) {
+            case 'completed':
+            case 'delivered':
+                return 'bg-green-600/20 text-green-700 hover:bg-green-600/30';
+            case 'processing':
+            case 'shipped':
+            case 'confirmed':
+                return 'bg-blue-600/20 text-blue-700 hover:bg-blue-600/30';
+            case 'pending':
+                return 'bg-yellow-600/20 text-yellow-700 hover:bg-yellow-600/30';
+            case 'cancelled':
+            case 'refunded':
+                return 'bg-red-600/20 text-red-700 hover:bg-red-600/30';
+            default:
+                return 'bg-gray-600/20 text-gray-700 hover:bg-gray-600/30';
+        }
+    }
+
 
     if (loading) {
-        return <LoadingSpinner />;
+        return <div className="flex h-full items-center justify-center"><LoadingSpinner /></div>;
     }
 
   return (
@@ -84,31 +104,26 @@ export default function OrdersPage() {
             {orders.map((order) => (
             <Card key={order.id}>
                 <CardContent className="p-4 grid grid-cols-2 md:grid-cols-5 items-center gap-4">
-                <div className="md:col-span-1">
-                    <p className="font-medium">{order.id.substring(0, 7)}</p>
-                    <p className="text-sm text-muted-foreground">{order.customer}</p>
-                </div>
-                <div className="md:col-span-1 flex justify-start md:justify-center">
-                    <Badge variant={order.status === "Fulfilled" ? "default" : order.status === "Processing" ? "secondary" : "outline"}
-                        className={
-                            order.status === "Fulfilled" ? "bg-green-600/20 text-green-700 hover:bg-green-600/30" : 
-                            order.status === "Processing" ? "bg-blue-600/20 text-blue-700 hover:bg-blue-600/30" :
-                            order.status === "Cancelled" ? "bg-red-600/20 text-red-700 hover:bg-red-600/30" : ""
-                        }>
-                        {order.status}
+                    <div className="md:col-span-1">
+                        <p className="font-medium">#{order.id.substring(0, 7)}</p>
+                        <p className="text-sm text-muted-foreground">{order.customer.name}</p>
+                    </div>
+                    <div className="md:col-span-1 flex justify-start md:justify-center">
+                        <Badge variant="secondary" className={getStatusVariant(order.status)}>
+                            {t(`orderStatus.${order.status}`)}
                         </Badge>
-                </div>
-                <div className="md:col-span-1 text-left md:text-center text-sm text-muted-foreground">
-                    {order.date}
-                </div>
-                <div className="md:col-span-1 text-left md:text-right font-semibold">
-                    R${order.amount.toFixed(2)}
-                </div>
-                <div className="flex md:col-span-1 justify-end items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => handleViewDetails(order)}>
-                      {t('ordersPage.detailsButton')}
-                    </Button>
-                </div>
+                    </div>
+                    <div className="md:col-span-1 text-left md:text-center text-sm text-muted-foreground">
+                        {new Date(order.createdAt as string).toLocaleDateString()}
+                    </div>
+                    <div className="md:col-span-1 text-left md:text-right font-semibold">
+                        R${order.total.toFixed(2)}
+                    </div>
+                    <div className="flex md:col-span-1 justify-end items-center gap-2">
+                        <Button variant="outline" size="sm" onClick={() => handleViewDetails(order)}>
+                        {t('ordersPage.detailsButton')}
+                        </Button>
+                    </div>
                 </CardContent>
             </Card>
             ))}

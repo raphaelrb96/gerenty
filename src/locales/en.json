@@ -158,5 +158,30 @@
         },
         "updateSuccess": { "title": "Product Updated", "description": "has been saved successfully." },
         "createSuccess": { "title": "Product Created", "description": "has been saved successfully." }
+    },
+    "orderStatus": {
+        "pending": "Pending",
+        "confirmed": "Confirmed",
+        "processing": "Processing",
+        "shipped": "Shipped",
+        "delivered": "Delivered",
+        "completed": "Completed",
+        "cancelled": "Cancelled",
+        "refunded": "Refunded"
+    },
+    "orderDetails": {
+        "orderId": "Order #{id}",
+        "customerDetails": "Customer Details",
+        "customer": "Customer",
+        "email": "Email",
+        "phone": "Phone",
+        "orderSummary": "Order Summary",
+        "subtotal": "Subtotal",
+        "shipping": "Shipping",
+        "total": "Total",
+        "updateStatus": "Update Status",
+        "selectStatus": "Select status",
+        "close": "Close",
+        "updateOrder": "Update Order"
     }
 }
