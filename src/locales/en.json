@@ -1,3 +1,4 @@
+
 {
     "My Account": "My Account",
     "Profile": "Profile",
@@ -6,5 +7,47 @@
     "Logout": "Logout",
     "Dashboard": "Dashboard",
     "Products": "Products",
-    "Orders": "Orders"
+    "Orders": "Orders",
+    "auth": {
+        "password": "Password",
+        "fullName": "Full Name",
+        "fullNamePlaceholder": "John Doe",
+        "forgotPasswordLink": "Forgot password?",
+        "backToLogin": "Back to Login",
+        "noAccount": "Don't have an account?",
+        "alreadyAccount": "Already have an account?",
+        "signUpLink": "Sign up",
+        "loginLink": "Log in",
+        "login": {
+            "title": "Welcome Back",
+            "description": "Enter your credentials to access your account.",
+            "button": "Login",
+            "successTitle": "Logged in successfully!",
+            "successDescription": "Redirecting to your dashboard..."
+        },
+        "signup": {
+            "title": "Create an Account",
+            "description": "Enter your information to get started.",
+            "button": "Create Account",
+            "successTitle": "Account created!",
+            "successDescription": "Welcome! We are redirecting you to the dashboard."
+        },
+        "forgotPassword": {
+            "title": "Forgot Password?",
+            "description": "No worries, we'll send you reset instructions.",
+            "submittedDescription": "If an account with that email exists, we've sent a password reset link.",
+            "button": "Send Reset Link"
+        },
+        "error": {
+            "invalidEmail": "Please enter a valid email address.",
+            "passwordRequired": "Password is required.",
+            "nameRequired": "Name must be at least 2 characters.",
+            "passwordLength": "Password must be at least 8 characters.",
+            "loginFailed": "Login Failed",
+            "signupFailed": "Signup Failed",
+            "emailInUse": "This email address is already in use.",
+            "invalidCredentials": "The email or password you entered is incorrect.",
+            "generic": "An unexpected error occurred. Please try again."
+        }
+    }
 }

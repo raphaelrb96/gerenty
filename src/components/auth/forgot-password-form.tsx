@@ -1,9 +1,14 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import Link from "next/link";
+import { useState } from "react";
+import { useTranslation } from "@/context/i18n-context";
+import { useToast } from "@/hooks/use-toast";
+import { resetPassword } from "@/services/auth-service";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -23,16 +28,21 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Logo } from "../logo";
-import { useState } from "react";
+import { Loader2 } from "lucide-react";
 
-const formSchema = z.object({
-  email: z.string().email({
-    message: "Please enter a valid email address.",
-  }),
-});
 
 export function ForgotPasswordForm() {
+  const { t } = useTranslation();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  
+  const formSchema = z.object({
+    email: z.string().email({
+      message: t("auth.error.invalidEmail"),
+    }),
+  });
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -40,20 +50,31 @@ export function ForgotPasswordForm() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    setSubmitted(true);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsLoading(true);
+    try {
+      await resetPassword(values.email);
+      setSubmitted(true);
+    } catch (error) {
+        console.error(error);
+        toast({
+            variant: "destructive",
+            title: t("auth.error.generic"),
+        })
+    } finally {
+        setIsLoading(false);
+    }
   }
 
   return (
     <Card className="mx-auto w-full max-w-sm p-4 sm:p-6">
       <CardHeader className="text-center">
         <Logo className="mb-4 justify-center" />
-        <CardTitle className="font-headline text-2xl">Forgot Password?</CardTitle>
+        <CardTitle className="font-headline text-2xl">{t('auth.forgotPassword.title')}</CardTitle>
         <CardDescription>
           {submitted
-            ? "If an account with that email exists, we've sent a password reset link."
-            : "No worries, we'll send you reset instructions."}
+            ? t('auth.forgotPassword.submittedDescription')
+            : t('auth.forgotPassword.description')}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -73,15 +94,16 @@ export function ForgotPasswordForm() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
-                Send Reset Link
+              <Button type="submit" className="w-full" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} disabled={isLoading}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {t('auth.forgotPassword.button')}
               </Button>
             </form>
           </Form>
         ) : null}
         <div className="mt-4 text-center text-sm">
           <Link href="/auth/login" className="font-medium text-primary hover:underline">
-            Back to Login
+             {t('auth.backToLogin')}
           </Link>
         </div>
       </CardContent>

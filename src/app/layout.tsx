@@ -1,8 +1,10 @@
+
 import type { Metadata } from "next";
 import { Toaster } from "@/components/ui/toaster"
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { I18nProvider } from "@/context/i18n-context";
+import { AuthProvider } from "@/context/auth-context";
 
 export const metadata: Metadata = {
   title: "Enterprisy Lite",
@@ -30,7 +32,9 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            {children}
+            <AuthProvider>
+                {children}
+            </AuthProvider>
             <Toaster />
           </ThemeProvider>
         </I18nProvider>

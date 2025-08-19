@@ -1,3 +1,4 @@
+
 {
     "My Account": "Minha Conta",
     "Profile": "Perfil",
@@ -6,5 +7,47 @@
     "Logout": "Sair",
     "Dashboard": "Painel",
     "Products": "Produtos",
-    "Orders": "Pedidos"
+    "Orders": "Pedidos",
+    "auth": {
+        "password": "Senha",
+        "fullName": "Nome Completo",
+        "fullNamePlaceholder": "João da Silva",
+        "forgotPasswordLink": "Esqueceu a senha?",
+        "backToLogin": "Voltar para o Login",
+        "noAccount": "Não tem uma conta?",
+        "alreadyAccount": "Já tem uma conta?",
+        "signUpLink": "Cadastre-se",
+        "loginLink": "Entrar",
+        "login": {
+            "title": "Bem-vindo de Volta",
+            "description": "Insira suas credenciais para acessar sua conta.",
+            "button": "Entrar",
+            "successTitle": "Login bem-sucedido!",
+            "successDescription": "Redirecionando para o seu painel..."
+        },
+        "signup": {
+            "title": "Crie uma Conta",
+            "description": "Insira suas informações para começar.",
+            "button": "Criar Conta",
+            "successTitle": "Conta criada!",
+            "successDescription": "Bem-vindo! Estamos redirecionando você para o painel."
+        },
+        "forgotPassword": {
+            "title": "Esqueceu a Senha?",
+            "description": "Não se preocupe, enviaremos instruções de redefinição.",
+            "submittedDescription": "Se existir uma conta com esse e-mail, enviamos um link para redefinir a senha.",
+            "button": "Enviar Link de Redefinição"
+        },
+        "error": {
+            "invalidEmail": "Por favor, insira um endereço de e-mail válido.",
+            "passwordRequired": "A senha é obrigatória.",
+            "nameRequired": "O nome deve ter pelo menos 2 caracteres.",
+            "passwordLength": "A senha deve ter pelo menos 8 caracteres.",
+            "loginFailed": "Falha no Login",
+            "signupFailed": "Falha no Cadastro",
+            "emailInUse": "Este endereço de e-mail já está em uso.",
+            "invalidCredentials": "O e-mail ou a senha que você inseriu estão incorretos.",
+            "generic": "Ocorreu um erro inesperado. Por favor, tente novamente."
+        }
+    }
 }

@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -18,13 +19,20 @@ import {
   LogOut,
   Settings,
 } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslation } from "@/context/i18n-context";
+import { signOut } from "@/services/auth-service";
 
 export function MainSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { t } = useTranslation();
+
+  const handleLogout = async () => {
+    await signOut();
+    router.push('/auth/login');
+  };
 
   const menuItems = [
     { href: "/dashboard", label: t("Dashboard"), icon: LayoutDashboard },
@@ -60,11 +68,9 @@ export function MainSidebar() {
       <SidebarFooter>
         <SidebarMenu>
            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={t("Logout")}>
-                <Link href="/auth/login">
+              <SidebarMenuButton onClick={handleLogout} tooltip={t("Logout")}>
                   <LogOut />
                   <span>{t("Logout")}</span>
-                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
         </SidebarMenu>

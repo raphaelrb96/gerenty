@@ -1,3 +1,4 @@
+
 {
     "My Account": "Mi Cuenta",
     "Profile": "Perfil",
@@ -6,5 +7,47 @@
     "Logout": "Cerrar Sesión",
     "Dashboard": "Panel",
     "Products": "Productos",
-    "Orders": "Pedidos"
+    "Orders": "Pedidos",
+    "auth": {
+        "password": "Contraseña",
+        "fullName": "Nombre Completo",
+        "fullNamePlaceholder": "Juan Pérez",
+        "forgotPasswordLink": "¿Olvidaste tu contraseña?",
+        "backToLogin": "Volver a Iniciar Sesión",
+        "noAccount": "¿No tienes una cuenta?",
+        "alreadyAccount": "¿Ya tienes una cuenta?",
+        "signUpLink": "Regístrate",
+        "loginLink": "Iniciar Sesión",
+        "login": {
+            "title": "Bienvenido de Nuevo",
+            "description": "Ingresa tus credenciales para acceder a tu cuenta.",
+            "button": "Iniciar Sesión",
+            "successTitle": "¡Inicio de sesión exitoso!",
+            "successDescription": "Redirigiendo a tu panel..."
+        },
+        "signup": {
+            "title": "Crear una Cuenta",
+            "description": "Ingresa tu información para comenzar.",
+            "button": "Crear Cuenta",
+            "successTitle": "¡Cuenta creada!",
+            "successDescription": "¡Bienvenido! Te estamos redirigiendo al panel."
+        },
+        "forgotPassword": {
+            "title": "¿Olvidaste tu Contraseña?",
+            "description": "No te preocupes, te enviaremos instrucciones para restablecerla.",
+            "submittedDescription": "Si existe una cuenta con ese correo, hemos enviado un enlace para restablecer la contraseña.",
+            "button": "Enviar Enlace de Restablecimiento"
+        },
+        "error": {
+            "invalidEmail": "Por favor, ingresa una dirección de correo electrónico válida.",
+            "passwordRequired": "La contraseña es obligatoria.",
+            "nameRequired": "El nombre debe tener al menos 2 caracteres.",
+            "passwordLength": "La contraseña debe tener al menos 8 caracteres.",
+            "loginFailed": "Error de Inicio de Sesión",
+            "signupFailed": "Error de Registro",
+            "emailInUse": "Esta dirección de correo electrónico ya está en uso.",
+            "invalidCredentials": "El correo electrónico o la contraseña que ingresaste son incorrectos.",
+            "generic": "Ocurrió un error inesperado. Por favor, inténtalo de nuevo."
+        }
+    }
 }

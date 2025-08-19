@@ -1,3 +1,4 @@
+
 "use client";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -15,9 +16,26 @@ import Link from "next/link";
 import { ThemeToggle } from "../theme-toggle";
 import { LanguageToggle } from "../language-toggle";
 import { useTranslation } from "@/context/i18n-context";
+import { useAuth } from "@/context/auth-context";
+import { useRouter } from "next/navigation";
+import { signOut } from "@/services/auth-service";
 
 export function Header() {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await signOut();
+    router.push('/auth/login');
+  };
+
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return "U";
+    const names = name.split(' ');
+    const initials = names.map(n => n[0]).join('');
+    return initials.slice(0, 2).toUpperCase();
+  }
 
   return (
     <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 sm:px-6">
@@ -34,8 +52,8 @@ export function Header() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-8 w-8 rounded-full">
               <Avatar className="h-8 w-8">
-                <AvatarImage src="https://placehold.co/40x40.png" alt="@user" data-ai-hint="user avatar" />
-                <AvatarFallback>JD</AvatarFallback>
+                <AvatarImage src={user?.photoURL || "https://placehold.co/40x40.png"} alt={user?.displayName || "User"} data-ai-hint="user avatar" />
+                <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
@@ -50,8 +68,8 @@ export function Header() {
             </DropdownMenuItem>
             <DropdownMenuItem>{t('Support')}</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href="/auth/login">{t('Logout')}</Link>
+            <DropdownMenuItem onClick={handleLogout}>
+              {t('Logout')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

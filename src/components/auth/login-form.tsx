@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -5,6 +6,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -24,18 +26,26 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Logo } from "../logo";
-
-const formSchema = z.object({
-  email: z.string().email({
-    message: "Please enter a valid email address.",
-  }),
-  password: z.string().min(8, {
-    message: "Password must be at least 8 characters.",
-  }),
-});
+import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/context/i18n-context";
+import { signInWithEmail } from "@/services/auth-service";
+import { Loader2 } from "lucide-react";
 
 export function LoginForm() {
+  const { t } = useTranslation();
   const router = useRouter();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const formSchema = z.object({
+    email: z.string().email({
+      message: t("auth.error.invalidEmail"),
+    }),
+    password: z.string().min(1, {
+      message: t("auth.error.passwordRequired"),
+    }),
+  });
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -44,19 +54,34 @@ export function LoginForm() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    // On successful login, redirect to dashboard
-    router.push("/dashboard");
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsLoading(true);
+    try {
+      await signInWithEmail(values.email, values.password);
+      toast({
+        title: t("auth.login.successTitle"),
+        description: t("auth.login.successDescription"),
+      });
+      router.push("/dashboard");
+    } catch (error: any) {
+      console.error(error);
+      toast({
+        variant: "destructive",
+        title: t("auth.error.loginFailed"),
+        description: t("auth.error.invalidCredentials"),
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
     <Card className="mx-auto w-full max-w-sm p-4 sm:p-6">
       <CardHeader className="text-center">
         <Logo className="mb-4 justify-center" />
-        <CardTitle className="font-headline text-2xl">Welcome Back</CardTitle>
+        <CardTitle className="font-headline text-2xl">{t('auth.login.title')}</CardTitle>
         <CardDescription>
-          Enter your credentials to access your account.
+          {t('auth.login.description')}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -81,12 +106,12 @@ export function LoginForm() {
               render={({ field }) => (
                 <FormItem>
                   <div className="flex items-center justify-between">
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>{t('auth.password')}</FormLabel>
                     <Link
                       href="/auth/forgot-password"
                       className="text-sm font-medium text-primary hover:underline"
                     >
-                      Forgot password?
+                      {t('auth.forgotPasswordLink')}
                     </Link>
                   </div>
                   <FormControl>
@@ -96,15 +121,16 @@ export function LoginForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
-              Login
+            <Button type="submit" className="w-full" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} disabled={isLoading}>
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {t('auth.login.button')}
             </Button>
           </form>
         </Form>
         <div className="mt-4 text-center text-sm">
-          Don&apos;t have an account?{" "}
+          {t('auth.noAccount')}{" "}
           <Link href="/auth/signup" className="font-medium text-primary hover:underline">
-            Sign up
+            {t('auth.signUpLink')}
           </Link>
         </div>
       </CardContent>
