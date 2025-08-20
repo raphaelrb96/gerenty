@@ -8,6 +8,8 @@
     "Dashboard": "Dashboard",
     "Products": "Products",
     "Orders": "Orders",
+    "Billing": "Billing",
+    "Loading": "Loading",
     "auth": {
         "password": "Password",
         "fullName": "Full Name",
@@ -262,5 +264,29 @@
         "summary": "Summary",
         "payButton": "Pay Securely",
         "securityNote": "Secure payment processed by Stripe."
+    },
+    "billingPage": {
+        "title": "Subscription Management",
+        "description": "Choose the plan that best suits your needs or manage your current subscription.",
+        "authError": {
+            "title": "Authentication Error",
+            "description": "You must be logged in to subscribe."
+        }
+    },
+    "billingStatus": {
+        "success": {
+            "title": "Payment Successful!",
+            "description": "Your subscription has been activated. You can now enjoy all the features of your new plan.",
+            "cta": "Go to Dashboard"
+        },
+        "cancelled": {
+            "title": "Payment Cancelled",
+            "description": "The payment process was cancelled. You can try again at any time.",
+            "cta": "View Plans"
+        },
+        "processing": {
+            "title": "Processing...",
+            "description": "Please wait while we process your subscription information."
+        }
     }
 }

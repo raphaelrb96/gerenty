@@ -42,8 +42,8 @@ export default function BillingPage() {
   const handleSubscribe = async (planId: string) => {
     if (!user) {
         toast({
-            title: "Authentication Error",
-            description: "You must be logged in to subscribe.",
+            title: t('billingPage.authError.title'),
+            description: t('billingPage.authError.description'),
             variant: "destructive",
         });
         return;
@@ -71,9 +71,9 @@ export default function BillingPage() {
   return (
     <div className="space-y-8">
         <div>
-            <h1 className="font-headline text-3xl font-bold">Gerenciamento de Assinatura</h1>
+            <h1 className="font-headline text-3xl font-bold">{t('billingPage.title')}</h1>
             <p className="text-muted-foreground">
-                Escolha o plano que melhor se adapta às suas necessidades ou gerencie sua assinatura atual.
+                {t('billingPage.description')}
             </p>
         </div>
 

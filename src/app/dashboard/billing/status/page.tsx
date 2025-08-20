@@ -7,25 +7,26 @@ import { Button } from '@/components/ui/button';
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense } from 'react';
+import { useTranslation } from '@/context/i18n-context';
 
 function BillingStatusContent() {
     const searchParams = useSearchParams();
     const status = searchParams.get('status');
-    const fromCheckout = searchParams.get('from_checkout');
+    const { t } = useTranslation();
 
     if (status === 'success') {
         return (
             <Card className="w-full max-w-lg">
                 <CardHeader className="items-center">
                     <CheckCircle2 className="h-16 w-16 text-green-500 mb-4" />
-                    <CardTitle className="text-2xl">Pagamento Bem-Sucedido!</CardTitle>
+                    <CardTitle className="text-2xl">{t('billingStatus.success.title')}</CardTitle>
                 </CardHeader>
                 <CardContent className="text-center space-y-4">
                     <p className="text-muted-foreground">
-                        Sua assinatura foi ativada. Você já pode aproveitar todos os recursos do seu novo plano.
+                        {t('billingStatus.success.description')}
                     </p>
                     <Button asChild>
-                        <Link href="/dashboard">Ir para o Dashboard</Link>
+                        <Link href="/dashboard">{t('billingStatus.success.cta')}</Link>
                     </Button>
                 </CardContent>
             </Card>
@@ -37,14 +38,14 @@ function BillingStatusContent() {
             <Card className="w-full max-w-lg">
                 <CardHeader className="items-center">
                     <XCircle className="h-16 w-16 text-red-500 mb-4" />
-                    <CardTitle className="text-2xl">Pagamento Cancelado</CardTitle>
+                    <CardTitle className="text-2xl">{t('billingStatus.cancelled.title')}</CardTitle>
                 </CardHeader>
                 <CardContent className="text-center space-y-4">
                     <p className="text-muted-foreground">
-                        O processo de pagamento foi cancelado. Você pode tentar novamente a qualquer momento.
+                       {t('billingStatus.cancelled.description')}
                     </p>
                     <Button asChild variant="outline">
-                        <Link href="/dashboard/billing">Ver Planos</Link>
+                        <Link href="/dashboard/billing">{t('billingStatus.cancelled.cta')}</Link>
                     </Button>
                 </CardContent>
             </Card>
@@ -55,11 +56,11 @@ function BillingStatusContent() {
         <Card className="w-full max-w-lg">
             <CardHeader className="items-center">
                 <Loader2 className="h-16 w-16 text-muted-foreground animate-spin mb-4" />
-                <CardTitle className="text-2xl">Processando...</CardTitle>
+                <CardTitle className="text-2xl">{t('billingStatus.processing.title')}</CardTitle>
             </CardHeader>
             <CardContent className="text-center space-y-4">
                 <p className="text-muted-foreground">
-                    Aguarde enquanto processamos as informações da sua assinatura.
+                    {t('billingStatus.processing.description')}
                 </p>
             </CardContent>
         </Card>
@@ -68,9 +69,10 @@ function BillingStatusContent() {
 
 
 export default function BillingStatusPage() {
+    const { t } = useTranslation();
     return (
         <div className="flex items-center justify-center h-full">
-            <Suspense fallback={<div>Carregando...</div>}>
+            <Suspense fallback={<div>{t('Loading')}...</div>}>
                 <BillingStatusContent />
             </Suspense>
         </div>

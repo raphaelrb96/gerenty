@@ -8,6 +8,8 @@
     "Dashboard": "Painel",
     "Products": "Produtos",
     "Orders": "Pedidos",
+    "Billing": "Faturamento",
+    "Loading": "Carregando",
     "auth": {
         "password": "Senha",
         "fullName": "Nome Completo",
@@ -241,7 +243,7 @@
         "pending": "Aguardando",
         "approved": "Aprovado",
         "refused": "Recusado",
-        "refunded": "Estornado"
+        "estornado": "Estornado"
     },
     "deliveryMethods": {
         "pickup": "Retirada na Loja",
@@ -262,5 +264,29 @@
         "summary": "Resumo",
         "payButton": "Pagar com Segurança",
         "securityNote": "Pagamento seguro processado pela Stripe."
+    },
+    "billingPage": {
+        "title": "Gerenciamento de Assinatura",
+        "description": "Escolha o plano que melhor se adapta às suas necessidades ou gerencie sua assinatura atual.",
+        "authError": {
+            "title": "Erro de Autenticação",
+            "description": "Você deve estar logado para assinar."
+        }
+    },
+     "billingStatus": {
+        "success": {
+            "title": "Pagamento Bem-Sucedido!",
+            "description": "Sua assinatura foi ativada. Você já pode aproveitar todos os recursos do seu novo plano.",
+            "cta": "Ir para o Dashboard"
+        },
+        "cancelled": {
+            "title": "Pagamento Cancelado",
+            "description": "O processo de pagamento foi cancelado. Você pode tentar novamente a qualquer momento.",
+            "cta": "Ver Planos"
+        },
+        "processing": {
+            "title": "Processando...",
+            "description": "Aguarde enquanto processamos as informações da sua assinatura."
+        }
     }
 }

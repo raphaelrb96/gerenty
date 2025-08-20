@@ -8,6 +8,8 @@
     "Dashboard": "Panel",
     "Products": "Productos",
     "Orders": "Pedidos",
+    "Billing": "Facturación",
+    "Loading": "Cargando",
     "auth": {
         "password": "Contraseña",
         "fullName": "Nombre Completo",
@@ -262,5 +264,29 @@
         "summary": "Resumen",
         "payButton": "Pagar de Forma Segura",
         "securityNote": "Pago seguro procesado por Stripe."
+    },
+     "billingPage": {
+        "title": "Gestión de Suscripción",
+        "description": "Elige el plan que mejor se adapte a tus necesidades o gestiona tu suscripción actual.",
+        "authError": {
+            "title": "Error de Autenticación",
+            "description": "Debes iniciar sesión para suscribirte."
+        }
+    },
+    "billingStatus": {
+        "success": {
+            "title": "¡Pago Exitoso!",
+            "description": "Tu suscripción ha sido activada. Ya puedes disfrutar de todas las características de tu nuevo plan.",
+            "cta": "Ir al Panel"
+        },
+        "cancelled": {
+            "title": "Pago Cancelado",
+            "description": "El proceso de pago fue cancelado. Puedes intentarlo de nuevo en cualquier momento.",
+            "cta": "Ver Planes"
+        },
+        "processing": {
+            "title": "Procesando...",
+            "description": "Por favor, espera mientras procesamos la información de tu suscripción."
+        }
     }
 }

@@ -41,7 +41,7 @@ export function MainSidebar() {
     { href: "/dashboard/products", label: t("Products"), icon: Package },
     { href: "/dashboard/orders", label: t("Orders"), icon: ShoppingCart },
     { href: "/dashboard/pos", label: "PDV", icon: PlusCircle },
-    { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
+    { href: "/dashboard/billing", label: t("Billing"), icon: CreditCard },
     { href: "/dashboard/profile", label: t("Profile"), icon: User },
     { href: "/dashboard/preferences", label: t("Preferences"), icon: Settings },
   ];
