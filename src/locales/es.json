@@ -112,24 +112,45 @@
             "subtitle": "Comienza gratis y mejora cuando estés listo.",
             "mostPopular": "Más Popular",
             "free": {
-                "name": "Plan Gratis",
-                "price": "$0",
-                "description": "Hasta 50 productos",
-                "features": ["Gestión básica de pedidos", "Soporte por correo electrónico", "Informes limitados"],
+                "name": "Gratis",
+                "price": "Gratis",
+                "priceSuffix": "",
+                "description": "Para quienes están comenzando",
+                "features": ["10 productos", "50 pedidos/mes", "1 usuario", "50 clientes"],
                 "cta": "Comenzar"
             },
+            "bronze": {
+                "name": "Bronce",
+                "priceSuffix": "/mes",
+                "description": "Para equipos pequeños",
+                "features": ["50 productos", "300 pedidos/mes", "3 usuarios", "300 clientes"],
+                "cta": "Elegir Plan"
+            },
+            "silver": {
+                "name": "Plata",
+                "priceSuffix": "/mes",
+                "description": "Para empresas en crecimiento",
+                "features": ["300 productos", "1000 pedidos/mes", "5 usuarios", "1000 clientes"],
+                "cta": "Elegir Plan"
+            },
+            "gold": {
+                "name": "Oro",
+                "priceSuffix": "/mes",
+                "description": "Para empresas establecidas",
+                "features": ["500 productos", "5000 pedidos/mes", "10 usuarios", "5000 clientes"],
+                "cta": "Elegir Plan"
+            },
+            "premium": {
+                "name": "Premium",
+                "priceSuffix": "/mes",
+                "description": "Para operaciones a gran escala",
+                "features": ["Productos ilimitados", "Pedidos ilimitados", "Hasta 20 usuarios", "Clientes ilimitados"],
+                "cta": "Contáctanos"
+            },
             "pro": {
-                "name": "Plan Pro",
-                "price": "$49/mes",
-                "description": "Productos ilimitados",
-                "features": ["Control de stock completo", "Automatización financiera", "Soporte prioritario"],
-                "cta": "Elegir Pro"
+                "cta": "Elegir Plan"
             },
             "enterprise": {
-                "name": "Plan Enterprise",
-                "price": "A consultar",
-                "description": "Todo lo del plan Pro",
-                "features": ["Múltiples usuarios y permisos", "Integraciones personalizadas", "Gerente de cuenta dedicado"],
                 "cta": "Contáctanos"
             }
         },

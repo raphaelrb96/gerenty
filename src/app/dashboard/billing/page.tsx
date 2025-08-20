@@ -9,31 +9,53 @@ import { useTranslation } from "@/context/i18n-context";
 import { useAuth } from "@/context/auth-context";
 import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
+import { useCurrency } from "@/context/currency-context";
 
 export default function BillingPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const router = useRouter();
   const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
+  const { formatCurrency } = useCurrency();
 
   const tiers = [
-    {
-      id: "pro",
-      name: t('landing.pricing.pro.name'),
-      price: t('landing.pricing.pro.price'),
-      priceDescription: t('landing.pricing.pro.priceDescription'),
-      description: t('landing.pricing.pro.description'),
-      features: t('landing.pricing.pro.features', { returnObjects: true }) as unknown as string[],
+     {
+      id: "bronze",
+      name: t('landing.pricing.bronze.name'),
+      price: 19,
+      priceSuffix: t('landing.pricing.bronze.priceSuffix'),
+      description: t('landing.pricing.bronze.description'),
+      features: t('landing.pricing.bronze.features', { returnObjects: true }) as unknown as string[],
       cta: t('landing.pricing.pro.cta'),
       isFeatured: true,
     },
     {
-      id: "enterprise",
-      name: t('landing.pricing.enterprise.name'),
-      price: t('landing.pricing.enterprise.price'),
-      priceDescription: t('landing.pricing.enterprise.priceDescription'),
-      description: t('landing.pricing.enterprise.description'),
-      features: t('landing.pricing.enterprise.features', { returnObjects: true }) as unknown as string[],
+      id: "silver",
+      name: t('landing.pricing.silver.name'),
+      price: 49,
+      priceSuffix: t('landing.pricing.silver.priceSuffix'),
+      description: t('landing.pricing.silver.description'),
+      features: t('landing.pricing.silver.features', { returnObjects: true }) as unknown as string[],
+      cta: t('landing.pricing.pro.cta'),
+      isFeatured: false,
+    },
+    {
+      id: "gold",
+      name: t('landing.pricing.gold.name'),
+      price: 99,
+      priceSuffix: t('landing.pricing.gold.priceSuffix'),
+      description: t('landing.pricing.gold.description'),
+      features: t('landing.pricing.gold.features', { returnObjects: true }) as unknown as string[],
+      cta: t('landing.pricing.pro.cta'),
+      isFeatured: false,
+    },
+    {
+      id: "premium",
+      name: t('landing.pricing.premium.name'),
+      price: 199,
+      priceSuffix: t('landing.pricing.premium.priceSuffix'),
+      description: t('landing.pricing.premium.description'),
+      features: t('landing.pricing.premium.features', { returnObjects: true }) as unknown as string[],
       cta: t('landing.pricing.enterprise.cta'),
       isFeatured: false,
     },
@@ -77,14 +99,14 @@ export default function BillingPage() {
             </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 items-start">
           {tiers.map((tier) => (
-            <Card key={tier.name} className={`flex flex-col h-full ${tier.isFeatured ? "border-primary shadow-lg" : "border-border"}`}>
+            <Card key={tier.id} className={`flex flex-col h-full ${tier.isFeatured ? "border-primary shadow-lg" : "border-border"}`}>
               <CardHeader>
                 <CardTitle className="font-headline text-2xl">{tier.name}</CardTitle>
                  <div className="flex items-baseline gap-2 mt-4">
-                    <span className="text-4xl font-bold">{tier.price}</span>
-                    <span className="text-muted-foreground">{tier.priceDescription}</span>
+                    <span className="text-4xl font-bold">{formatCurrency(tier.price)}</span>
+                    <span className="text-muted-foreground">{tier.priceSuffix}</span>
                 </div>
                 <CardDescription className="mt-2 h-12">{tier.description}</CardDescription>
               </CardHeader>

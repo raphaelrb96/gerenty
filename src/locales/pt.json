@@ -112,24 +112,45 @@
             "subtitle": "Comece com o grátis e evolua quando estiver pronto.",
             "mostPopular": "Mais Popular",
             "free": {
-                "name": "Plano Grátis",
-                "price": "R$0",
-                "description": "Até 50 produtos",
-                "features": ["Gestão de pedidos básica", "Suporte por email", "Relatórios limitados"],
+                "name": "Grátis",
+                "price": "Grátis",
+                "priceSuffix": "",
+                "description": "Para quem está começando",
+                "features": ["10 produtos", "50 pedidos/mês", "1 usuário", "50 clientes"],
                 "cta": "Começar Agora"
             },
-            "pro": {
-                "name": "Plano Pro",
-                "price": "R$49/mês",
-                "description": "Produtos ilimitados",
-                "features": ["Controle de estoque completo", "Automação financeira", "Suporte prioritário"],
-                "cta": "Escolher Pro"
+            "bronze": {
+                "name": "Bronze",
+                "priceSuffix": "/mês",
+                "description": "Para equipes pequenas",
+                "features": ["50 produtos", "300 pedidos/mês", "3 usuários", "300 clientes"],
+                "cta": "Escolher Plano"
+            },
+            "silver": {
+                "name": "Prata",
+                "priceSuffix": "/mês",
+                "description": "Para negócios em crescimento",
+                "features": ["300 produtos", "1000 pedidos/mês", "5 usuários", "1000 clientes"],
+                "cta": "Escolher Plano"
+            },
+            "gold": {
+                "name": "Ouro",
+                "priceSuffix": "/mês",
+                "description": "Para negócios estabelecidos",
+                "features": ["500 produtos", "5000 pedidos/mês", "10 usuários", "5000 clientes"],
+                "cta": "Escolher Plano"
+            },
+            "premium": {
+                "name": "Premium",
+                "priceSuffix": "/mês",
+                "description": "Para operações de grande escala",
+                "features": ["Produtos ilimitados", "Pedidos ilimitados", "Até 20 usuários", "Clientes ilimitados"],
+                "cta": "Fale Conosco"
+            },
+             "pro": {
+                "cta": "Escolher Plano"
             },
             "enterprise": {
-                "name": "Plano Enterprise",
-                "price": "Sob consulta",
-                "description": "Tudo do plano Pro",
-                "features": ["Múltiplos usuários e permissões", "Integrações personalizadas", "Gerente de conta dedicado"],
                 "cta": "Fale Conosco"
             }
         },

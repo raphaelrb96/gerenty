@@ -112,24 +112,45 @@
             "subtitle": "Start for free and upgrade when you're ready.",
             "mostPopular": "Most Popular",
             "free": {
-                "name": "Free Plan",
-                "price": "$0",
-                "description": "Up to 50 products",
-                "features": ["Basic order management", "Email support", "Limited reports"],
+                "name": "Free",
+                "price": "Free",
+                "priceSuffix": "",
+                "description": "For those getting started",
+                "features": ["10 products", "50 orders/month", "1 user", "50 customers"],
                 "cta": "Get Started"
             },
+            "bronze": {
+                "name": "Bronze",
+                "priceSuffix": "/month",
+                "description": "For small teams",
+                "features": ["50 products", "300 orders/month", "3 users", "300 customers"],
+                "cta": "Choose Plan"
+            },
+            "silver": {
+                "name": "Silver",
+                "priceSuffix": "/month",
+                "description": "For growing businesses",
+                "features": ["300 products", "1000 orders/month", "5 users", "1000 customers"],
+                "cta": "Choose Plan"
+            },
+            "gold": {
+                "name": "Gold",
+                "priceSuffix": "/month",
+                "description": "For established businesses",
+                "features": ["500 products", "5000 orders/month", "10 users", "5000 customers"],
+                "cta": "Choose Plan"
+            },
+            "premium": {
+                "name": "Premium",
+                "priceSuffix": "/month",
+                "description": "For large-scale operations",
+                "features": ["Unlimited products", "Unlimited orders", "Up to 20 users", "Unlimited customers"],
+                "cta": "Contact Us"
+            },
             "pro": {
-                "name": "Pro Plan",
-                "price": "$49/month",
-                "description": "Unlimited products",
-                "features": ["Complete stock control", "Financial automation", "Priority support"],
-                "cta": "Choose Pro"
+                "cta": "Choose Plan"
             },
             "enterprise": {
-                "name": "Enterprise Plan",
-                "price": "Custom",
-                "description": "Everything from the Pro plan",
-                "features": ["Multiple users and permissions", "Custom integrations", "Dedicated account manager"],
                 "cta": "Contact Us"
             }
         },

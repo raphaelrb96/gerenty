@@ -8,17 +8,19 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 import { useTranslation } from "@/context/i18n-context";
+import { useCurrency } from "@/context/currency-context";
 
 export function Pricing() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const router = useRouter();
-
+  const { formatCurrency } = useCurrency();
 
   const tiers = [
     {
       name: t('landing.pricing.free.name'),
-      price: t('landing.pricing.free.price'),
+      price: 0,
+      priceSuffix: t('landing.pricing.free.priceSuffix'),
       description: t('landing.pricing.free.description'),
       features: t('landing.pricing.free.features', { returnObjects: true }) as unknown as string[],
       cta: t('landing.pricing.free.cta'),
@@ -26,19 +28,41 @@ export function Pricing() {
       isPopular: false,
     },
     {
-      name: t('landing.pricing.pro.name'),
-      price: t('landing.pricing.pro.price'),
-      description: t('landing.pricing.pro.description'),
-      features: t('landing.pricing.pro.features', { returnObjects: true }) as unknown as string[],
+      name: t('landing.pricing.bronze.name'),
+      price: 19,
+      priceSuffix: t('landing.pricing.bronze.priceSuffix'),
+      description: t('landing.pricing.bronze.description'),
+      features: t('landing.pricing.bronze.features', { returnObjects: true }) as unknown as string[],
       cta: t('landing.pricing.pro.cta'),
       href: user ? "/dashboard/billing" : "/auth/signup",
       isPopular: true,
     },
     {
-      name: t('landing.pricing.enterprise.name'),
-      price: t('landing.pricing.enterprise.price'),
-      description: t('landing.pricing.enterprise.description'),
-      features: t('landing.pricing.enterprise.features', { returnObjects: true }) as unknown as string[],
+        name: t('landing.pricing.silver.name'),
+        price: 49,
+        priceSuffix: t('landing.pricing.silver.priceSuffix'),
+        description: t('landing.pricing.silver.description'),
+        features: t('landing.pricing.silver.features', { returnObjects: true }) as unknown as string[],
+        cta: t('landing.pricing.pro.cta'),
+        href: user ? "/dashboard/billing" : "/auth/signup",
+        isPopular: false,
+    },
+    {
+        name: t('landing.pricing.gold.name'),
+        price: 99,
+        priceSuffix: t('landing.pricing.gold.priceSuffix'),
+        description: t('landing.pricing.gold.description'),
+        features: t('landing.pricing.gold.features', { returnObjects: true }) as unknown as string[],
+        cta: t('landing.pricing.pro.cta'),
+        href: user ? "/dashboard/billing" : "/auth/signup",
+        isPopular: false,
+    },
+    {
+      name: t('landing.pricing.premium.name'),
+      price: 199,
+      priceSuffix: t('landing.pricing.premium.priceSuffix'),
+      description: t('landing.pricing.premium.description'),
+      features: t('landing.pricing.premium.features', { returnObjects: true }) as unknown as string[],
       cta: t('landing.pricing.enterprise.cta'),
       href: user ? "/dashboard/billing" : "/auth/signup",
       isPopular: false,
@@ -61,8 +85,8 @@ export function Pricing() {
             {t('landing.pricing.subtitle')}
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
-          {tiers.map((tier) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start justify-center">
+          {tiers.slice(0, 3).map((tier) => (
             <Card key={tier.name} className={`flex flex-col h-full rounded-xl shadow-lg border-2 ${tier.isPopular ? "border-primary" : "border-border"}`}>
                {tier.isPopular && (
                   <div className="bg-primary text-primary-foreground text-xs font-bold px-4 py-1 rounded-full inline-block mb-4 -mt-4 mx-auto">
@@ -73,12 +97,13 @@ export function Pricing() {
                 <CardTitle className="font-headline text-2xl">{tier.name}</CardTitle>
                 <CardDescription className="mt-2 h-12">{tier.description}</CardDescription>
                  <div className="flex items-baseline justify-center gap-2 mt-4">
-                    <span className="text-4xl font-bold">{tier.price}</span>
+                    <span className="text-4xl font-bold">{tier.price > 0 ? formatCurrency(tier.price) : t('landing.pricing.free.price')}</span>
+                     {tier.price > 0 && <span className="text-muted-foreground">{tier.priceSuffix}</span>}
                 </div>
               </CardHeader>
               <CardContent className="flex-1">
                 <ul className="space-y-2 text-left">
-                  {tier.features.map((feature) => (
+                  {(tier.features as string[]).map((feature) => (
                     <li key={feature} className="flex items-center gap-3">
                       <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
                       <span className="text-muted-foreground">{feature}</span>

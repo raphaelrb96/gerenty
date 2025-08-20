@@ -25,11 +25,11 @@ export function CurrencyToggle() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setCurrency('BRL')}>
-          BRL (R$)
-        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setCurrency('USD')}>
           USD ($)
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setCurrency('BRL')}>
+          BRL (R$)
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setCurrency('EUR')}>
           EUR (€)

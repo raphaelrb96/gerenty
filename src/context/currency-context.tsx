@@ -3,35 +3,39 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
-export type Currency = 'BRL' | 'USD' | 'EUR';
+export type Currency = 'USD' | 'BRL' | 'EUR';
 
+// Base currency is USD. Rates represent how many of the target currency one USD is.
 const exchangeRates = {
-  'BRL': 1,
-  'USD': 5.4,
-  'EUR': 6.0,
+  'USD': 1,
+  'BRL': 5.3,
+  'EUR': 0.92,
 };
 
 const currencySymbols: Record<Currency, string> = {
-  'BRL': 'R$',
   'USD': '$',
+  'BRL': 'R$',
   'EUR': '€',
 };
 
 interface CurrencyContextType {
   currency: Currency;
   setCurrency: (currency: Currency) => void;
-  formatCurrency: (value: number) => string;
+  formatCurrency: (valueInUsd: number) => string;
 }
 
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
 
 export const CurrencyProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [currency, setCurrency] = useState<Currency>('BRL');
+  const [currency, setCurrency] = useState<Currency>('USD');
 
-  const formatCurrency = (value: number) => {
+  const formatCurrency = (valueInUsd: number) => {
     const rate = exchangeRates[currency];
-    const convertedValue = value / rate;
+    const convertedValue = valueInUsd * rate;
     const symbol = currencySymbols[currency];
+    
+    // For BRL, the symbol comes before the number. For others, it might be different.
+    // This simple logic works for USD, BRL, and EUR.
     return `${symbol}${convertedValue.toFixed(2)}`;
   };
   
