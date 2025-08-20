@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -39,7 +40,7 @@ export function Pricing() {
       cta: t('landing.pricing.enterprise.cta'),
       href: "/checkout",
       isFeatured: false,
-    }, // Corrected closing curly brace
+    },
   ];
 
 
