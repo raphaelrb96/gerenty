@@ -38,7 +38,7 @@ export function Pricing() {
       description: t('landing.pricing.enterprise.description'),
       features: t('landing.pricing.enterprise.features', { returnObjects: true }) as unknown as string[],
       cta: t('landing.pricing.enterprise.cta'),
-      href: "/contact",
+      href: "/checkout",
       isFeatured: false,
     },
   ];
