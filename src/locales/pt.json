@@ -185,5 +185,72 @@
         "selectStatus": "Selecione o status",
         "close": "Fechar",
         "updateOrder": "Atualizar Pedido"
+    },
+    "pos": {
+        "title": "Novo Pedido (PDV)",
+        "customer": {
+            "title": "Cliente",
+            "name": "Nome",
+            "namePlaceholder": "Nome do Cliente",
+            "email": "Email",
+            "phone": "Telefone",
+            "document": "Documento",
+            "documentPlaceholder": "CPF/CNPJ"
+        },
+        "products": {
+            "title": "Produtos",
+            "select": "Selecionar Produto",
+            "selectPlaceholder": "Escolha um produto..."
+        },
+        "cart": {
+            "empty": "Nenhum produto no carrinho."
+        },
+        "payment": {
+            "title": "Pagamento e Entrega",
+            "method": "Forma de Pagamento",
+            "status": "Status do Pagamento",
+            "deliveryMethod": "Método de Entrega"
+        },
+        "summary": {
+            "title": "Resumo e Observações",
+            "shippingCost": "Custo do Frete",
+            "discount": "Desconto",
+            "notes": "Observações",
+            "notesPlaceholder": "Adicione notas sobre o pedido..."
+        },
+        "submitButton": "Finalizar Pedido",
+        "error": {
+            "notLoggedIn": "Você precisa estar logado.",
+            "title": "Erro ao Criar Pedido",
+            "description": "Ocorreu um erro, tente novamente."
+        },
+        "success": {
+            "title": "Pedido Criado com Sucesso!",
+            "description": "O pedido para {customerName} foi registrado."
+        }
+    },
+    "paymentMethods": {
+        "credit": "Cartão de Crédito",
+        "debit": "Cartão de Débito",
+        "pix": "PIX",
+        "cash": "Dinheiro",
+        "billet": "Boleto",
+        "link": "Link de Pagamento",
+        "other": "Outros"
+    },
+    "paymentStatus": {
+        "pending": "Aguardando",
+        "approved": "Aprovado",
+        "refused": "Recusado",
+        "refunded": "Estornado"
+    },
+    "deliveryMethods": {
+        "pickup": "Retirada na Loja",
+        "standard": "Entrega Padrão",
+        "correios": "Correios",
+        "own": "Logística Própria",
+        "digital": "Digital"
     }
 }
+
+    

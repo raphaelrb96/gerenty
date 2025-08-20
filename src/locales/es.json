@@ -185,5 +185,72 @@
         "selectStatus": "Seleccionar estado",
         "close": "Cerrar",
         "updateOrder": "Actualizar Pedido"
+    },
+    "pos": {
+        "title": "Nuevo Pedido (PDV)",
+        "customer": {
+            "title": "Cliente",
+            "name": "Nombre",
+            "namePlaceholder": "Nombre del Cliente",
+            "email": "Correo Electrónico",
+            "phone": "Teléfono",
+            "document": "Documento",
+            "documentPlaceholder": "CIF/NIF"
+        },
+        "products": {
+            "title": "Productos",
+            "select": "Seleccionar Producto",
+            "selectPlaceholder": "Elige un producto..."
+        },
+        "cart": {
+            "empty": "No hay productos en el carrito."
+        },
+        "payment": {
+            "title": "Pago y Entrega",
+            "method": "Método de Pago",
+            "status": "Estado del Pago",
+            "deliveryMethod": "Método de Entrega"
+        },
+        "summary": {
+            "title": "Resumen y Notas",
+            "shippingCost": "Costo de Envío",
+            "discount": "Descuento",
+            "notes": "Notas",
+            "notesPlaceholder": "Añadir notas sobre el pedido..."
+        },
+        "submitButton": "Finalizar Pedido",
+        "error": {
+            "notLoggedIn": "Debes iniciar sesión.",
+            "title": "Error al Crear Pedido",
+            "description": "Ocurrió un error, por favor inténtalo de nuevo."
+        },
+        "success": {
+            "title": "¡Pedido Creado con Éxito!",
+            "description": "El pedido para {customerName} ha sido registrado."
+        }
+    },
+    "paymentMethods": {
+        "credit": "Tarjeta de Crédito",
+        "debit": "Tarjeta de Débito",
+        "pix": "PIX",
+        "cash": "Efectivo",
+        "billet": "Boleto",
+        "link": "Enlace de Pago",
+        "other": "Otro"
+    },
+    "paymentStatus": {
+        "pending": "Pendiente",
+        "approved": "Aprobado",
+        "refused": "Rechazado",
+        "refunded": "Reembolsado"
+    },
+    "deliveryMethods": {
+        "pickup": "Recogida en Tienda",
+        "standard": "Envío Estándar",
+        "correios": "Correos",
+        "own": "Logística Propia",
+        "digital": "Digital"
     }
 }
+
+    

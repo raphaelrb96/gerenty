@@ -185,5 +185,72 @@
         "selectStatus": "Select status",
         "close": "Close",
         "updateOrder": "Update Order"
+    },
+    "pos": {
+        "title": "New Order (POS)",
+        "customer": {
+            "title": "Customer",
+            "name": "Name",
+            "namePlaceholder": "Customer Name",
+            "email": "Email",
+            "phone": "Phone",
+            "document": "Document",
+            "documentPlaceholder": "CPF/CNPJ"
+        },
+        "products": {
+            "title": "Products",
+            "select": "Select Product",
+            "selectPlaceholder": "Choose a product..."
+        },
+        "cart": {
+            "empty": "No products in the cart."
+        },
+        "payment": {
+            "title": "Payment & Delivery",
+            "method": "Payment Method",
+            "status": "Payment Status",
+            "deliveryMethod": "Delivery Method"
+        },
+        "summary": {
+            "title": "Summary and Notes",
+            "shippingCost": "Shipping Cost",
+            "discount": "Discount",
+            "notes": "Notes",
+            "notesPlaceholder": "Add notes about the order..."
+        },
+        "submitButton": "Finalize Order",
+        "error": {
+            "notLoggedIn": "You must be logged in.",
+            "title": "Error Creating Order",
+            "description": "An error occurred, please try again."
+        },
+        "success": {
+            "title": "Order Created Successfully!",
+            "description": "Order for {customerName} has been registered."
+        }
+    },
+    "paymentMethods": {
+        "credit": "Credit Card",
+        "debit": "Debit Card",
+        "pix": "PIX",
+        "cash": "Cash",
+        "billet": "Billet",
+        "link": "Payment Link",
+        "other": "Other"
+    },
+    "paymentStatus": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "refused": "Refused",
+        "refunded": "Refunded"
+    },
+    "deliveryMethods": {
+        "pickup": "In-Store Pickup",
+        "standard": "Standard Delivery",
+        "correios": "Correios",
+        "own": "Own Logistics",
+        "digital": "Digital"
     }
 }
+
+    

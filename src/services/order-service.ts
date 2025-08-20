@@ -2,7 +2,7 @@
 'use server';
 
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where, addDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
+import { collection, getDocs, query, where, addDoc, serverTimestamp, doc, updateDoc, Timestamp } from "firebase/firestore";
 import type { Order } from "@/lib/types";
 
 const ordersCollection = collection(db, "orders");
@@ -20,7 +20,7 @@ export async function getOrders(vendorId: string): Promise<Order[]> {
                 id: doc.id, 
                 ...data,
                 // Ensure date fields are handled correctly, they might be Timestamps
-                createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : data.createdAt,
+                createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString(),
             } as Order);
         });
         // Sort orders by date, most recent first
@@ -41,12 +41,12 @@ export async function addOrder(orderData: Omit<Order, 'id' | 'createdAt' | 'upda
             updatedAt: serverTimestamp(),
         });
         
-        const newOrder = {
+        const newOrder: Order = {
             id: docRef.id,
             ...orderData,
-            createdAt: new Date(),
-            updatedAt: new Date()
-        } as Order;
+            createdAt: Timestamp.now(), // Use Firestore Timestamp for consistency
+            updatedAt: Timestamp.now()
+        };
 
         return newOrder;
 

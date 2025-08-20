@@ -153,7 +153,7 @@ export function PosForm({ allProducts }: PosFormProps) {
 
   async function onSubmit(values: PosFormValues) {
     if (!user) {
-        toast({ variant: "destructive", title: "Você precisa estar logado." });
+        toast({ variant: "destructive", title: t('pos.error.notLoggedIn') });
         return;
     }
     
@@ -190,8 +190,8 @@ export function PosForm({ allProducts }: PosFormProps) {
     try {
         await addOrder(orderData);
         toast({
-            title: "Pedido Criado com Sucesso!",
-            description: `Pedido para ${values.customerName} foi registrado.`,
+            title: t('pos.success.title'),
+            description: t('pos.success.description', { customerName: values.customerName }),
         });
         
         setCart([]);
@@ -199,7 +199,7 @@ export function PosForm({ allProducts }: PosFormProps) {
         setValue('items', []);
     } catch(error) {
         console.error(error);
-        toast({ variant: "destructive", title: "Erro ao criar pedido", description: "Ocorreu um erro, tente novamente." });
+        toast({ variant: "destructive", title: t('pos.error.title'), description: t('pos.error.description') });
     } finally {
         setIsSaving(false);
     }
@@ -208,7 +208,7 @@ export function PosForm({ allProducts }: PosFormProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Novo Pedido (PDV)</CardTitle>
+        <CardTitle>{t('pos.title')}</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -217,20 +217,20 @@ export function PosForm({ allProducts }: PosFormProps) {
             <Accordion type="multiple" defaultValue={['item-1', 'item-2']} className="w-full">
                 {/* Customer Details */}
                 <AccordionItem value="item-1">
-                    <AccordionTrigger className="font-semibold text-lg"><div className="flex items-center gap-2"><User className="h-5 w-5"/> Cliente</div></AccordionTrigger>
+                    <AccordionTrigger className="font-semibold text-lg"><div className="flex items-center gap-2"><User className="h-5 w-5"/>{t('pos.customer.title')}</div></AccordionTrigger>
                     <AccordionContent className="pt-4 space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField control={form.control} name="customerName" render={({ field }) => (
-                                <FormItem><FormLabel>Nome</FormLabel><FormControl><Input placeholder="Nome do Cliente" {...field} /></FormControl><FormMessage /></FormItem>
+                                <FormItem><FormLabel>{t('pos.customer.name')}</FormLabel><FormControl><Input placeholder={t('pos.customer.namePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>
                             )}/>
                             <FormField control={form.control} name="customerEmail" render={({ field }) => (
-                                <FormItem><FormLabel>Email</FormLabel><FormControl><Input placeholder="email@cliente.com" {...field} /></FormControl><FormMessage /></FormItem>
+                                <FormItem><FormLabel>{t('pos.customer.email')}</FormLabel><FormControl><Input placeholder="email@cliente.com" {...field} /></FormControl><FormMessage /></FormItem>
                             )}/>
                             <FormField control={form.control} name="customerPhone" render={({ field }) => (
-                                <FormItem><FormLabel>Telefone</FormLabel><FormControl><Input placeholder="(99) 99999-9999" {...field} /></FormControl><FormMessage /></FormItem>
+                                <FormItem><FormLabel>{t('pos.customer.phone')}</FormLabel><FormControl><Input placeholder="(99) 99999-9999" {...field} /></FormControl><FormMessage /></FormItem>
                             )}/>
                             <FormField control={form.control} name="customerDocument" render={({ field }) => (
-                                <FormItem><FormLabel>CPF/CNPJ</FormLabel><FormControl><Input placeholder="Documento" {...field} /></FormControl><FormMessage /></FormItem>
+                                <FormItem><FormLabel>{t('pos.customer.document')}</FormLabel><FormControl><Input placeholder={t('pos.customer.documentPlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>
                             )}/>
                         </div>
                     </AccordionContent>
@@ -238,13 +238,13 @@ export function PosForm({ allProducts }: PosFormProps) {
 
                 {/* Product Selection */}
                 <AccordionItem value="item-2">
-                    <AccordionTrigger className="font-semibold text-lg">Produtos</AccordionTrigger>
+                    <AccordionTrigger className="font-semibold text-lg">{t('pos.products.title')}</AccordionTrigger>
                     <AccordionContent className="pt-4 space-y-4">
                         <div className="flex items-end gap-2">
                             <div className="flex-grow">
-                                <Label>Selecionar Produto</Label>
+                                <Label>{t('pos.products.select')}</Label>
                                 <Select onValueChange={setSelectedProduct} value={selectedProduct}>
-                                    <SelectTrigger><SelectValue placeholder="Escolha um produto..." /></SelectTrigger>
+                                    <SelectTrigger><SelectValue placeholder={t('pos.products.selectPlaceholder')} /></SelectTrigger>
                                     <SelectContent>
                                         {allProducts.map((product) => (
                                             <SelectItem key={product.id} value={product.id}>
@@ -267,7 +267,7 @@ export function PosForm({ allProducts }: PosFormProps) {
                                 <FormItem>
                                 <div className="space-y-2 rounded-md border p-2 min-h-[120px]">
                                     {cart.length === 0 ? (
-                                        <p className="text-muted-foreground text-center p-4">Nenhum produto no carrinho.</p>
+                                        <p className="text-muted-foreground text-center p-4">{t('pos.cart.empty')}</p>
                                     ) : (
                                         cart.map(item => (
                                             <div key={item.productId} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
@@ -294,46 +294,46 @@ export function PosForm({ allProducts }: PosFormProps) {
                 
                  {/* Payment & Shipping */}
                 <AccordionItem value="item-3">
-                    <AccordionTrigger className="font-semibold text-lg"><div className="flex items-center gap-2"><CreditCard className="h-5 w-5" /> Pagamento e Entrega</div></AccordionTrigger>
+                    <AccordionTrigger className="font-semibold text-lg"><div className="flex items-center gap-2"><CreditCard className="h-5 w-5" /> {t('pos.payment.title')}</div></AccordionTrigger>
                     <AccordionContent className="pt-4 space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                              <FormField control={form.control} name="paymentMethod" render={({ field }) => (
-                                <FormItem><FormLabel>Forma de Pagamento</FormLabel>
+                                <FormItem><FormLabel>{t('pos.payment.method')}</FormLabel>
                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                                         <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                                         <SelectContent>
-                                            <SelectItem value="credito">Cartão de Crédito</SelectItem>
-                                            <SelectItem value="debito">Cartão de Débito</SelectItem>
-                                            <SelectItem value="pix">PIX</SelectItem>
-                                            <SelectItem value="dinheiro">Dinheiro</SelectItem>
-                                            <SelectItem value="boleto">Boleto</SelectItem>
-                                            <SelectItem value="link">Link de Pagamento</SelectItem>
-                                            <SelectItem value="outros">Outros</SelectItem>
+                                            <SelectItem value="credito">{t('paymentMethods.credit')}</SelectItem>
+                                            <SelectItem value="debito">{t('paymentMethods.debit')}</SelectItem>
+                                            <SelectItem value="pix">{t('paymentMethods.pix')}</SelectItem>
+                                            <SelectItem value="dinheiro">{t('paymentMethods.cash')}</SelectItem>
+                                            <SelectItem value="boleto">{t('paymentMethods.billet')}</SelectItem>
+                                            <SelectItem value="link">{t('paymentMethods.link')}</SelectItem>
+                                            <SelectItem value="outros">{t('paymentMethods.other')}</SelectItem>
                                         </SelectContent>
                                     </Select><FormMessage /></FormItem>
                             )}/>
                              <FormField control={form.control} name="paymentStatus" render={({ field }) => (
-                                <FormItem><FormLabel>Status Pagamento</FormLabel>
+                                <FormItem><FormLabel>{t('pos.payment.status')}</FormLabel>
                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                                         <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                                         <SelectContent>
-                                            <SelectItem value="aprovado">Aprovado</SelectItem>
-                                            <SelectItem value="aguardando">Aguardando</SelectItem>
-                                            <SelectItem value="recusado">Recusado</SelectItem>
-                                            <SelectItem value="estornado">Estornado</SelectItem>
+                                            <SelectItem value="aprovado">{t('paymentStatus.approved')}</SelectItem>
+                                            <SelectItem value="aguardando">{t('paymentStatus.pending')}</SelectItem>
+                                            <SelectItem value="recusado">{t('paymentStatus.refused')}</SelectItem>
+                                            <SelectItem value="estornado">{t('paymentStatus.refunded')}</SelectItem>
                                         </SelectContent>
                                     </Select><FormMessage /></FormItem>
                             )}/>
                               <FormField control={form.control} name="deliveryMethod" render={({ field }) => (
-                                <FormItem><FormLabel>Método de Entrega</FormLabel>
+                                <FormItem><FormLabel>{t('pos.delivery.method')}</FormLabel>
                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                                         <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                                         <SelectContent>
-                                            <SelectItem value="retirada_loja">Retirada na Loja</SelectItem>
-                                            <SelectItem value="entrega_padrao">Entrega Padrão</SelectItem>
-                                            <SelectItem value="correios">Correios</SelectItem>
-                                            <SelectItem value="logistica_propria">Logística Própria</SelectItem>
-                                            <SelectItem value="digital">Digital</SelectItem>
+                                            <SelectItem value="retirada_loja">{t('deliveryMethods.pickup')}</SelectItem>
+                                            <SelectItem value="entrega_padrao">{t('deliveryMethods.standard')}</SelectItem>
+                                            <SelectItem value="correios">{t('deliveryMethods.correios')}</SelectItem>
+                                            <SelectItem value="logistica_propria">{t('deliveryMethods.own')}</SelectItem>
+                                            <SelectItem value="digital">{t('deliveryMethods.digital')}</SelectItem>
                                         </SelectContent>
                                     </Select><FormMessage /></FormItem>
                             )}/>
@@ -346,32 +346,32 @@ export function PosForm({ allProducts }: PosFormProps) {
             
             {/* Totals & Notes */}
             <div className="space-y-4">
-                 <h3 className="font-semibold text-lg">Resumo e Observações</h3>
+                 <h3 className="font-semibold text-lg">{t('pos.summary.title')}</h3>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField control={form.control} name="shippingCost" render={({ field }) => (
-                        <FormItem><FormLabel>Custo do Frete</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>{t('pos.summary.shippingCost')}</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} /></FormControl><FormMessage /></FormItem>
                     )}/>
                     <FormField control={form.control} name="discount" render={({ field }) => (
-                        <FormItem><FormLabel>Desconto</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>{t('pos.summary.discount')}</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} /></FormControl><FormMessage /></FormItem>
                     )}/>
                  </div>
                  <div className="space-y-2 rounded-md border bg-muted p-4">
-                    <div className="flex justify-between text-muted-foreground"><span>Subtotal</span><span>R$ {subtotal.toFixed(2)}</span></div>
-                    <div className="flex justify-between text-muted-foreground"><span>Frete</span><span>R$ {watchedShippingCost.toFixed(2)}</span></div>
-                    <div className="flex justify-between text-muted-foreground"><span>Desconto</span><span className="text-red-500">- R$ {watchedDiscount.toFixed(2)}</span></div>
+                    <div className="flex justify-between text-muted-foreground"><span>{t('orderDetails.subtotal')}</span><span>R$ {subtotal.toFixed(2)}</span></div>
+                    <div className="flex justify-between text-muted-foreground"><span>{t('orderDetails.shipping')}</span><span>R$ {watchedShippingCost.toFixed(2)}</span></div>
+                    <div className="flex justify-between text-muted-foreground"><span>{t('pos.summary.discount')}</span><span className="text-red-500">- R$ {watchedDiscount.toFixed(2)}</span></div>
                     <Separator className="my-2 bg-border" />
-                    <div className="flex justify-between font-bold text-lg"><span>Total</span><span>R$ {total.toFixed(2)}</span></div>
+                    <div className="flex justify-between font-bold text-lg"><span>{t('orderDetails.total')}</span><span>R$ {total.toFixed(2)}</span></div>
                  </div>
 
                  <FormField control={form.control} name="notes" render={({ field }) => (
-                    <FormItem><FormLabel>Observações</FormLabel><FormControl><Textarea placeholder="Adicione notas sobre o pedido..." {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>{t('pos.summary.notes')}</FormLabel><FormControl><Textarea placeholder={t('pos.summary.notesPlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>
                  )}/>
             </div>
             
             <CardFooter className="p-0 pt-6">
                  <Button type="submit" className="w-full" size="lg" disabled={isSaving || cart.length === 0} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
                      {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                     Finalizar Pedido (R$ {total.toFixed(2)})
+                     {t('pos.submitButton')} (R$ {total.toFixed(2)})
                  </Button>
             </CardFooter>
           </form>
