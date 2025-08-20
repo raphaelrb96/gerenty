@@ -3,7 +3,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Header } from "@/components/landing/header";
 import { Pricing } from "@/components/landing/pricing";
 import { Footer } from "@/components/landing/footer";
@@ -12,6 +12,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { BenefitCards } from "@/components/landing/BenefitCards";
+import Image from "next/image";
 
 export default function Home() {
   return (
@@ -21,7 +22,12 @@ export default function Home() {
         {/* 1. Proposta de Valor Impactante */}
         <section className="w-full py-20 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6 grid gap-10 lg:grid-cols-2 lg:gap-16 items-center">
-            <div className="flex flex-col justify-center space-y-6">
+            <motion.div 
+              className="flex flex-col justify-center space-y-6"
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5 }}
+            >
               <div className="space-y-4">
                 <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none font-headline">
                   Chega de apagar incêndios! Transforme sua loja em um negócio organizado e lucrativo.
@@ -30,30 +36,26 @@ export default function Home() {
                   Uma única plataforma para gerenciar vendas, estoque e finanças com total controle, de qualquer lugar.
                 </p>
               </div>
-              <motion.div
-                className="flex flex-col gap-4 min-[400px]:flex-row"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
+              <div className="flex flex-col gap-4 min-[400px]:flex-row">
                 <Button asChild size="lg" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
                   <Link href="/auth/signup">Começar Agora de Graça</Link>
                 </Button>
                 <Button variant="outline" size="lg" asChild>
                   <Link href="#pricing">Ver Planos</Link>
                 </Button>
-              </motion.div>
-            </div>
+              </div>
+            </motion.div>
             <motion.div 
-              className="aspect-video overflow-hidden rounded-xl object-cover sm:w-full lg:order-last bg-muted flex items-center justify-center shadow-lg"
-              initial={{ opacity: 0, scale: 0.9 }}
+              className="relative aspect-video overflow-hidden rounded-xl object-cover sm:w-full lg:order-last flex items-center justify-center shadow-lg"
+              initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
             >
-               <img
+               <Image
                 src="https://placehold.co/600x400.png"
                 alt="Dashboard preview"
-                className="rounded-lg shadow-2xl transform hover:scale-105 transition-transform duration-300"
+                fill
+                className="object-cover rounded-lg shadow-2xl transform transition-transform duration-300"
                 data-ai-hint="dashboard analytics"
               />
             </motion.div>
@@ -70,22 +72,22 @@ export default function Home() {
               </p>
             </div>
             <div className="grid gap-8 lg:grid-cols-2 items-start">
-              <div className="space-y-6 rounded-lg border bg-card p-6 shadow-sm">
+              <Card className="space-y-6 p-6 shadow-sm border-destructive/50">
                 <h3 className="text-2xl font-bold font-headline flex items-center gap-3"><XCircleIcon className="w-8 h-8 text-destructive flex-shrink-0" /> Sua Realidade Hoje</h3>
-                <ul className="space-y-4 text-lg text-muted-foreground pl-4">
+                <ul className="space-y-4 text-lg text-muted-foreground pl-4 list-disc list-inside">
                   <li>Perder vendas por falta de estoque?</li>
                   <li>Passar horas em planilhas financeiras?</li>
                   <li>Se sentir perdido com a bagunça dos pedidos?</li>
                 </ul>
-              </div>
-              <div className="space-y-6 rounded-lg border-2 border-primary bg-card p-6 shadow-lg">
+              </Card>
+              <Card className="space-y-6 p-6 shadow-lg border-primary/50 bg-card">
                 <h3 className="text-2xl font-bold font-headline flex items-center gap-3"><CheckCircleIcon className="w-8 h-8 text-green-500 flex-shrink-0" /> Sua Realidade com Enterprisy</h3>
-                <ul className="space-y-4 text-lg pl-4">
+                <ul className="space-y-4 text-lg pl-4 list-disc list-inside">
                   <li>Estoque atualizado em tempo real.</li>
                   <li>Relatórios financeiros automáticos.</li>
                   <li>Pedidos organizados em um só lugar.</li>
                 </ul>
-              </div>
+              </Card>
             </div>
           </div>
         </section>
@@ -102,43 +104,49 @@ export default function Home() {
 
             <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
               <Card className="bg-card text-left p-6 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center mb-4">
-                  <Avatar>
-                    <AvatarImage src="https://placehold.co/40x40.png" alt="User Avatar" data-ai-hint="man portrait" />
-                    <AvatarFallback>CN</AvatarFallback>
-                  </Avatar>
-                  <div className="ml-4">
-                    <p className="font-semibold text-card-foreground">Carlos N.</p>
-                    <p className="text-sm text-muted-foreground">Loja de Roupas</p>
-                  </div>
-                </div>
-                <p className="text-muted-foreground">"Enterprisy mudou a forma como gerencio meu estoque. Agora tenho tudo sob controle e perdi muito menos vendas."</p>
+                <CardContent className="p-0 flex flex-col h-full">
+                    <p className="text-muted-foreground flex-grow">"Enterprisy mudou a forma como gerencio meu estoque. Agora tenho tudo sob controle e perdi muito menos vendas."</p>
+                    <div className="flex items-center mt-4 pt-4 border-t">
+                      <Avatar>
+                        <AvatarImage src="https://placehold.co/40x40.png" alt="User Avatar" data-ai-hint="man portrait" />
+                        <AvatarFallback>CN</AvatarFallback>
+                      </Avatar>
+                      <div className="ml-4">
+                        <p className="font-semibold text-card-foreground">Carlos N.</p>
+                        <p className="text-sm text-muted-foreground">Loja de Roupas</p>
+                      </div>
+                    </div>
+                </CardContent>
               </Card>
               <Card className="bg-card text-left p-6 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center mb-4">
-                   <Avatar>
-                    <AvatarImage src="https://placehold.co/40x40.png" alt="User Avatar" data-ai-hint="woman portrait" />
-                    <AvatarFallback>AM</AvatarFallback>
-                  </Avatar>
-                  <div className="ml-4">
-                    <p className="font-semibold text-card-foreground">Ana M.</p>
-                    <p className="text-sm text-muted-foreground">Cafeteria</p>
-                  </div>
-                </div>
-                <p className="text-muted-foreground">"Os relatórios financeiros automáticos me poupam horas de trabalho toda semana. Posso focar no que realmente importa: meus clientes!"</p>
+                 <CardContent className="p-0 flex flex-col h-full">
+                    <p className="text-muted-foreground flex-grow">"Os relatórios financeiros automáticos me poupam horas de trabalho toda semana. Posso focar no que realmente importa: meus clientes!"</p>
+                    <div className="flex items-center mt-4 pt-4 border-t">
+                       <Avatar>
+                        <AvatarImage src="https://placehold.co/40x40.png" alt="User Avatar" data-ai-hint="woman portrait" />
+                        <AvatarFallback>AM</AvatarFallback>
+                      </Avatar>
+                      <div className="ml-4">
+                        <p className="font-semibold text-card-foreground">Ana M.</p>
+                        <p className="text-sm text-muted-foreground">Cafeteria</p>
+                      </div>
+                    </div>
+                </CardContent>
               </Card>
                <Card className="bg-card text-left p-6 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center mb-4">
-                  <Avatar>
-                    <AvatarImage src="https://placehold.co/40x40.png" alt="User Avatar" data-ai-hint="man glasses" />
-                    <AvatarFallback>RP</AvatarFallback>
-                  </Avatar>
-                  <div className="ml-4">
-                    <p className="font-semibold text-card-foreground">Roberto P.</p>
-                    <p className="text-sm text-muted-foreground">Loja de Eletrônicos</p>
-                  </div>
-                </div>
-                <p className="text-muted-foreground">"A gestão de pedidos ficou muito mais simples. Agora consigo processar tudo rapidamente e manter meus clientes felizes."</p>
+                <CardContent className="p-0 flex flex-col h-full">
+                    <p className="text-muted-foreground flex-grow">"A gestão de pedidos ficou muito mais simples. Agora consigo processar tudo rapidamente e manter meus clientes felizes."</p>
+                    <div className="flex items-center mt-4 pt-4 border-t">
+                      <Avatar>
+                        <AvatarImage src="https://placehold.co/40x40.png" alt="User Avatar" data-ai-hint="man glasses" />
+                        <AvatarFallback>RP</AvatarFallback>
+                      </Avatar>
+                      <div className="ml-4">
+                        <p className="font-semibold text-card-foreground">Roberto P.</p>
+                        <p className="text-sm text-muted-foreground">Loja de Eletrônicos</p>
+                      </div>
+                    </div>
+                </CardContent>
               </Card>
             </div>
 
@@ -200,3 +208,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
