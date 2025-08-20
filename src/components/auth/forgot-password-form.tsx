@@ -20,14 +20,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Logo } from "../logo";
 import { Loader2 } from "lucide-react";
 import { getFirebaseAuthErrorMessage } from "@/lib/firebase-errors";
 
@@ -69,17 +61,16 @@ export function ForgotPasswordForm() {
   }
 
   return (
-    <Card className="mx-auto w-full max-w-sm p-4 sm:p-6">
-      <CardHeader className="text-center">
-        <Logo className="mb-4 justify-center" />
-        <CardTitle className="font-headline text-2xl">{t('auth.forgotPassword.title')}</CardTitle>
-        <CardDescription>
-          {submitted
-            ? t('auth.forgotPassword.submittedDescription')
-            : t('auth.forgotPassword.description')}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+    <div className="w-full max-w-md space-y-6">
+        <div className="text-center">
+            <h1 className="font-headline text-3xl font-bold tracking-tight">{t('auth.forgotPassword.title')}</h1>
+            <p className="mt-2 text-muted-foreground">
+                {submitted
+                    ? t('auth.forgotPassword.submittedDescription')
+                    : t('auth.forgotPassword.description')}
+            </p>
+        </div>
+        
         {!submitted ? (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -103,12 +94,12 @@ export function ForgotPasswordForm() {
             </form>
           </Form>
         ) : null}
+
         <div className="mt-4 text-center text-sm">
           <Link href="/auth/login" className="font-medium text-primary hover:underline">
              {t('auth.backToLogin')}
           </Link>
         </div>
-      </CardContent>
-    </Card>
+      </div>
   );
 }

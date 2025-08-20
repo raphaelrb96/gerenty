@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from '@/context/i18n-context';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { LanguageToggle } from '@/components/language-toggle';
+import { Logo } from '@/components/logo';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -26,7 +27,6 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   }, [user, loading, router, toast, t]);
 
   if (loading || user) {
-    // Render a loading state or nothing while checking auth/redirecting
     return (
         <div className="flex min-h-screen items-center justify-center">
             {/* You can add a loader here if you want */}
@@ -35,14 +35,24 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col">
-        <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-            <ThemeToggle />
-            <LanguageToggle />
-        </div>
-        <main className="flex-1">
-            {children}
-        </main>
+    <div className="relative grid min-h-screen w-full grid-cols-1 lg:grid-cols-2">
+      <div className="absolute right-4 top-4 z-10 flex items-center gap-2 lg:right-6 lg:top-6">
+        <ThemeToggle />
+        <LanguageToggle />
+      </div>
+      <div className="hidden bg-accent p-12 text-accent-foreground lg:flex flex-col justify-between">
+          <Logo href="/" className="text-accent-foreground hover:text-accent-foreground/80" />
+          <div className="mb-24">
+            <h2 className="font-headline text-3xl font-bold">Gerencie com Maestria.</h2>
+            <p className="mt-2 text-lg text-accent-foreground/80">A plataforma completa para impulsionar o seu negócio.</p>
+          </div>
+          <footer className="text-sm text-accent-foreground/60">
+             {t('landing.footer.copy', { year: new Date().getFullYear() })}
+          </footer>
+      </div>
+      <main className="flex items-center justify-center p-6 lg:p-8">
+          {children}
+      </main>
     </div>
   );
 }

@@ -18,13 +18,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Logo } from "../logo";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/context/i18n-context";
@@ -78,15 +71,11 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="mx-auto w-full max-w-sm p-4 sm:p-6">
-      <CardHeader className="text-center">
-        <Logo className="mb-4 justify-center" />
-        <CardTitle className="font-headline text-2xl">{t('auth.login.title')}</CardTitle>
-        <CardDescription>
-          {t('auth.login.description')}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+    <div className="w-full max-w-md space-y-6">
+        <div className="text-center">
+            <h1 className="font-headline text-3xl font-bold tracking-tight">{t('auth.login.title')}</h1>
+            <p className="mt-2 text-muted-foreground">{t('auth.login.description')}</p>
+        </div>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -157,7 +146,6 @@ export function LoginForm() {
             {t('auth.signUpLink')}
           </Link>
         </div>
-      </CardContent>
-    </Card>
+      </div>
   );
 }
