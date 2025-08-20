@@ -1,70 +1,83 @@
 
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Check } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/auth-context";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Check, Loader2 } from "lucide-react";
 import { useTranslation } from "@/context/i18n-context";
+import { useAuth } from "@/context/auth-context";
+import { useRouter } from "next/navigation";
+import { toast } from "@/hooks/use-toast";
 
-export function Pricing() {
+export default function BillingPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const router = useRouter();
-
+  const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
 
   const tiers = [
     {
-      name: t('landing.pricing.free.name'),
-      price: t('landing.pricing.free.price'),
-      priceDescription: t('landing.pricing.free.priceDescription'),
-      description: t('landing.pricing.free.description'),
-      features: t('landing.pricing.free.features', { returnObjects: true }) as unknown as string[],
-      cta: t('landing.pricing.free.cta'),
-      href: "/auth/signup",
-      isFeatured: false,
-    },
-    {
+      id: "pro",
       name: t('landing.pricing.pro.name'),
       price: t('landing.pricing.pro.price'),
       priceDescription: t('landing.pricing.pro.priceDescription'),
       description: t('landing.pricing.pro.description'),
       features: t('landing.pricing.pro.features', { returnObjects: true }) as unknown as string[],
       cta: t('landing.pricing.pro.cta'),
-      href: user ? "/dashboard/billing" : "/auth/signup",
       isFeatured: true,
     },
     {
+      id: "enterprise",
       name: t('landing.pricing.enterprise.name'),
       price: t('landing.pricing.enterprise.price'),
       priceDescription: t('landing.pricing.enterprise.priceDescription'),
       description: t('landing.pricing.enterprise.description'),
       features: t('landing.pricing.enterprise.features', { returnObjects: true }) as unknown as string[],
       cta: t('landing.pricing.enterprise.cta'),
-      href: user ? "/dashboard/billing" : "/auth/signup",
       isFeatured: false,
     },
   ];
 
-  const handleCtaClick = (href: string) => {
-    router.push(href);
+  const handleSubscribe = async (planId: string) => {
+    if (!user) {
+        toast({
+            title: "Authentication Error",
+            description: "You must be logged in to subscribe.",
+            variant: "destructive",
+        });
+        return;
+    }
+
+    setLoadingPlanId(planId);
+
+    // Simulate calling a Cloud Function to get a Stripe Checkout URL
+    console.log(`User ${user.uid} is subscribing to plan ${planId}`);
+    
+    // In a real app, this would be an async call to your backend:
+    // const { url } = await createStripeCheckoutSession({ userId: user.uid, planId });
+    // window.location.href = url;
+
+    // For this prototype, we'll simulate a delay and redirect to a status page
+    setTimeout(() => {
+        // This is where you would redirect to the Stripe URL.
+        // For now, we redirect to a success page.
+        router.push('/dashboard/billing/status?status=success');
+        setLoadingPlanId(null);
+    }, 2000);
   };
 
 
   return (
-    <section className="bg-background py-20 md:py-24">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="font-headline text-3xl md:text-4xl font-bold text-foreground">
-            {t('landing.pricing.title')}
-          </h2>
-          <p className="mt-4 text-lg text-muted-foreground">
-            {t('landing.pricing.subtitle')}
-          </p>
+    <div className="space-y-8">
+        <div>
+            <h1 className="font-headline text-3xl font-bold">Gerenciamento de Assinatura</h1>
+            <p className="text-muted-foreground">
+                Escolha o plano que melhor se adapta às suas necessidades ou gerencie sua assinatura atual.
+            </p>
         </div>
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 items-start">
+
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 items-start">
           {tiers.map((tier) => (
             <Card key={tier.name} className={`flex flex-col h-full ${tier.isFeatured ? "border-primary shadow-lg" : "border-border"}`}>
               <CardHeader>
@@ -87,18 +100,19 @@ export function Pricing() {
               </CardContent>
               <CardFooter>
                 <Button 
-                  onClick={() => handleCtaClick(tier.href)}
+                  onClick={() => handleSubscribe(tier.id)}
                   className="w-full" 
                   variant={tier.isFeatured ? "default" : "outline"} 
                   style={tier.isFeatured ? { backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' } : {}}
+                  disabled={loadingPlanId === tier.id}
                 >
+                  {loadingPlanId === tier.id && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {tier.cta}
                 </Button>
               </CardFooter>
             </Card>
           ))}
         </div>
-      </div>
-    </section>
+    </div>
   );
 }
