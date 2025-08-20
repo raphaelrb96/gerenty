@@ -59,8 +59,7 @@
         "hero": {
             "title": "Stop putting out fires! Turn your store into an organized and profitable business.",
             "subtitle": "A single platform to manage sales, inventory, and finances with full control, from anywhere.",
-            "ctaPrimary": "Get Started Now for Free",
-            "ctaSecondary": "See Plans"
+            "ctaPrimary": "Get Started Now for Free"
         },
         "benefits": {
             "title": "Your Reality Today vs. Your Future with Enterprisy",
@@ -68,14 +67,14 @@
             "benefit1": { "title": "Real-Time Inventory", "description": "Lost a sale due to lack of stock? With Enterprisy, your inventory is updated with every sale, automatically." },
             "benefit2": { "title": "Automated Financial Reports", "description": "Tired of spending hours on spreadsheets? Get instant, easy-to-understand financial reports." },
             "benefit3": { "title": "Organized Order Management", "description": "Feeling lost in a mess of orders? Centralize and manage all your orders in one place, from start to finish." },
-            "benefit4": { "title": "Grow Without Limits", "description": "Integrate with multiple e-commerces and catalogs, centralizing your entire operation." }
+            "benefit4": { "title": "AI-Powered Growth", "description": "Use artificial intelligence to create descriptions, analyze data, and grow without limits." }
         },
         "pricing": {
             "title": "Find the Perfect Plan for You",
             "subtitle": "Start for free and scale as you grow. No credit card required.",
-            "free": { "name": "Free", "priceDescription": "/month", "description": "For individuals and small teams just starting out.", "features": ["10 Products", "100 Orders/month", "Basic Analytics"], "cta": "Get Started" },
-            "pro": { "name": "Pro", "priceDescription": "/month", "description": "For growing businesses that need more power.", "features": ["Unlimited Products", "Unlimited Orders", "Advanced Analytics", "AI Credits"], "cta": "Choose Pro" },
-            "enterprise": { "name": "Enterprise", "priceDescription": "/month", "description": "For large-scale operations with custom needs.", "features": ["Everything in Pro", "Priority Support", "Custom Integrations"], "cta": "Contact Us" }
+            "free": { "name": "Free", "price": "R$0", "priceDescription": "/month", "description": "For individuals and small teams just starting out.", "features": ["10 Products", "100 Orders/month", "Basic Analytics"], "cta": "Get Started" },
+            "pro": { "name": "Pro", "price": "R$29", "priceDescription": "/month", "description": "For growing businesses that need more power.", "features": ["Unlimited Products", "Unlimited Orders", "Advanced Analytics", "AI Credits"], "cta": "Choose Pro" },
+            "enterprise": { "name": "Enterprise", "price": "R$99", "priceDescription": "/month", "description": "For large-scale operations with custom needs.", "features": ["Everything in Pro", "Priority Support", "Custom Integrations"], "cta": "Contact Us" }
         },
         "header": {
             "login": "Login",

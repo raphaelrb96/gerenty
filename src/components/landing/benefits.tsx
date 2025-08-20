@@ -9,12 +9,12 @@ export function Benefits() {
 
   const benefits = [
     {
-      icon: <BarChart className="h-8 w-8 text-primary" />,
+      icon: <Package className="h-8 w-8 text-primary" />,
       title: t('landing.benefits.benefit1.title'),
       description: t('landing.benefits.benefit1.description'),
     },
     {
-      icon: <Package className="h-8 w-8 text-primary" />,
+      icon: <BarChart className="h-8 w-8 text-primary" />,
       title: t('landing.benefits.benefit2.title'),
       description: t('landing.benefits.benefit2.description'),
     },

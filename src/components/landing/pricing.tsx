@@ -12,7 +12,7 @@ export function Pricing() {
   const tiers = [
     {
       name: t('landing.pricing.free.name'),
-      price: "R$0",
+      price: t('landing.pricing.free.price'),
       priceDescription: t('landing.pricing.free.priceDescription'),
       description: t('landing.pricing.free.description'),
       features: t('landing.pricing.free.features', { returnObjects: true }) as unknown as string[],
@@ -22,7 +22,7 @@ export function Pricing() {
     },
     {
       name: t('landing.pricing.pro.name'),
-      price: "R$29",
+      price: t('landing.pricing.pro.price'),
       priceDescription: t('landing.pricing.pro.priceDescription'),
       description: t('landing.pricing.pro.description'),
       features: t('landing.pricing.pro.features', { returnObjects: true }) as unknown as string[],
@@ -32,7 +32,7 @@ export function Pricing() {
     },
     {
       name: t('landing.pricing.enterprise.name'),
-      price: "R$99",
+      price: t('landing.pricing.enterprise.price'),
       priceDescription: t('landing.pricing.enterprise.priceDescription'),
       description: t('landing.pricing.enterprise.description'),
       features: t('landing.pricing.enterprise.features', { returnObjects: true }) as unknown as string[],

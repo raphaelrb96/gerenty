@@ -23,9 +23,6 @@ export function Hero() {
               <Button asChild size="lg" className="w-full sm:w-auto" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
                 <Link href="/auth/signup">{t('landing.hero.ctaPrimary')}</Link>
               </Button>
-              <Button variant="outline" size="lg" asChild className="w-full sm:w-auto">
-                <Link href="/plans">{t('landing.hero.ctaSecondary')}</Link>
-              </Button>
             </div>
           </div>
           <div className="flex justify-center">

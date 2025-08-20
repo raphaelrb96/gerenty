@@ -59,8 +59,7 @@
         "hero": {
             "title": "Chega de apagar incêndios! Transforme sua loja em um negócio organizado e lucrativo.",
             "subtitle": "Uma única plataforma para gerenciar vendas, estoque e finanças com total controle, de qualquer lugar.",
-            "ctaPrimary": "Começar Agora de Graça",
-            "ctaSecondary": "Ver os Planos"
+            "ctaPrimary": "Começar Agora de Graça"
         },
         "benefits": {
             "title": "Sua Realidade Hoje vs. Seu Futuro com o Enterprisy",
@@ -68,14 +67,14 @@
             "benefit1": { "title": "Estoque em Tempo Real", "description": "Perdeu uma venda por falta de estoque? Com o Enterprisy, seu estoque é atualizado a cada venda, automaticamente." },
             "benefit2": { "title": "Relatórios Financeiros Automáticos", "description": "Cansado de passar horas em planilhas? Tenha relatórios financeiros instantâneos e fáceis de entender." },
             "benefit3": { "title": "Gestão de Pedidos Organizada", "description": "Sente-se perdido com a bagunça dos pedidos? Centralize e gerencie todos os seus pedidos em um único lugar, do início ao fim." },
-            "benefit4": { "title": "Cresça Sem Limites", "description": "Integre com múltiplos e-commerces e catálogos, centralizando toda a sua operação." }
+            "benefit4": { "title": "Crescimento com IA", "description": "Use inteligência artificial para criar descrições, analisar dados e crescer sem limites." }
         },
         "pricing": {
             "title": "Encontre o Plano Perfeito para Você",
             "subtitle": "Comece de graça e escale conforme cresce. Sem necessidade de cartão de crédito.",
-            "free": { "name": "Gratuito", "priceDescription": "/mês", "description": "Para indivíduos e pequenos times que estão começando.", "features": ["10 Produtos", "100 Pedidos/mês", "Análises Básicas"], "cta": "Comece de Graça" },
-            "pro": { "name": "Pro", "priceDescription": "/mês", "description": "Para negócios em crescimento que precisam de mais poder.", "features": ["Produtos Ilimitados", "Pedidos Ilimitados", "Análises Avançadas", "Créditos de IA"], "cta": "Escolher o Pro" },
-            "enterprise": { "name": "Enterprise", "priceDescription": "/mês", "description": "Para operações de larga escala com necessidades customizadas.", "features": ["Tudo do Pro", "Suporte Prioritário", "Integrações Customizadas"], "cta": "Fale Conosco" }
+            "free": { "name": "Gratuito", "price": "R$0", "priceDescription": "/mês", "description": "Para indivíduos e pequenos times que estão começando.", "features": ["10 Produtos", "100 Pedidos/mês", "Análises Básicas"], "cta": "Comece de Graça" },
+            "pro": { "name": "Pro", "price": "R$29", "priceDescription": "/mês", "description": "Para negócios em crescimento que precisam de mais poder.", "features": ["Produtos Ilimitados", "Pedidos Ilimitados", "Análises Avançadas", "Créditos de IA"], "cta": "Escolher o Pro" },
+            "enterprise": { "name": "Enterprise", "price": "R$99", "priceDescription": "/mês", "description": "Para operações de larga escala com necessidades customizadas.", "features": ["Tudo do Pro", "Suporte Prioritário", "Integrações Customizadas"], "cta": "Fale Conosco" }
         },
         "header": {
             "login": "Entrar",
