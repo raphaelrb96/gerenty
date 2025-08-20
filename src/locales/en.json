@@ -162,7 +162,13 @@
             "question2": "Is it easy to migrate my data to Enterprisy?",
             "answer2": "Our team is ready to help you! We offer a guided migration process so you can bring your products and customers without complications.",
             "question3": "How does the trial period work?",
-            "answer3": "We offer a free plan that you can use for as long as you want. It includes basic features so you can feel the power of Enterprisy without commitment. You only subscribe if you want to evolve."
+            "answer3": "We offer a free plan that you can use for as long as you want. It includes basic features so you can feel the power of Enterprisy without commitment. You only subscribe if you want to evolve.",
+            "question4": "Can I cancel my plan at any time?",
+            "answer4": "Yes, you can cancel your subscription at any time, without any bureaucracy. You will continue to have access to the features of your plan until the end of the current billing cycle.",
+            "question5": "What payment methods are accepted?",
+            "answer5": "We accept all major credit cards (Visa, MasterCard, American Express) and, depending on your region, other local payment methods.",
+            "question6": "Is my data secure?",
+            "answer6": "Absolutely. We use end-to-end encryption and best-in-class security practices to ensure that your business and customer data is always protected."
         },
         "finalCta": {
             "title": "Ready to take off?",

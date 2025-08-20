@@ -162,7 +162,13 @@
             "question2": "¿Es fácil migrar mis datos a Enterprisy?",
             "answer2": "¡Nuestro equipo está listo para ayudarte! Ofrecemos un proceso de migración guiado para que puedas traer tus productos y clientes sin complicaciones.",
             "question3": "¿Cómo funciona el período de prueba?",
-            "answer3": "Ofrecemos un plan gratuito que puedes usar todo el tiempo que quieras. Incluye funcionalidades básicas para que sientas el poder de Enterprisy sin compromiso. Solo te suscribes si quieres evolucionar."
+            "answer3": "Ofrecemos un plan gratuito que puedes usar todo el tiempo que quieras. Incluye funcionalidades básicas para que sientas el poder de Enterprisy sin compromiso. Solo te suscribes si quieres evolucionar.",
+            "question4": "¿Puedo cancelar mi plan en cualquier momento?",
+            "answer4": "Sí, puedes cancelar tu suscripción en cualquier momento, sin burocracia. Continuarás teniendo acceso a las funcionalidades de tu plan hasta el final del ciclo de facturación actual.",
+            "question5": "¿Qué métodos de pago se aceptan?",
+            "answer5": "Aceptamos todas las principales tarjetas de crédito (Visa, MasterCard, American Express) y, dependiendo de tu región, otros métodos de pago locales.",
+            "question6": "¿Están seguros mis datos?",
+            "answer6": "Absolutamente. Utilizamos encriptación de extremo a extremo y las mejores prácticas de seguridad para garantizar que los datos de tu negocio y de tus clientes estén siempre protegidos."
         },
         "finalCta": {
             "title": "¿Listo para despegar?",

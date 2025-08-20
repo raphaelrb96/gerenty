@@ -32,7 +32,7 @@ export default function BillingPage() {
     {
       id: "silver",
       name: t('landing.pricing.silver.name'),
-      price: 49,
+      price: 37,
       priceSuffix: t('landing.pricing.silver.priceSuffix'),
       description: t('landing.pricing.silver.description'),
       features: t('landing.pricing.silver.features', { returnObjects: true }) as unknown as string[],
@@ -42,7 +42,7 @@ export default function BillingPage() {
     {
       id: "gold",
       name: t('landing.pricing.gold.name'),
-      price: 99,
+      price: 79,
       priceSuffix: t('landing.pricing.gold.priceSuffix'),
       description: t('landing.pricing.gold.description'),
       features: t('landing.pricing.gold.features', { returnObjects: true }) as unknown as string[],
@@ -52,7 +52,7 @@ export default function BillingPage() {
     {
       id: "premium",
       name: t('landing.pricing.premium.name'),
-      price: 199,
+      price: 119,
       priceSuffix: t('landing.pricing.premium.priceSuffix'),
       description: t('landing.pricing.premium.description'),
       features: t('landing.pricing.premium.features', { returnObjects: true }) as unknown as string[],
