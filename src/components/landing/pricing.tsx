@@ -85,8 +85,8 @@ export function Pricing() {
             {t('landing.pricing.subtitle')}
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 items-start justify-center">
-          {tiers.map((tier) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start justify-center max-w-5xl mx-auto">
+          {tiers.slice(0, 3).map((tier) => (
             <Card key={tier.name} className={`flex flex-col h-full rounded-xl shadow-lg border-2 ${tier.isPopular ? "border-primary" : "border-border"}`}>
                {tier.isPopular && (
                   <div className="bg-primary text-primary-foreground text-xs font-bold px-4 py-1 rounded-full inline-block mb-4 -mt-4 mx-auto">
