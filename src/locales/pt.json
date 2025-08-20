@@ -57,18 +57,18 @@
     },
     "landing": {
         "hero": {
-            "title": "Simplifique a Gestão do seu Negócio",
-            "subtitle": "Enterprisy Lite oferece as ferramentas que você precisa para gerenciar produtos, pedidos e clientes com facilidade. Foque no crescimento, nós cuidamos do resto.",
-            "ctaPrimary": "Começar Gratuitamente",
-            "ctaSecondary": "Ver o Dashboard"
+            "title": "Chega de apagar incêndios! Transforme sua loja em um negócio organizado e lucrativo.",
+            "subtitle": "Uma única plataforma para gerenciar vendas, estoque e finanças com total controle, de qualquer lugar.",
+            "ctaPrimary": "Começar Agora de Graça",
+            "ctaSecondary": "Ver os Planos"
         },
         "benefits": {
-            "title": "Tudo o que Você Precisa para o Sucesso",
-            "subtitle": "Nossa plataforma foi projetada para otimizar seu fluxo de trabalho e impulsionar sua produtividade.",
-            "benefit1": { "title": "Dashboard Intuitivo", "description": "Visão clara do seu negócio com métricas e análises essenciais." },
-            "benefit2": { "title": "Gestão de Produtos", "description": "Adicione, edite e organize seus produtos de forma simples e eficaz." },
-            "benefit3": { "title": "Controle de Pedidos", "description": "Gerencie pedidos, atualize status e acompanhe seu funil de vendas." },
-            "benefit4": { "title": "Descrições com IA", "description": "Poupe tempo gerando descrições de produtos atraentes com nossa IA." }
+            "title": "Sua Realidade Hoje vs. Seu Futuro com o Enterprisy",
+            "subtitle": "Nós entendemos seus desafios e construímos a solução definitiva.",
+            "benefit1": { "title": "Estoque em Tempo Real", "description": "Perdeu uma venda por falta de estoque? Com o Enterprisy, seu estoque é atualizado a cada venda, automaticamente." },
+            "benefit2": { "title": "Relatórios Financeiros Automáticos", "description": "Cansado de passar horas em planilhas? Tenha relatórios financeiros instantâneos e fáceis de entender." },
+            "benefit3": { "title": "Gestão de Pedidos Organizada", "description": "Sente-se perdido com a bagunça dos pedidos? Centralize e gerencie todos os seus pedidos em um único lugar, do início ao fim." },
+            "benefit4": { "title": "Cresça Sem Limites", "description": "Integre com múltiplos e-commerces e catálogos, centralizando toda a sua operação." }
         },
         "pricing": {
             "title": "Encontre o Plano Perfeito para Você",
