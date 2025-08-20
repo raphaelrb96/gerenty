@@ -15,8 +15,8 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center px-4 md:px-6">
-        <div className="mr-4 hidden md:flex">
+      <div className="flex h-14 items-center px-4 md:px-6">
+        <div className="ml-3">
           <Logo />
         </div>
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
@@ -24,9 +24,7 @@ export function Header() {
             {/* Input de busca pode ser adicionado aqui */}
           </div>
           <nav className="hidden md:flex items-center gap-2">
-            <Button variant="ghost" asChild>
-              <Link href="#planos">{t('landing.pricing.title')}</Link>
-            </Button>
+
             <ThemeToggle />
             <LanguageToggle />
             <Button variant="ghost" asChild>
@@ -39,7 +37,6 @@ export function Header() {
         </div>
 
         <div className="md:hidden flex items-center">
-           <Logo className="mr-auto"/>
           <ThemeToggle />
           <LanguageToggle />
           <Sheet>
@@ -52,10 +49,8 @@ export function Header() {
             <SheetContent side="right">
               <div className="grid gap-4 p-6">
                 <Logo />
-                 <Button variant="ghost" asChild className="justify-start text-lg">
-                  <Link href="#planos">{t('landing.pricing.title')}</Link>
-                </Button>
-                <Button variant="ghost" asChild className="justify-start text-lg">
+
+                <Button asChild style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="justify-center text-lg mt-4">
                   <Link href="/auth/login">{t('landing.header.login')}</Link>
                 </Button>
                 <Button asChild style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="justify-center text-lg">

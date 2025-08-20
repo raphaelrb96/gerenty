@@ -40,10 +40,10 @@ export default function Home() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Header />
-      <main className="flex-1">
+      <main className="flex-1 ">
         {/* 1. Proposta de Valor Impactante */}
         <section className="w-full py-20 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
+          <div className="px-4 md:px-6">
             <div className="mx-auto max-w-7xl text-center">
               <motion.h1 
                 className="mb-4 text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl"
@@ -90,7 +90,7 @@ export default function Home() {
 
         {/* 2. Prova Social e Autoridade */}
         <section className="bg-muted/40 py-16">
-          <div className="container px-4 md:px-6">
+          <div className="px-4 md:px-6">
             <div className="mx-auto max-w-7xl text-center">
               <h2 className="mb-4 text-2xl font-bold text-primary sm:text-3xl">{t('landing.socialProof.title')}</h2>
               <div className="mb-12 grid grid-cols-1 gap-8 md:grid-cols-3">
@@ -104,7 +104,7 @@ export default function Home() {
                 ))}
               </div>
               <p className="mb-4 text-sm font-semibold tracking-widest text-muted-foreground">{t('landing.socialProof.subtitle')}</p>
-              <div className="flex flex-wrap items-center justify-center gap-6 opacity-70">
+              <div className="hidden flex-wrap items-center justify-center gap-6 opacity-70">
                 {logos.map((logo, index) => (
                   <Image key={index} src={logo.src} alt={logo.alt} width={120} height={40} className="mx-auto" />
                 ))}
@@ -115,13 +115,13 @@ export default function Home() {
 
         {/* 3. Seção de Dor e Solução */}
         <section className="py-16 md:py-24">
-          <div className="container px-4 md:px-6">
+          <div className="px-4 md:px-6">
             <div className="mx-auto max-w-7xl">
               <div className="mb-12 text-center">
                 <h2 className="mb-2 text-3xl font-bold sm:text-4xl">{t('landing.painSolution.title')}</h2>
                 <p className="text-xl text-muted-foreground">{t('landing.painSolution.subtitle')}</p>
               </div>
-              <div className="grid items-center gap-12 md:grid-cols-2">
+              <div className="max-w-screen-md grid mx-auto items-start gap-12 md:grid-cols-2">
                 <div className="space-y-6">
                   <h3 className="mb-4 text-2xl font-bold text-destructive">{t('landing.painSolution.realityToday')}</h3>
                   <div className="flex items-center space-x-4">
@@ -167,7 +167,7 @@ export default function Home() {
 
         {/* 6. Seção de Perguntas Frequentes (FAQ) */}
         <section className="bg-muted/40 py-16 md:py-24">
-          <div className="container px-4 md:px-6">
+          <div className="px-4 md:px-6">
             <div className="mx-auto max-w-7xl">
               <div className="mb-12 text-center">
                 <h2 className="text-3xl font-bold sm:text-4xl">{t('landing.faq.title')}</h2>
@@ -191,7 +191,7 @@ export default function Home() {
 
         {/* 7. Último CTA */}
         <section className="py-16 text-center">
-          <div className="container px-4 md:px-6">
+          <div className="px-4 md:px-6">
             <div className="mx-auto max-w-3xl">
               <h2 className="mb-4 text-3xl font-bold sm:text-4xl">{t('landing.finalCta.title')}</h2>
               <p className="mb-8 text-xl text-muted-foreground">{t('landing.finalCta.subtitle')}</p>
