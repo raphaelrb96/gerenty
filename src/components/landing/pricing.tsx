@@ -45,22 +45,14 @@ export function Pricing() {
 
 
   return (
-    <section className="bg-background py-20 md:py-24">
+    <section className="bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto">
-          <h2 className="font-headline text-3xl md:text-4xl font-bold text-foreground">
-            {t('landing.pricing.title')}
-          </h2>
-          <p className="mt-4 text-lg text-muted-foreground">
-            {t('landing.pricing.subtitle')}
-          </p>
-        </div>
-        <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 items-center">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 items-start">
           {tiers.map((tier) => (
-            <Card key={tier.name} className={`flex flex-col h-full ${tier.isFeatured ? "border-primary shadow-2xl scale-105" : "border-border"}`}>
-              <CardHeader className="text-center">
+            <Card key={tier.name} className={`flex flex-col h-full ${tier.isFeatured ? "border-primary shadow-lg" : "border-border"}`}>
+              <CardHeader>
                 <CardTitle className="font-headline text-2xl">{tier.name}</CardTitle>
-                 <div className="flex items-baseline justify-center gap-2 mt-4">
+                 <div className="flex items-baseline gap-2 mt-4">
                     <span className="text-4xl font-bold">{tier.price}</span>
                     <span className="text-muted-foreground">{tier.priceDescription}</span>
                 </div>
