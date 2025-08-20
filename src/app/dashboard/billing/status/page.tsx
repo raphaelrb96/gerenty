@@ -6,13 +6,45 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useTranslation } from '@/context/i18n-context';
+import { useAuth } from '@/context/auth-context';
+import { doc, onSnapshot, Timestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import type { User } from '@/lib/types';
 
 function BillingStatusContent() {
     const searchParams = useSearchParams();
-    const status = searchParams.get('status');
+    const urlStatus = searchParams.get('status');
     const { t } = useTranslation();
+    const { user } = useAuth();
+    
+    const [status, setStatus] = useState<'processing' | 'success' | 'cancelled'>(
+      urlStatus === 'cancelled' ? 'cancelled' : 'processing'
+    );
+
+    useEffect(() => {
+        if (!user || status === 'cancelled') return;
+
+        const unsub = onSnapshot(doc(db, "users", user.uid), (doc) => {
+            const userData = doc.data() as User;
+            if (userData?.statusPlan === 'ativo' && userData.assignedDate) {
+                const assignedDate = (userData.assignedDate as Timestamp).toDate();
+                const now = new Date();
+                const hoursDiff = Math.abs(now.getTime() - assignedDate.getTime()) / 36e5;
+
+                // Check if the plan was assigned in the last 48 hours
+                if (hoursDiff <= 48) {
+                    setStatus('success');
+                }
+            }
+        });
+
+        // Cleanup subscription on unmount
+        return () => unsub();
+
+    }, [user, status]);
+
 
     if (status === 'success') {
         return (
@@ -52,6 +84,7 @@ function BillingStatusContent() {
         );
     }
     
+    // Default to processing
     return (
         <Card className="w-full max-w-lg">
             <CardHeader className="items-center">
@@ -71,8 +104,8 @@ function BillingStatusContent() {
 export default function BillingStatusPage() {
     const { t } = useTranslation();
     return (
-        <div className="flex items-center justify-center h-full">
-            <Suspense fallback={<div>{t('Loading')}...</div>}>
+        <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
+            <Suspense fallback={<div className="flex items-center justify-center min-h-[calc(100vh-8rem)]"><Loader2 className="h-16 w-16 animate-spin" /></div>}>
                 <BillingStatusContent />
             </Suspense>
         </div>
