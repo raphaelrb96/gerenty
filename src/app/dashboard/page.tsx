@@ -19,10 +19,12 @@ import { getProducts } from "@/services/product-service";
 import type { Order, Product } from "@/lib/types";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { useTranslation } from "@/context/i18n-context";
+import { useCurrency } from "@/context/currency-context";
 
 export default function DashboardPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { formatCurrency } = useCurrency();
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,7 +54,7 @@ export default function DashboardPage() {
   const productsInStock = products.length;
 
   const stats = [
-    { title: t('dashboard.totalRevenue'), value: `R$${totalRevenue.toFixed(2)}`, icon: <DollarSign className="h-4 w-4 text-muted-foreground" /> },
+    { title: t('dashboard.totalRevenue'), value: formatCurrency(totalRevenue), icon: <DollarSign className="h-4 w-4 text-muted-foreground" /> },
     { title: t('dashboard.totalSales'), value: `+${totalSales}`, icon: <ShoppingCart className="h-4 w-4 text-muted-foreground" /> },
     { title: t('dashboard.productsInStock'), value: `${productsInStock}`, icon: <Package className="h-4 w-4 text-muted-foreground" /> },
   ];
@@ -106,7 +108,7 @@ export default function DashboardPage() {
                     <p className="text-sm text-muted-foreground">{activity.id.substring(0, 7)}</p>
                 </div>
                 <div className="text-right">
-                    <p className="font-semibold">R${activity.total.toFixed(2)}</p>
+                    <p className="font-semibold">{formatCurrency(activity.total)}</p>
                      <Badge variant={activity.status === "completed" ? "default" : activity.status === "processing" ? "secondary" : "outline"}
                     className={activity.status === "completed" ? "bg-green-600/20 text-green-700 hover:bg-green-600/30" : activity.status === "processing" ? "bg-blue-600/20 text-blue-700 hover:bg-blue-600/30" : "bg-yellow-600/20 text-yellow-700 hover:bg-yellow-600/30"}>
                       {t(`orderStatus.${activity.status}`)}

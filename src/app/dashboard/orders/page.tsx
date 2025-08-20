@@ -15,10 +15,12 @@ import { PageHeader } from "@/components/common/page-header";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { EmptyState } from "@/components/common/empty-state";
 import { useTranslation } from "@/context/i18n-context";
+import { useCurrency } from "@/context/currency-context";
 
 export default function OrdersPage() {
     const { t } = useTranslation();
     const { user } = useAuth();
+    const { formatCurrency } = useCurrency();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -117,7 +119,7 @@ export default function OrdersPage() {
                         {new Date(order.createdAt as string).toLocaleDateString()}
                     </div>
                     <div className="md:col-span-1 text-left md:text-right font-semibold">
-                        R${order.total.toFixed(2)}
+                        {formatCurrency(order.total)}
                     </div>
                     <div className="flex md:col-span-1 justify-end items-center gap-2">
                         <Button variant="outline" size="sm" onClick={() => handleViewDetails(order)}>

@@ -19,6 +19,7 @@ import { useTranslation } from "@/context/i18n-context";
 import { useAuth } from "@/context/auth-context";
 import { useRouter } from "next/navigation";
 import { signOut } from "@/services/auth-service";
+import { CurrencyToggle } from "../currency-toggle";
 
 export function Header() {
   const { t } = useTranslation();
@@ -48,6 +49,7 @@ export function Header() {
       <div className="flex items-center gap-2">
         <ThemeToggle />
         <LanguageToggle />
+        <CurrencyToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-8 w-8 rounded-full">

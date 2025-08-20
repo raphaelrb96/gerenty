@@ -33,6 +33,7 @@ import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
 import { useTranslation } from "@/context/i18n-context";
+import { useCurrency } from "@/context/currency-context";
 
 
 const orderItemSchema = z.object({
@@ -83,6 +84,7 @@ export function PosForm({ allProducts }: PosFormProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { formatCurrency } = useCurrency();
   const [cart, setCart] = useState<OrderItem[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
@@ -248,7 +250,7 @@ export function PosForm({ allProducts }: PosFormProps) {
                                     <SelectContent>
                                         {allProducts.map((product) => (
                                             <SelectItem key={product.id} value={product.id}>
-                                                {product.name} - R${product.pricing[0].price.toFixed(2)}
+                                                {product.name} - {formatCurrency(product.pricing[0].price)}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -273,10 +275,10 @@ export function PosForm({ allProducts }: PosFormProps) {
                                             <div key={item.productId} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
                                                 <div>
                                                     <p className="font-medium">{item.productName}</p>
-                                                    <p className="text-sm text-muted-foreground">{item.quantity} x R${item.unitPrice.toFixed(2)}</p>
+                                                    <p className="text-sm text-muted-foreground">{item.quantity} x {formatCurrency(item.unitPrice)}</p>
                                                 </div>
                                                 <div className="flex items-center gap-4">
-                                                    <p className="font-semibold">R${item.totalPrice.toFixed(2)}</p>
+                                                    <p className="font-semibold">{formatCurrency(item.totalPrice)}</p>
                                                     <Button type="button" variant="ghost" size="icon" className="text-destructive" onClick={() => handleRemoveFromCart(item.productId)}>
                                                         <Trash2 className="h-4 w-4" />
                                                     </Button>
@@ -356,11 +358,11 @@ export function PosForm({ allProducts }: PosFormProps) {
                     )}/>
                  </div>
                  <div className="space-y-2 rounded-md border bg-muted p-4">
-                    <div className="flex justify-between text-muted-foreground"><span>{t('orderDetails.subtotal')}</span><span>R$ {subtotal.toFixed(2)}</span></div>
-                    <div className="flex justify-between text-muted-foreground"><span>{t('orderDetails.shipping')}</span><span>R$ {watchedShippingCost.toFixed(2)}</span></div>
-                    <div className="flex justify-between text-muted-foreground"><span>{t('pos.summary.discount')}</span><span className="text-red-500">- R$ {watchedDiscount.toFixed(2)}</span></div>
+                    <div className="flex justify-between text-muted-foreground"><span>{t('orderDetails.subtotal')}</span><span>{formatCurrency(subtotal)}</span></div>
+                    <div className="flex justify-between text-muted-foreground"><span>{t('orderDetails.shipping')}</span><span>{formatCurrency(watchedShippingCost)}</span></div>
+                    <div className="flex justify-between text-muted-foreground"><span>{t('pos.summary.discount')}</span><span className="text-red-500">- {formatCurrency(watchedDiscount)}</span></div>
                     <Separator className="my-2 bg-border" />
-                    <div className="flex justify-between font-bold text-lg"><span>{t('orderDetails.total')}</span><span>R$ {total.toFixed(2)}</span></div>
+                    <div className="flex justify-between font-bold text-lg"><span>{t('orderDetails.total')}</span><span>{formatCurrency(total)}</span></div>
                  </div>
 
                  <FormField control={form.control} name="notes" render={({ field }) => (
@@ -371,7 +373,7 @@ export function PosForm({ allProducts }: PosFormProps) {
             <CardFooter className="p-0 pt-6">
                  <Button type="submit" className="w-full" size="lg" disabled={isSaving || cart.length === 0} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
                      {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                     {t('pos.submitButton')} (R$ {total.toFixed(2)})
+                     {t('pos.submitButton')} ({formatCurrency(total)})
                  </Button>
             </CardFooter>
           </form>
@@ -380,5 +382,3 @@ export function PosForm({ allProducts }: PosFormProps) {
     </Card>
   );
 }
-
-    

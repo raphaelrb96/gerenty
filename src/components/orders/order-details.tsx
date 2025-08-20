@@ -12,6 +12,7 @@ import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
 import type { Order, OrderStatus } from "@/lib/types";
 import { useTranslation } from "@/context/i18n-context";
+import { useCurrency } from "@/context/currency-context";
 
 type OrderDetailsProps = {
     order?: Order | null,
@@ -22,6 +23,7 @@ const statuses: OrderStatus[] = ["pending", "confirmed", "processing", "shipped"
 
 export function OrderDetails({ order, onFinished }: OrderDetailsProps) {
   const { t } = useTranslation();
+  const { formatCurrency } = useCurrency();
   if (!order) return null;
 
   return (
@@ -59,21 +61,21 @@ export function OrderDetails({ order, onFinished }: OrderDetailsProps) {
                 {order.items.map(item => (
                     <div key={item.productId} className="flex items-center justify-between">
                         <dt className="text-muted-foreground">{item.quantity}x {item.productName}</dt>
-                        <dd>R${item.totalPrice.toFixed(2)}</dd>
+                        <dd>{formatCurrency(item.totalPrice)}</dd>
                     </div>
                 ))}
                 <Separator className="my-2" />
                 <div className="flex items-center justify-between">
                     <dt className="text-muted-foreground">{t('orderDetails.subtotal')}</dt>
-                    <dd>R${order.subtotal.toFixed(2)}</dd>
+                    <dd>{formatCurrency(order.subtotal)}</dd>
                 </div>
                  <div className="flex items-center justify-between">
                     <dt className="text-muted-foreground">{t('orderDetails.shipping')}</dt>
-                    <dd>R${(order.shippingCost || 0).toFixed(2)}</dd>
+                    <dd>{formatCurrency(order.shippingCost || 0)}</dd>
                 </div>
                 <div className="flex items-center justify-between font-semibold">
                     <dt>{t('orderDetails.total')}</dt>
-                    <dd>R${order.total.toFixed(2)}</dd>
+                    <dd>{formatCurrency(order.total)}</dd>
                 </div>
             </dl>
         </div>

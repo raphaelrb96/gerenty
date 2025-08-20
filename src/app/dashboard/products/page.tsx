@@ -16,11 +16,13 @@ import { EmptyState } from "@/components/common/empty-state";
 import { PlusCircle, Package } from "lucide-react";
 import Image from "next/image";
 import { useTranslation } from "@/context/i18n-context";
+import { useCurrency } from "@/context/currency-context";
 
 
 export default function ProductsPage() {
     const { t } = useTranslation();
     const { user } = useAuth();
+    const { formatCurrency } = useCurrency();
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -111,7 +113,7 @@ export default function ProductsPage() {
                 </CardHeader>
                 <CardContent className="p-4">
                     <h3 className="text-lg font-semibold">{product.name}</h3>
-                    <p className="font-semibold text-primary">R${product.pricing[0]?.price.toFixed(2)}</p>
+                    <p className="font-semibold text-primary">{formatCurrency(product.pricing[0]?.price)}</p>
                     <p className="text-sm text-muted-foreground">{t('productsPage.stock')}: {typeof product.availableStock === 'number' ? product.availableStock : 'N/A'}</p>
                 </CardContent>
                 <CardFooter className="p-4 pt-0">

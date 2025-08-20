@@ -5,6 +5,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { I18nProvider } from "@/context/i18n-context";
 import { AuthProvider } from "@/context/auth-context";
+import { CurrencyProvider } from "@/context/currency-context";
 
 export const metadata: Metadata = {
   title: "Enterprisy Lite",
@@ -33,7 +34,9 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <AuthProvider>
+              <CurrencyProvider>
                 {children}
+              </CurrencyProvider>
             </AuthProvider>
             <Toaster />
           </ThemeProvider>

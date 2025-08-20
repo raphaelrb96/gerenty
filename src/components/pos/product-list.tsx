@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import { useState } from "react";
+import { useCurrency } from "@/context/currency-context";
 
 type ProductListProps = {
   products: Product[];
@@ -13,6 +14,7 @@ type ProductListProps = {
 
 export function ProductList({ products }: ProductListProps) {
     const [searchTerm, setSearchTerm] = useState("");
+    const { formatCurrency } = useCurrency();
 
     const filteredProducts = products.filter(product => 
         product.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -41,7 +43,7 @@ export function ProductList({ products }: ProductListProps) {
                     />
                     <div className="flex-grow">
                         <p className="font-semibold">{product.name}</p>
-                        <p className="text-sm text-muted-foreground">R${product.pricing[0]?.price.toFixed(2)}</p>
+                        <p className="text-sm text-muted-foreground">{formatCurrency(product.pricing[0]?.price)}</p>
                     </div>
                 </div>
             )) : (

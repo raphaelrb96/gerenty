@@ -9,14 +9,15 @@ import { LanguageToggle } from "../language-toggle";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 import { useTranslation } from "@/context/i18n-context";
+import { CurrencyToggle } from "../currency-toggle";
 
 export function Header() {
   const { t } = useTranslation();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-14 items-center px-4 md:px-6">
-        <div className="ml-3">
+      <div className="container flex h-14 items-center">
+        <div className="mr-4 hidden md:flex">
           <Logo />
         </div>
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
@@ -24,9 +25,9 @@ export function Header() {
             {/* Input de busca pode ser adicionado aqui */}
           </div>
           <nav className="hidden md:flex items-center gap-2">
-
             <ThemeToggle />
             <LanguageToggle />
+            <CurrencyToggle />
             <Button variant="ghost" asChild>
               <Link href="/auth/login">{t('landing.header.login')}</Link>
             </Button>
@@ -39,6 +40,7 @@ export function Header() {
         <div className="md:hidden flex items-center">
           <ThemeToggle />
           <LanguageToggle />
+          <CurrencyToggle />
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon">
