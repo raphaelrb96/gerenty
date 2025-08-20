@@ -28,7 +28,7 @@ export function Pricing() {
       description: t('landing.pricing.pro.description'),
       features: t('landing.pricing.pro.features', { returnObjects: true }) as unknown as string[],
       cta: t('landing.pricing.pro.cta'),
-      href: "/auth/signup",
+      href: "/checkout",
       isFeatured: true,
     },
     {

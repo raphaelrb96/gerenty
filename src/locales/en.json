@@ -250,7 +250,18 @@
         "correios": "Correios",
         "own": "Own Logistics",
         "digital": "Digital"
+    },
+    "checkout": {
+        "title": "Finalize Your Purchase",
+        "subtitle": "Complete the details below to start your subscription.",
+        "paymentDetails": "Payment Details",
+        "paymentDescription": "Enter your credit card information.",
+        "cardNumber": "Card Number",
+        "expiryDate": "Expiry Date",
+        "cvc": "CVC",
+        "nameOnCard": "Name on Card",
+        "summary": "Summary",
+        "payButton": "Pay Securely",
+        "securityNote": "Secure payment processed by Stripe."
     }
 }
-
-    

@@ -250,7 +250,18 @@
         "correios": "Correios",
         "own": "Logística Própria",
         "digital": "Digital"
+    },
+    "checkout": {
+        "title": "Finalize Sua Compra",
+        "subtitle": "Complete os detalhes abaixo para iniciar sua assinatura.",
+        "paymentDetails": "Detalhes do Pagamento",
+        "paymentDescription": "Insira as informações do seu cartão de crédito.",
+        "cardNumber": "Número do Cartão",
+        "expiryDate": "Data de Validade",
+        "cvc": "CVC",
+        "nameOnCard": "Nome no Cartão",
+        "summary": "Resumo",
+        "payButton": "Pagar com Segurança",
+        "securityNote": "Pagamento seguro processado pela Stripe."
     }
 }
-
-    

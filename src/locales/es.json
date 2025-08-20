@@ -250,7 +250,18 @@
         "correios": "Correos",
         "own": "Logística Propia",
         "digital": "Digital"
+    },
+    "checkout": {
+        "title": "Finaliza tu Compra",
+        "subtitle": "Completa los detalles a continuación para iniciar tu suscripción.",
+        "paymentDetails": "Detalles del Pago",
+        "paymentDescription": "Ingresa la información de tu tarjeta de crédito.",
+        "cardNumber": "Número de Tarjeta",
+        "expiryDate": "Fecha de Vencimiento",
+        "cvc": "CVC",
+        "nameOnCard": "Nombre en la Tarjeta",
+        "summary": "Resumen",
+        "payButton": "Pagar de Forma Segura",
+        "securityNote": "Pago seguro procesado por Stripe."
     }
 }
-
-    
