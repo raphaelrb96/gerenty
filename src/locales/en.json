@@ -59,31 +59,103 @@
     },
     "landing": {
         "hero": {
-            "title": "Stop putting out fires! Turn your store into an organized and profitable business.",
+            "title": {
+                "line1": "Stop putting out fires!",
+                "line2": "Transform your business."
+            },
             "subtitle": "A single platform to manage sales, inventory, and finances with full control, from anywhere.",
-            "ctaPrimary": "Get Started Now for Free"
+            "ctaPrimary": "Get Started Now for Free",
+            "ctaSecondary": "See Features",
+            "videoAlt": "Animated product video placeholder"
         },
-        "benefits": {
-            "title": "Your Reality Today vs. Your Future with Enterprisy",
-            "subtitle": "We understand your challenges and have built the definitive solution.",
-            "benefit1": { "title": "Real-Time Inventory", "description": "Lost a sale due to lack of stock? With Enterprisy, your inventory is updated with every sale, automatically." },
-            "benefit2": { "title": "Automated Financial Reports", "description": "Tired of spending hours on spreadsheets? Get instant, easy-to-understand financial reports." },
-            "benefit3": { "title": "Organized Order Management", "description": "Feeling lost in a mess of orders? Centralize and manage all your orders in one place, from start to finish." },
-            "benefit4": { "title": "AI-Powered Growth", "description": "Use artificial intelligence to create descriptions, analyze data, and grow without limits." }
+        "socialProof": {
+            "title": "The trust of those who have already transformed their business",
+            "subtitle": "MORE THAN 10,000 BUSINESSES ALREADY USE ENTERPRISY"
+        },
+        "testimonials": {
+            "quote1": "Before Enterprisy, I wasted hours on spreadsheets. Today, I have full control of my business. It simply changed my game!",
+            "author1": "Ana P., E-commerce Owner",
+            "quote2": "I thought ERP was for big companies. Enterprisy is intuitive, affordable, and helped me professionalize my online store. Amazing!",
+            "author2": "João V., Freelance Seller",
+            "quote3": "The transition was super smooth. Inventory and order management became much more efficient, and the dashboard gives me the vision I need to make decisions.",
+            "author3": "Maria S., Bazaar Manager"
+        },
+        "painSolution": {
+            "title": "Stop struggling with the mess!",
+            "subtitle": "Enterprisy is the complete solution for your biggest challenges.",
+            "realityToday": "Your reality today:",
+            "pain1": "Lost a sale due to lack of stock?",
+            "pain2": "Spend hours on financial spreadsheets, unsure of the profit?",
+            "pain3": "Feeling lost with the back and forth of orders?",
+            "realityWithEnterprisy": "Your reality with Enterprisy:",
+            "solution1": "Real-time updated inventory. Never lose a sale again.",
+            "solution2": "Accurate and automatic reports. Know exactly how much you earn.",
+            "solution3": "Organized orders, updated statuses, and an intuitive workflow."
+        },
+        "features": {
+            "title": "Your success in every feature",
+            "feature1": {
+                "title": "Uncomplicated Management",
+                "description": "Control products, orders, and finances on a single platform. Less bureaucracy, more efficiency."
+            },
+            "feature2": {
+                "title": "Intelligent Decisions",
+                "description": "Get access to metrics and reports in real-time. Know where to invest to maximize your profit."
+            },
+            "feature3": {
+                "title": "Customer Relationship",
+                "description": "Organize your contacts and understand purchasing behavior. Build bonds that generate recurring sales."
+            }
         },
         "pricing": {
-            "title": "Find the Perfect Plan for You",
-            "subtitle": "Start for free and scale as you grow. No credit card required.",
-            "free": { "name": "Free", "price": "R$0", "priceDescription": "/month", "description": "For individuals and small teams just starting out.", "features": ["10 Products", "100 Orders/month", "Basic Analytics"], "cta": "Get Started" },
-            "pro": { "name": "Pro", "price": "R$29", "priceDescription": "/month", "description": "For growing businesses that need more power.", "features": ["Unlimited Products", "Unlimited Orders", "Advanced Analytics", "AI Credits"], "cta": "Choose Pro" },
-            "enterprise": { "name": "Enterprise", "price": "R$99", "priceDescription": "/month", "description": "For large-scale operations with custom needs.", "features": ["Everything in Pro", "Priority Support", "Custom Integrations"], "cta": "Contact Us" }
+            "title": "Choose the ideal plan for your business",
+            "subtitle": "Start for free and upgrade when you're ready.",
+            "mostPopular": "Most Popular",
+            "free": {
+                "name": "Free Plan",
+                "price": "$0",
+                "description": "Up to 50 products",
+                "features": ["Basic order management", "Email support", "Limited reports"],
+                "cta": "Get Started"
+            },
+            "pro": {
+                "name": "Pro Plan",
+                "price": "$49/month",
+                "description": "Unlimited products",
+                "features": ["Complete stock control", "Financial automation", "Priority support"],
+                "cta": "Choose Pro"
+            },
+            "enterprise": {
+                "name": "Enterprise Plan",
+                "price": "Custom",
+                "description": "Everything from the Pro plan",
+                "features": ["Multiple users and permissions", "Custom integrations", "Dedicated account manager"],
+                "cta": "Contact Us"
+            }
+        },
+        "faq": {
+            "title": "Answers to your questions",
+            "subtitle": "Everything you need to know to make the best decision.",
+            "question1": "Is Enterprisy suitable for my type of business?",
+            "answer1": "Yes! Our platform was developed to serve everyone from small entrepreneurs to more robust online stores, with scalable features to accompany your growth.",
+            "question2": "Is it easy to migrate my data to Enterprisy?",
+            "answer2": "Our team is ready to help you! We offer a guided migration process so you can bring your products and customers without complications.",
+            "question3": "How does the trial period work?",
+            "answer3": "We offer a free plan that you can use for as long as you want. It includes basic features so you can feel the power of Enterprisy without commitment. You only subscribe if you want to evolve."
+        },
+        "finalCta": {
+            "title": "Ready to take off?",
+            "subtitle": "Join thousands of entrepreneurs who are transforming their businesses with Enterprisy.",
+            "cta": "Start Your Journey"
         },
         "header": {
             "login": "Login",
             "signup": "Sign Up Free"
         },
         "footer": {
-            "copy": "© {year} Enterprisy Lite. All rights reserved."
+            "copy": "© {year} Enterprisy Lite. All rights reserved.",
+            "terms": "Terms",
+            "privacy": "Privacy"
         }
     },
     "dashboard": {

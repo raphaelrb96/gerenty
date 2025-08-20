@@ -2,207 +2,208 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Header } from "@/components/landing/header";
 import { Pricing } from "@/components/landing/pricing";
 import { Footer } from "@/components/landing/footer";
-import { XCircleIcon, CheckCircleIcon } from "lucide-react";
+import { ArrowRight, Check, X } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { BenefitCards } from "@/components/landing/BenefitCards";
 import Image from "next/image";
+import { useTranslation } from "@/context/i18n-context";
 
 export default function Home() {
+  const { t } = useTranslation();
+
+  const testimonials = [
+    { quote: t('landing.testimonials.quote1'), author: t('landing.testimonials.author1') },
+    { quote: t('landing.testimonials.quote2'), author: t('landing.testimonials.author2') },
+    { quote: t('landing.testimonials.quote3'), author: t('landing.testimonials.author3') },
+  ];
+
+  const faqs = [
+    { question: t('landing.faq.question1'), answer: t('landing.faq.answer1') },
+    { question: t('landing.faq.question2'), answer: t('landing.faq.answer2') },
+    { question: t('landing.faq.question3'), answer: t('landing.faq.answer3') },
+  ];
+
+  const logos = [
+    { src: "https://placehold.co/120x40/E5E7EB/9CA3AF?text=Loja+ABC", alt: "Loja ABC" },
+    { src: "https://placehold.co/120x40/E5E7EB/9CA3AF?text=Moda+Online", alt: "Moda Online" },
+    { src: "https://placehold.co/120x40/E5E7EB/9CA3AF?text=Tech+Gadgets", alt: "Tech Gadgets" },
+    { src: "https://placehold.co/120x40/E5E7EB/9CA3AF?text=Artesanato", alt: "Artesanato" },
+    { src: "https://placehold.co/120x40/E5E7EB/9CA3AF?text=Pet+Shop", alt: "Pet Shop" },
+  ];
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Header />
       <main className="flex-1">
         {/* 1. Proposta de Valor Impactante */}
         <section className="w-full py-20 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6 grid gap-10 lg:grid-cols-2 lg:gap-16 items-center">
-            <motion.div 
-              className="flex flex-col justify-center space-y-6"
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <div className="space-y-4">
-                <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none font-headline">
-                  Chega de apagar incêndios! Transforme sua loja em um negócio organizado e lucrativo.
-                </h1>
-                <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                  Uma única plataforma para gerenciar vendas, estoque e finanças com total controle, de qualquer lugar.
-                </p>
-              </div>
-              <div className="flex flex-col gap-4 min-[400px]:flex-row">
-                <Button asChild size="lg" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
-                  <Link href="/auth/signup">Começar Agora de Graça</Link>
-                </Button>
-                <Button variant="outline" size="lg" asChild>
-                  <Link href="#pricing">Ver Planos</Link>
-                </Button>
-              </div>
-            </motion.div>
-            <motion.div 
-              className="relative aspect-video overflow-hidden rounded-xl object-cover sm:w-full lg:order-last flex items-center justify-center shadow-lg"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-               <Image
-                src="https://placehold.co/600x400.png"
-                alt="Dashboard preview"
-                fill
-                className="object-cover rounded-lg shadow-2xl transform transition-transform duration-300"
-                data-ai-hint="dashboard analytics"
-              />
-            </motion.div>
-          </div>
-        </section>
-
-        {/* 2. Seção de Dor e Solução */}
-        <section className="w-full py-20 md:py-24 lg:py-32 bg-muted/40">
           <div className="container px-4 md:px-6">
-             <div className="text-center max-w-3xl mx-auto mb-12">
-              <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl font-headline">Sua Realidade Hoje vs. Seu Futuro com o Enterprisy</h2>
-              <p className="max-w-[700px] mx-auto text-muted-foreground md:text-xl/relaxed mt-4">
-               Entendemos seus desafios e construímos a solução definitiva.
-              </p>
-            </div>
-            <div className="grid gap-8 lg:grid-cols-2 items-start">
-              <Card className="space-y-6 p-6 shadow-sm border-destructive/50">
-                <h3 className="text-2xl font-bold font-headline flex items-center gap-3"><XCircleIcon className="w-8 h-8 text-destructive flex-shrink-0" /> Sua Realidade Hoje</h3>
-                <ul className="space-y-4 text-lg text-muted-foreground pl-4 list-disc list-inside">
-                  <li>Perder vendas por falta de estoque?</li>
-                  <li>Passar horas em planilhas financeiras?</li>
-                  <li>Se sentir perdido com a bagunça dos pedidos?</li>
-                </ul>
-              </Card>
-              <Card className="space-y-6 p-6 shadow-lg border-primary/50 bg-card">
-                <h3 className="text-2xl font-bold font-headline flex items-center gap-3"><CheckCircleIcon className="w-8 h-8 text-green-500 flex-shrink-0" /> Sua Realidade com Enterprisy</h3>
-                <ul className="space-y-4 text-lg pl-4 list-disc list-inside">
-                  <li>Estoque atualizado em tempo real.</li>
-                  <li>Relatórios financeiros automáticos.</li>
-                  <li>Pedidos organizados em um só lugar.</li>
-                </ul>
-              </Card>
-            </div>
-          </div>
-        </section>
-
-        {/* 3. Prova Social e Autoridade */}
-        <section className="w-full py-20 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6 text-center">
-            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl font-headline">
-              Quem já está transformando o negócio
-            </h2>
-            <p className="max-w-[700px] mx-auto text-muted-foreground md:text-xl/relaxed mt-4">
-              Veja o que nossos clientes satisfeitos dizem sobre os resultados que alcançaram.
-            </p>
-
-            <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-              <Card className="bg-card text-left p-6 shadow-sm hover:shadow-md transition-shadow">
-                <CardContent className="p-0 flex flex-col h-full">
-                    <p className="text-muted-foreground flex-grow">"Enterprisy mudou a forma como gerencio meu estoque. Agora tenho tudo sob controle e perdi muito menos vendas."</p>
-                    <div className="flex items-center mt-4 pt-4 border-t">
-                      <Avatar>
-                        <AvatarImage src="https://placehold.co/40x40.png" alt="User Avatar" data-ai-hint="man portrait" />
-                        <AvatarFallback>CN</AvatarFallback>
-                      </Avatar>
-                      <div className="ml-4">
-                        <p className="font-semibold text-card-foreground">Carlos N.</p>
-                        <p className="text-sm text-muted-foreground">Loja de Roupas</p>
-                      </div>
-                    </div>
-                </CardContent>
-              </Card>
-              <Card className="bg-card text-left p-6 shadow-sm hover:shadow-md transition-shadow">
-                 <CardContent className="p-0 flex flex-col h-full">
-                    <p className="text-muted-foreground flex-grow">"Os relatórios financeiros automáticos me poupam horas de trabalho toda semana. Posso focar no que realmente importa: meus clientes!"</p>
-                    <div className="flex items-center mt-4 pt-4 border-t">
-                       <Avatar>
-                        <AvatarImage src="https://placehold.co/40x40.png" alt="User Avatar" data-ai-hint="woman portrait" />
-                        <AvatarFallback>AM</AvatarFallback>
-                      </Avatar>
-                      <div className="ml-4">
-                        <p className="font-semibold text-card-foreground">Ana M.</p>
-                        <p className="text-sm text-muted-foreground">Cafeteria</p>
-                      </div>
-                    </div>
-                </CardContent>
-              </Card>
-               <Card className="bg-card text-left p-6 shadow-sm hover:shadow-md transition-shadow">
-                <CardContent className="p-0 flex flex-col h-full">
-                    <p className="text-muted-foreground flex-grow">"A gestão de pedidos ficou muito mais simples. Agora consigo processar tudo rapidamente e manter meus clientes felizes."</p>
-                    <div className="flex items-center mt-4 pt-4 border-t">
-                      <Avatar>
-                        <AvatarImage src="https://placehold.co/40x40.png" alt="User Avatar" data-ai-hint="man glasses" />
-                        <AvatarFallback>RP</AvatarFallback>
-                      </Avatar>
-                      <div className="ml-4">
-                        <p className="font-semibold text-card-foreground">Roberto P.</p>
-                        <p className="text-sm text-muted-foreground">Loja de Eletrônicos</p>
-                      </div>
-                    </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="mt-16 text-center">
-              <p className="text-2xl font-bold text-foreground">Mais de <span className="text-primary">5.000 negócios</span> já usam Enterprisy para crescer</p>
-              <p className="text-xl text-muted-foreground mt-2">Economize até <span className="font-bold text-primary">15 horas</span> por semana em gestão</p>
+            <div className="mx-auto max-w-7xl text-center">
+              <motion.h1 
+                className="mb-4 text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+              >
+                {t('landing.hero.title.line1')} <span className="mt-2 block text-primary sm:inline-block">{t('landing.hero.title.line2')}</span>
+              </motion.h1>
+              <motion.p 
+                className="mx-auto mb-8 max-w-3xl text-lg text-muted-foreground sm:text-xl md:text-2xl"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+              >
+                {t('landing.hero.subtitle')}
+              </motion.p>
+              <motion.div 
+                className="flex flex-col justify-center space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+              >
+                <Button asChild size="lg" className="transform transition-transform hover:scale-105" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
+                  <Link href="/auth/signup">{t('landing.hero.ctaPrimary')}</Link>
+                </Button>
+                <Button asChild size="lg" variant="outline" className="transform transition-transform hover:scale-105">
+                  <Link href="#funcionalidades">{t('landing.hero.ctaSecondary')}</Link>
+                </Button>
+              </motion.div>
+              <motion.div 
+                className="mx-auto mt-16 w-full max-w-4xl overflow-hidden rounded-xl bg-muted shadow-2xl"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
+              >
+                <div className="aspect-video flex items-center justify-center">
+                  <Image src="https://placehold.co/1280x720.png" alt={t('landing.hero.videoAlt')} width={1280} height={720} className="object-cover" data-ai-hint="dashboard analytics" />
+                </div>
+              </motion.div>
             </div>
           </div>
         </section>
 
-        {/* 4. Seção de Funcionalidades como Benefícios */}
+        {/* 2. Prova Social e Autoridade */}
+        <section className="bg-muted/40 py-16">
+          <div className="container px-4 md:px-6">
+            <div className="mx-auto max-w-7xl text-center">
+              <h2 className="mb-4 text-2xl font-bold text-primary sm:text-3xl">{t('landing.socialProof.title')}</h2>
+              <div className="mb-12 grid grid-cols-1 gap-8 md:grid-cols-3">
+                {testimonials.map((t, index) => (
+                  <Card key={index} className="border p-6 text-left shadow-md">
+                    <CardContent className="p-0">
+                      <p className="mb-4 italic text-muted-foreground">"{t.quote}"</p>
+                      <p className="font-semibold text-foreground">- {t.author}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+              <p className="mb-4 text-sm font-semibold tracking-widest text-muted-foreground">{t('landing.socialProof.subtitle')}</p>
+              <div className="flex flex-wrap items-center justify-center gap-6 opacity-70">
+                {logos.map((logo, index) => (
+                  <Image key={index} src={logo.src} alt={logo.alt} width={120} height={40} className="mx-auto" />
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 3. Seção de Dor e Solução */}
+        <section className="py-16 md:py-24">
+          <div className="container px-4 md:px-6">
+            <div className="mx-auto max-w-7xl">
+              <div className="mb-12 text-center">
+                <h2 className="mb-2 text-3xl font-bold sm:text-4xl">{t('landing.painSolution.title')}</h2>
+                <p className="text-xl text-muted-foreground">{t('landing.painSolution.subtitle')}</p>
+              </div>
+              <div className="grid items-center gap-12 md:grid-cols-2">
+                <div className="space-y-6">
+                  <h3 className="mb-4 text-2xl font-bold text-destructive">{t('landing.painSolution.realityToday')}</h3>
+                  <div className="flex items-center space-x-4">
+                    <div className="flex-shrink-0 rounded-full bg-destructive p-3 text-destructive-foreground"><X size={24} /></div>
+                    <p className="text-lg">{t('landing.painSolution.pain1')}</p>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                     <div className="flex-shrink-0 rounded-full bg-destructive p-3 text-destructive-foreground"><X size={24} /></div>
+                    <p className="text-lg">{t('landing.painSolution.pain2')}</p>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="flex-shrink-0 rounded-full bg-destructive p-3 text-destructive-foreground"><X size={24} /></div>
+                    <p className="text-lg">{t('landing.painSolution.pain3')}</p>
+                  </div>
+                </div>
+                <div className="space-y-6">
+                  <h3 className="mb-4 text-2xl font-bold text-green-500">{t('landing.painSolution.realityWithEnterprisy')}</h3>
+                  <div className="flex items-center space-x-4">
+                    <div className="flex-shrink-0 rounded-full bg-green-500 p-3 text-white"><Check size={24} /></div>
+                    <p className="text-lg">{t('landing.painSolution.solution1')}</p>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="flex-shrink-0 rounded-full bg-green-500 p-3 text-white"><Check size={24} /></div>
+                    <p className="text-lg">{t('landing.painSolution.solution2')}</p>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="flex-shrink-0 rounded-full bg-green-500 p-3 text-white"><Check size={24} /></div>
+                    <p className="text-lg">{t('landing.painSolution.solution3')}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 4. Funcionalidades como Benefícios */}
         <BenefitCards />
 
         {/* 5. Seção de Planos e Preços */}
-        <div id="pricing">
-         <Pricing />
+        <div id="planos">
+          <Pricing />
         </div>
 
-        {/* 6. Seção de Perguntas Frequentes (FAQ) e Último CTA */}
-        <section className="w-full py-20 md:py-24 lg:py-32 bg-muted/40">
+        {/* 6. Seção de Perguntas Frequentes (FAQ) */}
+        <section className="bg-muted/40 py-16 md:py-24">
           <div className="container px-4 md:px-6">
-            <div className="text-center max-w-3xl mx-auto mb-12">
-              <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl font-headline">Perguntas Frequentes</h2>
-              <p className="max-w-[700px] mx-auto text-muted-foreground md:text-xl/relaxed mt-4">
-                Encontre respostas para as dúvidas mais comuns sobre o Enterprisy.
-              </p>
-            </div>
-            <Accordion type="single" collapsible className="w-full max-w-3xl mx-auto bg-card p-4 rounded-lg shadow-sm">
-              <AccordionItem value="item-1">
-                <AccordionTrigger className="text-lg">Como funciona a cobrança?</AccordionTrigger>
-                <AccordionContent className="text-base text-muted-foreground">
-                  A cobrança é mensal ou anual, dependendo do plano escolhido. Você pode cancelar a qualquer momento diretamente no seu painel de controle.
-                </AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="item-2">
-                <AccordionTrigger className="text-lg">Meus dados estão seguros?</AccordionTrigger>
-                <AccordionContent className="text-base text-muted-foreground">
-                  Sim, a segurança dos seus dados é nossa prioridade máxima. Utilizamos as melhores práticas e criptografia de ponta para garantir a proteção das suas informações.
-                </AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="item-3">
-                <AccordionTrigger className="text-lg">Qual a diferença entre os planos?</AccordionTrigger>
-                <AccordionContent className="text-base text-muted-foreground">
-                  Cada plano oferece diferentes níveis de recursos e limites, adaptados às necessidades de diferentes tamanhos de negócio. Consulte a seção de preços para uma comparação detalhada.
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-             <div className="mt-16 text-center">
-                <h3 className="text-2xl md:text-3xl font-bold font-headline">Pronto para decolar?</h3>
-                <p className="text-muted-foreground md:text-xl mt-2">Experimente agora o Enterprisy e transforme seu negócio.</p>
-                <Button asChild size="lg" className="mt-6" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
-                  <Link href="/auth/signup">Começar Agora de Graça</Link>
-                </Button>
+            <div className="mx-auto max-w-7xl">
+              <div className="mb-12 text-center">
+                <h2 className="text-3xl font-bold sm:text-4xl">{t('landing.faq.title')}</h2>
+                <p className="text-lg text-muted-foreground">{t('landing.faq.subtitle')}</p>
+              </div>
+              <Accordion type="multiple" className="mx-auto max-w-3xl">
+                {faqs.map((faq, index) => (
+                  <AccordionItem key={index} value={`item-${index}`} className="border-b">
+                    <AccordionTrigger className="w-full justify-between py-4 text-left text-lg font-semibold hover:text-primary">
+                      {faq.question}
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <p className="py-2 text-muted-foreground">{faq.answer}</p>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
             </div>
           </div>
         </section>
+
+        {/* 7. Último CTA */}
+        <section className="py-16 text-center">
+          <div className="container px-4 md:px-6">
+            <div className="mx-auto max-w-3xl">
+              <h2 className="mb-4 text-3xl font-bold sm:text-4xl">{t('landing.finalCta.title')}</h2>
+              <p className="mb-8 text-xl text-muted-foreground">{t('landing.finalCta.subtitle')}</p>
+              <Button asChild size="lg" className="transform transition-transform hover:scale-105" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
+                <Link href="/auth/signup">
+                  {t('landing.finalCta.cta')} <ArrowRight className="ml-2" size={20} />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+
       </main>
       <Footer />
     </div>

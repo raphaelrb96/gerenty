@@ -59,31 +59,103 @@
     },
     "landing": {
         "hero": {
-            "title": "Chega de apagar incêndios! Transforme sua loja em um negócio organizado e lucrativo.",
+            "title": {
+                "line1": "Chega de apagar incêndios!",
+                "line2": "Transforme seu negócio."
+            },
             "subtitle": "Uma única plataforma para gerenciar vendas, estoque e finanças com total controle, de qualquer lugar.",
-            "ctaPrimary": "Começar Agora de Graça"
+            "ctaPrimary": "Começar Agora de Graça",
+            "ctaSecondary": "Ver Funcionalidades",
+            "videoAlt": "Placeholder de vídeo animado do produto"
         },
-        "benefits": {
-            "title": "Sua Realidade Hoje vs. Seu Futuro com o Enterprisy",
-            "subtitle": "Nós entendemos seus desafios e construímos a solução definitiva.",
-            "benefit1": { "title": "Estoque em Tempo Real", "description": "Perdeu uma venda por falta de estoque? Com o Enterprisy, seu estoque é atualizado a cada venda, automaticamente." },
-            "benefit2": { "title": "Relatórios Financeiros Automáticos", "description": "Cansado de passar horas em planilhas? Tenha relatórios financeiros instantâneos e fáceis de entender." },
-            "benefit3": { "title": "Gestão de Pedidos Organizada", "description": "Sente-se perdido com a bagunça dos pedidos? Centralize e gerencie todos os seus pedidos em um único lugar, do início ao fim." },
-            "benefit4": { "title": "Crescimento com IA", "description": "Use inteligência artificial para criar descrições, analisar dados e crescer sem limites." }
+        "socialProof": {
+            "title": "A confiança de quem já transformou o negócio",
+            "subtitle": "MAIS DE 10.000 NEGÓCIOS JÁ USAM ENTERPRISY"
+        },
+        "testimonials": {
+            "quote1": "Antes do Enterprisy, perdia horas em planilhas. Hoje, tenho o controle total do meu negócio. Simplesmente mudou meu jogo!",
+            "author1": "Ana P., Dona de E-commerce",
+            "quote2": "Achei que ERP era coisa de empresa grande. O Enterprisy é intuitivo, acessível e me ajudou a profissionalizar minha loja virtual. Incrível!",
+            "author2": "João V., Vendedor Autônomo",
+            "quote3": "A transição foi super suave. A gestão de estoque e pedidos ficou muito mais eficiente, e o dashboard me dá a visão que preciso para tomar decisões.",
+            "author3": "Maria S., Gerente de Bazar"
+        },
+        "painSolution": {
+            "title": "Pare de sofrer com a bagunça!",
+            "subtitle": "O Enterprisy é a solução completa para os seus maiores desafios.",
+            "realityToday": "Sua realidade hoje:",
+            "pain1": "Perdeu uma venda por falta de estoque?",
+            "pain2": "Passa horas em planilhas financeiras, sem ter certeza do lucro?",
+            "pain3": "Se sente perdido com o vai e vem de pedidos?",
+            "realityWithEnterprisy": "Sua realidade com Enterprisy:",
+            "solution1": "Estoque atualizado em tempo real. Nunca mais perca uma venda.",
+            "solution2": "Relatórios automáticos e precisos. Saiba exatamente quanto você ganha.",
+            "solution3": "Pedidos organizados, status atualizados e fluxo de trabalho intuitivo."
+        },
+        "features": {
+            "title": "Seu sucesso em cada funcionalidade",
+            "feature1": {
+                "title": "Gestão Descomplicada",
+                "description": "Controle produtos, pedidos e finanças em uma única plataforma. Menos burocracia, mais eficiência."
+            },
+            "feature2": {
+                "title": "Decisões Inteligentes",
+                "description": "Tenha acesso a métricas e relatórios em tempo real. Saiba onde investir para maximizar seu lucro."
+            },
+            "feature3": {
+                "title": "Relacionamento com Clientes",
+                "description": "Organize seus contatos e entenda o comportamento de compra. Crie laços que geram vendas recorrentes."
+            }
         },
         "pricing": {
-            "title": "Encontre o Plano Perfeito para Você",
-            "subtitle": "Comece de graça e escale conforme cresce. Sem necessidade de cartão de crédito.",
-            "free": { "name": "Gratuito", "price": "R$0", "priceDescription": "/mês", "description": "Para indivíduos e pequenos times que estão começando.", "features": ["10 Produtos", "100 Pedidos/mês", "Análises Básicas"], "cta": "Comece de Graça" },
-            "pro": { "name": "Pro", "price": "R$29", "priceDescription": "/mês", "description": "Para negócios em crescimento que precisam de mais poder.", "features": ["Produtos Ilimitados", "Pedidos Ilimitados", "Análises Avançadas", "Créditos de IA"], "cta": "Escolher o Pro" },
-            "enterprise": { "name": "Enterprise", "price": "R$99", "priceDescription": "/mês", "description": "Para operações de larga escala com necessidades customizadas.", "features": ["Tudo do Pro", "Suporte Prioritário", "Integrações Customizadas"], "cta": "Fale Conosco" }
+            "title": "Escolha o plano ideal para o seu negócio",
+            "subtitle": "Comece com o grátis e evolua quando estiver pronto.",
+            "mostPopular": "Mais Popular",
+            "free": {
+                "name": "Plano Grátis",
+                "price": "R$0",
+                "description": "Até 50 produtos",
+                "features": ["Gestão de pedidos básica", "Suporte por email", "Relatórios limitados"],
+                "cta": "Começar Agora"
+            },
+            "pro": {
+                "name": "Plano Pro",
+                "price": "R$49/mês",
+                "description": "Produtos ilimitados",
+                "features": ["Controle de estoque completo", "Automação financeira", "Suporte prioritário"],
+                "cta": "Escolher Pro"
+            },
+            "enterprise": {
+                "name": "Plano Enterprise",
+                "price": "Sob consulta",
+                "description": "Tudo do plano Pro",
+                "features": ["Múltiplos usuários e permissões", "Integrações personalizadas", "Gerente de conta dedicado"],
+                "cta": "Fale Conosco"
+            }
+        },
+        "faq": {
+            "title": "Respostas para suas dúvidas",
+            "subtitle": "Tudo o que você precisa saber para tomar a melhor decisão.",
+            "question1": "O Enterprisy é adequado para meu tipo de negócio?",
+            "answer1": "Sim! Nossa plataforma foi desenvolvida para atender desde pequenos empreendedores até lojas virtuais mais robustas, com funcionalidades escaláveis para acompanhar o seu crescimento.",
+            "question2": "É fácil migrar meus dados para o Enterprisy?",
+            "answer2": "Nossa equipe está pronta para te ajudar! Oferecemos um processo de migração guiado para que você possa trazer seus produtos e clientes sem complicações.",
+            "question3": "Como funciona o período de teste?",
+            "answer3": "Oferecemos um plano gratuito que você pode usar pelo tempo que quiser. Ele inclui funcionalidades básicas para que você sinta o poder do Enterprisy sem compromisso. Você só assina se quiser evoluir."
+        },
+        "finalCta": {
+            "title": "Pronto para decolar?",
+            "subtitle": "Junte-se a milhares de empreendedores que estão transformando seus negócios com o Enterprisy.",
+            "cta": "Comece sua jornada"
         },
         "header": {
             "login": "Entrar",
             "signup": "Cadastre-se Gratuitamente"
         },
         "footer": {
-            "copy": "© {year} Enterprisy Lite. Todos os direitos reservados."
+            "copy": "© {year} Enterprisy Lite. Todos os direitos reservados.",
+            "terms": "Termos",
+            "privacy": "Privacidade"
         }
     },
     "dashboard": {

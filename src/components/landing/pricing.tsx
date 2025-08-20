@@ -19,32 +19,29 @@ export function Pricing() {
     {
       name: t('landing.pricing.free.name'),
       price: t('landing.pricing.free.price'),
-      priceDescription: t('landing.pricing.free.priceDescription'),
       description: t('landing.pricing.free.description'),
       features: t('landing.pricing.free.features', { returnObjects: true }) as unknown as string[],
       cta: t('landing.pricing.free.cta'),
       href: "/auth/signup",
-      isFeatured: false,
+      isPopular: false,
     },
     {
       name: t('landing.pricing.pro.name'),
       price: t('landing.pricing.pro.price'),
-      priceDescription: t('landing.pricing.pro.priceDescription'),
       description: t('landing.pricing.pro.description'),
       features: t('landing.pricing.pro.features', { returnObjects: true }) as unknown as string[],
       cta: t('landing.pricing.pro.cta'),
       href: user ? "/dashboard/billing" : "/auth/signup",
-      isFeatured: true,
+      isPopular: true,
     },
     {
       name: t('landing.pricing.enterprise.name'),
       price: t('landing.pricing.enterprise.price'),
-      priceDescription: t('landing.pricing.enterprise.priceDescription'),
       description: t('landing.pricing.enterprise.description'),
       features: t('landing.pricing.enterprise.features', { returnObjects: true }) as unknown as string[],
       cta: t('landing.pricing.enterprise.cta'),
       href: user ? "/dashboard/billing" : "/auth/signup",
-      isFeatured: false,
+      isPopular: false,
     },
   ];
 
@@ -54,9 +51,9 @@ export function Pricing() {
 
 
   return (
-    <section className="w-full py-20 md:py-24 lg:py-32 bg-background">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto mb-16">
+    <section className="w-full py-16 md:py-24 bg-background">
+      <div className="container mx-auto px-4 md:px-6">
+        <div className="text-center max-w-3xl mx-auto mb-12">
           <h2 className="font-headline text-3xl md:text-4xl font-bold text-foreground">
             {t('landing.pricing.title')}
           </h2>
@@ -64,23 +61,27 @@ export function Pricing() {
             {t('landing.pricing.subtitle')}
           </p>
         </div>
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
           {tiers.map((tier) => (
-            <Card key={tier.name} className={`flex flex-col h-full ${tier.isFeatured ? "border-primary shadow-lg" : "border-border"}`}>
-              <CardHeader>
+            <Card key={tier.name} className={`flex flex-col h-full rounded-xl shadow-lg border-2 ${tier.isPopular ? "border-primary" : "border-border"}`}>
+               {tier.isPopular && (
+                  <div className="bg-primary text-primary-foreground text-xs font-bold px-4 py-1 rounded-full inline-block mb-4 -mt-4 mx-auto">
+                    {t('landing.pricing.mostPopular')}
+                  </div>
+                )}
+              <CardHeader className="text-center">
                 <CardTitle className="font-headline text-2xl">{tier.name}</CardTitle>
-                 <div className="flex items-baseline gap-2 mt-4">
-                    <span className="text-4xl font-bold">{tier.price}</span>
-                    <span className="text-muted-foreground">{tier.priceDescription}</span>
-                </div>
                 <CardDescription className="mt-2 h-12">{tier.description}</CardDescription>
+                 <div className="flex items-baseline justify-center gap-2 mt-4">
+                    <span className="text-4xl font-bold">{tier.price}</span>
+                </div>
               </CardHeader>
               <CardContent className="flex-1">
-                <ul className="space-y-4">
+                <ul className="space-y-2 text-left">
                   {tier.features.map((feature) => (
                     <li key={feature} className="flex items-center gap-3">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0" />
-                      <span>{feature}</span>
+                      <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
+                      <span className="text-muted-foreground">{feature}</span>
                     </li>
                   ))}
                 </ul>
@@ -88,9 +89,9 @@ export function Pricing() {
               <CardFooter>
                 <Button 
                   onClick={() => handleCtaClick(tier.href)}
-                  className="w-full" 
-                  variant={tier.isFeatured ? "default" : "outline"} 
-                  style={tier.isFeatured ? { backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' } : {}}
+                  className="w-full transform hover:scale-105 transition-transform" 
+                  variant={tier.isPopular ? "default" : "outline"} 
+                  style={tier.isPopular ? { backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' } : {}}
                 >
                   {tier.cta}
                 </Button>
