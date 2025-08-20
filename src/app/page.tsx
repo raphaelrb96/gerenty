@@ -40,7 +40,7 @@ export default function Home() {
                   <Link href="/auth/signup">Começar Agora de Graça</Link>
                 </Button>
                 <Button variant="outline" size="lg" asChild>
-                  <Link href="#">Experimente sem Compromisso</Link>
+                  <Link href="#pricing">Ver Planos</Link>
                 </Button>
               </motion.div>
             </div>
@@ -50,47 +50,42 @@ export default function Home() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1 }}
             >
-              <span className="text-muted-foreground">Placeholder para Vídeo/GIF</span>
+               <img
+                src="https://placehold.co/600x400.png"
+                alt="Dashboard preview"
+                className="rounded-lg shadow-2xl transform hover:scale-105 transition-transform duration-300"
+                data-ai-hint="dashboard analytics"
+              />
             </motion.div>
           </div>
         </section>
 
         {/* 2. Seção de Dor e Solução */}
         <section className="w-full py-20 md:py-24 lg:py-32 bg-muted/40">
-          <div className="container px-4 md:px-6 grid gap-12 lg:grid-cols-2 items-center">
-            <div className="space-y-6 rounded-lg border bg-card p-6 shadow-sm">
-              <h3 className="text-2xl font-bold font-headline">Sua Realidade Hoje</h3>
-              <ul className="space-y-4">
-                <li className="flex items-start gap-3">
-                  <XCircleIcon className="w-6 h-6 text-destructive flex-shrink-0 mt-1" />
-                  <p className="text-card-foreground">Perdeu uma venda por falta de estoque?</p>
-                </li>
-                <li className="flex items-start gap-3">
-                  <XCircleIcon className="w-6 h-6 text-destructive flex-shrink-0 mt-1" />
-                  <p className="text-card-foreground">Passa horas em planilhas financeiras?</p>
-                </li>
-                <li className="flex items-start gap-3">
-                  <XCircleIcon className="w-6 h-6 text-destructive flex-shrink-0 mt-1" />
-                  <p className="text-card-foreground">Se sente perdido com a bagunça dos pedidos?</p>
-                </li>
-              </ul>
+          <div className="container px-4 md:px-6">
+             <div className="text-center max-w-3xl mx-auto mb-12">
+              <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl font-headline">Sua Realidade Hoje vs. Seu Futuro com o Enterprisy</h2>
+              <p className="max-w-[700px] mx-auto text-muted-foreground md:text-xl/relaxed mt-4">
+               Entendemos seus desafios e construímos a solução definitiva.
+              </p>
             </div>
-             <div className="space-y-6 rounded-lg border bg-card p-6 shadow-sm">
-              <h3 className="text-2xl font-bold font-headline">Sua Realidade com Enterprisy</h3>
-              <ul className="space-y-4">
-                <li className="flex items-start gap-3">
-                  <CheckCircleIcon className="w-6 h-6 text-green-500 flex-shrink-0 mt-1" />
-                  <p className="text-card-foreground">Estoque atualizado em tempo real.</p>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircleIcon className="w-6 h-6 text-green-500 flex-shrink-0 mt-1" />
-                  <p className="text-card-foreground">Relatórios financeiros automáticos.</p>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircleIcon className="w-6 h-6 text-green-500 flex-shrink-0 mt-1" />
-                  <p className="text-card-foreground">Pedidos organizados em um só lugar.</p>
-                </li>
-              </ul>
+            <div className="grid gap-8 lg:grid-cols-2 items-start">
+              <div className="space-y-6 rounded-lg border bg-card p-6 shadow-sm">
+                <h3 className="text-2xl font-bold font-headline flex items-center gap-3"><XCircleIcon className="w-8 h-8 text-destructive flex-shrink-0" /> Sua Realidade Hoje</h3>
+                <ul className="space-y-4 text-lg text-muted-foreground pl-4">
+                  <li>Perder vendas por falta de estoque?</li>
+                  <li>Passar horas em planilhas financeiras?</li>
+                  <li>Se sentir perdido com a bagunça dos pedidos?</li>
+                </ul>
+              </div>
+              <div className="space-y-6 rounded-lg border-2 border-primary bg-card p-6 shadow-lg">
+                <h3 className="text-2xl font-bold font-headline flex items-center gap-3"><CheckCircleIcon className="w-8 h-8 text-green-500 flex-shrink-0" /> Sua Realidade com Enterprisy</h3>
+                <ul className="space-y-4 text-lg pl-4">
+                  <li>Estoque atualizado em tempo real.</li>
+                  <li>Relatórios financeiros automáticos.</li>
+                  <li>Pedidos organizados em um só lugar.</li>
+                </ul>
+              </div>
             </div>
           </div>
         </section>
@@ -106,7 +101,7 @@ export default function Home() {
             </p>
 
             <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-              <Card className="bg-card text-left p-6">
+              <Card className="bg-card text-left p-6 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center mb-4">
                   <Avatar>
                     <AvatarImage src="https://placehold.co/40x40.png" alt="User Avatar" data-ai-hint="man portrait" />
@@ -119,7 +114,7 @@ export default function Home() {
                 </div>
                 <p className="text-muted-foreground">"Enterprisy mudou a forma como gerencio meu estoque. Agora tenho tudo sob controle e perdi muito menos vendas."</p>
               </Card>
-              <Card className="bg-card text-left p-6">
+              <Card className="bg-card text-left p-6 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center mb-4">
                    <Avatar>
                     <AvatarImage src="https://placehold.co/40x40.png" alt="User Avatar" data-ai-hint="woman portrait" />
@@ -132,7 +127,7 @@ export default function Home() {
                 </div>
                 <p className="text-muted-foreground">"Os relatórios financeiros automáticos me poupam horas de trabalho toda semana. Posso focar no que realmente importa: meus clientes!"</p>
               </Card>
-               <Card className="bg-card text-left p-6">
+               <Card className="bg-card text-left p-6 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center mb-4">
                   <Avatar>
                     <AvatarImage src="https://placehold.co/40x40.png" alt="User Avatar" data-ai-hint="man glasses" />
@@ -149,7 +144,7 @@ export default function Home() {
 
             <div className="mt-16 text-center">
               <p className="text-2xl font-bold text-foreground">Mais de <span className="text-primary">5.000 negócios</span> já usam Enterprisy para crescer</p>
-              <p className="text-2xl font-bold text-foreground">Economize até <span className="text-primary">15 horas</span> por semana em gestão</p>
+              <p className="text-xl text-muted-foreground mt-2">Economize até <span className="font-bold text-primary">15 horas</span> por semana em gestão</p>
             </div>
           </div>
         </section>
@@ -158,7 +153,9 @@ export default function Home() {
         <BenefitCards />
 
         {/* 5. Seção de Planos e Preços */}
-        <Pricing />
+        <div id="pricing">
+         <Pricing />
+        </div>
 
         {/* 6. Seção de Perguntas Frequentes (FAQ) e Último CTA */}
         <section className="w-full py-20 md:py-24 lg:py-32 bg-muted/40">
@@ -171,27 +168,27 @@ export default function Home() {
             </div>
             <Accordion type="single" collapsible className="w-full max-w-3xl mx-auto bg-card p-4 rounded-lg shadow-sm">
               <AccordionItem value="item-1">
-                <AccordionTrigger>Como funciona a cobrança?</AccordionTrigger>
-                <AccordionContent>
+                <AccordionTrigger className="text-lg">Como funciona a cobrança?</AccordionTrigger>
+                <AccordionContent className="text-base text-muted-foreground">
                   A cobrança é mensal ou anual, dependendo do plano escolhido. Você pode cancelar a qualquer momento diretamente no seu painel de controle.
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-2">
-                <AccordionTrigger>Meus dados estão seguros?</AccordionTrigger>
-                <AccordionContent>
+                <AccordionTrigger className="text-lg">Meus dados estão seguros?</AccordionTrigger>
+                <AccordionContent className="text-base text-muted-foreground">
                   Sim, a segurança dos seus dados é nossa prioridade máxima. Utilizamos as melhores práticas e criptografia de ponta para garantir a proteção das suas informações.
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-3">
-                <AccordionTrigger>Qual a diferença entre os planos?</AccordionTrigger>
-                <AccordionContent>
+                <AccordionTrigger className="text-lg">Qual a diferença entre os planos?</AccordionTrigger>
+                <AccordionContent className="text-base text-muted-foreground">
                   Cada plano oferece diferentes níveis de recursos e limites, adaptados às necessidades de diferentes tamanhos de negócio. Consulte a seção de preços para uma comparação detalhada.
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
              <div className="mt-16 text-center">
                 <h3 className="text-2xl md:text-3xl font-bold font-headline">Pronto para decolar?</h3>
-                <p className="text-muted-foreground mt-2">Experimente agora o Enterprisy e transforme seu negócio.</p>
+                <p className="text-muted-foreground md:text-xl mt-2">Experimente agora o Enterprisy e transforme seu negócio.</p>
                 <Button asChild size="lg" className="mt-6" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
                   <Link href="/auth/signup">Começar Agora de Graça</Link>
                 </Button>
