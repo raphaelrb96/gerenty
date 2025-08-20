@@ -5,8 +5,9 @@ import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Header } from '@/components/landing/header';
 import { useTranslation } from '@/context/i18n-context';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { LanguageToggle } from '@/components/language-toggle';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -34,8 +35,11 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-        <Header />
+    <div className="relative flex min-h-screen flex-col">
+        <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+            <ThemeToggle />
+            <LanguageToggle />
+        </div>
         <main className="flex-1">
             {children}
         </main>
