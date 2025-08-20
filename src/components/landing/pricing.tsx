@@ -54,7 +54,7 @@ export function Pricing() {
 
 
   return (
-    <section className="bg-background py-20 md:py-24">
+    <section className="w-full py-20 md:py-24 lg:py-32 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="font-headline text-3xl md:text-4xl font-bold text-foreground">

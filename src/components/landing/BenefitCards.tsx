@@ -103,5 +103,3 @@ export function BenefitCards() {
     </section>
   );
 }
-
-    

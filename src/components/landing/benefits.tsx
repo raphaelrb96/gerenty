@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -7,7 +8,7 @@ import { useTranslation } from "@/context/i18n-context";
 export function Benefits() {
   const { t } = useTranslation();
 
-  const benefits = [
+  const benefitsList = [
     {
       icon: <Package className="h-8 w-8 text-primary" />,
       title: t('landing.benefits.benefit1.title'),
@@ -31,7 +32,7 @@ export function Benefits() {
   ];
 
   return (
-    <section className="bg-muted/40 py-20 md:py-24">
+    <section className="w-full py-20 md:py-24 lg:py-32 bg-muted/40">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto">
           <h2 className="font-headline text-3xl md:text-4xl font-bold text-foreground">
@@ -42,9 +43,9 @@ export function Benefits() {
           </p>
         </div>
         <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
-          {benefits.map((benefit) => (
+          {benefitsList.map((benefit) => (
             <Card key={benefit.title} className="text-center transform hover:-translate-y-2 transition-transform duration-300">
-              <CardHeader className="items-center">
+              <CardHeader className="items-center p-6">
                 <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
                   {benefit.icon}
                 </div>
