@@ -58,7 +58,7 @@ export default function DashboardPage() {
   ];
 
   if (loading) {
-    return <LoadingSpinner />;
+    return <div className="flex h-full items-center justify-center"><LoadingSpinner /></div>;
   }
 
   return (
@@ -108,8 +108,8 @@ export default function DashboardPage() {
                 <div className="text-right">
                     <p className="font-semibold">R${activity.total.toFixed(2)}</p>
                      <Badge variant={activity.status === "completed" ? "default" : activity.status === "processing" ? "secondary" : "outline"}
-                    className={activity.status === "completed" ? "bg-green-600/20 text-green-700 hover:bg-green-600/30" : activity.status === "processing" ? "bg-blue-600/20 text-blue-700 hover:bg-blue-600/30" : ""}>
-                      {activity.status}
+                    className={activity.status === "completed" ? "bg-green-600/20 text-green-700 hover:bg-green-600/30" : activity.status === "processing" ? "bg-blue-600/20 text-blue-700 hover:bg-blue-600/30" : "bg-yellow-600/20 text-yellow-700 hover:bg-yellow-600/30"}>
+                      {t(`orderStatus.${activity.status}`)}
                     </Badge>
                 </div>
             </div>
