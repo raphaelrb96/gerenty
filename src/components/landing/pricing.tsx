@@ -19,7 +19,7 @@ export function Pricing() {
   const tiers = [
      {
       name: t('landing.pricing.premium.name'),
-      price: 119,
+      price: 99,
       priceSuffix: t('landing.pricing.premium.priceSuffix'),
       description: t('landing.pricing.premium.description'),
       features: t('landing.pricing.premium.features', { returnObjects: true }) as unknown as string[],
@@ -29,7 +29,7 @@ export function Pricing() {
     },
     {
         name: t('landing.pricing.gold.name'),
-        price: 79,
+        price: 59,
         priceSuffix: t('landing.pricing.gold.priceSuffix'),
         description: t('landing.pricing.gold.description'),
         features: t('landing.pricing.gold.features', { returnObjects: true }) as unknown as string[],
@@ -39,7 +39,7 @@ export function Pricing() {
     },
     {
         name: t('landing.pricing.silver.name'),
-        price: 37,
+        price: 29,
         priceSuffix: t('landing.pricing.silver.priceSuffix'),
         description: t('landing.pricing.silver.description'),
         features: t('landing.pricing.silver.features', { returnObjects: true }) as unknown as string[],
@@ -49,7 +49,7 @@ export function Pricing() {
     },
     {
       name: t('landing.pricing.bronze.name'),
-      price: 19,
+      price: 14,
       priceSuffix: t('landing.pricing.bronze.priceSuffix'),
       description: t('landing.pricing.bronze.description'),
       features: t('landing.pricing.bronze.features', { returnObjects: true }) as unknown as string[],
