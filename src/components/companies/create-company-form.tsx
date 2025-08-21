@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { addCompany } from "@/services/company-service";
 import { uploadFile } from "@/services/storage-service";
 import type { Company } from "@/lib/types";
+import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -26,7 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Loader2 } from "lucide-react";
+import { Loader2, Image as ImageIcon, Upload } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
@@ -89,8 +90,11 @@ export function CreateCompanyForm() {
     const { setActiveCompany } = useCompany();
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
+    
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [bannerFile, setBannerFile] = useState<File | null>(null);
+    const [logoPreview, setLogoPreview] = useState<string | null>(null);
+    const [bannerPreview, setBannerPreview] = useState<string | null>(null);
 
     const form = useForm<CreateCompanyFormValues>({
         resolver: zodResolver(formSchema),
@@ -132,6 +136,21 @@ export function CreateCompanyForm() {
             }
         },
     });
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'logo' | 'banner') => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const previewUrl = URL.createObjectURL(file);
+            if (type === 'logo') {
+                setLogoFile(file);
+                setLogoPreview(previewUrl);
+            } else {
+                setBannerFile(file);
+                setBannerPreview(previewUrl);
+            }
+        }
+    };
+
 
     async function onSubmit(values: CreateCompanyFormValues) {
         if (!user) {
@@ -177,11 +196,10 @@ export function CreateCompanyForm() {
             socialMedia: values.socialMedia,
             address: {
                 ...values.address,
-                location: null, // Location would be set later, e.g., via geocoding
+                location: null,
             },
             businessPolicy: {
                 ...values.businessPolicy,
-                // These are complex and would be configured in an "edit" screen
                 shippingDetails: { methods: [] }, 
                 acceptedPayments: [], 
             },
@@ -221,9 +239,27 @@ export function CreateCompanyForm() {
                             <AccordionItem value="item-1">
                                 <AccordionTrigger className="font-semibold text-lg">Informações Institucionais</AccordionTrigger>
                                 <AccordionContent className="pt-4 space-y-4">
-                                    <FormField control={form.control} name="name" render={({ field }) => (
-                                        <FormItem><FormLabel>Nome da Empresa</FormLabel><FormControl><Input placeholder="Minha Empresa LTDA" {...field} /></FormControl><FormMessage /></FormItem>
-                                    )}/>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                                         <FormField control={form.control} name="name" render={({ field }) => (
+                                            <FormItem><FormLabel>Nome da Empresa</FormLabel><FormControl><Input placeholder="Minha Empresa LTDA" {...field} /></FormControl><FormMessage /></FormItem>
+                                        )}/>
+                                        <div className="space-y-2 flex flex-col items-center">
+                                            <FormLabel>Logo</FormLabel>
+                                            <Label htmlFor="logo-upload" className="cursor-pointer">
+                                                <div className="w-32 h-32 rounded-full border-2 border-dashed flex items-center justify-center text-muted-foreground hover:bg-muted/50 transition-colors">
+                                                    {logoPreview ? (
+                                                        <Image src={logoPreview} alt="Logo preview" width={128} height={128} className="rounded-full object-cover w-full h-full" />
+                                                    ) : (
+                                                        <div className="text-center">
+                                                            <Upload className="mx-auto h-8 w-8" />
+                                                            <p className="text-xs mt-1">Clique para enviar</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </Label>
+                                            <Input id="logo-upload" type="file" accept="image/*" className="hidden" onChange={(e) => handleFileChange(e, 'logo')} />
+                                        </div>
+                                    </div>
                                     <FormField control={form.control} name="description" render={({ field }) => (
                                         <FormItem><FormLabel>Descrição</FormLabel><FormControl><Textarea placeholder="Descreva brevemente sua empresa..." {...field} /></FormControl><FormMessage /></FormItem>
                                     )}/>
@@ -243,19 +279,21 @@ export function CreateCompanyForm() {
                                             <FormItem><FormLabel>Número do Documento</FormLabel><FormControl><Input placeholder="00.000.000/0001-00" {...field} /></FormControl><FormMessage /></FormItem>
                                         )}/>
                                     </div>
-                                    <FormItem>
-                                        <FormLabel>Logo</FormLabel>
-                                        <FormControl>
-                                            <Input type="file" accept="image/*" onChange={(e) => setLogoFile(e.target.files ? e.target.files[0] : null)} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                     <FormItem>
+                                    <FormItem className="space-y-2">
                                         <FormLabel>Banner</FormLabel>
-                                        <FormControl>
-                                            <Input type="file" accept="image/*" onChange={(e) => setBannerFile(e.target.files ? e.target.files[0] : null)} />
-                                        </FormControl>
-                                        <FormMessage />
+                                        <Label htmlFor="banner-upload" className="cursor-pointer block">
+                                             <Card className="border-2 border-dashed flex items-center justify-center text-muted-foreground hover:bg-muted/50 transition-colors aspect-[16/6]">
+                                                {bannerPreview ? (
+                                                      <Image src={bannerPreview} alt="Banner preview" layout="fill" className="rounded-md object-cover" />
+                                                ) : (
+                                                    <div className="text-center">
+                                                        <ImageIcon className="mx-auto h-12 w-12" />
+                                                        <p className="text-sm mt-2">Clique para enviar o banner</p>
+                                                    </div>
+                                                )}
+                                            </Card>
+                                        </Label>
+                                        <Input id="banner-upload" type="file" accept="image/*" className="hidden" onChange={(e) => handleFileChange(e, 'banner')} />
                                     </FormItem>
                                 </AccordionContent>
                             </AccordionItem>
@@ -362,7 +400,7 @@ export function CreateCompanyForm() {
                                             <Label>Cor do Tema</Label>
                                             <FormControl>
                                                 <div className="relative">
-                                                     <div className="absolute left-2 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full" style={{ backgroundColor: field.value || 'transparent' }}/>
+                                                     <div className="absolute left-2 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full border" style={{ backgroundColor: field.value || 'transparent' }}/>
                                                      <Input type="text" placeholder="#45A0A0" className="pl-9" {...field} />
                                                 </div>
                                             </FormControl>
@@ -398,3 +436,5 @@ export function CreateCompanyForm() {
         </Card>
     );
 }
+
+    
