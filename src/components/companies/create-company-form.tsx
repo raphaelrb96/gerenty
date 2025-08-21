@@ -27,6 +27,8 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Switch } from "../ui/switch";
+import { Label } from "../ui/label";
 
 
 const formSchema = z.object({
@@ -35,22 +37,49 @@ const formSchema = z.object({
   description: z.string().optional(),
   document: z.string().optional(),
   documentType: z.enum(['CNPJ', 'CPF', 'Outro']).default('CNPJ'),
+  logoUrl: z.string().url("URL do logo inválida.").optional().or(z.literal('')),
+  bannerUrl: z.string().url("URL do banner inválida.").optional().or(z.literal('')),
   
   // Contato
   email: z.string().email("Email de contato inválido."),
   phone: z.string().optional(),
   whatsapp: z.string().optional(),
   website: z.string().url("URL do site inválida.").optional().or(z.literal('')),
+
+  // Redes Sociais
+  socialMedia: z.object({
+      instagram: z.string().optional(),
+      facebook: z.string().optional(),
+      tiktok: z.string().optional(),
+      linkedin: z.string().optional(),
+      youtube: z.string().optional(),
+      twitter: z.string().optional(),
+  }).optional(),
   
   // Endereço
-  street: z.string().optional(),
-  number: z.string().optional(),
-  complement: z.string().optional(),
-  neighborhood: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  zipCode: z.string().optional(),
-  country: z.string().optional(),
+  address: z.object({
+    street: z.string().optional(),
+    number: z.string().optional(),
+    complement: z.string().optional(),
+    neighborhood: z.string().optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
+    zipCode: z.string().optional(),
+    country: z.string().optional(),
+  }),
+  
+  // Políticas de Negócio (Simplificado para o formulário inicial)
+  businessPolicy: z.object({
+      deliveryEnabled: z.boolean().default(false),
+      pickupEnabled: z.boolean().default(false),
+      minimumOrderValue: z.preprocess((a) => parseFloat(z.string().parse(a || "0").replace(",", ".")), z.number().min(0)).optional(),
+  }).optional(),
+
+  // Configurações do Catálogo
+  catalogSettings: z.object({
+      themeColor: z.string().optional(),
+      layout: z.enum(['grid', 'list', 'carousel']).default('grid'),
+  }).optional(),
 });
 
 type CreateCompanyFormValues = z.infer<typeof formSchema>;
@@ -73,14 +102,35 @@ export function CreateCompanyForm() {
             phone: "",
             whatsapp: "",
             website: "",
-            street: "",
-            number: "",
-            complement: "",
-            neighborhood: "",
-            city: "",
-            state: "",
-            zipCode: "",
-            country: "Brasil",
+            logoUrl: "",
+            bannerUrl: "",
+            address: {
+                street: "",
+                number: "",
+                complement: "",
+                neighborhood: "",
+                city: "",
+                state: "",
+                zipCode: "",
+                country: "Brasil",
+            },
+            socialMedia: {
+                instagram: "",
+                facebook: "",
+                tiktok: "",
+                linkedin: "",
+                youtube: "",
+                twitter: "",
+            },
+            businessPolicy: {
+                deliveryEnabled: true,
+                pickupEnabled: false,
+                minimumOrderValue: 0,
+            },
+            catalogSettings: {
+                themeColor: "#45A0A0",
+                layout: 'grid',
+            }
         },
     });
 
@@ -97,22 +147,26 @@ export function CreateCompanyForm() {
             name: values.name,
             slug: values.name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''),
             description: values.description,
+            logoUrl: values.logoUrl,
+            bannerUrl: values.bannerUrl,
             document: values.document,
             documentType: values.documentType,
             email: values.email,
             phone: values.phone,
             whatsapp: values.whatsapp,
             website: values.website,
+            socialMedia: values.socialMedia,
             address: {
-                street: values.street,
-                number: values.number,
-                complement: values.complement,
-                neighborhood: values.neighborhood,
-                city: values.city,
-                state: values.state,
-                zipCode: values.zipCode,
-                country: values.country,
+                ...values.address,
+                location: null, // Location would be set later, e.g., via geocoding
             },
+            businessPolicy: {
+                ...values.businessPolicy,
+                // These are complex and would be configured in an "edit" screen
+                shippingDetails: { methods: [] }, 
+                acceptedPayments: [], 
+            },
+            catalogSettings: values.catalogSettings,
             isVerified: false,
             isActive: true,
         };
@@ -170,6 +224,12 @@ export function CreateCompanyForm() {
                                             <FormItem><FormLabel>Número do Documento</FormLabel><FormControl><Input placeholder="00.000.000/0001-00" {...field} /></FormControl><FormMessage /></FormItem>
                                         )}/>
                                     </div>
+                                    <FormField control={form.control} name="logoUrl" render={({ field }) => (
+                                        <FormItem><FormLabel>URL do Logo</FormLabel><FormControl><Input placeholder="https://exemplo.com/logo.png" {...field} /></FormControl><FormMessage /></FormItem>
+                                    )}/>
+                                    <FormField control={form.control} name="bannerUrl" render={({ field }) => (
+                                        <FormItem><FormLabel>URL do Banner</FormLabel><FormControl><Input placeholder="https://exemplo.com/banner.png" {...field} /></FormControl><FormMessage /></FormItem>
+                                    )}/>
                                 </AccordionContent>
                             </AccordionItem>
 
@@ -190,39 +250,114 @@ export function CreateCompanyForm() {
                                 </AccordionContent>
                             </AccordionItem>
 
+                             <AccordionItem value="item-social">
+                                <AccordionTrigger className="font-semibold text-lg">Redes Sociais</AccordionTrigger>
+                                <AccordionContent className="pt-4 space-y-4">
+                                    <FormField control={form.control} name="socialMedia.instagram" render={({ field }) => ( <FormItem><FormLabel>Instagram</FormLabel><FormControl><Input placeholder="usuario_instagram" {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                                    <FormField control={form.control} name="socialMedia.facebook" render={({ field }) => ( <FormItem><FormLabel>Facebook</FormLabel><FormControl><Input placeholder="pagina_facebook" {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                                    <FormField control={form.control} name="socialMedia.tiktok" render={({ field }) => ( <FormItem><FormLabel>TikTok</FormLabel><FormControl><Input placeholder="@usuario_tiktok" {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                                    <FormField control={form.control} name="socialMedia.linkedin" render={({ field }) => ( <FormItem><FormLabel>LinkedIn</FormLabel><FormControl><Input placeholder="linkedin.com/company/sua-empresa" {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                                </AccordionContent>
+                            </AccordionItem>
+
                             <AccordionItem value="item-3">
                                 <AccordionTrigger className="font-semibold text-lg">Endereço</AccordionTrigger>
                                 <AccordionContent className="pt-4 space-y-4">
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <FormField control={form.control} name="zipCode" render={({ field }) => (
+                                        <FormField control={form.control} name="address.zipCode" render={({ field }) => (
                                             <FormItem className="md:col-span-1"><FormLabel>CEP</FormLabel><FormControl><Input placeholder="00000-000" {...field} /></FormControl><FormMessage /></FormItem>
                                         )}/>
                                     </div>
-                                    <FormField control={form.control} name="street" render={({ field }) => (
+                                    <FormField control={form.control} name="address.street" render={({ field }) => (
                                         <FormItem><FormLabel>Rua</FormLabel><FormControl><Input placeholder="Avenida Principal" {...field} /></FormControl><FormMessage /></FormItem>
                                     )}/>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                         <FormField control={form.control} name="number" render={({ field }) => (
+                                         <FormField control={form.control} name="address.number" render={({ field }) => (
                                             <FormItem><FormLabel>Número</FormLabel><FormControl><Input placeholder="123" {...field} /></FormControl><FormMessage /></FormItem>
                                         )}/>
-                                        <FormField control={form.control} name="complement" render={({ field }) => (
+                                        <FormField control={form.control} name="address.complement" render={({ field }) => (
                                             <FormItem className="md:col-span-2"><FormLabel>Complemento</FormLabel><FormControl><Input placeholder="Sala 101" {...field} /></FormControl><FormMessage /></FormItem>
                                         )}/>
                                     </div>
                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                         <FormField control={form.control} name="neighborhood" render={({ field }) => (
+                                         <FormField control={form.control} name="address.neighborhood" render={({ field }) => (
                                             <FormItem><FormLabel>Bairro</FormLabel><FormControl><Input placeholder="Centro" {...field} /></FormControl><FormMessage /></FormItem>
                                         )}/>
-                                         <FormField control={form.control} name="city" render={({ field }) => (
+                                         <FormField control={form.control} name="address.city" render={({ field }) => (
                                             <FormItem><FormLabel>Cidade</FormLabel><FormControl><Input placeholder="São Paulo" {...field} /></FormControl><FormMessage /></FormItem>
                                         )}/>
-                                         <FormField control={form.control} name="state" render={({ field }) => (
+                                         <FormField control={form.control} name="address.state" render={({ field }) => (
                                             <FormItem><FormLabel>Estado</FormLabel><FormControl><Input placeholder="SP" {...field} /></FormControl><FormMessage /></FormItem>
                                         )}/>
                                     </div>
                                 </AccordionContent>
                             </AccordionItem>
-
+                             <AccordionItem value="item-4">
+                                <AccordionTrigger className="font-semibold text-lg">Políticas de Negócio</AccordionTrigger>
+                                <AccordionContent className="pt-4 space-y-4">
+                                     <FormField
+                                        control={form.control} name="businessPolicy.deliveryEnabled"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                                <div className="space-y-0.5">
+                                                    <FormLabel>Habilitar Entregas</FormLabel>
+                                                    <p className="text-xs text-muted-foreground">Permite que os clientes escolham a entrega como opção de envio.</p>
+                                                </div>
+                                                <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control} name="businessPolicy.pickupEnabled"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                                <div className="space-y-0.5">
+                                                    <FormLabel>Habilitar Retirada</FormLabel>
+                                                    <p className="text-xs text-muted-foreground">Permite que os clientes retirem o pedido no local.</p>
+                                                </div>
+                                                <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField control={form.control} name="businessPolicy.minimumOrderValue" render={({ field }) => (
+                                        <FormItem><FormLabel>Valor Mínimo do Pedido (opcional)</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>
+                                    )}/>
+                                     <div className="text-sm text-muted-foreground pt-2">
+                                        <p><strong>Nota:</strong> Configurações avançadas de frete, pagamento e políticas de devolução poderão ser configuradas na tela de edição da empresa.</p>
+                                    </div>
+                                </AccordionContent>
+                            </AccordionItem>
+                             <AccordionItem value="item-5">
+                                <AccordionTrigger className="font-semibold text-lg">Configurações do Catálogo</AccordionTrigger>
+                                <AccordionContent className="pt-4 space-y-4">
+                                     <FormField control={form.control} name="catalogSettings.themeColor" render={({ field }) => (
+                                        <FormItem>
+                                            <Label>Cor do Tema</Label>
+                                            <FormControl>
+                                                <div className="relative">
+                                                     <div className="absolute left-2 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full" style={{ backgroundColor: field.value || 'transparent' }}/>
+                                                     <Input type="text" placeholder="#45A0A0" className="pl-9" {...field} />
+                                                </div>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}/>
+                                      <FormField control={form.control} name="catalogSettings.layout" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Layout Padrão</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="grid">Grade</SelectItem>
+                                                    <SelectItem value="list">Lista</SelectItem>
+                                                    <SelectItem value="carousel">Carrossel</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}/>
+                                </AccordionContent>
+                            </AccordionItem>
                         </Accordion>
                         <CardFooter className="p-0 pt-6 flex justify-end">
                             <Button type="submit" disabled={isLoading} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
@@ -236,3 +371,5 @@ export function CreateCompanyForm() {
         </Card>
     );
 }
+
+    
