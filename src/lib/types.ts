@@ -1,4 +1,5 @@
 
+
 import type { FieldValue, Timestamp } from "firebase/firestore";
 
 export type User = {
@@ -39,8 +40,8 @@ export type Product = {
   // Identificador único do produto (por exemplo, SKU, ID interno)
   id: string;
 
-  // ID da empresa à qual o produto pertence
-  companyId: string;
+  // IDs das empresas às quais o produto pertence
+  companyIds: string[];
 
   // Nome do produto, ex: "Camiseta Preta Básica"
   name: string;
@@ -558,4 +559,3 @@ export type Company = {
   updatedAt?:  Date | Timestamp | FieldValue; // Data da última atualização
 };
 
-    
