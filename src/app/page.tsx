@@ -46,7 +46,7 @@ export default function Home() {
       <main className="flex-1 ">
         {/* 1. Proposta de Valor Impactante */}
         <section className="w-full py-20 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
+          <div className="px-4 md:px-6">
             <div className="mx-auto max-w-7xl text-center">
               <motion.h1 
                 className="mb-4 text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl"
@@ -74,7 +74,7 @@ export default function Home() {
                   <Link href="/auth/signup">{t('landing.hero.ctaPrimary')}</Link>
                 </Button>
                 <Button asChild size="lg" variant="outline" className="transform transition-transform hover:scale-105">
-                  <Link href="#funcionalidades">{t('landing.hero.ctaSecondary')}</Link>
+                  <Link href="#planos">{t('landing.hero.ctaSecondary')}</Link>
                 </Button>
               </motion.div>
               <motion.div 
@@ -93,7 +93,7 @@ export default function Home() {
 
         {/* 2. Prova Social e Autoridade */}
         <section className="bg-muted/40 py-16">
-          <div className="container px-4 md:px-6">
+          <div className=" px-4 md:px-6">
             <div className="mx-auto max-w-7xl text-center">
               <h2 className="mb-4 text-2xl font-bold text-primary sm:text-3xl">{t('landing.socialProof.title')}</h2>
               <div className="mb-12 grid grid-cols-1 gap-8 md:grid-cols-3">
@@ -118,7 +118,7 @@ export default function Home() {
 
         {/* 3. Seção de Dor e Solução */}
         <section className="py-16 md:py-24">
-          <div className="container px-4 md:px-6">
+          <div className=" px-8 md:px-6">
             <div className="mx-auto max-w-7xl">
               <div className="mb-12 text-center">
                 <h2 className="mb-2 text-3xl font-bold sm:text-4xl">{t('landing.painSolution.title')}</h2>
@@ -170,7 +170,7 @@ export default function Home() {
 
         {/* 6. Seção de Perguntas Frequentes (FAQ) */}
         <section className="bg-muted/40 py-16 md:py-24">
-          <div className="container px-4 md:px-6">
+          <div className=" px-6 md:px-10">
             <div className="mx-auto max-w-7xl">
               <div className="mb-12 text-center">
                 <h2 className="text-3xl font-bold sm:text-4xl">{t('landing.faq.title')}</h2>
@@ -194,7 +194,7 @@ export default function Home() {
 
         {/* 7. Último CTA */}
         <section className="py-16 text-center">
-          <div className="container px-4 md:px-6">
+          <div className=" px-4 md:px-6">
             <div className="mx-auto max-w-3xl">
               <h2 className="mb-4 text-3xl font-bold sm:text-4xl">{t('landing.finalCta.title')}</h2>
               <p className="mb-8 text-xl text-muted-foreground">{t('landing.finalCta.subtitle')}</p>

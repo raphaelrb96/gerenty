@@ -23,7 +23,7 @@ export function Pricing() {
       priceSuffix: t('landing.pricing.premium.priceSuffix'),
       description: t('landing.pricing.premium.description'),
       features: t('landing.pricing.premium.features', { returnObjects: true }) as unknown as string[],
-      cta: t('landing.pricing.enterprise.cta'),
+      cta: t('landing.pricing.pro.cta'),
       href: user ? "/dashboard/billing" : "/auth/signup",
       isPopular: true,
     },
@@ -76,7 +76,7 @@ export function Pricing() {
 
   return (
     <section className="w-full py-16 md:py-24 bg-background">
-      <div className="container mx-auto px-4 md:px-6">
+      <div className=" mx-auto px-10 md:px-6">
         <div className="text-center max-w-3xl mx-auto mb-12">
           <h2 className="font-headline text-3xl md:text-4xl font-bold text-foreground">
             {t('landing.pricing.title')}
@@ -85,7 +85,7 @@ export function Pricing() {
             {t('landing.pricing.subtitle')}
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start justify-center max-w-7xl mx-auto">
+        <div className="grid max-w-sm grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start justify-center md:max-w-7xl mx-auto">
           {tiers.map((tier) => (
             <Card key={tier.name} className={`flex flex-col h-full rounded-xl shadow-lg border-2 ${tier.isPopular ? "border-primary" : "border-border"}`}>
                {tier.isPopular && (
