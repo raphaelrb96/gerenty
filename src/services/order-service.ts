@@ -7,11 +7,11 @@ import type { Order } from "@/lib/types";
 
 const ordersCollection = collection(db, "orders");
 
-// Get all orders for a specific vendor
+// Get all orders for a specific company
 // NOTE: In a real-world scenario, you'd likely want to implement pagination.
-export async function getOrders(vendorId: string): Promise<Order[]> {
+export async function getOrders(companyId: string): Promise<Order[]> {
     try {
-        const q = query(ordersCollection, where("companyId", "==", vendorId));
+        const q = query(ordersCollection, where("companyId", "==", companyId));
         const querySnapshot = await getDocs(q);
         const orders: Order[] = [];
         querySnapshot.forEach((doc) => {

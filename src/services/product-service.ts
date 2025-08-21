@@ -31,7 +31,8 @@ export async function addProduct(productData: Omit<Product, 'id' | 'createdAt' |
 
 export async function getProducts(companyId: string): Promise<Product[]> {
     try {
-        const q = query(productsCollection, where("companyId", "==", companyId));
+        // Find products where the companyId is in the companyIds array
+        const q = query(productsCollection, where("companyIds", "array-contains", companyId));
         const querySnapshot = await getDocs(q);
         const products: Product[] = [];
         querySnapshot.forEach((doc) => {
