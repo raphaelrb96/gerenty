@@ -282,8 +282,8 @@ export function CreateCompanyForm() {
                                 <AccordionContent className="pt-4 space-y-4">
                                     <FormField control={form.control} name="socialMedia.instagram" render={({ field }) => ( <FormItem><FormLabel>Instagram</FormLabel><FormControl><Input placeholder="usuario_instagram" {...field} /></FormControl><FormMessage /></FormItem> )}/>
                                     <FormField control={form.control} name="socialMedia.facebook" render={({ field }) => ( <FormItem><FormLabel>Facebook</FormLabel><FormControl><Input placeholder="pagina_facebook" {...field} /></FormControl><FormMessage /></FormItem> )}/>
-                                    <FormField control={form.control} name="socialMedia.tiktok" render={({ field }) => ( <FormItem><FormLabel>TikTok</FormLabel><FormControl><Input placeholder="@usuario_tiktok" {...field} /></FormControl><FormMessage /></FormMessage> )}/>
-                                    <FormField control={form.control} name="socialMedia.linkedin" render={({ field }) => ( <FormItem><FormLabel>LinkedIn</FormLabel><FormControl><Input placeholder="linkedin.com/company/sua-empresa" {...field} /></FormControl><FormMessage /></Item> )}/>
+                                    <FormField control={form.control} name="socialMedia.tiktok" render={({ field }) => ( <FormItem><FormLabel>TikTok</FormLabel><FormControl><Input placeholder="@usuario_tiktok" {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                                    <FormField control={form.control} name="socialMedia.linkedin" render={({ field }) => ( <FormItem><FormLabel>LinkedIn</FormLabel><FormControl><Input placeholder="linkedin.com/company/sua-empresa" {...field} /></FormControl><FormMessage /></FormItem> )}/>
                                 </AccordionContent>
                             </AccordionItem>
 
