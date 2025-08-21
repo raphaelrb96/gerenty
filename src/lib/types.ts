@@ -39,6 +39,9 @@ export type Product = {
   // Identificador único do produto (por exemplo, SKU, ID interno)
   id: string;
 
+  // ID da empresa à qual o produto pertence
+  companyId: string;
+
   // Nome do produto, ex: "Camiseta Preta Básica"
   name: string;
 
@@ -99,9 +102,6 @@ export type Product = {
     endDate: Date; // Data de término da promoção
     discountPercentage: number; // Porcentagem de desconto
   };
-
-  // ID do usuário/empresa que possui o produto (referência ao dono)
-  vendorId: string;
 
   // Flag que indica se o produto foi verificado (por exemplo, por admins)
   isVerified: boolean;
@@ -234,6 +234,7 @@ export type Plan = {
     catalogs?: number;
     products?: number;
     users?: number;
+    companies?: number; // Limite de empresas
     storageMB?: number;
     ordersPerMonth?: number;
     customDomains?: boolean;

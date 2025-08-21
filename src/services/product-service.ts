@@ -29,9 +29,9 @@ export async function addProduct(productData: Omit<Product, 'id' | 'createdAt' |
     }
 }
 
-export async function getProducts(vendorId: string): Promise<Product[]> {
+export async function getProducts(companyId: string): Promise<Product[]> {
     try {
-        const q = query(productsCollection, where("vendorId", "==", vendorId));
+        const q = query(productsCollection, where("companyId", "==", companyId));
         const querySnapshot = await getDocs(q);
         const products: Product[] = [];
         querySnapshot.forEach((doc) => {
@@ -66,3 +66,5 @@ export async function deleteProduct(productId: string): Promise<void> {
         throw new Error("Failed to delete product.");
     }
 }
+
+    

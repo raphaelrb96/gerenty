@@ -120,6 +120,9 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
     
     setIsSaving(true);
     
+    // TODO: This needs to get the active company ID from a context
+    const companyId = "temp-company-id"; 
+
     const productData = {
         name: values.name,
         slug: values.name.toLowerCase().replace(/\s+/g, '-'),
@@ -133,7 +136,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
         }],
         availableStock: values.stock,
         tags: values.attributes.split(',').map(attr => attr.trim()),
-        vendorId: user.uid,
+        companyId: companyId,
         isActive: true,
         status: 'available',
         visibility: 'public',
@@ -158,7 +161,7 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
             });
         } else {
             // Create new product
-            await addProduct(productData);
+            await addProduct(productData as Omit<Product, 'id' | 'createdAt' | 'updatedAt'>);
             toast({
                 title: t('productForm.createSuccess.title'),
                 description: `${values.name} ${t('productForm.createSuccess.description')}`,
@@ -272,3 +275,5 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
     </Form>
   );
 }
+
+    
