@@ -10,6 +10,7 @@ import { useAuth } from "@/context/auth-context";
 import { useCompany } from "@/context/company-context";
 import { useToast } from "@/hooks/use-toast";
 import { addCompany } from "@/services/company-service";
+import { uploadFile } from "@/services/storage-service";
 import type { Company } from "@/lib/types";
 
 import { Button } from "@/components/ui/button";
@@ -37,8 +38,6 @@ const formSchema = z.object({
   description: z.string().optional(),
   document: z.string().optional(),
   documentType: z.enum(['CNPJ', 'CPF', 'Outro']).default('CNPJ'),
-  logoUrl: z.string().url("URL do logo inválida.").optional().or(z.literal('')),
-  bannerUrl: z.string().url("URL do banner inválida.").optional().or(z.literal('')),
   
   // Contato
   email: z.string().email("Email de contato inválido."),
@@ -90,6 +89,8 @@ export function CreateCompanyForm() {
     const { setActiveCompany } = useCompany();
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
+    const [logoFile, setLogoFile] = useState<File | null>(null);
+    const [bannerFile, setBannerFile] = useState<File | null>(null);
 
     const form = useForm<CreateCompanyFormValues>({
         resolver: zodResolver(formSchema),
@@ -102,8 +103,6 @@ export function CreateCompanyForm() {
             phone: "",
             whatsapp: "",
             website: "",
-            logoUrl: "",
-            bannerUrl: "",
             address: {
                 street: "",
                 number: "",
@@ -142,13 +141,33 @@ export function CreateCompanyForm() {
         
         setIsLoading(true);
 
+        let logoUrl = "";
+        let bannerUrl = "";
+
+        try {
+            if (logoFile) {
+                const path = `companies/${user.uid}/${values.name.replace(/\s+/g, '-')}-logo-${Date.now()}`;
+                logoUrl = await uploadFile(logoFile, path);
+            }
+            if (bannerFile) {
+                const path = `companies/${user.uid}/${values.name.replace(/\s+/g, '-')}-banner-${Date.now()}`;
+                bannerUrl = await uploadFile(bannerFile, path);
+            }
+        } catch (error) {
+            console.error("Image upload error", error);
+            toast({ variant: "destructive", title: "Erro no Upload", description: "Não foi possível enviar as imagens. Tente novamente." });
+            setIsLoading(false);
+            return;
+        }
+
+
         const companyData: Omit<Company, 'id' | 'createdAt' | 'updatedAt'> = {
             ownerId: user.uid,
             name: values.name,
             slug: values.name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''),
             description: values.description,
-            logoUrl: values.logoUrl,
-            bannerUrl: values.bannerUrl,
+            logoUrl: logoUrl,
+            bannerUrl: bannerUrl,
             document: values.document,
             documentType: values.documentType,
             email: values.email,
@@ -224,12 +243,20 @@ export function CreateCompanyForm() {
                                             <FormItem><FormLabel>Número do Documento</FormLabel><FormControl><Input placeholder="00.000.000/0001-00" {...field} /></FormControl><FormMessage /></FormItem>
                                         )}/>
                                     </div>
-                                    <FormField control={form.control} name="logoUrl" render={({ field }) => (
-                                        <FormItem><FormLabel>URL do Logo</FormLabel><FormControl><Input placeholder="https://exemplo.com/logo.png" {...field} /></FormControl><FormMessage /></FormItem>
-                                    )}/>
-                                    <FormField control={form.control} name="bannerUrl" render={({ field }) => (
-                                        <FormItem><FormLabel>URL do Banner</FormLabel><FormControl><Input placeholder="https://exemplo.com/banner.png" {...field} /></FormControl><FormMessage /></FormItem>
-                                    )}/>
+                                    <FormItem>
+                                        <FormLabel>Logo</FormLabel>
+                                        <FormControl>
+                                            <Input type="file" accept="image/*" onChange={(e) => setLogoFile(e.target.files ? e.target.files[0] : null)} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                     <FormItem>
+                                        <FormLabel>Banner</FormLabel>
+                                        <FormControl>
+                                            <Input type="file" accept="image/*" onChange={(e) => setBannerFile(e.target.files ? e.target.files[0] : null)} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
                                 </AccordionContent>
                             </AccordionItem>
 
@@ -255,7 +282,7 @@ export function CreateCompanyForm() {
                                 <AccordionContent className="pt-4 space-y-4">
                                     <FormField control={form.control} name="socialMedia.instagram" render={({ field }) => ( <FormItem><FormLabel>Instagram</FormLabel><FormControl><Input placeholder="usuario_instagram" {...field} /></FormControl><FormMessage /></FormItem> )}/>
                                     <FormField control={form.control} name="socialMedia.facebook" render={({ field }) => ( <FormItem><FormLabel>Facebook</FormLabel><FormControl><Input placeholder="pagina_facebook" {...field} /></FormControl><FormMessage /></FormItem> )}/>
-                                    <FormField control={form.control} name="socialMedia.tiktok" render={({ field }) => ( <FormItem><FormLabel>TikTok</FormLabel><FormControl><Input placeholder="@usuario_tiktok" {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                                    <FormField control={form.control} name="socialMedia.tiktok" render={({ field }) => ( <FormItem><FormLabel>TikTok</FormLabel><FormControl><Input placeholder="@usuario_tiktok" {...field} /></FormControl><FormMessage /></FormMessage> )}/>
                                     <FormField control={form.control} name="socialMedia.linkedin" render={({ field }) => ( <FormItem><FormLabel>LinkedIn</FormLabel><FormControl><Input placeholder="linkedin.com/company/sua-empresa" {...field} /></FormControl><FormMessage /></FormItem> )}/>
                                 </AccordionContent>
                             </AccordionItem>
@@ -371,5 +398,3 @@ export function CreateCompanyForm() {
         </Card>
     );
 }
-
-    
