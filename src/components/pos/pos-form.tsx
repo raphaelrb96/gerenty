@@ -34,6 +34,7 @@ import { Textarea } from "../ui/textarea";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
 import { useTranslation } from "@/context/i18n-context";
 import { useCurrency } from "@/context/currency-context";
+import { useCompany } from "@/context/company-context";
 
 
 const orderItemSchema = z.object({
@@ -83,6 +84,7 @@ type PosFormProps = {
 export function PosForm({ allProducts }: PosFormProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { activeCompany } = useCompany();
   const { toast } = useToast();
   const { formatCurrency } = useCurrency();
   const [cart, setCart] = useState<OrderItem[]>([]);
@@ -154,7 +156,7 @@ export function PosForm({ allProducts }: PosFormProps) {
 
 
   async function onSubmit(values: PosFormValues) {
-    if (!user) {
+    if (!user || !activeCompany) {
         toast({ variant: "destructive", title: t('pos.error.notLoggedIn') });
         return;
     }
@@ -162,7 +164,7 @@ export function PosForm({ allProducts }: PosFormProps) {
     setIsSaving(true);
     
     const orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'> = {
-        companyId: user.uid,
+        companyId: activeCompany.id,
         customer: {
             name: values.customerName,
             email: values.customerEmail,
@@ -245,7 +247,7 @@ export function PosForm({ allProducts }: PosFormProps) {
                         <div className="flex items-end gap-2">
                             <div className="flex-grow">
                                 <Label>{t('pos.products.select')}</Label>
-                                <Select onValueChange={setSelectedProduct} value={selectedProduct}>
+                                <Select onValueChange={setSelectedProduct} value={selectedProduct} disabled={!activeCompany}>
                                     <SelectTrigger><SelectValue placeholder={t('pos.products.selectPlaceholder')} /></SelectTrigger>
                                     <SelectContent>
                                         {allProducts.map((product) => (
@@ -256,7 +258,7 @@ export function PosForm({ allProducts }: PosFormProps) {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <Button type="button" size="icon" onClick={handleAddProductToCart} disabled={!selectedProduct}>
+                            <Button type="button" size="icon" onClick={handleAddProductToCart} disabled={!selectedProduct || !activeCompany}>
                                 <PlusCircle className="h-4 w-4" />
                             </Button>
                         </div>
@@ -371,7 +373,7 @@ export function PosForm({ allProducts }: PosFormProps) {
             </div>
             
             <CardFooter className="p-0 pt-6">
-                 <Button type="submit" className="w-full" size="lg" disabled={isSaving || cart.length === 0} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
+                 <Button type="submit" className="w-full" size="lg" disabled={isSaving || cart.length === 0 || !activeCompany} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
                      {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                      {t('pos.submitButton')} ({formatCurrency(total)})
                  </Button>

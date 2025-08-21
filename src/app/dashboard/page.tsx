@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DollarSign, Package, ShoppingCart, ArrowUpRight, PlusCircle } from "lucide-react";
+import { DollarSign, Package, ShoppingCart, ArrowUpRight, PlusCircle, ChevronsUpDown, Building } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
 import { useEffect, useState } from "react";
@@ -20,10 +20,86 @@ import type { Order, Product } from "@/lib/types";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { useTranslation } from "@/context/i18n-context";
 import { useCurrency } from "@/context/currency-context";
+import { useCompany } from "@/context/company-context";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+function CompanySelector() {
+    const { companies, activeCompany, setActiveCompany } = useCompany();
+
+    if (!activeCompany) {
+        return (
+            <Card>
+                <CardContent className="p-6">
+                    <div className="flex items-center justify-center gap-4">
+                        <Building className="h-8 w-8 text-muted-foreground" />
+                        <div>
+                             <h2 className="font-semibold">Nenhuma empresa selecionada</h2>
+                             <p className="text-sm text-muted-foreground">Crie ou selecione uma empresa para começar.</p>
+                        </div>
+                        <Button asChild className="ml-auto">
+                            <Link href="/dashboard/companies/create">Criar Empresa</Link>
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+        );
+    }
+
+    return (
+        <Card>
+            <CardContent className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-md bg-muted">
+                        <Building className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <div>
+                        <p className="text-xs text-muted-foreground">Empresa Ativa</p>
+                        <h2 className="text-lg font-bold">{activeCompany.name}</h2>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline">
+                                Trocar Empresa
+                                <ChevronsUpDown className="ml-2 h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            {companies.map((company) => (
+                                <DropdownMenuItem key={company.id} onSelect={() => setActiveCompany(company)}>
+                                    {company.name}
+                                </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    <Button asChild>
+                         <Link href="/dashboard/companies/create">
+                            <PlusCircle className="mr-2 h-4 w-4" /> Criar Nova Empresa
+                        </Link>
+                    </Button>
+                     <Button variant="secondary" asChild>
+                         <Link href="/dashboard/companies">
+                            Ver Todas
+                        </Link>
+                    </Button>
+                </div>
+            </CardContent>
+        </Card>
+    )
+}
+
 
 export default function DashboardPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { activeCompany } = useCompany();
   const { formatCurrency } = useCurrency();
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -31,12 +107,15 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function fetchData() {
-      if (!user) return;
+      if (!user || !activeCompany) {
+        setLoading(false);
+        return
+      };
       try {
         setLoading(true);
         const [userOrders, userProducts] = await Promise.all([
-          getOrders(user.uid),
-          getProducts(user.uid),
+          getOrders(activeCompany.id),
+          getProducts(activeCompany.id),
         ]);
         setOrders(userOrders);
         setProducts(userProducts);
@@ -47,7 +126,7 @@ export default function DashboardPage() {
       }
     }
     fetchData();
-  }, [user]);
+  }, [user, activeCompany]);
 
   const totalRevenue = orders.reduce((acc, order) => acc + order.total, 0);
   const totalSales = orders.length;
@@ -65,6 +144,8 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-4">
+      <CompanySelector />
+
       <div className="flex items-center justify-between space-y-2">
         <h1 className="font-headline text-3xl font-bold">{t('Dashboard')}</h1>
         <div className="flex items-center space-x-2">

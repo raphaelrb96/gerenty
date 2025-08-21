@@ -16,10 +16,12 @@ import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { EmptyState } from "@/components/common/empty-state";
 import { useTranslation } from "@/context/i18n-context";
 import { useCurrency } from "@/context/currency-context";
+import { useCompany } from "@/context/company-context";
 
 export default function OrdersPage() {
     const { t } = useTranslation();
     const { user } = useAuth();
+    const { activeCompany } = useCompany();
     const { formatCurrency } = useCurrency();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
@@ -27,16 +29,18 @@ export default function OrdersPage() {
     const [isSheetOpen, setIsSheetOpen] = useState(false);
 
      useEffect(() => {
-        if (user) {
+        if (user && activeCompany) {
             fetchOrders();
+        } else {
+            setLoading(false);
         }
-    }, [user]);
+    }, [user, activeCompany]);
 
     const fetchOrders = async () => {
-        if (!user) return;
+        if (!user || !activeCompany) return;
         setLoading(true);
         try {
-            const userOrders = await getOrders(user.uid);
+            const userOrders = await getOrders(activeCompany.id);
             setOrders(userOrders);
         } catch (error) {
             console.error(error);
@@ -99,7 +103,7 @@ export default function OrdersPage() {
         <EmptyState
             icon={<ShoppingCart className="h-16 w-16" />}
             title={t('ordersPage.empty.title')}
-            description={t('ordersPage.empty.description')}
+            description={!activeCompany ? "Selecione uma empresa para ver os pedidos." : t('ordersPage.empty.description')}
         />
       ) : (
         <div className="space-y-4">

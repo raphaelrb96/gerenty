@@ -10,25 +10,29 @@ import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { PosForm } from "@/components/pos/pos-form";
 import { ProductList } from "@/components/pos/product-list";
 import { useTranslation } from "@/context/i18n-context";
+import { useCompany } from "@/context/company-context";
 
 
 export default function PosPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { activeCompany } = useCompany();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
+    if (user && activeCompany) {
       fetchProducts();
+    } else {
+      setLoading(false);
     }
-  }, [user]);
+  }, [user, activeCompany]);
 
   const fetchProducts = async () => {
-    if (!user) return;
+    if (!user || !activeCompany) return;
     setLoading(true);
     try {
-      const userProducts = await getProducts(user.uid);
+      const userProducts = await getProducts(activeCompany.id);
       setProducts(userProducts);
     } catch (error) {
       console.error(error);

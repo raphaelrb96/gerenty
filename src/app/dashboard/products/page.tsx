@@ -17,11 +17,13 @@ import { PlusCircle, Package } from "lucide-react";
 import Image from "next/image";
 import { useTranslation } from "@/context/i18n-context";
 import { useCurrency } from "@/context/currency-context";
+import { useCompany } from "@/context/company-context";
 
 
 export default function ProductsPage() {
     const { t } = useTranslation();
     const { user } = useAuth();
+    const { activeCompany } = useCompany();
     const { formatCurrency } = useCurrency();
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
@@ -29,16 +31,18 @@ export default function ProductsPage() {
     const [isSheetOpen, setIsSheetOpen] = useState(false);
 
     useEffect(() => {
-        if (user) {
+        if (user && activeCompany) {
             fetchProducts();
+        } else {
+            setLoading(false);
         }
-    }, [user]);
+    }, [user, activeCompany]);
 
     const fetchProducts = async () => {
-        if (!user) return;
+        if (!user || !activeCompany) return;
         setLoading(true);
         try {
-            const userProducts = await getProducts(user.uid);
+            const userProducts = await getProducts(activeCompany.id);
             setProducts(userProducts);
         } catch (error) {
             console.error(error);
@@ -72,7 +76,7 @@ export default function ProductsPage() {
         title={t('productsPage.title')}
         description={t('productsPage.description')}
         action={
-            <Button onClick={handleAddProduct} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
+            <Button onClick={handleAddProduct} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} disabled={!activeCompany}>
                 <PlusCircle className="mr-2 h-4 w-4" /> {t('productsPage.addProduct')}
             </Button>
         }
@@ -91,9 +95,9 @@ export default function ProductsPage() {
          <EmptyState 
             icon={<Package className="h-16 w-16" />}
             title={t('productsPage.empty.title')}
-            description={t('productsPage.empty.description')}
+            description={!activeCompany ? "Selecione uma empresa para ver os produtos." : t('productsPage.empty.description')}
             action={
-                <Button onClick={handleAddProduct} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
+                <Button onClick={handleAddProduct} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} disabled={!activeCompany}>
                     <PlusCircle className="mr-2 h-4 w-4" /> {t('productsPage.empty.action')}
                 </Button>
             }

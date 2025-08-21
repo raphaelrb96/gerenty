@@ -24,6 +24,7 @@ import { addProduct, updateProduct } from "@/services/product-service";
 import { Bot, Loader2 } from "lucide-react";
 import type { Product } from "@/lib/types";
 import { useTranslation } from "@/context/i18n-context";
+import { useCompany } from "@/context/company-context";
 
 const formSchema = z.object({
   name: z.string().min(3, { message: "Product name must be at least 3 characters." }),
@@ -44,6 +45,7 @@ type ProductFormProps = {
 export function ProductForm({ product, onFinished }: ProductFormProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { activeCompany } = useCompany();
   const [isSaving, setIsSaving] = useState(false);
   const [isGenerating, startGenerateTransition] = useTransition();
   const { toast } = useToast();
@@ -113,17 +115,14 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
   };
 
   async function onSubmit(values: ProductFormValues) {
-    if (!user) {
+    if (!user || !activeCompany) {
         toast({ variant: "destructive", title: t('productForm.error.noUser') });
         return;
     }
     
     setIsSaving(true);
-    
-    // TODO: This needs to get the active company ID from a context
-    const companyId = "temp-company-id"; 
 
-    const productData = {
+    const productData: Partial<Product> = {
         name: values.name,
         slug: values.name.toLowerCase().replace(/\s+/g, '-'),
         description: values.description || '',
@@ -136,25 +135,24 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
         }],
         availableStock: values.stock,
         tags: values.attributes.split(',').map(attr => attr.trim()),
-        companyId: companyId,
+        companyIds: [activeCompany.id],
         isActive: true,
         status: 'available',
         visibility: 'public',
-        // Default empty values for required fields
-        attributes: [],
-        categories: [],
-        collections: [],
-        images: { mainImage: '', gallery: [] },
         isVerified: false,
-        permissions: { canEdit: true, canDelete: true, allowedRoles: ['empresa'] },
-        reviews: { averageRating: 0, totalReviews: 0, ratings: [] },
-        versionHistory: { version: '1.0', updatedAt: new Date(), changes: ['Initial creation'] },
     };
 
     try {
         if (product) {
             // Update existing product
-            await updateProduct(product.id, productData);
+            // Ensure companyIds is handled correctly when updating
+            const updatedProductData = {
+                ...productData,
+                companyIds: product.companyIds.includes(activeCompany.id) 
+                    ? product.companyIds 
+                    : [...product.companyIds, activeCompany.id]
+            };
+            await updateProduct(product.id, updatedProductData);
             toast({
                 title: t('productForm.updateSuccess.title'),
                 description: `${values.name} ${t('productForm.updateSuccess.description')}`,

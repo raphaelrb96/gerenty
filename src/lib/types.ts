@@ -559,3 +559,4 @@ export type Company = {
   updatedAt?:  Date | Timestamp | FieldValue; // Data da última atualização
 };
 
+
