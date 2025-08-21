@@ -137,14 +137,14 @@
                 "name": "Gold",
                 "priceSuffix": "/month",
                 "description": "For established businesses",
-                "features": ["500 products", "5000 orders/month", "10 users", "5000 customers"],
+                "features": ["500 products", "5000 orders/month", "10 users", "5000 customers", "Multi-company management"],
                 "cta": "Choose Plan"
             },
             "premium": {
                 "name": "Premium",
                 "priceSuffix": "/month",
                 "description": "For large-scale operations",
-                "features": ["Unlimited products", "Unlimited orders", "Up to 20 users", "Unlimited customers"],
+                "features": ["Unlimited products", "Unlimited orders", "Up to 20 users", "Unlimited customers", "Multi-company management"],
                 "cta": "Contact Us"
             },
             "pro": {

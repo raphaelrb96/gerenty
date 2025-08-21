@@ -137,14 +137,14 @@
                 "name": "Ouro",
                 "priceSuffix": "/mês",
                 "description": "Para negócios estabelecidos",
-                "features": ["500 produtos", "5000 pedidos/mês", "10 usuários", "5000 clientes"],
+                "features": ["500 produtos", "5000 pedidos/mês", "10 usuários", "5000 clientes", "Gerenciamento multi-empresa"],
                 "cta": "Escolher Plano"
             },
             "premium": {
                 "name": "Premium",
                 "priceSuffix": "/mês",
                 "description": "Para operações de grande escala",
-                "features": ["Produtos ilimitados", "Pedidos ilimitados", "Até 20 usuários", "Clientes ilimitados"],
+                "features": ["Produtos ilimitados", "Pedidos ilimitados", "Até 20 usuários", "Clientes ilimitados", "Gerenciamento multi-empresa"],
                 "cta": "Fale Conosco"
             },
              "pro": {
