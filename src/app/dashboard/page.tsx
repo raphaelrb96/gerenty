@@ -144,18 +144,11 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-4">
-      <CompanySelector />
-
-      <div className="flex items-center justify-between space-y-2">
+      <div className="space-y-2">
         <h1 className="font-headline text-3xl font-bold">{t('Dashboard')}</h1>
-        <div className="flex items-center space-x-2">
-            <Button asChild style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
-                <Link href="/dashboard/products">
-                    <PlusCircle className="mr-2 h-4 w-4" /> {t('dashboard.addProduct')}
-                </Link>
-            </Button>
-        </div>
       </div>
+
+      <CompanySelector />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {stats.map(stat => (
