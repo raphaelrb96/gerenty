@@ -43,7 +43,6 @@ export function MainSidebar() {
     { href: "/dashboard/pos", label: "PDV", icon: PlusCircle },
     { href: "/dashboard/billing", label: t("Billing"), icon: CreditCard },
     { href: "/dashboard/profile", label: t("Profile"), icon: User },
-    { href: "/dashboard/preferences", label: t("Preferences"), icon: Settings },
   ];
 
   return (

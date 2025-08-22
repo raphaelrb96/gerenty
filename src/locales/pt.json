@@ -211,25 +211,26 @@
         "manageCompany": "Gerenciar"
     },
     "profilePage": {
-        "title": "Perfil",
-        "description": "Gerencie as configurações da sua conta e informações pessoais.",
+        "title": "Perfil & Configurações",
+        "description": "Gerencie as configurações da sua conta, preferências e assinatura.",
         "personalInfo": "Informações Pessoais",
         "personalInfoDesc": "Atualize seu nome e endereço de e-mail.",
-        "subscription": "Gerenciar Assinatura",
-        "currentPlan": "Você está atualmente no",
-        "proPlan": "Plano Pro",
-        "renewal": "Seu plano renova em 1 de dezembro de 2024.",
+        "subscription": {
+            "title": "Assinatura",
+            "status": "Status do Plano",
+            "renewalDate": "Seu plano renova em {date}.",
+            "inactiveText": "Você não possui um plano ativo."
+        },
         "manageButton": "Gerenciar Assinatura",
         "updateSuccess": { "title": "Perfil Atualizado", "description": "Suas informações foram salvas com sucesso." },
         "updateError": { "title": "Erro ao Atualizar", "description": "Não foi possível salvar suas informações. Tente novamente." }
     },
     "preferencesPage": {
-        "title": "Preferências",
+        "title": "Preferências da Conta",
         "description": "Personalize sua experiência.",
-        "appearance": "Aparência",
-        "appearanceDesc": "Altere a aparência da aplicação.",
         "theme": "Tema",
-        "language": "Idioma"
+        "language": "Idioma",
+        "currency": "Moeda"
     },
      "productsPage": {
         "title": "Produtos",

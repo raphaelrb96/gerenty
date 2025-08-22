@@ -19,6 +19,7 @@ import { useTranslation } from "@/context/i18n-context";
 import { useAuth } from "@/context/auth-context";
 import { useRouter } from "next/navigation";
 import { signOut } from "@/services/auth-service";
+import { CurrencyToggle } from "../currency-toggle";
 
 export function Header() {
   const { t } = useTranslation();
@@ -62,9 +63,6 @@ export function Header() {
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <Link href="/dashboard/profile">{t('Profile')}</Link>
-            </DropdownMenuItem>
-             <DropdownMenuItem asChild>
-              <Link href="/dashboard/preferences">{t('Preferences')}</Link>
             </DropdownMenuItem>
             <DropdownMenuItem>{t('Support')}</DropdownMenuItem>
             <DropdownMenuSeparator />

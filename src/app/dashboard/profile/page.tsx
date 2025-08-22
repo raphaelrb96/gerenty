@@ -12,9 +12,36 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/context/i18n-context";
+import { useAuth } from "@/context/auth-context";
+import { useRouter } from "next/navigation";
+import { signOut } from "@/services/auth-service";
+import { Label } from "@/components/ui/label";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { LanguageToggle } from "@/components/language-toggle";
+import { CurrencyToggle } from "@/components/currency-toggle";
+import { Badge } from "@/components/ui/badge";
 
 export default function ProfilePage() {
   const { t } = useTranslation();
+  const { userData } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await signOut();
+    router.push('/auth/login');
+  };
+
+  const getStatusVariant = (status: string | undefined) => {
+    switch (status) {
+        case 'ativo':
+            return 'bg-green-600/20 text-green-700 hover:bg-green-600/30';
+        case 'pendente':
+            return 'bg-yellow-600/20 text-yellow-700 hover:bg-yellow-600/30';
+        case 'inativo':
+        default:
+            return 'bg-red-600/20 text-red-700 hover:bg-red-600/30';
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -25,31 +52,61 @@ export default function ProfilePage() {
         </p>
       </div>
       <div className="grid gap-8 md:grid-cols-3">
-        <Card className="md:col-span-2">
-            <CardHeader>
-                <CardTitle>{t('profilePage.personalInfo')}</CardTitle>
-                <CardDescription>{t('profilePage.personalInfoDesc')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <ProfileForm />
-            </CardContent>
-        </Card>
-        <Card>
+        <div className="md:col-span-2 space-y-8">
+            <Card>
+                <CardHeader>
+                    <CardTitle>{t('profilePage.personalInfo')}</CardTitle>
+                    <CardDescription>{t('profilePage.personalInfoDesc')}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ProfileForm />
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle>{t('preferencesPage.title')}</CardTitle>
+                    <CardDescription>{t('preferencesPage.description')}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div className="flex items-center justify-between">
+                        <Label>{t('preferencesPage.theme')}</Label>
+                        <ThemeToggle />
+                    </div>
+                     <div className="flex items-center justify-between">
+                        <Label>{t('preferencesPage.language')}</Label>
+                        <LanguageToggle />
+                    </div>
+                     <div className="flex items-center justify-between">
+                        <Label>{t('preferencesPage.currency')}</Label>
+                        <CurrencyToggle />
+                    </div>
+                </CardContent>
+                <CardFooter>
+                    <Button variant="outline" onClick={handleLogout}>{t('Logout')}</Button>
+                </CardFooter>
+            </Card>
+        </div>
+
+        <Card className="md:col-span-1 h-fit">
           <CardHeader>
-            <CardTitle>{t('profilePage.subscription')}</CardTitle>
-            <CardDescription>
-              {t('profilePage.currentPlan')}{" "}
-              <strong>{t('profilePage.proPlan')}</strong>.
-            </CardDescription>
+            <CardTitle>{t('profilePage.subscription.title')}</CardTitle>
           </CardHeader>
-          <CardContent>
-            <p>{t('profilePage.renewal')}</p>
+          <CardContent className="space-y-4">
+             <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">{t('profilePage.subscription.status')}</span>
+                <Badge className={getStatusVariant(userData?.statusPlan)}>{userData?.statusPlan || 'inativo'}</Badge>
+            </div>
+             <p className="text-sm text-muted-foreground">
+                {userData?.statusPlan === 'ativo' ? t('profilePage.subscription.renewalDate', {date: new Date(userData?.validityDate as any).toLocaleDateString()}) : t('profilePage.subscription.inactiveText')}
+            </p>
           </CardContent>
-          <CardFooter className="border-t pt-4">
-            <Button style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="w-full">
-              {t('profilePage.manageButton')}
-            </Button>
-          </CardFooter>
+          {(userData?.statusPlan === 'inativo' || userData?.statusPlan === 'pendente') && (
+             <CardFooter className="border-t pt-4">
+                <Button onClick={() => router.push('/dashboard/billing')} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="w-full">
+                {t('profilePage.manageButton')}
+                </Button>
+            </CardFooter>
+          )}
         </Card>
       </div>
     </div>

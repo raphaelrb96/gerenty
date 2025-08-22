@@ -211,25 +211,26 @@
         "manageCompany": "Manage"
     },
     "profilePage": {
-        "title": "Profile",
-        "description": "Manage your account settings and personal information.",
+        "title": "Profile & Settings",
+        "description": "Manage your account settings, preferences, and subscription.",
         "personalInfo": "Personal Information",
         "personalInfoDesc": "Update your name and email address.",
-        "subscription": "Manage Subscription",
-        "currentPlan": "You are currently on the",
-        "proPlan": "Pro Plan",
-        "renewal": "Your plan renews on December 1, 2024.",
+        "subscription": {
+            "title": "Subscription",
+            "status": "Plan Status",
+            "renewalDate": "Your plan renews on {date}.",
+            "inactiveText": "You do not have an active plan."
+        },
         "manageButton": "Manage Subscription",
         "updateSuccess": { "title": "Profile Updated", "description": "Your information has been saved successfully." },
         "updateError": { "title": "Update Error", "description": "Could not save your information. Please try again." }
     },
     "preferencesPage": {
-        "title": "Preferences",
+        "title": "Account Preferences",
         "description": "Customize your experience.",
-        "appearance": "Appearance",
-        "appearanceDesc": "Change the look and feel of the application.",
         "theme": "Theme",
-        "language": "Language"
+        "language": "Language",
+        "currency": "Currency"
     },
     "productsPage": {
         "title": "Products",

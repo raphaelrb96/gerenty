@@ -211,25 +211,26 @@
         "manageCompany": "Gestionar"
     },
     "profilePage": {
-        "title": "Perfil",
-        "description": "Gestiona la configuración de tu cuenta y tu información personal.",
+        "title": "Perfil y Configuración",
+        "description": "Gestiona la configuración de tu cuenta, preferencias y suscripción.",
         "personalInfo": "Información Personal",
         "personalInfoDesc": "Actualiza tu nombre y dirección de correo electrónico.",
-        "subscription": "Gestionar Suscripción",
-        "currentPlan": "Actualmente estás en el",
-        "proPlan": "Plan Pro",
-        "renewal": "Tu plan se renueva el 1 de diciembre de 2024.",
+        "subscription": {
+            "title": "Suscripción",
+            "status": "Estado del Plan",
+            "renewalDate": "Tu plan se renueva el {date}.",
+            "inactiveText": "No tienes un plan activo."
+        },
         "manageButton": "Gestionar Suscripción",
         "updateSuccess": { "title": "Perfil Actualizado", "description": "Tu información ha sido guardada exitosamente." },
         "updateError": { "title": "Error al Actualizar", "description": "No se pudo guardar tu información. Por favor, inténtalo de nuevo." }
     },
     "preferencesPage": {
-        "title": "Preferencias",
+        "title": "Preferencias de la Cuenta",
         "description": "Personaliza tu experiencia.",
-        "appearance": "Apariencia",
-        "appearanceDesc": "Cambia el aspecto y la sensación de la aplicación.",
         "theme": "Tema",
-        "language": "Idioma"
+        "language": "Idioma",
+        "currency": "Moneda"
     },
     "productsPage": {
         "title": "Productos",
