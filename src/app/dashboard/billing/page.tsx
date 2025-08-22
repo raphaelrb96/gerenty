@@ -99,7 +99,7 @@ export default function BillingPage() {
             </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
           {tiers.map((tier) => (
             <Card key={tier.id} className={`flex flex-col h-full ${tier.isFeatured ? "border-primary shadow-lg" : "border-border"}`}>
               <CardHeader>
