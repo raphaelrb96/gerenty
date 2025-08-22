@@ -11,6 +11,7 @@
     "Billing": "Facturación",
     "Loading": "Cargando",
     "auth": {
+        "email": "Correo Electrónico",
         "password": "Contraseña",
         "fullName": "Nombre Completo",
         "fullNamePlaceholder": "Juan Pérez",
@@ -52,7 +53,7 @@
             "loginFailed": "Error de Inicio de Sesión",
             "signupFailed": "Error de Registro",
             "resetPasswordFailed": "Error al Restablecer la Contraseña",
-            "emailInUse": "Esta dirección de correo electrónico ya está en uso.",
+            "emailInUse": "Esta dirección de correo electrónico ya está en uso por otra cuenta.",
             "invalidCredentials": "El correo electrónico o la contraseña que ingresaste son incorrectos.",
             "generic": "Ocurrió un error inesperado. Por favor, inténtalo de nuevo."
         }

@@ -11,6 +11,7 @@
     "Billing": "Faturamento",
     "Loading": "Carregando",
     "auth": {
+        "email": "E-mail",
         "password": "Senha",
         "fullName": "Nome Completo",
         "fullNamePlaceholder": "João da Silva",

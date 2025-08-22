@@ -11,6 +11,7 @@
     "Billing": "Billing",
     "Loading": "Loading",
     "auth": {
+        "email": "Email",
         "password": "Password",
         "fullName": "Full Name",
         "fullNamePlaceholder": "John Doe",
