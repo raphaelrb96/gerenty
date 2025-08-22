@@ -27,6 +27,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import Image from "next/image";
 
 function CompanySelector() {
     const { companies, activeCompany, setActiveCompany } = useCompany();
@@ -99,7 +100,7 @@ function CompanySelector() {
 export default function DashboardPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { activeCompany } = useCompany();
+  const { activeCompany, companies } = useCompany();
   const { formatCurrency } = useCurrency();
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -138,12 +139,12 @@ export default function DashboardPage() {
     { title: t('dashboard.productsInStock'), value: `${productsInStock}`, icon: <Package className="h-4 w-4 text-muted-foreground" /> },
   ];
 
-  if (loading) {
+  if (loading && !activeCompany) {
     return <div className="flex h-full items-center justify-center"><LoadingSpinner /></div>;
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-8">
       <div className="space-y-2">
         <h1 className="font-headline text-3xl font-bold">{t('Dashboard')}</h1>
       </div>
@@ -192,6 +193,43 @@ export default function DashboardPage() {
           ))}
         </CardContent>
       </Card>
+
+      <div className="space-y-4">
+        <h2 className="font-headline text-2xl font-bold">Minhas Empresas</h2>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {companies.map((company) => (
+                <Card key={company.id} className="overflow-hidden">
+                    <CardHeader className="p-0">
+                        <Image 
+                            src={company.bannerUrl || "https://placehold.co/400x200.png"} 
+                            alt={`Banner for ${company.name}`} 
+                            width={400} 
+                            height={200} 
+                            className="w-full h-32 object-cover" 
+                        />
+                    </CardHeader>
+                    <CardContent className="p-4 flex items-center gap-4">
+                        <Image 
+                            src={company.logoUrl || "https://placehold.co/64x64.png"} 
+                            alt={`Logo for ${company.name}`} 
+                            width={64} 
+                            height={64} 
+                            className="rounded-full border-2 border-background -mt-10" 
+                        />
+                        <div>
+                            <CardTitle className="text-lg">{company.name}</CardTitle>
+                            <p className="text-sm text-muted-foreground">{company.email}</p>
+                        </div>
+                    </CardContent>
+                    <CardContent className="p-4 pt-0">
+                        <Button variant="outline" className="w-full" asChild>
+                            <Link href={`/dashboard/companies/edit/${company.id}`}>Gerenciar</Link>
+                        </Button>
+                    </CardContent>
+                </Card>
+            ))}
+        </div>
+      </div>
     </div>
   );
 }
