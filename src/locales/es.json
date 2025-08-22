@@ -58,6 +58,10 @@
             "generic": "Ocurrió un error inesperado. Por favor, inténtalo de nuevo."
         }
     },
+    "authLayout": {
+        "headline": "Gestiona con Maestría.",
+        "tagline": "La plataforma completa para impulsar tu negocio."
+    },
     "landing": {
         "hero": {
             "title": {

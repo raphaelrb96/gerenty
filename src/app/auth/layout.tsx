@@ -43,8 +43,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <div className="hidden bg-accent p-12 text-accent-foreground lg:flex flex-col justify-between">
           <Logo href="/" className="text-accent-foreground hover:text-accent-foreground/80" />
           <div className="mb-24">
-            <h2 className="font-headline text-3xl font-bold">Gerencie com Maestria.</h2>
-            <p className="mt-2 text-lg text-accent-foreground/80">A plataforma completa para impulsionar o seu negócio.</p>
+            <h2 className="font-headline text-3xl font-bold">{t('authLayout.headline')}</h2>
+            <p className="mt-2 text-lg text-accent-foreground/80">{t('authLayout.tagline')}</p>
           </div>
           <footer className="text-sm text-accent-foreground/60">
              {t('landing.footer.copy', { year: new Date().getFullYear() })}

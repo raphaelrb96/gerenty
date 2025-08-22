@@ -58,6 +58,10 @@
             "generic": "An unexpected error occurred. Please try again."
         }
     },
+    "authLayout": {
+        "headline": "Manage with Mastery.",
+        "tagline": "The complete platform to boost your business."
+    },
     "landing": {
         "hero": {
             "title": {

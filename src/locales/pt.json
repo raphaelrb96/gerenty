@@ -58,6 +58,10 @@
             "generic": "Ocorreu um erro inesperado. Por favor, tente novamente."
         }
     },
+    "authLayout": {
+        "headline": "Gerencie com Maestria.",
+        "tagline": "A plataforma completa para impulsionar o seu negócio."
+    },
     "landing": {
         "hero": {
             "title": {
