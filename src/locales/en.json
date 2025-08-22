@@ -404,5 +404,17 @@
             "title": "Processing...",
             "description": "Please wait while we process your subscription information."
         }
+    },
+    "companiesPage": {
+        "sidebarTitle": "Companies",
+        "title": "My Companies",
+        "description": "Manage your companies or add a new one.",
+        "createButton": "Create New Company",
+        "manageButton": "Manage Company",
+        "empty": {
+            "title": "No Companies Found",
+            "description": "Get started by creating your first company profile. It's the first step to organizing your business.",
+            "action": "Create First Company"
+        }
     }
 }

@@ -404,5 +404,17 @@
             "title": "Procesando...",
             "description": "Por favor, espera mientras procesamos la información de tu suscripción."
         }
+    },
+    "companiesPage": {
+        "sidebarTitle": "Empresas",
+        "title": "Mis Empresas",
+        "description": "Gestiona tus empresas o añade una nueva.",
+        "createButton": "Crear Nueva Empresa",
+        "manageButton": "Gestionar Empresa",
+        "empty": {
+            "title": "No se Encontraron Empresas",
+            "description": "Comienza creando el perfil de tu primera empresa. Es el primer paso para organizar tu negocio.",
+            "action": "Crear Primera Empresa"
+        }
     }
 }
