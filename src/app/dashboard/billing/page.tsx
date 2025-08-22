@@ -10,6 +10,7 @@ import { useAuth } from "@/context/auth-context";
 import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
 import { useCurrency } from "@/context/currency-context";
+import { CurrencyToggle } from "@/components/currency-toggle";
 
 export default function BillingPage() {
   const { t } = useTranslation();
@@ -92,11 +93,14 @@ export default function BillingPage() {
 
   return (
     <div className="space-y-8">
-        <div>
-            <h1 className="font-headline text-3xl font-bold">{t('billingPage.title')}</h1>
-            <p className="text-muted-foreground">
-                {t('billingPage.description')}
-            </p>
+        <div className="flex justify-between items-start">
+            <div>
+                <h1 className="font-headline text-3xl font-bold">{t('billingPage.title')}</h1>
+                <p className="text-muted-foreground">
+                    {t('billingPage.description')}
+                </p>
+            </div>
+            <CurrencyToggle />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
