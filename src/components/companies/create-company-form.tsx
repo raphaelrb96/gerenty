@@ -160,10 +160,10 @@ export function CreateCompanyForm() {
         
         setIsLoading(true);
 
-        let logoUrl = "";
-        let bannerUrl = "";
-
         try {
+            let logoUrl = "";
+            let bannerUrl = "";
+
             if (logoFile) {
                 const path = `companies/${user.uid}/${values.name.replace(/\s+/g, '-')}-logo-${Date.now()}`;
                 logoUrl = await uploadFile(logoFile, path);
@@ -172,43 +172,35 @@ export function CreateCompanyForm() {
                 const path = `companies/${user.uid}/${values.name.replace(/\s+/g, '-')}-banner-${Date.now()}`;
                 bannerUrl = await uploadFile(bannerFile, path);
             }
-        } catch (error) {
-            console.error("Image upload error", error);
-            toast({ variant: "destructive", title: "Erro no Upload", description: "Não foi possível enviar as imagens. Tente novamente." });
-            setIsLoading(false);
-            return;
-        }
+            
+            const companyData: Omit<Company, 'id' | 'createdAt' | 'updatedAt'> = {
+                ownerId: user.uid,
+                name: values.name,
+                slug: values.name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''),
+                description: values.description,
+                logoUrl: logoUrl,
+                bannerUrl: bannerUrl,
+                document: values.document,
+                documentType: values.documentType,
+                email: values.email,
+                phone: values.phone,
+                whatsapp: values.whatsapp,
+                website: values.website,
+                socialMedia: values.socialMedia,
+                address: {
+                    ...values.address,
+                    location: null,
+                },
+                businessPolicy: {
+                    ...values.businessPolicy,
+                    shippingDetails: { methods: [] }, 
+                    acceptedPayments: [], 
+                },
+                catalogSettings: values.catalogSettings,
+                isVerified: false,
+                isActive: true,
+            };
 
-
-        const companyData: Omit<Company, 'id' | 'createdAt' | 'updatedAt'> = {
-            ownerId: user.uid,
-            name: values.name,
-            slug: values.name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''),
-            description: values.description,
-            logoUrl: logoUrl,
-            bannerUrl: bannerUrl,
-            document: values.document,
-            documentType: values.documentType,
-            email: values.email,
-            phone: values.phone,
-            whatsapp: values.whatsapp,
-            website: values.website,
-            socialMedia: values.socialMedia,
-            address: {
-                ...values.address,
-                location: null,
-            },
-            businessPolicy: {
-                ...values.businessPolicy,
-                shippingDetails: { methods: [] }, 
-                acceptedPayments: [], 
-            },
-            catalogSettings: values.catalogSettings,
-            isVerified: false,
-            isActive: true,
-        };
-
-        try {
             const newCompany = await addCompany(companyData);
             toast({
                 title: "Empresa Criada!",
@@ -218,7 +210,7 @@ export function CreateCompanyForm() {
             router.push("/dashboard");
 
         } catch(error) {
-            console.error("Firestore error", error);
+            console.error("Operação falhou", error);
             toast({ variant: "destructive", title: "Erro ao Criar Empresa", description: "Ocorreu um erro ao salvar os dados. Por favor, tente novamente." });
         } finally {
             setIsLoading(false);
@@ -436,3 +428,5 @@ export function CreateCompanyForm() {
         </Card>
     );
 }
+
+    
