@@ -20,6 +20,7 @@ import {
   Settings,
   PlusCircle,
   CreditCard,
+  Building,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -42,6 +43,7 @@ export function MainSidebar() {
     { href: "/dashboard/orders", label: t("Orders"), icon: ShoppingCart },
     { href: "/dashboard/pos", label: "PDV", icon: PlusCircle },
     { href: "/dashboard/billing", label: t("Billing"), icon: CreditCard },
+    { href: "/dashboard/companies", label: "Empresas", icon: Building },
     { href: "/dashboard/profile", label: t("Profile"), icon: User },
   ];
 
