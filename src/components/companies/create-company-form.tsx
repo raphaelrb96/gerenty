@@ -282,7 +282,7 @@ export function CreateCompanyForm() {
                                     <FormItem className="space-y-2">
                                         <FormLabel>Banner</FormLabel>
                                         <Label htmlFor="banner-upload" className="cursor-pointer block">
-                                             <Card className="border-2 border-dashed flex items-center justify-center text-muted-foreground hover:bg-muted/50 transition-colors aspect-[16/6]">
+                                             <Card className="relative h-32 border-2 border-dashed flex items-center justify-center text-muted-foreground hover:bg-muted/50 transition-colors">
                                                 {bannerPreview ? (
                                                       <Image src={bannerPreview} alt="Banner preview" layout="fill" className="rounded-md object-cover" />
                                                 ) : (
@@ -436,5 +436,7 @@ export function CreateCompanyForm() {
         </Card>
     );
 }
+
+    
 
     
