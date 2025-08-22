@@ -51,11 +51,13 @@ export async function addCompany(companyData: Omit<Company, 'id' | 'createdAt' |
             updatedAt: serverTimestamp(),
         });
         
+        // Fetch the newly created document to get the server-generated timestamps
+        const newDocSnap = await getDoc(docRef);
+        const newDocData = newDocSnap.data();
+
         return {
             id: docRef.id,
-            ...companyData,
-            createdAt: new Date(),
-            updatedAt: new Date()
+            ...newDocData
         } as Company;
 
     } catch (error) {

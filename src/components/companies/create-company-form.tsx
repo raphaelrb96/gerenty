@@ -154,7 +154,7 @@ export function CreateCompanyForm() {
 
     async function onSubmit(values: CreateCompanyFormValues) {
         if (!user) {
-            toast({ variant: "destructive", title: "Erro", description: "Você precisa estar logado para criar uma empresa." });
+            toast({ variant: "destructive", title: "Erro de Autenticação", description: "Você precisa estar logado para criar uma empresa." });
             return;
         }
         
@@ -218,8 +218,8 @@ export function CreateCompanyForm() {
             router.push("/dashboard");
 
         } catch(error) {
-            console.error(error);
-            toast({ variant: "destructive", title: "Erro ao Criar Empresa", description: "Ocorreu um erro, por favor tente novamente." });
+            console.error("Firestore error", error);
+            toast({ variant: "destructive", title: "Erro ao Criar Empresa", description: "Ocorreu um erro ao salvar os dados. Por favor, tente novamente." });
         } finally {
             setIsLoading(false);
         }
