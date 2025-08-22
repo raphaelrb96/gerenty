@@ -30,6 +30,7 @@ import {
 import Image from "next/image";
 
 function CompanySelector() {
+    const { t } = useTranslation();
     const { companies, activeCompany, setActiveCompany } = useCompany();
 
     if (!activeCompany) {
@@ -39,11 +40,11 @@ function CompanySelector() {
                     <div className="flex items-center justify-center gap-4">
                         <Building className="h-8 w-8 text-muted-foreground" />
                         <div>
-                             <h2 className="font-semibold">Nenhuma empresa selecionada</h2>
-                             <p className="text-sm text-muted-foreground">Crie ou selecione uma empresa para começar.</p>
+                             <h2 className="font-semibold">{t('dashboard.noCompanySelected.title')}</h2>
+                             <p className="text-sm text-muted-foreground">{t('dashboard.noCompanySelected.description')}</p>
                         </div>
                         <Button asChild className="ml-auto">
-                            <Link href="/dashboard/companies/create">Criar Empresa</Link>
+                            <Link href="/dashboard/companies/create">{t('dashboard.createCompany')}</Link>
                         </Button>
                     </div>
                 </CardContent>
@@ -59,7 +60,7 @@ function CompanySelector() {
                         <Building className="h-6 w-6 text-muted-foreground" />
                     </div>
                     <div>
-                        <p className="text-xs text-muted-foreground">Empresa Ativa</p>
+                        <p className="text-xs text-muted-foreground">{t('dashboard.activeCompany')}</p>
                         <h2 className="text-lg font-bold">{activeCompany.name}</h2>
                     </div>
                 </div>
@@ -68,7 +69,7 @@ function CompanySelector() {
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline">
-                                Trocar Empresa
+                                {t('dashboard.switchCompany')}
                                 <ChevronsUpDown className="ml-2 h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
@@ -82,12 +83,12 @@ function CompanySelector() {
                     </DropdownMenu>
                     <Button asChild>
                          <Link href="/dashboard/companies/create">
-                            <PlusCircle className="mr-2 h-4 w-4" /> Criar Nova Empresa
+                            <PlusCircle className="mr-2 h-4 w-4" /> {t('dashboard.createNewCompany')}
                         </Link>
                     </Button>
                      <Button variant="secondary" asChild>
                          <Link href="/dashboard/companies">
-                            Ver Todas
+                            {t('dashboard.viewAllCompanies')}
                         </Link>
                     </Button>
                 </div>
@@ -196,7 +197,7 @@ export default function DashboardPage() {
 
       {companies && companies.length > 0 && (
         <div className="space-y-4">
-          <h2 className="font-headline text-2xl font-bold">Minhas Empresas</h2>
+          <h2 className="font-headline text-2xl font-bold">{t('dashboard.myCompanies')}</h2>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {companies.map((company) => (
                   <Card key={company.id} className="overflow-hidden">
@@ -224,7 +225,7 @@ export default function DashboardPage() {
                       </CardContent>
                       <CardContent className="p-4 pt-0">
                           <Button variant="outline" className="w-full" asChild>
-                              <Link href={`/dashboard/companies/edit/${company.id}`}>Gerenciar</Link>
+                              <Link href={`/dashboard/companies/edit/${company.id}`}>{t('dashboard.manageCompany')}</Link>
                           </Button>
                       </CardContent>
                   </Card>

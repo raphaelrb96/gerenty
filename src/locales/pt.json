@@ -197,7 +197,18 @@
         "addProduct": "Adicionar Produto",
         "recentActivity": "Atividade Recente",
         "recentActivityDesc": "Uma visão geral dos últimos pedidos em sua loja.",
-        "viewAll": "Ver Todos"
+        "viewAll": "Ver Todos",
+        "noCompanySelected": {
+            "title": "Nenhuma empresa selecionada",
+            "description": "Crie ou selecione uma empresa para começar."
+        },
+        "createCompany": "Criar Empresa",
+        "activeCompany": "Empresa Ativa",
+        "switchCompany": "Trocar Empresa",
+        "createNewCompany": "Criar Nova Empresa",
+        "viewAllCompanies": "Ver Todas",
+        "myCompanies": "Minhas Empresas",
+        "manageCompany": "Gerenciar"
     },
     "profilePage": {
         "title": "Perfil",
