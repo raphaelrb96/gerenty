@@ -79,5 +79,3 @@ export async function updateCompany(companyId: string, companyData: Partial<Omit
         throw new Error("Failed to update company.");
     }
 }
-
-    
