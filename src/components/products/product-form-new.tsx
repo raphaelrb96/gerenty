@@ -25,6 +25,7 @@ import { useTranslation } from "@/context/i18n-context";
 import { Label } from "../ui/label";
 import Image from "next/image";
 import { MultiSelect } from "../ui/multi-select";
+import { uploadFile } from "@/services/storage-service";
 
 // Esquema de validação com Zod
 const formSchema = z.object({
@@ -64,11 +65,13 @@ export function ProductFormNew({ product }: ProductFormProps) {
     const router = useRouter();
     const { t } = useTranslation();
     const { user, userData } = useAuth();
-    const { companies, loading: loadingCompanies } = useCompany();
+    const { companies, activeCompany, loading: loadingCompanies } = useCompany();
     const { toast } = useToast();
 
     const [isSaving, setIsSaving] = useState(false);
     const [isGenerating, startGenerateTransition] = useTransition();
+    const [mainImageFile, setMainImageFile] = useState<File | null>(null);
+    const [mainImagePreview, setMainImagePreview] = useState<string | null>(null);
 
     const form = useForm<ProductFormValues>({
         resolver: zodResolver(formSchema),
@@ -83,7 +86,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
             visibility: "public",
             tags: "",
             attributes: [],
-            companyIds: [],
+            companyIds: activeCompany ? [activeCompany.id] : [],
         },
     });
     
@@ -112,8 +115,21 @@ export function ProductFormNew({ product }: ProductFormProps) {
                 attributes: product.attributes?.map(a => ({ name: a.name, options: a.options.join(', ') })) || [],
                 companyIds: product.companyIds || [],
             });
+            setMainImagePreview(product.images?.mainImage || null);
         }
     }, [product, form]);
+    
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'main') => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const previewUrl = URL.createObjectURL(file);
+            if (type === 'main') {
+                setMainImageFile(file);
+                setMainImagePreview(previewUrl);
+            }
+        }
+    };
+
 
     const handleGenerateDescription = () => {
         const productName = form.watch('name');
@@ -146,16 +162,20 @@ export function ProductFormNew({ product }: ProductFormProps) {
     };
 
     async function onSubmit(values: ProductFormValues) {
-        if (!user || !activeCompany) {
-            toast({ variant: "destructive", title: t('productForm.error.noUser') });
+        if (!user || values.companyIds.length === 0) {
+            toast({ variant: "destructive", title: "Dados Incompletos", description: "Você precisa estar logado e selecionar pelo menos uma empresa." });
             return;
         }
         setIsSaving(true);
         
         if (!product) {
             const productLimit = userData?.plan?.limits?.products ?? 0;
-            const currentProducts = await getProducts(activeCompany.id);
-            if (currentProducts.length >= productLimit) {
+            // This logic is imperfect for multi-company, we'd need to check per company
+            // For now, let's assume a global limit for simplicity
+            const allProducts = await Promise.all(values.companyIds.map(id => getProducts(id)));
+            const totalProducts = allProducts.flat().length;
+
+            if (totalProducts >= productLimit) {
                 toast({
                     variant: "destructive",
                     title: "Limite de Produtos Atingido",
@@ -166,18 +186,23 @@ export function ProductFormNew({ product }: ProductFormProps) {
                 return;
             }
         }
+
+        let mainImageUrl = product?.images?.mainImage || "";
+        if (mainImageFile && user) {
+            const path = `products/${user.uid}/${values.name.replace(/\s+/g, '-')}-main-${Date.now()}`;
+            mainImageUrl = await uploadFile(mainImageFile, path);
+        }
+
         
         const productData = {
             ...values,
-            companyIds: values.companyIds,
             slug: values.slug || values.name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''),
             isActive: true,
             pricing: values.pricing.map(p => ({ ...p, minQuantity: 1, quantityRule: 'perItem' as const })),
             tags: values.tags?.split(',').map(tag => tag.trim()).filter(Boolean) || [],
             attributes: values.attributes.map(a => ({...a, options: a.options.split(',').map(o => o.trim())})),
             isVerified: false,
-            // Default empty values for fields not in form
-            images: product?.images || { mainImage: '', gallery: [] },
+            images: { mainImage: mainImageUrl, gallery: product?.images?.gallery || [] },
             categories: product?.categories || [],
             collections: product?.collections || [],
         };
@@ -239,16 +264,24 @@ export function ProductFormNew({ product }: ProductFormProps) {
                         <Card>
                             <CardHeader><CardTitle>Imagens e Mídia</CardTitle></CardHeader>
                             <CardContent>
-                                <div className="flex items-center justify-center w-full">
-                                    <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50">
-                                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                            <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
-                                            <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Clique para enviar</span> ou arraste e solte</p>
-                                            <p className="text-xs text-muted-foreground">PNG, JPG, GIF (MAX. 800x400px)</p>
-                                        </div>
-                                        <input id="dropzone-file" type="file" className="hidden" multiple />
-                                    </label>
-                                </div> 
+                                <div className="space-y-4">
+                                    <FormItem>
+                                        <FormLabel>Imagem Principal</FormLabel>
+                                        <Label htmlFor="main-image-upload" className="cursor-pointer">
+                                            <Card className="relative aspect-video w-full border-2 border-dashed flex items-center justify-center text-muted-foreground hover:bg-muted/50 transition-colors">
+                                                {mainImagePreview ? (
+                                                    <Image src={mainImagePreview} alt="Pré-visualização da imagem principal" layout="fill" className="rounded-md object-cover" />
+                                                ) : (
+                                                    <div className="text-center">
+                                                        <ImageIcon className="mx-auto h-12 w-12" />
+                                                        <p className="text-sm mt-2">Clique para enviar a imagem principal</p>
+                                                    </div>
+                                                )}
+                                            </Card>
+                                        </Label>
+                                        <Input id="main-image-upload" type="file" accept="image/*" className="hidden" onChange={(e) => handleFileChange(e, 'main')} />
+                                    </FormItem>
+                                </div>
                             </CardContent>
                         </Card>
                         
