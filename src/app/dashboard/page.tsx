@@ -27,13 +27,19 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import Image from "next/image";
 
 function CompanySelector() {
     const { t } = useTranslation();
     const { companies, activeCompany, setActiveCompany } = useCompany();
 
-    if (!activeCompany) {
+    const getDisplayName = () => {
+        if (!activeCompany) {
+            return "Visão Geral de Todas as Empresas";
+        }
+        return activeCompany.name;
+    };
+
+    if (companies.length === 0) {
         return (
             <Card>
                 <CardContent className="p-6">
@@ -52,6 +58,7 @@ function CompanySelector() {
         );
     }
 
+
     return (
         <Card>
             <CardContent className="relative p-4">
@@ -67,7 +74,7 @@ function CompanySelector() {
                       </div>
                       <div>
                           <p className="text-xs text-muted-foreground">{t('dashboard.activeCompany')}</p>
-                          <h2 className="text-lg font-bold">{activeCompany.name}</h2>
+                          <h2 className="text-lg font-bold">{getDisplayName()}</h2>
                       </div>
                   </div>
 
@@ -80,6 +87,9 @@ function CompanySelector() {
                               </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                              <DropdownMenuItem onSelect={() => setActiveCompany(null)}>
+                                Visão Geral de Todas as Empresas
+                              </DropdownMenuItem>
                               {companies.map((company) => (
                                   <DropdownMenuItem key={company.id} onSelect={() => setActiveCompany(company)}>
                                       {company.name}
@@ -111,28 +121,52 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function fetchData() {
-      if (!user || !activeCompany) {
-        setLoading(false);
-        setOrders([]);
-        setProducts([]);
-        return
-      };
-      try {
+        if (!user) {
+            setLoading(false);
+            setOrders([]);
+            setProducts([]);
+            return;
+        }
+
         setLoading(true);
-        const [userOrders, userProducts] = await Promise.all([
-          getOrders(activeCompany.id),
-          getProducts(activeCompany.id),
-        ]);
-        setOrders(userOrders);
-        setProducts(userProducts);
-      } catch (error) {
-        console.error("Failed to fetch dashboard data", error);
-      } finally {
-        setLoading(false);
-      }
+        try {
+            let allOrders: Order[] = [];
+            let allProducts: Product[] = [];
+
+            if (activeCompany) {
+                // Fetch data for a single active company
+                const [userOrders, userProducts] = await Promise.all([
+                    getOrders(activeCompany.id),
+                    getProducts(activeCompany.id),
+                ]);
+                allOrders = userOrders;
+                allProducts = userProducts;
+            } else {
+                // Fetch data for all companies and aggregate
+                const orderPromises = companies.map(c => getOrders(c.id));
+                const productPromises = companies.map(c => getProducts(c.id));
+
+                const ordersResults = await Promise.all(orderPromises);
+                const productsResults = await Promise.all(productPromises);
+
+                allOrders = ordersResults.flat();
+                allProducts = productsResults.flat();
+            }
+
+            setOrders(allOrders);
+            setProducts(allProducts);
+
+        } catch (error) {
+            console.error("Failed to fetch dashboard data", error);
+        } finally {
+            setLoading(false);
+        }
     }
-    fetchData();
-  }, [user, activeCompany]);
+
+    if (companies) {
+       fetchData();
+    }
+  }, [user, activeCompany, companies]);
 
   const totalRevenue = orders.reduce((acc, order) => acc + order.total, 0);
   const totalSales = orders.length;
@@ -156,7 +190,7 @@ export default function DashboardPage() {
 
       <CompanySelector />
 
-      {activeCompany && (
+      {(activeCompany || companies.length > 0) && (
         <>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {stats.map(stat => (
@@ -205,3 +239,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
