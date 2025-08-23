@@ -86,7 +86,7 @@ export function CollectionSelector({ selectedCollections, onChange }: Collection
                         )
                     }}
                  />
-                 <Button type="button" variant="link" onClick={handleCreate} className="p-0 h-auto mt-2 text-sm">
+                 <Button type="button" variant="outline" size="sm" onClick={handleCreate} className="w-full mt-2">
                      <PlusCircle className="mr-2 h-4 w-4" />
                      Criar Nova Coleção
                  </Button>
