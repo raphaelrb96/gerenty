@@ -298,4 +298,3 @@ export function ProductFormNew({ product }: ProductFormProps) {
         </Form>
     );
 }
-
