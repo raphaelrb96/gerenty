@@ -54,7 +54,7 @@ function CompanySelector() {
 
     return (
         <Card>
-            <CardContent className="p-4 flex items-center justify-between">
+            <CardContent className="p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                     <div className="p-3 rounded-md bg-muted">
                         <Building className="h-6 w-6 text-muted-foreground" />
@@ -65,7 +65,7 @@ function CompanySelector() {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 self-start md:self-center">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline">
@@ -242,3 +242,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
