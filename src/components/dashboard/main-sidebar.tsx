@@ -9,6 +9,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Logo } from "@/components/logo";
 import {
@@ -31,11 +32,18 @@ export function MainSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { t } = useTranslation();
+  const { setOpenMobile, isMobile } = useSidebar();
 
   const handleLogout = async () => {
     await signOut();
     router.push('/auth/login');
   };
+
+  const handleLinkClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  }
 
   const menuItems = [
     { href: "/dashboard", label: t("Dashboard"), icon: LayoutDashboard },
@@ -60,6 +68,7 @@ export function MainSidebar() {
                 asChild
                 isActive={pathname.startsWith(item.href) && item.href !== "/dashboard" ? pathname.startsWith(item.href) : pathname === item.href}
                 tooltip={item.label}
+                onClick={handleLinkClick}
               >
                 <Link href={item.href}>
                   <item.icon />
@@ -73,7 +82,7 @@ export function MainSidebar() {
       <SidebarFooter>
         <SidebarMenu>
            <SidebarMenuItem>
-              <SidebarMenuButton onClick={handleLogout} tooltip={t("Logout")}>
+              <SidebarMenuButton onClick={() => { handleLogout(); handleLinkClick(); }} tooltip={t("Logout")}>
                   <LogOut />
                   <span>{t("Logout")}</span>
               </SidebarMenuButton>
