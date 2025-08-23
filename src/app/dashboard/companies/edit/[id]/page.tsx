@@ -24,7 +24,9 @@ export default function EditCompanyPage() {
         const fetchCompany = async () => {
             try {
                 setLoading(true);
+                console.log("get Company Id: ", id);
                 const fetchedCompany = await getCompanyById(id);
+                console.log('fetchCompany: ', fetchedCompany);
                 if (fetchedCompany) {
                     setCompany(fetchedCompany);
                     setActiveCompany(fetchedCompany);
@@ -40,7 +42,7 @@ export default function EditCompanyPage() {
         };
 
         fetchCompany();
-    }, [id, setActiveCompany]);
+    }, [id]);
 
     if (loading) {
         return <LoadingSpinner />;
