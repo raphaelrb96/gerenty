@@ -163,14 +163,19 @@ export function CreateCompanyForm() {
         try {
             let logoUrl = "";
             let bannerUrl = "";
-
+            
             if (logoFile) {
                 const path = `companies/${user.uid}/${values.name.replace(/\s+/g, '-')}-logo-${Date.now()}`;
+                console.log('Upload Logo Init: ', path);
                 logoUrl = await uploadFile(logoFile, path);
+                console.log('Upload Logo Finalizado');
             }
+
             if (bannerFile) {
                 const path = `companies/${user.uid}/${values.name.replace(/\s+/g, '-')}-banner-${Date.now()}`;
+                console.log('Upload Banner Init: ', path);
                 bannerUrl = await uploadFile(bannerFile, path);
+                console.log('Upload Banner Finalizado');
             }
             
             const companyData: Omit<Company, 'id' | 'createdAt' | 'updatedAt'> = {
@@ -201,7 +206,9 @@ export function CreateCompanyForm() {
                 isActive: true,
             };
 
+            console.log('Salvando dados da empresa...');
             const newCompany = await addCompany(companyData);
+            console.log('Dados da empresa salvos com sucesso');
             toast({
                 title: "Empresa Criada!",
                 description: `A empresa ${newCompany.name} foi criada com sucesso.`,
@@ -210,6 +217,7 @@ export function CreateCompanyForm() {
             router.push("/dashboard");
 
         } catch(error) {
+            setIsLoading(false);
             console.error("Operação falhou", error);
             toast({ variant: "destructive", title: "Erro ao Criar Empresa", description: "Ocorreu um erro ao salvar os dados. Por favor, tente novamente." });
         } finally {
