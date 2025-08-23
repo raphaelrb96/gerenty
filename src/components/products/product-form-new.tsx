@@ -70,7 +70,7 @@ type ProductFormProps = {
 
 export function ProductFormNew({ product }: ProductFormProps) {
     const router = useRouter();
-    const { t } = useTranslation();
+    const { t, language } = useTranslation();
     const { user, userData } = useAuth();
     const { companies, activeCompany, loading: loadingCompanies } = useCompany();
     const { toast } = useToast();
@@ -204,7 +204,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
     
         startGenerateTransition(async () => {
             try {
-                const result = await generateProductDescription({ productName, attributes: tags || '' });
+                const result = await generateProductDescription({ productName, attributes: tags || '', language });
                 form.setValue('description', result.description, { shouldValidate: true });
                 toast({
                     title: t('productForm.generateSuccess.title'),

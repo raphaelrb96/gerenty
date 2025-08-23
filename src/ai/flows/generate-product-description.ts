@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -14,6 +15,7 @@ import {z} from 'genkit';
 const GenerateProductDescriptionInputSchema = z.object({
   productName: z.string().describe('The name of the product.'),
   attributes: z.string().describe('Key attributes of the product (e.g., color, material, size).'),
+  language: z.string().describe('The language for the generated description (e.g., "en", "pt").'),
 });
 export type GenerateProductDescriptionInput = z.infer<typeof GenerateProductDescriptionInputSchema>;
 
@@ -33,6 +35,8 @@ const prompt = ai.definePrompt({
   prompt: `You are an expert copywriter specializing in creating compelling product descriptions.
 
   Based on the product name and its key attributes, generate a product description that is both informative and engaging.
+
+  Generate the description in the following language: {{{language}}}
 
   Product Name: {{{productName}}}
   Attributes: {{{attributes}}}
