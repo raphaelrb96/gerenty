@@ -22,9 +22,10 @@ type MultiSelectProps = {
     placeholder?: string;
     className?: string;
     disabled?: boolean;
+    renderAction?: (option: Option) => React.ReactNode;
 }
 
-export function MultiSelect({ options, selected, onChange, placeholder = "Select options...", className, disabled }: MultiSelectProps) {
+export function MultiSelect({ options, selected, onChange, placeholder = "Select options...", className, disabled, renderAction }: MultiSelectProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [open, setOpen] = React.useState(false);
   const [inputValue, setInputValue] = React.useState("");
@@ -109,10 +110,11 @@ export function MultiSelect({ options, selected, onChange, placeholder = "Select
                       setInputValue("");
                       onChange([...selected, option.value]);
                     }}
-                    className={"cursor-pointer"}
+                    className={"cursor-pointer flex items-center justify-between"}
                     disabled={disabled}
                   >
-                    {option.label}
+                    <span>{option.label}</span>
+                    {renderAction && renderAction(option)}
                   </CommandItem>
                 );
               })}

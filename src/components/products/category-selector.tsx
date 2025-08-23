@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { CategoryForm } from "./category-form";
 import { PlusCircle, Pencil } from "lucide-react";
-import { Command, CommandGroup, CommandItem } from "../ui/command";
 
 type CategorySelectorProps = {
     selectedCategories: string[] | undefined;
@@ -72,6 +71,20 @@ export function CategorySelector({ selectedCategories, onChange }: CategorySelec
                     placeholder="Selecione as categorias..."
                     className="w-full"
                     disabled={loading}
+                    renderAction={(option) => {
+                        const category = categories.find(c => c.id === option.value);
+                        if (!category) return null;
+                        return (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 ml-auto"
+                                onClick={(e) => handleEdit(e, category)}
+                            >
+                                <Pencil className="h-4 w-4" />
+                            </Button>
+                        )
+                    }}
                  />
                  <Button type="button" variant="link" onClick={handleCreate} className="p-0 h-auto mt-2 text-sm">
                      <PlusCircle className="mr-2 h-4 w-4" />
