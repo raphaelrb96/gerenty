@@ -18,7 +18,7 @@ export async function getCategoriesByCompany(companyId: string): Promise<Product
             categories.push({ 
                 id: doc.id, 
                 ...data,
-            } as ProductCategory);
+            } as unknown as ProductCategory);
         });
         return categories;
     } catch (error) {
@@ -38,7 +38,7 @@ export async function getCategoryById(categoryId: string): Promise<ProductCatego
             return null;
         }
         
-        return { id: categoryDoc.id, ...categoryDoc.data() } as ProductCategory;
+        return { id: categoryDoc.id, ...categoryDoc.data() } as unknown as ProductCategory;
     } catch (error) {
         console.error("Error getting category by ID: ", error);
         throw new Error("Failed to fetch category data.");
@@ -55,7 +55,7 @@ export async function addCategory(categoryData: Omit<ProductCategory, 'id'> & { 
         });
         
         const newDocSnap = await getDoc(docRef);
-        return { id: docRef.id, ...newDocSnap.data() } as ProductCategory;
+        return { id: docRef.id, ...newDocSnap.data() } as unknown as ProductCategory;
 
     } catch (error) {
         console.error("Error adding category: ", error);
