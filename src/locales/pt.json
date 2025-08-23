@@ -409,7 +409,7 @@
         "sidebarTitle": "Empresas",
         "title": "Minhas Empresas",
         "description": "Gerencie suas empresas ou adicione uma nova.",
-        "createButton": "Criar Nova Empresa",
+        "createButton": "Adicionar",
         "manageButton": "Gerenciar Empresa",
         "empty": {
             "title": "Nenhuma Empresa Encontrada",

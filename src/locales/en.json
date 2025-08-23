@@ -409,7 +409,7 @@
         "sidebarTitle": "Companies",
         "title": "My Companies",
         "description": "Manage your companies or add a new one.",
-        "createButton": "Create New Company",
+        "createButton": "Add",
         "manageButton": "Manage Company",
         "empty": {
             "title": "No Companies Found",
