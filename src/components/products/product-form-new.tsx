@@ -500,13 +500,22 @@ export function ProductFormNew({ product }: ProductFormProps) {
                                         <FormItem><FormLabel>Estoque Disponível</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                                     )}/>
                                 )}
-
+                                <FormField control={form.control} name="tags" render={({ field }) => (
+                                    <FormItem><FormLabel>Tags (separadas por vírgula)</FormLabel><FormControl><Input placeholder="Ex: promoção, unissex" {...field} /></FormControl><FormMessage /></FormItem>
+                                )}/>
+                            </CardContent>
+                        </Card>
+                        
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Categorias</CardTitle>
+                            </CardHeader>
+                            <CardContent>
                                 <FormField
                                     control={form.control}
                                     name="categoryIds"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Categorias</FormLabel>
                                             <CategorySelector
                                                 selectedCategories={field.value}
                                                 onChange={field.onChange}
@@ -515,15 +524,20 @@ export function ProductFormNew({ product }: ProductFormProps) {
                                         </FormItem>
                                     )}
                                 />
-
+                            </CardContent>
+                        </Card>
+                        
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Coleções</CardTitle>
+                            </CardHeader>
+                            <CardContent>
                                 <FormField control={form.control} name="collections" render={({ field }) => (
                                     <FormItem><FormLabel>Coleções (separadas por vírgula)</FormLabel><FormControl><Input placeholder="Ex: coleção de lançamento" {...field} /></FormControl><FormMessage /></FormItem>
                                 )}/>
-                                <FormField control={form.control} name="tags" render={({ field }) => (
-                                    <FormItem><FormLabel>Tags (separadas por vírgula)</FormLabel><FormControl><Input placeholder="Ex: promoção, unissex" {...field} /></FormControl><FormMessage /></FormItem>
-                                )}/>
                             </CardContent>
                         </Card>
+
                     </div>
                 </div>
                 
@@ -538,3 +552,5 @@ export function ProductFormNew({ product }: ProductFormProps) {
         </Form>
     );
 }
+
+    
