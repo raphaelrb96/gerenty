@@ -54,43 +54,45 @@ function CompanySelector() {
 
     return (
         <Card>
-            <CardContent className="relative p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <CardContent className="relative p-4">
                  <Button asChild className="absolute top-4 right-4">
                      <Link href="/dashboard/companies/create">
                         <PlusCircle className="mr-2 h-4 w-4" /> {t('dashboard.createNewCompany')}
                     </Link>
                 </Button>
-                <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-md bg-muted">
-                        <Building className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                    <div>
-                        <p className="text-xs text-muted-foreground">{t('dashboard.activeCompany')}</p>
-                        <h2 className="text-lg font-bold">{activeCompany.name}</h2>
-                    </div>
-                </div>
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center gap-4">
+                      <div className="p-3 rounded-md bg-muted">
+                          <Building className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                      <div>
+                          <p className="text-xs text-muted-foreground">{t('dashboard.activeCompany')}</p>
+                          <h2 className="text-lg font-bold">{activeCompany.name}</h2>
+                      </div>
+                  </div>
 
-                <div className="flex flex-wrap items-center gap-2 self-start md:self-center mt-4 md:mt-0">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline">
-                                {t('dashboard.switchCompany')}
-                                <ChevronsUpDown className="ml-2 h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            {companies.map((company) => (
-                                <DropdownMenuItem key={company.id} onSelect={() => setActiveCompany(company)}>
-                                    {company.name}
-                                </DropdownMenuItem>
-                            ))}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                     <Button variant="secondary" asChild>
-                         <Link href="/dashboard/companies">
-                            {t('dashboard.viewAllCompanies')}
-                        </Link>
-                    </Button>
+                  <div className="flex flex-wrap items-center gap-2">
+                      <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                              <Button variant="outline">
+                                  {t('dashboard.switchCompany')}
+                                  <ChevronsUpDown className="ml-2 h-4 w-4" />
+                              </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                              {companies.map((company) => (
+                                  <DropdownMenuItem key={company.id} onSelect={() => setActiveCompany(company)}>
+                                      {company.name}
+                                  </DropdownMenuItem>
+                              ))}
+                          </DropdownMenuContent>
+                      </DropdownMenu>
+                       <Button variant="secondary" asChild>
+                           <Link href="/dashboard/companies">
+                              {t('dashboard.viewAllCompanies')}
+                          </Link>
+                      </Button>
+                  </div>
                 </div>
             </CardContent>
         </Card>
