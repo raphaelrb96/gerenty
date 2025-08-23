@@ -384,12 +384,12 @@ export function ProductFormNew({ product }: ProductFormProps) {
                             <CardHeader><CardTitle>Preços</CardTitle></CardHeader>
                             <CardContent className="space-y-4">
                                 {priceFields.map((field, index) => (
-                                    <div key={field.id} className="flex items-end gap-2 p-2 border rounded-md">
+                                    <div key={field.id} className="grid sm:grid-cols-2 md:grid-cols-5 items-end gap-2 p-2 border rounded-md">
                                         <FormField control={form.control} name={`pricing.${index}.label`} render={({ field }) => (
-                                            <FormItem className="flex-1"><FormLabel>Rótulo</FormLabel><FormControl><Input placeholder="Varejo" {...field} /></FormControl><FormMessage /></FormItem>
+                                            <FormItem className="sm:col-span-2 md:col-span-2"><FormLabel>Rótulo</FormLabel><FormControl><Input placeholder="Varejo" {...field} /></FormControl><FormMessage /></FormItem>
                                         )}/>
                                         <FormField control={form.control} name={`pricing.${index}.price`} render={({ field }) => (
-                                            <FormItem className="flex-1"><FormLabel>Preço</FormLabel><FormControl><Input type="number" placeholder="99.90" {...field} /></FormControl><FormMessage /></FormItem>
+                                            <FormItem className="md:col-span-2"><FormLabel>Preço</FormLabel><FormControl><Input type="number" placeholder="99.90" {...field} /></FormControl><FormMessage /></FormItem>
                                         )}/>
                                         <FormField control={form.control} name={`pricing.${index}.currency`} render={({ field }) => (
                                             <FormItem><FormLabel>Moeda</FormLabel>
