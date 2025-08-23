@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Loader2, Bot, Upload, Trash2, PlusCircle, Image as ImageIcon } from "lucide-react";
+import { Loader2, Bot, Upload, Trash2, PlusCircle, Star } from "lucide-react";
 import { useTranslation } from "@/context/i18n-context";
 import { Label } from "../ui/label";
 import Image from "next/image";
@@ -71,11 +71,10 @@ export function ProductFormNew({ product }: ProductFormProps) {
     const [isSaving, setIsSaving] = useState(false);
     const [isGenerating, startGenerateTransition] = useTransition();
     
-    const [mainImageFile, setMainImageFile] = useState<File | null>(null);
-    const [mainImagePreview, setMainImagePreview] = useState<string | null>(null);
+    // Unified state for all images
+    const [imageFiles, setImageFiles] = useState<File[]>([]);
+    const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
-    const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
-    const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
 
     const form = useForm<ProductFormValues>({
         resolver: zodResolver(formSchema),
@@ -119,33 +118,58 @@ export function ProductFormNew({ product }: ProductFormProps) {
                 attributes: product.attributes?.map(a => ({ name: a.name, options: a.options.join(', ') })) || [],
                 companyIds: product.companyIds || [],
             });
-            setMainImagePreview(product.images?.mainImage || null);
-            setGalleryPreviews(product.images?.gallery || []);
+            // Populate image previews from existing product data
+            const existingImages = [];
+            if (product.images?.mainImage) {
+                existingImages.push(product.images.mainImage);
+            }
+            if (product.images?.gallery) {
+                existingImages.push(...product.images.gallery);
+            }
+            setImagePreviews(existingImages);
+
         }
     }, [product, form]);
     
-    const handleMainImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            setMainImageFile(file);
-            setMainImagePreview(URL.createObjectURL(file));
-        }
-    };
     
-    const handleGalleryImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (files) {
             const newFiles = Array.from(files);
-            setGalleryFiles(prev => [...prev, ...newFiles]);
+            setImageFiles(prev => [...prev, ...newFiles]);
             
             const newPreviews = newFiles.map(file => URL.createObjectURL(file));
-            setGalleryPreviews(prev => [...prev, ...newPreviews]);
+            setImagePreviews(prev => [...prev, ...newPreviews]);
         }
     };
 
-    const handleRemoveGalleryImage = (indexToRemove: number) => {
-        setGalleryPreviews(prev => prev.filter((_, index) => index !== indexToRemove));
-        setGalleryFiles(prev => prev.filter((_, index) => index !== indexToRemove));
+    const handleRemoveImage = (indexToRemove: number) => {
+        setImagePreviews(prev => prev.filter((_, index) => index !== indexToRemove));
+        setImageFiles(prev => prev.filter((_, index) => index !== indexToRemove));
+    };
+
+    const handleSetMainImage = (indexToSet: number) => {
+        if (indexToSet === 0) return; // Already the main image
+
+        const newImagePreviews = [...imagePreviews];
+        const [itemToMove] = newImagePreviews.splice(indexToSet, 1);
+        newImagePreviews.unshift(itemToMove);
+        setImagePreviews(newImagePreviews);
+
+        const newImageFiles = [...imageFiles];
+        // This is tricky if files and previews are out of sync (e.g. on edit)
+        // We only need to reorder if the files have been staged for upload
+        if(imageFiles.length === imagePreviews.length) {
+          const [fileToMove] = newImageFiles.splice(indexToSet, 1);
+          newImageFiles.unshift(fileToMove);
+          setImageFiles(newImageFiles);
+        } else {
+            toast({
+                title: "Aviso",
+                description: "A reordenação de imagens já existentes será salva, mas não afeta os arquivos originais. Apenas novas imagens podem ter sua ordem de upload alterada.",
+                variant: "default"
+            });
+        }
     };
 
 
@@ -202,22 +226,18 @@ export function ProductFormNew({ product }: ProductFormProps) {
                 return;
             }
         }
+        
+        // This logic needs to be smarter. It needs to differentiate between existing URLs and new files.
+        const uploadedUrls = await Promise.all(imageFiles.map(file => {
+            const path = `products/${user.uid}/gallery/${values.name.replace(/\s+/g, '-')}-${file.name}-${Date.now()}`;
+            return uploadFile(file, path);
+        }));
 
-        let mainImageUrl = product?.images?.mainImage || "";
-        if (mainImageFile && user) {
-            const path = `products/${user.uid}/${values.name.replace(/\s+/g, '-')}-main-${Date.now()}`;
-            mainImageUrl = await uploadFile(mainImageFile, path);
-        }
+        // Combine existing urls (that were not removed) with new urls
+        const finalImageUrls = imagePreviews.filter(p => p.startsWith('http')).concat(uploadedUrls);
 
-        const galleryImageUrls: string[] = product?.images?.gallery || [];
-        if (galleryFiles.length > 0 && user) {
-            const uploadPromises = galleryFiles.map(file => {
-                const path = `products/${user.uid}/gallery/${values.name.replace(/\s+/g, '-')}-${file.name}-${Date.now()}`;
-                return uploadFile(file, path);
-            });
-            const newUrls = await Promise.all(uploadPromises);
-            galleryImageUrls.push(...newUrls);
-        }
+        const mainImageUrl = finalImageUrls[0] || "";
+        const galleryImageUrls = finalImageUrls.slice(1);
         
         const productData = {
             ...values,
@@ -287,48 +307,58 @@ export function ProductFormNew({ product }: ProductFormProps) {
                         </Card>
 
                         <Card>
-                            <CardHeader><CardTitle>Imagens e Mídia</CardTitle></CardHeader>
-                            <CardContent className="space-y-6">
-                                <FormItem>
-                                    <FormLabel>Imagem Principal</FormLabel>
-                                    <Label htmlFor="main-image-upload" className="cursor-pointer">
-                                        <Card className="relative aspect-video w-full border-2 border-dashed flex items-center justify-center text-muted-foreground hover:bg-muted/50 transition-colors">
-                                            {mainImagePreview ? (
-                                                <Image src={mainImagePreview} alt="Pré-visualização da imagem principal" layout="fill" className="rounded-md object-cover" />
-                                            ) : (
-                                                <div className="text-center">
-                                                    <ImageIcon className="mx-auto h-12 w-12" />
-                                                    <p className="text-sm mt-2">Clique para enviar a imagem principal</p>
-                                                </div>
-                                            )}
-                                        </Card>
-                                    </Label>
-                                    <Input id="main-image-upload" type="file" accept="image/*" className="hidden" onChange={handleMainImageChange} />
-                                </FormItem>
-                                
+                            <CardHeader><CardTitle>Imagens</CardTitle></CardHeader>
+                            <CardContent>
                                 <FormItem>
                                     <FormLabel>Galeria de Imagens</FormLabel>
-                                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
-                                        {galleryPreviews.map((src, index) => (
-                                            <div key={index} className="relative aspect-square">
-                                                <Image src={src} alt={`Preview ${index}`} layout="fill" className="rounded-md object-cover" />
-                                                <Button 
-                                                    type="button" 
-                                                    variant="destructive" 
-                                                    size="icon" 
-                                                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-                                                    onClick={() => handleRemoveGalleryImage(index)}
-                                                >
-                                                    <Trash2 className="h-3 w-3" />
-                                                </Button>
+                                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+                                        {imagePreviews.map((src, index) => (
+                                            <div key={src} className="relative group aspect-square">
+                                                <Image 
+                                                    src={src} 
+                                                    alt={`Preview ${index + 1}`} 
+                                                    layout="fill" 
+                                                    className={cn(
+                                                        "rounded-md object-cover transition-all",
+                                                        index === 0 && "ring-2 ring-primary ring-offset-2"
+                                                    )}
+                                                />
+                                                <div className="absolute top-1 right-1 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Button 
+                                                        type="button" 
+                                                        variant="destructive" 
+                                                        size="icon" 
+                                                        className="h-6 w-6 rounded-full"
+                                                        onClick={() => handleRemoveImage(index)}
+                                                    >
+                                                        <Trash2 className="h-3 w-3" />
+                                                        <span className="sr-only">Remover Imagem</span>
+                                                    </Button>
+                                                    {index > 0 && (
+                                                        <Button 
+                                                            type="button" 
+                                                            variant="default" 
+                                                            size="icon" 
+                                                            className="h-6 w-6 rounded-full bg-primary/80 hover:bg-primary"
+                                                            onClick={() => handleSetMainImage(index)}
+                                                        >
+                                                            <Star className="h-3 w-3" />
+                                                            <span className="sr-only">Tornar Principal</span>
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                                {index === 0 && (
+                                                    <div className="absolute bottom-0 left-0 right-0 bg-primary/80 text-primary-foreground text-xs text-center py-0.5 rounded-b-md">Principal</div>
+                                                )}
                                             </div>
                                         ))}
                                         <Label htmlFor="gallery-upload" className="cursor-pointer aspect-square border-2 border-dashed flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/50 transition-colors rounded-md">
                                             <Upload className="h-8 w-8" />
                                             <span className="text-xs text-center mt-1">Adicionar Imagens</span>
                                         </Label>
-                                        <Input id="gallery-upload" type="file" accept="image/*" multiple className="hidden" onChange={handleGalleryImageChange} />
+                                        <Input id="gallery-upload" type="file" accept="image/*" multiple className="hidden" onChange={handleImageChange} />
                                     </div>
+                                    <p className="text-xs text-muted-foreground mt-2">A primeira imagem da lista será a imagem principal do produto.</p>
                                 </FormItem>
                             </CardContent>
                         </Card>
@@ -450,4 +480,3 @@ export function ProductFormNew({ product }: ProductFormProps) {
         </Form>
     );
 }
-
