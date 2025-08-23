@@ -26,6 +26,7 @@ import { Label } from "../ui/label";
 import Image from "next/image";
 import { MultiSelect } from "../ui/multi-select";
 import { uploadFile } from "@/services/storage-service";
+import { cn } from "@/lib/utils";
 
 // Esquema de validação com Zod
 const formSchema = z.object({
