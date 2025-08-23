@@ -313,7 +313,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
                                         <FormLabel>Descrição</FormLabel>
                                         <Button type="button" variant="ghost" size="sm" onClick={handleGenerateDescription} disabled={isGenerating}>
                                             {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                                            Gerar com IA
+                                            {t('productForm.generateButton')}
                                         </Button>
                                     </div>
                                     <FormField control={form.control} name="description" render={({ field }) => (
@@ -384,9 +384,9 @@ export function ProductFormNew({ product }: ProductFormProps) {
                             <CardHeader><CardTitle>Preços</CardTitle></CardHeader>
                             <CardContent className="space-y-4">
                                 {priceFields.map((field, index) => (
-                                    <div key={field.id} className="grid sm:grid-cols-2 md:grid-cols-5 items-end gap-2 p-2 border rounded-md">
+                                    <div key={field.id} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 items-end gap-2 p-2 border rounded-md">
                                         <FormField control={form.control} name={`pricing.${index}.label`} render={({ field }) => (
-                                            <FormItem className="sm:col-span-2 md:col-span-2"><FormLabel>Rótulo</FormLabel><FormControl><Input placeholder="Varejo" {...field} /></FormControl><FormMessage /></FormItem>
+                                            <FormItem className="col-span-1 sm:col-span-2"><FormLabel>Rótulo</FormLabel><FormControl><Input placeholder="Varejo" {...field} /></FormControl><FormMessage /></FormItem>
                                         )}/>
                                         <FormField control={form.control} name={`pricing.${index}.price`} render={({ field }) => (
                                             <FormItem className="md:col-span-2"><FormLabel>Preço</FormLabel><FormControl><Input type="number" placeholder="99.90" {...field} /></FormControl><FormMessage /></FormItem>
