@@ -25,12 +25,12 @@ export type User = {
   //plano de assinatura
   plan: Plan | null;
   statusPlan: 'ativo' | 'inativo' | 'pendente';
-  validityDate?:  Date | Timestamp | FieldValue;
-  assignedDate?:  Date | Timestamp | FieldValue;
+  validityDate?:  string | Date | Timestamp | FieldValue;
+  assignedDate?:  string | Date | Timestamp | FieldValue;
   //datas e horarios
-  createdAt:  Date | Timestamp | FieldValue;
-  lastLogin?:  Date | Timestamp | FieldValue;
-  updatedAt?:  Date | Timestamp | FieldValue;
+  createdAt:  string | Date | Timestamp | FieldValue;
+  lastLogin?:  string | Date | Timestamp | FieldValue;
+  updatedAt?:  string | Date | Timestamp | FieldValue;
 
   onboardingCompleted?: boolean;
 
@@ -87,9 +87,9 @@ export type Product = {
   templateId?: string;
 
   // Datas de publicação e atualização do produto
-  publishedAt?: Date | Timestamp | FieldValue;
-  updatedAt: Date | Timestamp | FieldValue;
-  createdAt: Date | Timestamp | FieldValue;
+  publishedAt?: string | Date | Timestamp | FieldValue;
+  updatedAt: string | Date | Timestamp | FieldValue;
+  createdAt: string | Date | Timestamp | FieldValue;
 
   // Status do produto (disponível, fora de estoque ou descontinuado)
   status: 'available' | 'out-of-stock' | 'discontinued';
@@ -193,12 +193,12 @@ export type ProductPriceTier = {
    * (Opcional) Data de início da validade desta faixa de preço.
    * Útil para promoções com tempo limitado.
    */
-  startDate?: Date | FieldValue;
+  startDate?: string | Date | FieldValue;
 
   /**
    * (Opcional) Data final da validade desta faixa de preço.
    */
-  endDate?: Date | FieldValue;
+  endDate?: string | Date | FieldValue;
 
 };
 
@@ -246,8 +246,8 @@ export type Plan = {
   isCustom?: boolean;
   highlight?: boolean;
   // Metadados
-  createdAt?: Date | Timestamp | FieldValue;
-  updatedAt?: Date | Timestamp | FieldValue;
+  createdAt?: string | Date | Timestamp | FieldValue;
+  updatedAt?: string | Date | Timestamp | FieldValue;
 };
 
 /**
@@ -274,10 +274,10 @@ export type Order = {
 
   notes?: string; // Notas internas ou observações do comprador
 
-  createdAt: Date | Timestamp | FieldValue; // Data de criação do pedido
-  updatedAt: Date | Timestamp | FieldValue; // Última atualização do pedido
-  completedAt?: Date | Timestamp | FieldValue; // Data de conclusão (entrega ou finalização)
-  cancelledAt?: Date | Timestamp | FieldValue; // Data de cancelamento (se houver)
+  createdAt: string | Date | Timestamp | FieldValue; // Data de criação do pedido
+  updatedAt: string | Date | Timestamp | FieldValue; // Última atualização do pedido
+  completedAt?: string | Date | Timestamp | FieldValue; // Data de conclusão (entrega ou finalização)
+  cancelledAt?: string | Date | Timestamp | FieldValue; // Data de cancelamento (se houver)
 };
 
 
@@ -555,8 +555,9 @@ export type Company = {
   isActive: boolean; // Se a empresa está ativa na plataforma
 
   // Datas de criação e atualização da empresa
-  createdAt:  Date | Timestamp | FieldValue;
-  updatedAt?:  Date | Timestamp | FieldValue; // Data da última atualização
+  createdAt:  string | Date | Timestamp | FieldValue;
+  updatedAt?:  string | Date | Timestamp | FieldValue; // Data da última atualização
 };
+
 
 

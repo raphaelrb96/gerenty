@@ -12,6 +12,7 @@ interface CompanyContextType {
   activeCompany: Company | null;
   setActiveCompany: (company: Company | null) => void;
   loading: boolean;
+  refreshCompanies: () => void;
 }
 
 const CompanyContext = createContext<CompanyContextType | undefined>(undefined);
@@ -24,38 +25,42 @@ export const CompanyProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [activeCompany, setActiveCompanyState] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchCompanies = async () => {
-      if (user) {
-        setLoading(true);
-        try {
-          const userCompanies = await getCompaniesForUser(user.uid);
-          setCompanies(userCompanies);
+  const fetchCompanies = async () => {
+    if (user) {
+      setLoading(true);
+      try {
+        const userCompanies = await getCompaniesForUser(user.uid);
+        setCompanies(userCompanies);
 
-          const storedCompanyId = localStorage.getItem(ACTIVE_COMPANY_STORAGE_KEY);
-          const companyToActivate = userCompanies.find(c => c.id === storedCompanyId) || userCompanies[0] || null;
-          
-          setActiveCompanyState(companyToActivate);
-          if (companyToActivate) {
-            localStorage.setItem(ACTIVE_COMPANY_STORAGE_KEY, companyToActivate.id);
-          } else {
+        if (userCompanies.length > 0) {
+            const storedCompanyId = localStorage.getItem(ACTIVE_COMPANY_STORAGE_KEY);
+            const companyToActivate = userCompanies.find(c => c.id === storedCompanyId) || userCompanies[0];
+            
+            setActiveCompanyState(companyToActivate);
+            if (companyToActivate) {
+                localStorage.setItem(ACTIVE_COMPANY_STORAGE_KEY, companyToActivate.id);
+            }
+        } else {
+            setActiveCompanyState(null);
             localStorage.removeItem(ACTIVE_COMPANY_STORAGE_KEY);
-          }
-
-        } catch (error) {
-          console.error("Failed to fetch companies:", error);
-          setCompanies([]);
-          setActiveCompanyState(null);
-        } finally {
-          setLoading(false);
         }
-      } else {
+
+      } catch (error) {
+        console.error("Failed to fetch companies:", error);
         setCompanies([]);
         setActiveCompanyState(null);
+      } finally {
         setLoading(false);
       }
-    };
+    } else {
+      setCompanies([]);
+      setActiveCompanyState(null);
+      setLoading(false);
+    }
+  };
 
+
+  useEffect(() => {
     if (!authLoading) {
       fetchCompanies();
     }
@@ -75,7 +80,7 @@ export const CompanyProvider: React.FC<{ children: ReactNode }> = ({ children })
   }
 
   return (
-    <CompanyContext.Provider value={{ companies, activeCompany, setActiveCompany, loading }}>
+    <CompanyContext.Provider value={{ companies, activeCompany, setActiveCompany, loading, refreshCompanies: fetchCompanies }}>
       {children}
     </CompanyContext.Provider>
   );

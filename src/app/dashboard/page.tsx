@@ -111,6 +111,8 @@ export default function DashboardPage() {
     async function fetchData() {
       if (!user || !activeCompany) {
         setLoading(false);
+        setOrders([]);
+        setProducts([]);
         return
       };
       try {
@@ -140,7 +142,7 @@ export default function DashboardPage() {
     { title: t('dashboard.productsInStock'), value: `${productsInStock}`, icon: <Package className="h-4 w-4 text-muted-foreground" /> },
   ];
 
-  if (loading && !activeCompany) {
+  if (loading) {
     return <div className="flex h-full items-center justify-center"><LoadingSpinner /></div>;
   }
 
@@ -152,48 +154,52 @@ export default function DashboardPage() {
 
       <CompanySelector />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {stats.map(stat => (
-          <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-              {stat.icon}
+      {activeCompany && (
+        <>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {stats.map(stat => (
+              <Card key={stat.title}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                  {stat.icon}
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stat.value}</div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center">
+                <div className="grid gap-2">
+                    <CardTitle>{t('dashboard.recentActivity')}</CardTitle>
+                    <CardDescription>{t('dashboard.recentActivityDesc')}</CardDescription>
+                </div>
+                <Button asChild size="sm" className="ml-auto gap-1">
+                    <Link href="/dashboard/orders">{t('dashboard.viewAll')} <ArrowUpRight className="h-4 w-4" /></Link>
+                </Button>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
+            <CardContent className="space-y-4">
+              {orders.slice(0, 5).map(activity => (
+                <div key={activity.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50">
+                    <div className="grid gap-1">
+                        <p className="font-medium">{activity.customer.name}</p>
+                        <p className="text-sm text-muted-foreground">{activity.id.substring(0, 7)}</p>
+                    </div>
+                    <div className="text-right">
+                        <p className="font-semibold">{formatCurrency(activity.total)}</p>
+                        <Badge variant={activity.status === "completed" ? "default" : activity.status === "processing" ? "secondary" : "outline"}
+                        className={activity.status === "completed" ? "bg-green-600/20 text-green-700 hover:bg-green-600/30" : activity.status === "processing" ? "bg-blue-600/20 text-blue-700 hover:bg-blue-600/30" : "bg-yellow-600/20 text-yellow-700 hover:bg-yellow-600/30"}>
+                          {t(`orderStatus.${activity.status}`)}
+                        </Badge>
+                    </div>
+                </div>
+              ))}
             </CardContent>
           </Card>
-        ))}
-      </div>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center">
-            <div className="grid gap-2">
-                 <CardTitle>{t('dashboard.recentActivity')}</CardTitle>
-                 <CardDescription>{t('dashboard.recentActivityDesc')}</CardDescription>
-            </div>
-            <Button asChild size="sm" className="ml-auto gap-1">
-                <Link href="/dashboard/orders">{t('dashboard.viewAll')} <ArrowUpRight className="h-4 w-4" /></Link>
-            </Button>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {orders.slice(0, 5).map(activity => (
-            <div key={activity.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50">
-                <div className="grid gap-1">
-                    <p className="font-medium">{activity.customer.name}</p>
-                    <p className="text-sm text-muted-foreground">{activity.id.substring(0, 7)}</p>
-                </div>
-                <div className="text-right">
-                    <p className="font-semibold">{formatCurrency(activity.total)}</p>
-                     <Badge variant={activity.status === "completed" ? "default" : activity.status === "processing" ? "secondary" : "outline"}
-                    className={activity.status === "completed" ? "bg-green-600/20 text-green-700 hover:bg-green-600/30" : activity.status === "processing" ? "bg-blue-600/20 text-blue-700 hover:bg-blue-600/30" : "bg-yellow-600/20 text-yellow-700 hover:bg-yellow-600/30"}>
-                      {t(`orderStatus.${activity.status}`)}
-                    </Badge>
-                </div>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+        </>
+      )}
 
       {companies && companies.length > 0 && (
         <div className="space-y-4">
@@ -201,13 +207,13 @@ export default function DashboardPage() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {companies.map((company) => (
                   <Card key={company.id} className="overflow-hidden">
-                      <CardHeader className="p-0">
+                      <CardHeader className="p-0 relative h-32">
                           <Image 
                               src={company.bannerUrl || "https://placehold.co/400x200.png"} 
                               alt={`Banner for ${company.name}`} 
-                              width={400} 
-                              height={200} 
-                              className="w-full h-32 object-cover" 
+                              layout="fill"
+                              objectFit="cover"
+                              className="w-full h-full" 
                           />
                       </CardHeader>
                       <CardContent className="p-4 flex items-center gap-4">
@@ -216,7 +222,7 @@ export default function DashboardPage() {
                               alt={`Logo for ${company.name}`} 
                               width={64} 
                               height={64} 
-                              className="rounded-full border-2 border-background -mt-10" 
+                              className="rounded-full border-2 border-background -mt-10 bg-background" 
                           />
                           <div>
                               <CardTitle className="text-lg">{company.name}</CardTitle>

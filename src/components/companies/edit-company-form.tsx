@@ -30,6 +30,7 @@ import { Loader2, Image as ImageIcon, Upload } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
+import { useCompany as useCompanyContext } from "@/context/company-context";
 
 
 const formSchema = z.object({
@@ -82,6 +83,7 @@ export function EditCompanyForm({ company }: EditCompanyFormProps) {
     const { user } = useAuth();
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
+    const { refreshCompanies } = useCompanyContext();
     
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [bannerFile, setBannerFile] = useState<File | null>(null);
@@ -183,6 +185,7 @@ export function EditCompanyForm({ company }: EditCompanyFormProps) {
                 title: "Empresa Atualizada!",
                 description: `A empresa ${values.name} foi atualizada com sucesso.`,
             });
+            refreshCompanies();
             router.push("/dashboard/companies");
             router.refresh();
 
@@ -250,7 +253,7 @@ export function EditCompanyForm({ company }: EditCompanyFormProps) {
                                     </div>
                                     <FormItem className="space-y-2">
                                         <FormLabel>Banner</FormLabel>
-                                        <Label htmlFor="banner-upload" className="cursor-pointer block relative">
+                                        <Label htmlFor="banner-upload" className="cursor-pointer block">
                                              <Card className="relative h-32 border-2 border-dashed flex items-center justify-center text-muted-foreground hover:bg-muted/50 transition-colors">
                                                 {bannerPreview ? (
                                                       <Image src={bannerPreview} alt="Banner preview" layout="fill" className="rounded-md object-cover" />
@@ -405,5 +408,3 @@ export function EditCompanyForm({ company }: EditCompanyFormProps) {
         </Card>
     );
 }
-
-    

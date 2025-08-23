@@ -14,7 +14,13 @@ export async function getCompaniesForUser(ownerId: string): Promise<Company[]> {
         const querySnapshot = await getDocs(q);
         const companies: Company[] = [];
         querySnapshot.forEach((doc) => {
-            companies.push({ id: doc.id, ...doc.data() } as Company);
+            const data = doc.data();
+            companies.push({ 
+                id: doc.id, 
+                ...data,
+                createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString(),
+                updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : new Date().toISOString(),
+            } as Company);
         });
         return companies;
     } catch (error) {
@@ -33,8 +39,14 @@ export async function getCompanyById(companyId: string): Promise<Company | null>
             console.warn(`No company found with id: ${companyId}`);
             return null;
         }
-
-        return { id: companyDoc.id, ...companyDoc.data() } as Company;
+        
+        const data = companyDoc.data();
+        return { 
+            id: companyDoc.id, 
+            ...data,
+            createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString(),
+            updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : new Date().toISOString(),
+        } as Company;
     } catch (error) {
         console.error("Error getting company by ID: ", error);
         throw new Error("Failed to fetch company data.");
@@ -57,7 +69,9 @@ export async function addCompany(companyData: Omit<Company, 'id' | 'createdAt' |
 
         return {
             id: docRef.id,
-            ...newDocData
+            ...newDocData,
+            createdAt: newDocData?.createdAt?.toDate ? newDocData.createdAt.toDate().toISOString() : new Date().toISOString(),
+            updatedAt: newDocData?.updatedAt?.toDate ? newDocData.updatedAt.toDate().toISOString() : new Date().toISOString(),
         } as Company;
 
     } catch (error) {
