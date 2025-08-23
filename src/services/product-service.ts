@@ -67,3 +67,5 @@ export async function deleteProduct(productId: string): Promise<void> {
         throw new Error("Failed to delete product.");
     }
 }
+
+    

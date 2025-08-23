@@ -66,19 +66,19 @@ export type Product = {
   availableStock?: number | boolean;
 
   // Atributos personalizados do produto (ex: Cor, Tamanho)
-  attributes: ProductAttribute[];
+  attributes?: ProductAttribute[];
 
   // Categorias globais do produto (ex: "Roupas", "Acessórios")
-  categories: ProductCategory[]; // Categorias globais do produto
+  categories?: ProductCategory[]; // Categorias globais do produto
 
   // Coleções privadas associadas ao produto (ex: "Coleção Verão 2023")
-  collections: string[];
+  collections?: string[];
 
   // Tags que ajudam a categorizar ou filtrar o produto (ex: "camisa", "promoção")
-  tags: string[];
+  tags?: string[];
 
   // Imagens do produto (imagem principal e galeria de imagens)
-  images: {
+  images?: {
     mainImage: string; // URL da imagem principal do produto
     gallery: string[]; // Galeria de imagens do produto
   };
@@ -108,7 +108,7 @@ export type Product = {
   isVerified: boolean;
 
   // Permissões relacionadas ao produto (quem pode editar ou excluir)
-  permissions: {
+  permissions?: {
     canEdit: boolean;
     canDelete: boolean;
     allowedRoles: ('admin' | 'empresa' | 'user')[]; // Papéis que têm permissão sobre o produto
@@ -124,14 +124,14 @@ export type Product = {
   };
 
   // Avaliações do produto
-  reviews: {
+  reviews?: {
     averageRating: number; // Média de avaliações (0 a 5)
     totalReviews: number; // Quantidade total de avaliações
     ratings: number[]; // Array de avaliações (ex: [5, 4, 3, 2, 1])
   };
 
   // Histórico de versões do produto
-  versionHistory: {
+  versionHistory?: {
     version: string; // Número da versão do produto
     updatedAt: Date; // Data da última atualização
     changes: string[]; // Descrição das mudanças realizadas
@@ -206,7 +206,7 @@ export type ProductPriceTier = {
 export type ProductAttribute = {
   name: string; // Nome do atributo visível ao usuário, ex: "Cor", "Tamanho", "Peso"
   options: string[]; // Lista de opções possíveis
-  imageUrls: { option: string; imageUrl: string }[]; // Array de objetos, onde cada objeto tem a opção e a URL da imagem correspondente
+  imageUrls?: { option: string; imageUrl: string }[]; // Array de objetos, onde cada objeto tem a opção e a URL da imagem correspondente
 };
 
 // Tipo auxiliar para categorizar produtos com estrutura de ID e nome
@@ -214,7 +214,7 @@ export type ProductCategory = {
   id: number;     // ID único da categoria
   name: string;   // Nome visível da categoria (ex: "Roupas", "Calçados")
   slug: string;   // Slug gerado para URL (ex: "roupas-masculinas", "calçados-femininos")
-  emoji: string;  // Emoji ou ícone representativo da categoria
+  emoji?: string;  // Emoji ou ícone representativo da categoria
 };
 
 
@@ -561,3 +561,6 @@ export type Company = {
 
 
 
+
+
+    
