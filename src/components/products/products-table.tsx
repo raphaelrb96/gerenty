@@ -14,9 +14,8 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { MoreHorizontal, PlusCircle } from "lucide-react"
+import { MoreHorizontal } from "lucide-react"
 import Image from "next/image"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 
 import { Badge } from "@/components/ui/badge"
@@ -288,4 +287,3 @@ export function ProductsTable({ data, onProductDeleted }: ProductsTableProps) {
     </div>
   )
 }
-
