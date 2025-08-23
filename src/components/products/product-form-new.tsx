@@ -27,6 +27,7 @@ import Image from "next/image";
 import { MultiSelect } from "../ui/multi-select";
 import { uploadFile } from "@/services/storage-service";
 import { cn } from "@/lib/utils";
+import { Switch } from "../ui/switch";
 
 // Esquema de validação com Zod
 const formSchema = z.object({
@@ -41,12 +42,15 @@ const formSchema = z.object({
     currency: z.enum(['BRL', 'USD', 'EUR', 'GBP']),
   })).min(1, "Adicione pelo menos um preço."),
 
+  manageStock: z.boolean().default(true),
   availableStock: z.preprocess((a) => parseInt(z.string().parse(a || "0"), 10), z.number().int().nonnegative()),
 
   status: z.enum(['available', 'out-of-stock', 'discontinued']),
   visibility: z.enum(['public', 'private']),
   
   tags: z.string().optional(),
+  categories: z.string().optional(),
+  collections: z.string().optional(),
   
   attributes: z.array(z.object({
       name: z.string().min(1, "O nome do atributo é obrigatório"),
@@ -85,10 +89,13 @@ export function ProductFormNew({ product }: ProductFormProps) {
             description: "",
             sku: "",
             pricing: [{ label: 'Varejo', price: 0, currency: 'BRL' }],
+            manageStock: true,
             availableStock: 0,
             status: "available",
             visibility: "public",
             tags: "",
+            categories: "",
+            collections: "",
             attributes: [],
             companyIds: activeCompany ? [activeCompany.id] : [],
         },
@@ -104,18 +111,24 @@ export function ProductFormNew({ product }: ProductFormProps) {
         name: "attributes",
     });
 
+    const watchManageStock = form.watch("manageStock");
+
     useEffect(() => {
         if (product) {
+            const stockIsManaged = typeof product.availableStock === 'number';
             form.reset({
                 name: product.name,
                 slug: product.slug,
                 description: product.description || '',
                 sku: product.sku || '',
                 pricing: product.pricing?.map(p => ({ label: p.label, price: p.price, currency: p.currency })) || [{ label: 'Varejo', price: 0, currency: 'BRL' }],
-                availableStock: typeof product.availableStock === 'number' ? product.availableStock : 0,
+                manageStock: stockIsManaged,
+                availableStock: stockIsManaged ? product.availableStock : 0,
                 status: product.status,
                 visibility: product.visibility,
                 tags: product.tags?.join(', ') || '',
+                categories: product.categories?.map(c => c.name).join(', ') || '',
+                collections: product.collections?.join(', ') || '',
                 attributes: product.attributes?.map(a => ({ name: a.name, options: a.options.join(', ') })) || [],
                 companyIds: product.companyIds || [],
             });
@@ -242,15 +255,17 @@ export function ProductFormNew({ product }: ProductFormProps) {
         
         const productData = {
             ...values,
+            availableStock: values.manageStock ? values.availableStock : true, // Set to true for infinite stock
             slug: values.slug || values.name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''),
             isActive: true,
             pricing: values.pricing.map(p => ({ ...p, minQuantity: 1, quantityRule: 'perItem' as const })),
             tags: values.tags?.split(',').map(tag => tag.trim()).filter(Boolean) || [],
+            collections: values.collections?.split(',').map(coll => coll.trim()).filter(Boolean) || [],
+            // Simplistic category handling for now
+            categories: values.categories?.split(',').map(cat => ({ id: Math.random(), name: cat.trim(), slug: cat.trim().toLowerCase().replace(/\s+/g, '-') })).filter(c => c.name) || [],
             attributes: values.attributes.map(a => ({...a, options: a.options.split(',').map(o => o.trim())})),
             isVerified: false,
             images: { mainImage: mainImageUrl, gallery: galleryImageUrls },
-            categories: product?.categories || [],
-            collections: product?.collections || [],
         };
         
         try {
@@ -459,11 +474,41 @@ export function ProductFormNew({ product }: ProductFormProps) {
                                 <FormField control={form.control} name="sku" render={({ field }) => (
                                     <FormItem><FormLabel>SKU (Código)</FormLabel><FormControl><Input placeholder="SKU12345" {...field} /></FormControl><FormMessage /></FormItem>
                                 )}/>
-                                 <FormField control={form.control} name="availableStock" render={({ field }) => (
-                                    <FormItem><FormLabel>Estoque Disponível</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                                
+                                <FormField
+                                    control={form.control}
+                                    name="manageStock"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                            <div className="space-y-0.5">
+                                                <FormLabel>Gerenciar Estoque</FormLabel>
+                                                <FormDescription className="text-xs">
+                                                    Ative para controlar a quantidade disponível.
+                                                </FormDescription>
+                                            </div>
+                                            <FormControl>
+                                                <Switch
+                                                    checked={field.value}
+                                                    onCheckedChange={field.onChange}
+                                                />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                                {watchManageStock && (
+                                    <FormField control={form.control} name="availableStock" render={({ field }) => (
+                                        <FormItem><FormLabel>Estoque Disponível</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                                    )}/>
+                                )}
+
+                                <FormField control={form.control} name="categories" render={({ field }) => (
+                                    <FormItem><FormLabel>Categorias (separadas por vírgula)</FormLabel><FormControl><Input placeholder="Ex: camisetas, verão" {...field} /></FormControl><FormMessage /></FormItem>
+                                )}/>
+                                <FormField control={form.control} name="collections" render={({ field }) => (
+                                    <FormItem><FormLabel>Coleções (separadas por vírgula)</FormLabel><FormControl><Input placeholder="Ex: coleção de lançamento" {...field} /></FormControl><FormMessage /></FormItem>
                                 )}/>
                                 <FormField control={form.control} name="tags" render={({ field }) => (
-                                    <FormItem><FormLabel>Tags (separadas por vírgula)</FormLabel><FormControl><Input placeholder="Ex: promoção, verão, unissex" {...field} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>Tags (separadas por vírgula)</FormLabel><FormControl><Input placeholder="Ex: promoção, unissex" {...field} /></FormControl><FormMessage /></FormItem>
                                 )}/>
                             </CardContent>
                         </Card>
