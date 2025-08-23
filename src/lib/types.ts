@@ -73,7 +73,7 @@ export type Product = {
   categoryIds?: string[]; // Categorias globais do produto
 
   // Coleções privadas associadas ao produto (ex: "Coleção Verão 2023")
-  collections?: string[];
+  collectionIds?: string[];
 
   // Tags que ajudam a categorizar ou filtrar o produto (ex: "camisa", "promoção")
   tags?: string[];

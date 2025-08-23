@@ -29,6 +29,7 @@ import { uploadFile } from "@/services/storage-service";
 import { cn } from "@/lib/utils";
 import { Switch } from "../ui/switch";
 import { CategorySelector } from "./category-selector";
+import { CollectionSelector } from "./collection-selector";
 
 // Esquema de validação com Zod
 const formSchema = z.object({
@@ -51,7 +52,7 @@ const formSchema = z.object({
   
   tags: z.string().optional(),
   categoryIds: z.array(z.string()).optional(),
-  collections: z.string().optional(),
+  collectionIds: z.array(z.string()).optional(),
   
   attributes: z.array(z.object({
       name: z.string().min(1, "O nome do atributo é obrigatório"),
@@ -96,7 +97,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
             visibility: "public",
             tags: "",
             categoryIds: [],
-            collections: "",
+            collectionIds: [],
             attributes: [],
             companyIds: activeCompany ? [activeCompany.id] : [],
         },
@@ -129,7 +130,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
                 visibility: product.visibility,
                 tags: product.tags?.join(', ') || '',
                 categoryIds: product.categoryIds || [],
-                collections: product.collections?.join(', ') || '',
+                collectionIds: product.collectionIds || [],
                 attributes: product.attributes?.map(a => ({ name: a.name, options: a.options.join(', ') })) || [],
                 companyIds: product.companyIds || [],
             });
@@ -261,8 +262,8 @@ export function ProductFormNew({ product }: ProductFormProps) {
             isActive: true,
             pricing: values.pricing.map(p => ({ ...p, minQuantity: 1, quantityRule: 'perItem' as const })),
             tags: values.tags?.split(',').map(tag => tag.trim()).filter(Boolean) || [],
-            collections: values.collections?.split(',').map(coll => coll.trim()).filter(Boolean) || [],
             categoryIds: values.categoryIds || [],
+            collectionIds: values.collectionIds || [],
             attributes: values.attributes.map(a => ({...a, options: a.options.split(',').map(o => o.trim())})),
             isVerified: false,
             images: { mainImage: mainImageUrl, gallery: galleryImageUrls },
@@ -532,9 +533,19 @@ export function ProductFormNew({ product }: ProductFormProps) {
                                 <CardTitle>Coleções</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <FormField control={form.control} name="collections" render={({ field }) => (
-                                    <FormItem><FormLabel>Coleções (separadas por vírgula)</FormLabel><FormControl><Input placeholder="Ex: coleção de lançamento" {...field} /></FormControl><FormMessage /></FormItem>
-                                )}/>
+                                <FormField
+                                    control={form.control}
+                                    name="collectionIds"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <CollectionSelector
+                                                selectedCollections={field.value}
+                                                onChange={field.onChange}
+                                            />
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                             </CardContent>
                         </Card>
 
@@ -552,5 +563,3 @@ export function ProductFormNew({ product }: ProductFormProps) {
         </Form>
     );
 }
-
-    

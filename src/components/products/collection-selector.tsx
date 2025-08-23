@@ -1,0 +1,103 @@
+
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { useCompany } from "@/context/company-context";
+import { getCollectionsByCompany } from "@/services/collection-service";
+import type { ProductCollection } from "@/services/collection-service";
+import { MultiSelect } from "@/components/ui/multi-select";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CollectionForm } from "./collection-form";
+import { PlusCircle, Pencil } from "lucide-react";
+
+type CollectionSelectorProps = {
+    selectedCollections: string[] | undefined;
+    onChange: (selected: string[]) => void;
+};
+
+export function CollectionSelector({ selectedCollections, onChange }: CollectionSelectorProps) {
+    const { activeCompany } = useCompany();
+    const [collections, setCollections] = useState<ProductCollection[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [openModal, setOpenModal] = useState(false);
+    const [editingCollection, setEditingCollection] = useState<ProductCollection | null>(null);
+
+    const fetchAndSetCollections = useCallback(async () => {
+        if (activeCompany) {
+            setLoading(true);
+            try {
+                const companyCollections = await getCollectionsByCompany(activeCompany.id);
+                setCollections(companyCollections);
+            } catch (error) {
+                console.error("Failed to fetch collections", error);
+            } finally {
+                setLoading(false);
+            }
+        }
+    }, [activeCompany]);
+
+    useEffect(() => {
+        fetchAndSetCollections();
+    }, [fetchAndSetCollections]);
+
+    const handleFormFinished = () => {
+        setOpenModal(false);
+        setEditingCollection(null);
+        fetchAndSetCollections(); // Refresh list after add/edit
+    };
+
+    const handleEdit = (e: React.MouseEvent, collection: ProductCollection) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setEditingCollection(collection);
+        setOpenModal(true);
+    };
+    
+    const handleCreate = () => {
+        setEditingCollection(null);
+        setOpenModal(true);
+    }
+    
+    const collectionOptions = collections.map(c => ({ value: c.id, label: c.name }));
+
+    return (
+        <Dialog open={openModal} onOpenChange={setOpenModal}>
+            <div>
+                 <MultiSelect
+                    options={collectionOptions}
+                    selected={selectedCollections || []}
+                    onChange={onChange}
+                    placeholder="Selecione as coleções..."
+                    className="w-full"
+                    disabled={loading}
+                    renderAction={(option) => {
+                        const collection = collections.find(c => c.id === option.value);
+                        if (!collection) return null;
+                        return (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 ml-auto"
+                                onClick={(e) => handleEdit(e, collection)}
+                            >
+                                <Pencil className="h-4 w-4" />
+                            </Button>
+                        )
+                    }}
+                 />
+                 <Button type="button" variant="link" onClick={handleCreate} className="p-0 h-auto mt-2 text-sm">
+                     <PlusCircle className="mr-2 h-4 w-4" />
+                     Criar Nova Coleção
+                 </Button>
+            </div>
+           
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>{editingCollection ? "Editar Coleção" : "Criar Nova Coleção"}</DialogTitle>
+                </DialogHeader>
+                <CollectionForm collection={editingCollection} onFinished={handleFormFinished} />
+            </DialogContent>
+        </Dialog>
+    );
+}
