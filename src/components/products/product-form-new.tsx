@@ -28,6 +28,7 @@ import { MultiSelect } from "../ui/multi-select";
 import { uploadFile } from "@/services/storage-service";
 import { cn } from "@/lib/utils";
 import { Switch } from "../ui/switch";
+import { CategorySelector } from "./category-selector";
 
 // Esquema de validação com Zod
 const formSchema = z.object({
@@ -49,7 +50,7 @@ const formSchema = z.object({
   visibility: z.enum(['public', 'private']),
   
   tags: z.string().optional(),
-  categories: z.string().optional(),
+  categoryIds: z.array(z.string()).optional(),
   collections: z.string().optional(),
   
   attributes: z.array(z.object({
@@ -94,7 +95,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
             status: "available",
             visibility: "public",
             tags: "",
-            categories: "",
+            categoryIds: [],
             collections: "",
             attributes: [],
             companyIds: activeCompany ? [activeCompany.id] : [],
@@ -127,7 +128,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
                 status: product.status,
                 visibility: product.visibility,
                 tags: product.tags?.join(', ') || '',
-                categories: product.categories?.map(c => c.name).join(', ') || '',
+                categoryIds: product.categoryIds || [],
                 collections: product.collections?.join(', ') || '',
                 attributes: product.attributes?.map(a => ({ name: a.name, options: a.options.join(', ') })) || [],
                 companyIds: product.companyIds || [],
@@ -261,8 +262,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
             pricing: values.pricing.map(p => ({ ...p, minQuantity: 1, quantityRule: 'perItem' as const })),
             tags: values.tags?.split(',').map(tag => tag.trim()).filter(Boolean) || [],
             collections: values.collections?.split(',').map(coll => coll.trim()).filter(Boolean) || [],
-            // Simplistic category handling for now
-            categories: values.categories?.split(',').map(cat => ({ id: Math.random(), name: cat.trim(), slug: cat.trim().toLowerCase().replace(/\s+/g, '-') })).filter(c => c.name) || [],
+            categoryIds: values.categoryIds || [],
             attributes: values.attributes.map(a => ({...a, options: a.options.split(',').map(o => o.trim())})),
             isVerified: false,
             images: { mainImage: mainImageUrl, gallery: galleryImageUrls },
@@ -501,9 +501,21 @@ export function ProductFormNew({ product }: ProductFormProps) {
                                     )}/>
                                 )}
 
-                                <FormField control={form.control} name="categories" render={({ field }) => (
-                                    <FormItem><FormLabel>Categorias (separadas por vírgula)</FormLabel><FormControl><Input placeholder="Ex: camisetas, verão" {...field} /></FormControl><FormMessage /></FormItem>
-                                )}/>
+                                <FormField
+                                    control={form.control}
+                                    name="categoryIds"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Categorias</FormLabel>
+                                            <CategorySelector
+                                                selectedCategories={field.value}
+                                                onChange={field.onChange}
+                                            />
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
                                 <FormField control={form.control} name="collections" render={({ field }) => (
                                     <FormItem><FormLabel>Coleções (separadas por vírgula)</FormLabel><FormControl><Input placeholder="Ex: coleção de lançamento" {...field} /></FormControl><FormMessage /></FormItem>
                                 )}/>
@@ -526,5 +538,3 @@ export function ProductFormNew({ product }: ProductFormProps) {
         </Form>
     );
 }
-
-    

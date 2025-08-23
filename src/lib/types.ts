@@ -70,7 +70,7 @@ export type Product = {
   attributes?: ProductAttribute[];
 
   // Categorias globais do produto (ex: "Roupas", "Acessórios")
-  categories?: ProductCategory[]; // Categorias globais do produto
+  categoryIds?: string[]; // Categorias globais do produto
 
   // Coleções privadas associadas ao produto (ex: "Coleção Verão 2023")
   collections?: string[];
@@ -212,7 +212,8 @@ export type ProductAttribute = {
 
 // Tipo auxiliar para categorizar produtos com estrutura de ID e nome
 export type ProductCategory = {
-  id: number;     // ID único da categoria
+  id: string;     // ID único da categoria
+  companyId: string; // ID da empresa à qual pertence
   name: string;   // Nome visível da categoria (ex: "Roupas", "Calçados")
   slug: string;   // Slug gerado para URL (ex: "roupas-masculinas", "calçados-femininos")
   emoji?: string;  // Emoji ou ícone representativo da categoria

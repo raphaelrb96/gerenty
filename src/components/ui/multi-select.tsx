@@ -22,9 +22,10 @@ type MultiSelectProps = {
     placeholder?: string;
     className?: string;
     disabled?: boolean;
+    renderItem?: (option: Option, isSelected: boolean, onSelect: (value: string) => void) => React.ReactNode;
 }
 
-export function MultiSelect({ options, selected, onChange, placeholder = "Select options...", className, disabled }: MultiSelectProps) {
+export function MultiSelect({ options, selected, onChange, placeholder = "Select options...", className, disabled, renderItem }: MultiSelectProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [open, setOpen] = React.useState(false);
   const [inputValue, setInputValue] = React.useState("");
@@ -50,6 +51,10 @@ export function MultiSelect({ options, selected, onChange, placeholder = "Select
   }, [onChange, selected]);
 
   const selectables = options.filter(option => !selected.includes(option.value));
+  const onSelect = (value: string) => {
+      setInputValue("");
+      onChange([...selected, value]);
+  };
 
   return (
     <Command onKeyDown={handleKeyDown} className={cn("overflow-visible bg-transparent", className)}>
@@ -98,6 +103,10 @@ export function MultiSelect({ options, selected, onChange, placeholder = "Select
           <div className="absolute w-full z-10 top-0 rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in">
             <CommandGroup className="h-full overflow-auto">
               {selectables.map((option) => {
+                const isSelected = selected.includes(option.value);
+                if (renderItem) {
+                    return renderItem(option, isSelected, onSelect);
+                }
                 return (
                   <CommandItem
                     key={option.value}
@@ -105,10 +114,7 @@ export function MultiSelect({ options, selected, onChange, placeholder = "Select
                       e.preventDefault();
                       e.stopPropagation();
                     }}
-                    onSelect={() => {
-                      setInputValue("")
-                      onChange([...selected, option.value])
-                    }}
+                    onSelect={() => onSelect(option.value)}
                     className={"cursor-pointer"}
                     disabled={disabled}
                   >
