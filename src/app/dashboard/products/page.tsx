@@ -18,13 +18,15 @@ import Image from "next/image";
 import { useTranslation } from "@/context/i18n-context";
 import { useCurrency } from "@/context/currency-context";
 import { useCompany } from "@/context/company-context";
+import { useToast } from "@/hooks/use-toast";
 
 
 export default function ProductsPage() {
     const { t } = useTranslation();
-    const { user } = useAuth();
+    const { user, userData } = useAuth();
     const { activeCompany } = useCompany();
     const { formatCurrency } = useCurrency();
+    const { toast } = useToast();
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -52,6 +54,15 @@ export default function ProductsPage() {
     };
 
     const handleAddProduct = () => {
+        const productLimit = userData?.plan?.limits?.products ?? 0;
+        if (products.length >= productLimit) {
+            toast({
+                variant: "destructive",
+                title: "Limite de Produtos Atingido",
+                description: "Você atingiu o limite de produtos para o seu plano atual. Considere fazer um upgrade.",
+            });
+            return;
+        }
         setSelectedProduct(null);
         setIsSheetOpen(true);
     }
@@ -70,13 +81,15 @@ export default function ProductsPage() {
         return <LoadingSpinner />;
     }
 
+    const isProductLimitReached = (userData?.plan?.limits?.products ?? 0) <= products.length;
+
   return (
     <div className="space-y-4">
        <PageHeader 
         title={t('productsPage.title')}
         description={t('productsPage.description')}
         action={
-            <Button onClick={handleAddProduct} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} disabled={!activeCompany}>
+            <Button onClick={handleAddProduct} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} disabled={!activeCompany || isProductLimitReached}>
                 <PlusCircle className="mr-2 h-4 w-4" /> {t('productsPage.addProduct')}
             </Button>
         }
@@ -97,7 +110,7 @@ export default function ProductsPage() {
             title={t('productsPage.empty.title')}
             description={!activeCompany ? "Selecione uma empresa para ver os produtos." : t('productsPage.empty.description')}
             action={
-                <Button onClick={handleAddProduct} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} disabled={!activeCompany}>
+                <Button onClick={handleAddProduct} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} disabled={!activeCompany || isProductLimitReached}>
                     <PlusCircle className="mr-2 h-4 w-4" /> {t('productsPage.empty.action')}
                 </Button>
             }

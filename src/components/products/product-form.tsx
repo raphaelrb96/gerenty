@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { generateProductDescription } from "@/ai/flows/generate-product-description";
-import { addProduct, updateProduct } from "@/services/product-service";
+import { addProduct, updateProduct, getProducts } from "@/services/product-service";
 import { Bot, Loader2 } from "lucide-react";
 import type { Product } from "@/lib/types";
 import { useTranslation } from "@/context/i18n-context";
@@ -44,7 +44,7 @@ type ProductFormProps = {
 
 export function ProductForm({ product, onFinished }: ProductFormProps) {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
   const { activeCompany } = useCompany();
   const [isSaving, setIsSaving] = useState(false);
   const [isGenerating, startGenerateTransition] = useTransition();
@@ -121,6 +121,23 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
     }
     
     setIsSaving(true);
+    
+    // Security check for new products
+    if (!product) {
+        const productLimit = userData?.plan?.limits?.products ?? 0;
+        const currentProducts = await getProducts(activeCompany.id);
+        if (currentProducts.length >= productLimit) {
+            toast({
+                variant: "destructive",
+                title: "Limite de Produtos Atingido",
+                description: "Você atingiu o limite de produtos para o seu plano atual. Considere fazer um upgrade.",
+            });
+            setIsSaving(false);
+            onFinished(); // Close the sheet
+            return;
+        }
+    }
+
 
     const productData: Partial<Product> = {
         name: values.name,
@@ -273,5 +290,3 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
     </Form>
   );
 }
-
-    
