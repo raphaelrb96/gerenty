@@ -18,7 +18,9 @@ export async function getCategoriesByCompany(companyId: string): Promise<Product
             categories.push({ 
                 id: doc.id, 
                 ...data,
-            } as unknown as ProductCategory);
+                createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString(),
+                updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : new Date().toISOString(),
+            } as ProductCategory);
         });
         return categories;
     } catch (error) {
@@ -38,7 +40,13 @@ export async function getCategoryById(categoryId: string): Promise<ProductCatego
             return null;
         }
         
-        return { id: categoryDoc.id, ...categoryDoc.data() } as unknown as ProductCategory;
+        const data = categoryDoc.data();
+        return { 
+            id: categoryDoc.id, 
+            ...data,
+            createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString(),
+            updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : new Date().toISOString(),
+        } as ProductCategory;
     } catch (error) {
         console.error("Error getting category by ID: ", error);
         throw new Error("Failed to fetch category data.");
@@ -46,7 +54,7 @@ export async function getCategoryById(categoryId: string): Promise<ProductCatego
 }
 
 // Add a new category
-export async function addCategory(categoryData: Omit<ProductCategory, 'id'> & { companyId: string }): Promise<ProductCategory> {
+export async function addCategory(categoryData: Omit<ProductCategory, 'id' | 'createdAt' | 'updatedAt'> & { companyId: string }): Promise<ProductCategory> {
     try {
         const docRef = await addDoc(categoriesCollection, {
             ...categoryData,
@@ -55,7 +63,13 @@ export async function addCategory(categoryData: Omit<ProductCategory, 'id'> & { 
         });
         
         const newDocSnap = await getDoc(docRef);
-        return { id: docRef.id, ...newDocSnap.data() } as unknown as ProductCategory;
+        const newDocData = newDocSnap.data();
+        return { 
+            id: docRef.id, 
+            ...newDocData,
+            createdAt: newDocData?.createdAt?.toDate ? newDocData.createdAt.toDate().toISOString() : new Date().toISOString(),
+            updatedAt: newDocData?.updatedAt?.toDate ? newDocData.updatedAt.toDate().toISOString() : new Date().toISOString(),
+        } as ProductCategory;
 
     } catch (error) {
         console.error("Error adding category: ", error);

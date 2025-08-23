@@ -7,6 +7,16 @@ import type { Product } from "@/lib/types";
 
 const productsCollection = collection(db, "products");
 
+const convertProductTimestamps = (product: any) => {
+    return {
+        ...product,
+        createdAt: product.createdAt?.toDate ? product.createdAt.toDate().toISOString() : new Date().toISOString(),
+        updatedAt: product.updatedAt?.toDate ? product.updatedAt.toDate().toISOString() : new Date().toISOString(),
+        publishedAt: product.publishedAt?.toDate ? product.publishedAt.toDate().toISOString() : undefined,
+    };
+};
+
+
 export async function addProduct(productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<Product> {
     try {
         const docRef = await addDoc(productsCollection, {
@@ -17,10 +27,10 @@ export async function addProduct(productData: Omit<Product, 'id' | 'createdAt' |
         
         const newDocSnap = await getDoc(docRef);
         const newDocData = newDocSnap.data();
-        return {
+        return convertProductTimestamps({
             id: docRef.id,
             ...newDocData,
-        } as Product;
+        }) as Product;
 
     } catch (error) {
         console.error("Error adding product: ", error);
@@ -34,7 +44,7 @@ export async function getProducts(companyId: string): Promise<Product[]> {
         const querySnapshot = await getDocs(q);
         const products: Product[] = [];
         querySnapshot.forEach((doc) => {
-            products.push({ id: doc.id, ...doc.data() } as Product);
+            products.push(convertProductTimestamps({ id: doc.id, ...doc.data() }) as Product);
         });
         return products;
     } catch (error) {
@@ -53,7 +63,7 @@ export async function getProductById(productId: string): Promise<Product | null>
             return null;
         }
         
-        return { id: productDoc.id, ...productDoc.data() } as Product;
+        return convertProductTimestamps({ id: productDoc.id, ...productDoc.data() }) as Product;
     } catch (error) {
         console.error("Error getting product by ID: ", error);
         throw new Error("Failed to fetch product data.");

@@ -12,6 +12,8 @@ export type ProductCollection = {
     companyId: string;
     slug?: string;
     description?: string;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 const collectionsCollection = collection(db, "collections");
@@ -27,6 +29,8 @@ export async function getCollectionsByCompany(companyId: string): Promise<Produc
             collections.push({ 
                 id: doc.id, 
                 ...data,
+                createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString(),
+                updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : new Date().toISOString(),
             } as ProductCollection);
         });
         return collections;
@@ -38,7 +42,7 @@ export async function getCollectionsByCompany(companyId: string): Promise<Produc
 
 
 // Add a new collection
-export async function addCollection(collectionData: Omit<ProductCollection, 'id'>): Promise<ProductCollection> {
+export async function addCollection(collectionData: Omit<ProductCollection, 'id' | 'createdAt' | 'updatedAt'>): Promise<ProductCollection> {
     try {
         const docRef = await addDoc(collectionsCollection, {
             ...collectionData,
@@ -47,7 +51,13 @@ export async function addCollection(collectionData: Omit<ProductCollection, 'id'
         });
         
         const newDocSnap = await getDoc(docRef);
-        return { id: docRef.id, ...newDocSnap.data() } as ProductCollection;
+        const newDocData = newDocSnap.data();
+        return { 
+            id: docRef.id, 
+            ...newDocData,
+            createdAt: newDocData?.createdAt?.toDate ? newDocData.createdAt.toDate().toISOString() : new Date().toISOString(),
+            updatedAt: newDocData?.updatedAt?.toDate ? newDocData.updatedAt.toDate().toISOString() : new Date().toISOString(),
+        } as ProductCollection;
 
     } catch (error) {
         console.error("Error adding collection: ", error);
