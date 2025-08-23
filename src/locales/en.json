@@ -221,7 +221,7 @@
             "renewalDate": "Your plan renews on {date}.",
             "inactiveText": "You do not have an active plan."
         },
-        "manageButton": "Manage Subscription",
+        "manageButton": "Manage",
         "updateSuccess": { "title": "Profile Updated", "description": "Your information has been saved successfully." },
         "updateError": { "title": "Update Error", "description": "Could not save your information. Please try again." }
     },

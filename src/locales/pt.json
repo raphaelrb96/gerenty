@@ -221,7 +221,7 @@
             "renewalDate": "Seu plano renova em {date}.",
             "inactiveText": "Você não possui um plano ativo."
         },
-        "manageButton": "Gerenciar Assinatura",
+        "manageButton": "Gerenciar",
         "updateSuccess": { "title": "Perfil Atualizado", "description": "Suas informações foram salvas com sucesso." },
         "updateError": { "title": "Erro ao Atualizar", "description": "Não foi possível salvar suas informações. Tente novamente." }
     },

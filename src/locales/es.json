@@ -165,7 +165,7 @@
             "question1": "¿Es Enterprisy adecuado para mi tipo de negocio?",
             "answer1": "¡Sí! Nuestra plataforma fue desarrollada para atender desde pequeños emprendedores hasta tiendas en línea más robustas, con funcionalidades escalables para acompañar tu crecimiento.",
             "question2": "¿Es fácil migrar mis datos a Enterprisy?",
-            "answer2": "¡Nuestro equipo está listo para ayudarte! Ofrecemos un proceso de migración guiado para que puedas traer tus productos y clientes sin complicaciones.",
+            "answer2": "¡Nuestro equipo está listo para ayudarte! Oferecemos un proceso de migración guiado para que puedas traer tus productos y clientes sin complicaciones.",
             "question3": "¿Cómo funciona el período de prueba?",
             "answer3": "Ofrecemos un plan gratuito que puedes usar todo el tiempo que quieras. Incluye funcionalidades básicas para que sientas el poder de Enterprisy sin compromiso. Solo te suscribes si quieres evolucionar.",
             "question4": "¿Puedo cancelar mi plan en cualquier momento?",
@@ -221,7 +221,7 @@
             "renewalDate": "Tu plan se renueva el {date}.",
             "inactiveText": "No tienes un plan activo."
         },
-        "manageButton": "Gestionar Suscripción",
+        "manageButton": "Gestionar",
         "updateSuccess": { "title": "Perfil Actualizado", "description": "Tu información ha sido guardada exitosamente." },
         "updateError": { "title": "Error al Actualizar", "description": "No se pudo guardar tu información. Por favor, inténtalo de nuevo." }
     },
