@@ -92,11 +92,11 @@ export default function ProfilePage() {
             <CardTitle>{t('profilePage.subscription.title')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-             <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">{t('profilePage.subscription.status')}</span>
+             <div className="space-y-2">
+                <span className="text-muted-foreground text-sm">{t('profilePage.subscription.status')}</span>
                 <Badge className={getStatusVariant(userData?.statusPlan)}>{userData?.statusPlan || 'inativo'}</Badge>
             </div>
-             <p className="text-sm text-muted-foreground">
+             <p className="text-sm text-muted-foreground pt-2">
                 {userData?.statusPlan === 'ativo' ? t('profilePage.subscription.renewalDate', {date: new Date(userData?.validityDate as any).toLocaleDateString()}) : t('profilePage.subscription.inactiveText')}
             </p>
           </CardContent>
