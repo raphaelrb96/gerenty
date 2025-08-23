@@ -72,18 +72,6 @@ export function CategorySelector({ selectedCategories, onChange }: CategorySelec
                     placeholder="Selecione as categorias..."
                     className="w-full"
                     disabled={loading}
-                    renderItem={(option, isSelected, onSelect) => (
-                        <CommandItem
-                            key={option.value}
-                            onSelect={() => onSelect(option.value)}
-                            className="flex justify-between items-center cursor-pointer"
-                         >
-                            <span>{option.label}</span>
-                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => handleEdit(e, categories.find(c => c.id === option.value)!)}>
-                                <Pencil className="h-3 w-3" />
-                            </Button>
-                        </CommandItem>
-                    )}
                  />
                  <Button type="button" variant="link" onClick={handleCreate} className="p-0 h-auto mt-2 text-sm">
                      <PlusCircle className="mr-2 h-4 w-4" />
