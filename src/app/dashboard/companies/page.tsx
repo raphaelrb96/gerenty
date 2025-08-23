@@ -62,11 +62,11 @@ export default function CompaniesPage() {
                                         alt={`Logo for ${company.name}`} 
                                         width={64} 
                                         height={64} 
-                                        className="rounded-full border-2 border-background -mt-10 bg-background object-cover" 
+                                        className="rounded-full border-2 border-background -mt-10 bg-background object-cover shrink-0" 
                                     />
                                     <div className="pt-1">
                                         <CardTitle className="text-lg">{company.name}</CardTitle>
-                                        <p className="text-sm text-muted-foreground">{company.email}</p>
+                                        <p className="text-sm text-muted-foreground break-all">{company.email}</p>
                                     </div>
                                 </div>
                             </CardContent>
