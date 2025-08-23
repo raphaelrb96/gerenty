@@ -70,8 +70,12 @@ export function ProductFormNew({ product }: ProductFormProps) {
 
     const [isSaving, setIsSaving] = useState(false);
     const [isGenerating, startGenerateTransition] = useTransition();
+    
     const [mainImageFile, setMainImageFile] = useState<File | null>(null);
     const [mainImagePreview, setMainImagePreview] = useState<string | null>(null);
+
+    const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
+    const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
 
     const form = useForm<ProductFormValues>({
         resolver: zodResolver(formSchema),
@@ -116,18 +120,32 @@ export function ProductFormNew({ product }: ProductFormProps) {
                 companyIds: product.companyIds || [],
             });
             setMainImagePreview(product.images?.mainImage || null);
+            setGalleryPreviews(product.images?.gallery || []);
         }
     }, [product, form]);
     
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'main') => {
+    const handleMainImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            const previewUrl = URL.createObjectURL(file);
-            if (type === 'main') {
-                setMainImageFile(file);
-                setMainImagePreview(previewUrl);
-            }
+            setMainImageFile(file);
+            setMainImagePreview(URL.createObjectURL(file));
         }
+    };
+    
+    const handleGalleryImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (files) {
+            const newFiles = Array.from(files);
+            setGalleryFiles(prev => [...prev, ...newFiles]);
+            
+            const newPreviews = newFiles.map(file => URL.createObjectURL(file));
+            setGalleryPreviews(prev => [...prev, ...newPreviews]);
+        }
+    };
+
+    const handleRemoveGalleryImage = (indexToRemove: number) => {
+        setGalleryPreviews(prev => prev.filter((_, index) => index !== indexToRemove));
+        setGalleryFiles(prev => prev.filter((_, index) => index !== indexToRemove));
     };
 
 
@@ -170,8 +188,6 @@ export function ProductFormNew({ product }: ProductFormProps) {
         
         if (!product) {
             const productLimit = userData?.plan?.limits?.products ?? 0;
-            // This logic is imperfect for multi-company, we'd need to check per company
-            // For now, let's assume a global limit for simplicity
             const allProducts = await Promise.all(values.companyIds.map(id => getProducts(id)));
             const totalProducts = allProducts.flat().length;
 
@@ -193,6 +209,15 @@ export function ProductFormNew({ product }: ProductFormProps) {
             mainImageUrl = await uploadFile(mainImageFile, path);
         }
 
+        const galleryImageUrls: string[] = product?.images?.gallery || [];
+        if (galleryFiles.length > 0 && user) {
+            const uploadPromises = galleryFiles.map(file => {
+                const path = `products/${user.uid}/gallery/${values.name.replace(/\s+/g, '-')}-${file.name}-${Date.now()}`;
+                return uploadFile(file, path);
+            });
+            const newUrls = await Promise.all(uploadPromises);
+            galleryImageUrls.push(...newUrls);
+        }
         
         const productData = {
             ...values,
@@ -202,7 +227,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
             tags: values.tags?.split(',').map(tag => tag.trim()).filter(Boolean) || [],
             attributes: values.attributes.map(a => ({...a, options: a.options.split(',').map(o => o.trim())})),
             isVerified: false,
-            images: { mainImage: mainImageUrl, gallery: product?.images?.gallery || [] },
+            images: { mainImage: mainImageUrl, gallery: galleryImageUrls },
             categories: product?.categories || [],
             collections: product?.collections || [],
         };
@@ -263,25 +288,48 @@ export function ProductFormNew({ product }: ProductFormProps) {
 
                         <Card>
                             <CardHeader><CardTitle>Imagens e Mídia</CardTitle></CardHeader>
-                            <CardContent>
-                                <div className="space-y-4">
-                                    <FormItem>
-                                        <FormLabel>Imagem Principal</FormLabel>
-                                        <Label htmlFor="main-image-upload" className="cursor-pointer">
-                                            <Card className="relative aspect-video w-full border-2 border-dashed flex items-center justify-center text-muted-foreground hover:bg-muted/50 transition-colors">
-                                                {mainImagePreview ? (
-                                                    <Image src={mainImagePreview} alt="Pré-visualização da imagem principal" layout="fill" className="rounded-md object-cover" />
-                                                ) : (
-                                                    <div className="text-center">
-                                                        <ImageIcon className="mx-auto h-12 w-12" />
-                                                        <p className="text-sm mt-2">Clique para enviar a imagem principal</p>
-                                                    </div>
-                                                )}
-                                            </Card>
+                            <CardContent className="space-y-6">
+                                <FormItem>
+                                    <FormLabel>Imagem Principal</FormLabel>
+                                    <Label htmlFor="main-image-upload" className="cursor-pointer">
+                                        <Card className="relative aspect-video w-full border-2 border-dashed flex items-center justify-center text-muted-foreground hover:bg-muted/50 transition-colors">
+                                            {mainImagePreview ? (
+                                                <Image src={mainImagePreview} alt="Pré-visualização da imagem principal" layout="fill" className="rounded-md object-cover" />
+                                            ) : (
+                                                <div className="text-center">
+                                                    <ImageIcon className="mx-auto h-12 w-12" />
+                                                    <p className="text-sm mt-2">Clique para enviar a imagem principal</p>
+                                                </div>
+                                            )}
+                                        </Card>
+                                    </Label>
+                                    <Input id="main-image-upload" type="file" accept="image/*" className="hidden" onChange={handleMainImageChange} />
+                                </FormItem>
+                                
+                                <FormItem>
+                                    <FormLabel>Galeria de Imagens</FormLabel>
+                                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                                        {galleryPreviews.map((src, index) => (
+                                            <div key={index} className="relative aspect-square">
+                                                <Image src={src} alt={`Preview ${index}`} layout="fill" className="rounded-md object-cover" />
+                                                <Button 
+                                                    type="button" 
+                                                    variant="destructive" 
+                                                    size="icon" 
+                                                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                                                    onClick={() => handleRemoveGalleryImage(index)}
+                                                >
+                                                    <Trash2 className="h-3 w-3" />
+                                                </Button>
+                                            </div>
+                                        ))}
+                                        <Label htmlFor="gallery-upload" className="cursor-pointer aspect-square border-2 border-dashed flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/50 transition-colors rounded-md">
+                                            <Upload className="h-8 w-8" />
+                                            <span className="text-xs text-center mt-1">Adicionar Imagens</span>
                                         </Label>
-                                        <Input id="main-image-upload" type="file" accept="image/*" className="hidden" onChange={(e) => handleFileChange(e, 'main')} />
-                                    </FormItem>
-                                </div>
+                                        <Input id="gallery-upload" type="file" accept="image/*" multiple className="hidden" onChange={handleGalleryImageChange} />
+                                    </div>
+                                </FormItem>
                             </CardContent>
                         </Card>
                         
@@ -402,3 +450,4 @@ export function ProductFormNew({ product }: ProductFormProps) {
         </Form>
     );
 }
+
