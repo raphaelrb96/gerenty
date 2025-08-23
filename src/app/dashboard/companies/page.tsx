@@ -62,7 +62,7 @@ export default function CompaniesPage() {
                                         alt={`Logo for ${company.name}`} 
                                         width={64} 
                                         height={64} 
-                                        className="rounded-full border-2 border-background -mt-10 bg-background" 
+                                        className="rounded-full border-2 border-background -mt-10 bg-background object-cover" 
                                     />
                                     <div className="pt-1">
                                         <CardTitle className="text-lg">{company.name}</CardTitle>
