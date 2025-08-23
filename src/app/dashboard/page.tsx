@@ -54,7 +54,12 @@ function CompanySelector() {
 
     return (
         <Card>
-            <CardContent className="p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <CardContent className="relative p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                 <Button asChild className="absolute top-4 right-4">
+                     <Link href="/dashboard/companies/create">
+                        <PlusCircle className="mr-2 h-4 w-4" /> {t('dashboard.createNewCompany')}
+                    </Link>
+                </Button>
                 <div className="flex items-center gap-4">
                     <div className="p-3 rounded-md bg-muted">
                         <Building className="h-6 w-6 text-muted-foreground" />
@@ -65,7 +70,7 @@ function CompanySelector() {
                     </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 self-start md:self-center">
+                <div className="flex flex-wrap items-center gap-2 self-start md:self-center mt-4 md:mt-0">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline">
@@ -81,11 +86,6 @@ function CompanySelector() {
                             ))}
                         </DropdownMenuContent>
                     </DropdownMenu>
-                    <Button asChild>
-                         <Link href="/dashboard/companies/create">
-                            <PlusCircle className="mr-2 h-4 w-4" /> {t('dashboard.createNewCompany')}
-                        </Link>
-                    </Button>
                      <Button variant="secondary" asChild>
                          <Link href="/dashboard/companies">
                             {t('dashboard.viewAllCompanies')}
@@ -242,5 +242,7 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
 
     
