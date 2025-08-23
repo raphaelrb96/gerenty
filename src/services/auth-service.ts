@@ -13,11 +13,11 @@ import {
   type User as FirebaseUser
 } from "firebase/auth";
 import { doc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
-import type { User } from '@/lib/types';
+import type { User, Plan } from '@/lib/types';
 
 
 // --- Sign Up ---
-export async function signUpWithEmail(name: string, email: string, password: string): Promise<FirebaseUser> {
+export async function signUpWithEmail(name: string, email: string, password:string): Promise<FirebaseUser> {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const firebaseUser = userCredential.user;
@@ -25,14 +25,31 @@ export async function signUpWithEmail(name: string, email: string, password: str
     await updateProfile(firebaseUser, { displayName: name });
 
     const userDocRef = doc(db, "users", firebaseUser.uid);
+
+    const freePlan: Plan = {
+      name: "Plano Gratuito",
+      type: 'free',
+      price: 0,
+      features: ["1 Empresa", "10 Produtos", "50 Pedidos/mês"],
+      limits: {
+        companies: 1,
+        products: 10,
+        users: 1,
+        ordersPerMonth: 50,
+        customDomains: false,
+        supportLevel: 'nenhum',
+      },
+      isActive: true,
+    };
+    
     const newUser: Partial<User> = {
         uid: firebaseUser.uid,
         email: firebaseUser.email!,
         name: name,
         authProvider: 'email',
         role: 'empresa',
-        plan: null,
-        statusPlan: 'inativo',
+        plan: freePlan,
+        statusPlan: 'ativo',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         onboardingCompleted: false,
