@@ -36,6 +36,7 @@ export type User = {
 
 };
 
+// Tipo do Produto
 export type Product = {
   // Identificador único do produto (por exemplo, SKU, ID interno)
   id: string;

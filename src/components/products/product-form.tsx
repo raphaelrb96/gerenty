@@ -6,7 +6,6 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useTransition, useEffect, useState } from 'react';
 import { useAuth } from "@/context/auth-context";
-
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -138,7 +137,6 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
         }
     }
 
-
     const productData: Partial<Product> = {
         name: values.name,
         slug: values.name.toLowerCase().replace(/\s+/g, '-'),
@@ -161,8 +159,6 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
 
     try {
         if (product) {
-            // Update existing product
-            // Ensure companyIds is handled correctly when updating
             const updatedProductData = {
                 ...productData,
                 companyIds: product.companyIds.includes(activeCompany.id) 
@@ -175,7 +171,6 @@ export function ProductForm({ product, onFinished }: ProductFormProps) {
                 description: `${values.name} ${t('productForm.updateSuccess.description')}`,
             });
         } else {
-            // Create new product
             await addProduct(productData as Omit<Product, 'id' | 'createdAt' | 'updatedAt'>);
             toast({
                 title: t('productForm.createSuccess.title'),

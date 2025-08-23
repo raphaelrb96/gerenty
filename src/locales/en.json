@@ -258,6 +258,8 @@
         }
     },
     "productForm": {
+        "newDescription": "Fill in the details below to register a new product.",
+        "editDescription": "Editing product: {productName}",
         "name": { "label": "Product Name", "placeholder": "e.g., Ergonomic Office Chair" },
         "attributes": { "label": "Key Attributes", "placeholder": "e.g., black, mesh, adjustable arms" },
         "description": { "label": "Product Description", "placeholder": "A detailed description of the product..." },

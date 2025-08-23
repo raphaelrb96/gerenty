@@ -258,6 +258,8 @@
         }
     },
      "productForm": {
+        "newDescription": "Preencha os detalhes abaixo para cadastrar um novo produto.",
+        "editDescription": "Editando o produto: {productName}",
         "name": { "label": "Nome do Produto", "placeholder": "Ex: Cadeira de Escritório Ergonômica" },
         "attributes": { "label": "Atributos Principais", "placeholder": "Ex: preta, malha, braços ajustáveis" },
         "description": { "label": "Descrição do Produto", "placeholder": "Uma descrição detalhada do produto..." },

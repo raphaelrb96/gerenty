@@ -258,6 +258,8 @@
         }
     },
     "productForm": {
+        "newDescription": "Rellena los detalles a continuación para registrar un nuevo producto.",
+        "editDescription": "Editando el producto: {productName}",
         "name": { "label": "Nombre del Producto", "placeholder": "Ej: Silla de Oficina Ergonómica" },
         "attributes": { "label": "Atributos Clave", "placeholder": "Ej: negra, malla, brazos ajustables" },
         "description": { "label": "Descripción del Producto", "placeholder": "Una descripción detallada del producto..." },

@@ -2,12 +2,11 @@
 'use server';
 
 import { db } from "@/lib/firebase";
-import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, serverTimestamp, Timestamp } from "firebase/firestore";
+import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, query, where, serverTimestamp, Timestamp } from "firebase/firestore";
 import type { Product } from "@/lib/types";
 
 const productsCollection = collection(db, "products");
 
-// The data passed here should match the Product type, omitting fields that are auto-generated.
 export async function addProduct(productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<Product> {
     try {
         const docRef = await addDoc(productsCollection, {
@@ -15,14 +14,14 @@ export async function addProduct(productData: Omit<Product, 'id' | 'createdAt' |
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
         });
-
-        // Construct the full product object to return, simulating the server-side timestamps.
-        return { 
-            id: docRef.id, 
-            ...productData,
-            createdAt: Timestamp.now(),
-            updatedAt: Timestamp.now()
+        
+        const newDocSnap = await getDoc(docRef);
+        const newDocData = newDocSnap.data();
+        return {
+            id: docRef.id,
+            ...newDocData,
         } as Product;
+
     } catch (error) {
         console.error("Error adding product: ", error);
         throw new Error("Failed to add product.");
@@ -31,7 +30,6 @@ export async function addProduct(productData: Omit<Product, 'id' | 'createdAt' |
 
 export async function getProducts(companyId: string): Promise<Product[]> {
     try {
-        // Find products where the companyId is in the companyIds array
         const q = query(productsCollection, where("companyIds", "array-contains", companyId));
         const querySnapshot = await getDocs(q);
         const products: Product[] = [];
@@ -42,6 +40,23 @@ export async function getProducts(companyId: string): Promise<Product[]> {
     } catch (error) {
         console.error("Error getting products: ", error);
         throw new Error("Failed to fetch products.");
+    }
+}
+
+export async function getProductById(productId: string): Promise<Product | null> {
+    try {
+        const productDocRef = doc(db, "products", productId);
+        const productDoc = await getDoc(productDocRef);
+
+        if (!productDoc.exists()) {
+            console.warn(`No product found with id: ${productId}`);
+            return null;
+        }
+        
+        return { id: productDoc.id, ...productDoc.data() } as Product;
+    } catch (error) {
+        console.error("Error getting product by ID: ", error);
+        throw new Error("Failed to fetch product data.");
     }
 }
 
@@ -67,5 +82,3 @@ export async function deleteProduct(productId: string): Promise<void> {
         throw new Error("Failed to delete product.");
     }
 }
-
-    
