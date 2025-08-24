@@ -163,7 +163,6 @@ export function ProductFormNew({ product }: ProductFormProps) {
     const [isSaving, setIsSaving] = useState(false);
     const [isGenerating, startGenerateTransition] = useTransition();
     
-    // Unified state for all images
     const [imageFiles, setImageFiles] = useState<File[]>([]);
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
@@ -225,7 +224,6 @@ export function ProductFormNew({ product }: ProductFormProps) {
                 attributes: product.attributes?.map(a => ({ name: a.name, options: a.options.join(', ') })) || [],
                 companyIds: product.companyIds || [],
             });
-            // Populate image previews from existing product data
             const existingImages = [];
             if (product.images?.mainImage) {
                 existingImages.push(product.images.mainImage);
@@ -243,50 +241,42 @@ export function ProductFormNew({ product }: ProductFormProps) {
         const files = e.target.files;
         if (files) {
             const newFiles = Array.from(files);
+            const newFilePreviews = newFiles.map(file => URL.createObjectURL(file));
+
             setImageFiles(prev => [...prev, ...newFiles]);
-            
-            const newPreviews = newFiles.map(file => URL.createObjectURL(file));
-            setImagePreviews(prev => [...prev, ...newPreviews]);
+            setImagePreviews(prev => [...prev, ...newFilePreviews]);
         }
     };
 
     const handleRemoveImage = (indexToRemove: number) => {
         const urlToRemove = imagePreviews[indexToRemove];
+        
         setImagePreviews(prev => prev.filter((_, index) => index !== indexToRemove));
         
-        // If the removed preview was a local blob URL, remove the corresponding file
-        if (urlToRemove.startsWith('blob:')) {
-            const fileIndex = imagePreviews.filter(p => p.startsWith('blob:')).indexOf(urlToRemove);
-            if (fileIndex > -1) {
-                setImageFiles(prev => prev.filter((_, index) => index !== fileIndex));
-            }
+        const fileIndexToRemove = imageFiles.findIndex(file => URL.createObjectURL(file) === urlToRemove);
+        if (fileIndexToRemove > -1) {
+            setImageFiles(prev => prev.filter((_, index) => index !== fileIndexToRemove));
         }
     };
 
     const handleSetMainImage = (indexToSet: number) => {
-        if (indexToSet === 0) return; // Already the main image
+        if (indexToSet === 0) return;
 
         const newImagePreviews = [...imagePreviews];
         const [itemToMove] = newImagePreviews.splice(indexToSet, 1);
         newImagePreviews.unshift(itemToMove);
         setImagePreviews(newImagePreviews);
 
-        const newImageFiles = [...imageFiles];
-        // This is tricky if files and previews are out of sync (e.g. on edit)
-        // We only need to reorder if the files have been staged for upload
-        if(imageFiles.length === imagePreviews.length) {
-          const [fileToMove] = newImageFiles.splice(indexToSet, 1);
-          newImageFiles.unshift(fileToMove);
-          setImageFiles(newImageFiles);
-        } else {
-            toast({
-                title: "Aviso",
-                description: "A reordenação de imagens já existentes será salva, mas não afeta os arquivos originais. Apenas novas imagens podem ter sua ordem de upload alterada.",
-                variant: "default"
-            });
+        const urlToMove = imagePreviews[indexToSet];
+        const correspondingFileIndex = imageFiles.findIndex(file => URL.createObjectURL(file) === urlToMove);
+
+        if (correspondingFileIndex > -1) {
+            const newImageFiles = [...imageFiles];
+            const [fileToMove] = newImageFiles.splice(correspondingFileIndex, 1);
+            newImageFiles.unshift(fileToMove);
+            setImageFiles(newImageFiles);
         }
     };
-
 
     const handleGenerateDescription = () => {
         const productName = form.watch('name');
@@ -325,34 +315,46 @@ export function ProductFormNew({ product }: ProductFormProps) {
         }
         setIsSaving(true);
         
-        if (!product) {
-            const productLimit = userData?.plan?.limits?.products ?? 0;
-            const allProducts = await Promise.all(values.companyIds.map(id => getProducts(id)));
-            const totalProducts = allProducts.flat().length;
-
-            if (totalProducts >= productLimit) {
-                toast({
-                    variant: "destructive",
-                    title: "Limite de Produtos Atingido",
-                    description: "Você atingiu o limite de produtos para o seu plano atual. Considere fazer um upgrade.",
-                });
-                setIsSaving(false);
-                router.push('/dashboard/products');
-                return;
-            }
-        }
-        
         try {
+            if (!product) {
+                const productLimit = userData?.plan?.limits?.products ?? 0;
+                const allProducts = await Promise.all(values.companyIds.map(id => getProducts(id)));
+                const totalProducts = allProducts.flat().length;
+
+                if (totalProducts >= productLimit) {
+                    toast({
+                        variant: "destructive",
+                        title: "Limite de Produtos Atingido",
+                        description: "Você atingiu o limite de produtos para o seu plano atual. Considere fazer um upgrade.",
+                    });
+                    setIsSaving(false);
+                    router.push('/dashboard/products');
+                    return;
+                }
+            }
+
+            const filesToUpload = imageFiles.filter(file => imagePreviews.includes(URL.createObjectURL(file)));
             const uploadedUrls = await Promise.all(
-                imageFiles.map(file => {
+                filesToUpload.map(file => {
                     const path = `products/${user.uid}/gallery/${values.name.replace(/\s+/g, '-')}-${file.name}-${Date.now()}`;
                     return uploadFile(file, path);
                 })
             );
-
-            // Filter out blob URLs from previews and combine with newly uploaded URLs
+            
             const existingUrls = imagePreviews.filter(p => !p.startsWith('blob:'));
-            const finalImageUrls = [...existingUrls, ...uploadedUrls];
+            
+            const finalImageUrls = [...existingUrls];
+            const blobUrlMap = new Map(imageFiles.map((file, i) => [URL.createObjectURL(file), uploadedUrls[i]]));
+            
+            imagePreviews.forEach(preview => {
+                if (preview.startsWith('blob:')) {
+                    const url = blobUrlMap.get(preview);
+                    if (url) {
+                        const originalIndex = imagePreviews.indexOf(preview);
+                        finalImageUrls.splice(originalIndex, 0, url);
+                    }
+                }
+            });
 
             const mainImageUrl = finalImageUrls[0] || "";
             const galleryImageUrls = finalImageUrls.slice(1);
@@ -379,8 +381,9 @@ export function ProductFormNew({ product }: ProductFormProps) {
             }
             router.push('/dashboard/products');
             router.refresh();
+
         } catch (error) {
-            console.error(error);
+            console.error("Error saving product:", error);
             toast({
                 variant: "destructive",
                 title: t('productForm.error.genericTitle'),
