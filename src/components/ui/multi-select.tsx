@@ -39,7 +39,7 @@ export function MultiSelect({ options, selected, onChange, placeholder = "Select
     if (input) {
       if (e.key === "Delete" || e.key === "Backspace") {
         if (input.value === "") {
-          const newSelected = [...selected];
+          const newSelected = [...(selected || [])];
           newSelected.pop();
           onChange(newSelected);
         }
@@ -50,7 +50,7 @@ export function MultiSelect({ options, selected, onChange, placeholder = "Select
     }
   }, [onChange, selected]);
 
-  const selectables = options.filter(option => !selected.includes(option.value));
+  const selectables = options.filter(option => !(selected || []).includes(option.value));
 
   return (
     <Command onKeyDown={handleKeyDown} className={cn("overflow-visible bg-transparent", className)}>
@@ -58,7 +58,7 @@ export function MultiSelect({ options, selected, onChange, placeholder = "Select
         className="group border border-input rounded-md px-3 py-2 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
       >
         <div className="flex gap-1 flex-wrap">
-          {selected.map((value) => {
+          {(selected || []).map((value) => {
             const option = options.find(o => o.value === value);
             return (
               <Badge key={value} variant="secondary">
@@ -108,7 +108,7 @@ export function MultiSelect({ options, selected, onChange, placeholder = "Select
                     }}
                     onSelect={() => {
                       setInputValue("");
-                      onChange([...selected, option.value]);
+                      onChange([...(selected || []), option.value]);
                     }}
                     className={"cursor-pointer flex items-center justify-between"}
                     disabled={disabled}
