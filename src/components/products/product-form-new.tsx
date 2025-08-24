@@ -215,7 +215,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
                     rule: p.rule || { type: 'none' }
                 })) || [{ label: 'Padrão', price: 0, rule: { type: 'none' } }],
                 manageStock: stockIsManaged,
-                availableStock: stockIsManaged ? product.availableStock : 0,
+                availableStock: stockIsManaged ? (product?.availableStock as number || 0) : 0,
                 status: product.status,
                 visibility: product.visibility,
                 tags: product.tags?.join(', ') || '',
@@ -309,10 +309,13 @@ export function ProductFormNew({ product }: ProductFormProps) {
     };
 
     async function onSubmit(values: ProductFormValues) {
+        console.log('onsubmit');
         if (!user || values.companyIds.length === 0) {
+            console.log('erro: ', user, values.companyIds);
             toast({ variant: "destructive", title: "Dados Incompletos", description: "Você precisa estar logado e selecionar pelo menos uma empresa." });
             return;
         }
+        console.log('saving');
         setIsSaving(true);
         
         try {
@@ -682,7 +685,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
                 
                 <CardFooter className="flex justify-end gap-2 mt-8 p-0">
                     <Button type="button" variant="outline" onClick={() => router.back()}>Cancelar</Button>
-                    <Button type="submit" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} disabled={isSaving}>
+                    <Button onClick={form.handleSubmit(onSubmit)} type="submit" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} disabled={isSaving}>
                         {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         {product ? "Salvar Alterações" : "Criar Produto"}
                     </Button>
