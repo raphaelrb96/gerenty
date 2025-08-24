@@ -14,7 +14,8 @@ import { useTranslation } from "@/context/i18n-context";
 import { useCompany } from "@/context/company-context";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { ProductsTable } from "@/components/products/products-table";
+import { ProductsGrid } from "@/components/products/products-grid";
+import { Input } from "@/components/ui/input";
 
 export default function ProductsPage() {
     const { t } = useTranslation();
@@ -24,14 +25,8 @@ export default function ProductsPage() {
     const router = useRouter();
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState("");
 
-    useEffect(() => {
-        if (user && activeCompany) {
-            fetchProducts();
-        } else {
-            setLoading(false);
-        }
-    }, [user, activeCompany]);
 
     const fetchProducts = async () => {
         if (!user || !activeCompany) return;
@@ -45,6 +40,16 @@ export default function ProductsPage() {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        if (user && activeCompany) {
+            fetchProducts();
+        } else {
+            setProducts([]);
+            setLoading(false);
+        }
+    }, [user, activeCompany]);
+
 
     const handleAddProduct = () => {
         const productLimit = userData?.plan?.limits?.products ?? 0;
@@ -65,6 +70,10 @@ export default function ProductsPage() {
 
     const isProductLimitReached = (userData?.plan?.limits?.products ?? 0) <= products.length;
 
+    const filteredProducts = products.filter(product =>
+        product.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     return (
         <div className="space-y-4">
             <PageHeader
@@ -77,7 +86,18 @@ export default function ProductsPage() {
                 }
             />
 
-            {products.length === 0 ? (
+            {products.length > 0 && (
+                 <div className="flex items-center">
+                    <Input
+                        placeholder="Filtrar por nome..."
+                        value={searchTerm}
+                        onChange={(event) => setSearchTerm(event.target.value)}
+                        className="max-w-sm"
+                    />
+                </div>
+            )}
+
+            {filteredProducts.length === 0 && !loading ? (
                 <EmptyState
                     icon={<Package className="h-16 w-16" />}
                     title={t('productsPage.empty.title')}
@@ -89,7 +109,7 @@ export default function ProductsPage() {
                     }
                 />
             ) : (
-                <ProductsTable data={products} onProductDeleted={fetchProducts} />
+                <ProductsGrid data={filteredProducts} onProductDeleted={fetchProducts} />
             )}
         </div>
     );
