@@ -300,16 +300,6 @@ export function ProductFormNew({ product }: ProductFormProps) {
             }
         });
     };
-    
-    const onInvalid: (errors: FieldErrors<ProductFormValues>) => void = (errors) => {
-        console.error("Validation Errors:", errors);
-        toast({
-            variant: "destructive",
-            title: "Erro de Validação",
-            description: "Por favor, corrija os campos marcados em vermelho e tente novamente.",
-        });
-    };
-
 
     async function onSubmit(values: ProductFormValues) {
         setIsSaving(true);
@@ -402,7 +392,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit, onInvalid)}>
+            <form onSubmit={form.handleSubmit(onSubmit)}>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Coluna Principal */}
                     <div className="lg:col-span-2 space-y-6">
