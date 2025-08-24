@@ -71,9 +71,10 @@ type ProductFormProps = {
     product?: Product | null;
 }
 
-const PriceRuleInput = ({ control, index }: { control: any, index: number }) => {
+const PriceRuleInput = ({ control, index, ruleType }: { control: any, index: number, ruleType: string }) => {
     const { t } = useTranslation();
-    const ruleType = useForm().watch(`pricing.${index}.rule.type`);
+    
+    if (index === 0) return null; // Não renderizar para o preço padrão
 
     switch (ruleType) {
         case 'minQuantity':
@@ -198,6 +199,8 @@ export function ProductFormNew({ product }: ProductFormProps) {
     });
 
     const watchManageStock = form.watch("manageStock");
+    const watchedPricing = form.watch("pricing");
+
 
     useEffect(() => {
         if (product) {
@@ -473,7 +476,18 @@ export function ProductFormNew({ product }: ProductFormProps) {
                                 {priceFields.map((field, index) => (
                                     <div key={field.id} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-2 border rounded-md">
                                         <FormField control={form.control} name={`pricing.${index}.label`} render={({ field }) => (
-                                            <FormItem className="col-span-1 sm:col-span-2 md:col-span-3"><FormLabel>Rótulo</FormLabel><FormControl><Input placeholder="Varejo" {...field} /></FormControl><FormMessage /></FormItem>
+                                            <FormItem className="col-span-1 sm:col-span-2 md:col-span-3">
+                                                <FormLabel>Rótulo</FormLabel>
+                                                <FormControl>
+                                                    <Input 
+                                                        placeholder="Varejo" 
+                                                        {...field} 
+                                                        disabled={index === 0} 
+                                                        value={index === 0 ? "Padrão" : field.value} 
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
                                         )}/>
                                         <FormField control={form.control} name={`pricing.${index}.price`} render={({ field }) => (
                                             <FormItem><FormLabel>Preço</FormLabel><FormControl><Input type="number" placeholder="99.90" {...field} /></FormControl><FormMessage /></FormItem>
@@ -484,7 +498,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>Regra</FormLabel>
-                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={index === 0}>
                                                         <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                                                         <SelectContent>
                                                             <SelectItem value="none">Padrão (Sem Regra)</SelectItem>
@@ -498,8 +512,11 @@ export function ProductFormNew({ product }: ProductFormProps) {
                                                 </FormItem>
                                             )}
                                         />
-                                        <PriceRuleInput control={form.control} index={index} />
-                                        <Button type="button" variant="destructive" size="icon" onClick={() => removePrice(index)} className="self-end"><Trash2 className="h-4 w-4" /></Button>
+                                        <PriceRuleInput control={form.control} index={index} ruleType={watchedPricing[index]?.rule?.type ?? 'none'} />
+                                        
+                                        {index > 0 && (
+                                            <Button type="button" variant="destructive" size="icon" onClick={() => removePrice(index)} className="self-end"><Trash2 className="h-4 w-4" /></Button>
+                                        )}
                                     </div>
                                 ))}
                                 <Button type="button" variant="outline" size="sm" onClick={() => appendPrice({ label: '', price: 0, rule: { type: 'none' } })}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Faixa de Preço</Button>
@@ -661,5 +678,3 @@ export function ProductFormNew({ product }: ProductFormProps) {
         </Form>
     );
 }
-
-    
