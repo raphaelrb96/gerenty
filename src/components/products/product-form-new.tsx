@@ -325,12 +325,12 @@ export function ProductFormNew({ product }: ProductFormProps) {
             }
             
             const uploadedUrls = await Promise.all(
-                images.map(async (image) => {
+                images.map(image => {
                     if (image.file) { // Only upload new files
                         const path = `products/${user.uid}/gallery/${values.name.replace(/\s+/g, '-')}-${image.file.name}-${Date.now()}`;
                         return uploadFile(image.file, path);
                     }
-                    return image.url; // Keep existing URLs
+                    return Promise.resolve(image.url); // Keep existing URLs
                 })
             );
             
