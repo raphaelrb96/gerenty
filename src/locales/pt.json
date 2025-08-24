@@ -240,10 +240,20 @@
         "newProduct": "Adicionar Novo Produto",
         "stock": "Estoque",
         "edit": "Editar",
+        "delete": "Deletar",
+        "actionsLabel": "Ações",
+        "stockLabel": "Estoque",
         "empty": {
             "title": "Nenhum produto ainda",
             "description": "Seus produtos aparecerão aqui. Comece adicionando seu primeiro produto.",
             "action": "Adicionar Primeiro Produto"
+        },
+        "deleteConfirm": {
+            "message": "Tem certeza de que deseja excluir este produto? Esta ação não pode ser desfeita.",
+            "successTitle": "Produto Excluído",
+            "successDescription": "O produto foi removido com sucesso.",
+            "errorTitle": "Erro ao Excluir",
+            "errorDescription": "Não foi possível remover o produto. Tente novamente."
         }
     },
     "ordersPage": {
@@ -279,6 +289,11 @@
         },
         "updateSuccess": { "title": "Produto '{productName}' Atualizado!" },
         "createSuccess": { "title": "Produto '{productName}' Criado!" }
+    },
+    "productStatus": {
+        "available": "Disponível",
+        "out-of-stock": "Esgotado",
+        "discontinued": "Descontinuado"
     },
     "orderStatus": {
         "pending": "Pendente",

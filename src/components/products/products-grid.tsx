@@ -21,6 +21,7 @@ import { useCurrency } from "@/context/currency-context"
 import { useToast } from "@/hooks/use-toast"
 import { deleteProduct } from "@/services/product-service"
 import type { Product } from "@/lib/types"
+import { useTranslation } from "@/context/i18n-context"
 
 type ProductsGridProps = {
   data: Product[];
@@ -31,24 +32,25 @@ export function ProductsGrid({ data, onProductDeleted }: ProductsGridProps) {
     const { formatCurrency } = useCurrency();
     const router = useRouter();
     const { toast } = useToast();
+    const { t } = useTranslation();
 
     const handleDeleteProduct = async (productId: string) => {
-        if (!confirm("Tem certeza que deseja deletar este produto? Esta ação não pode ser desfeita.")) {
+        if (!confirm(t('productsPage.deleteConfirm.message'))) {
             return;
         }
 
         try {
             await deleteProduct(productId);
             toast({
-                title: "Produto Deletado",
-                description: "O produto foi removido com sucesso.",
+                title: t('productsPage.deleteConfirm.successTitle'),
+                description: t('productsPage.deleteConfirm.successDescription'),
             });
             onProductDeleted();
         } catch (error) {
             toast({
                 variant: "destructive",
-                title: "Erro ao Deletar",
-                description: "Não foi possível remover o produto. Tente novamente.",
+                title: t('productsPage.deleteConfirm.errorTitle'),
+                description: t('productsPage.deleteConfirm.errorDescription'),
             });
         }
     };
@@ -85,13 +87,13 @@ export function ProductsGrid({ data, onProductDeleted }: ProductsGridProps) {
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => router.push(`/dashboard/products/${product.id}/edit`)}>
-                        Editar
+                        <DropdownMenuLabel>{t('productsPage.actionsLabel')}</DropdownMenuLabel>
+                        <DropdownMenuItem onSelect={() => router.push(`/dashboard/products/${product.id}/edit`)}>
+                        {t('productsPage.edit')}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleDeleteProduct(product.id)} className="text-red-600">
-                        Deletar
+                        <DropdownMenuItem onSelect={() => handleDeleteProduct(product.id)} className="text-red-600">
+                        {t('productsPage.delete')}
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
@@ -100,11 +102,11 @@ export function ProductsGrid({ data, onProductDeleted }: ProductsGridProps) {
                 <CardTitle className="text-base font-semibold truncate" title={product.name}>{product.name}</CardTitle>
                 <div className="flex items-center justify-between mt-2">
                     <p className="text-lg font-bold text-primary">{formatCurrency(product.pricing?.[0]?.price ?? 0)}</p>
-                    <Badge variant="outline" className={getStatusVariant(product.status)}>{product.status}</Badge>
+                    <Badge variant="outline" className={getStatusVariant(product.status)}>{t(`productStatus.${product.status}`)}</Badge>
                 </div>
             </CardContent>
             <CardFooter className="p-3 pt-0 text-xs text-muted-foreground">
-               Estoque: {typeof product.availableStock === 'number' ? product.availableStock : 'Ilimitado'}
+               {t('productsPage.stockLabel')}: {typeof product.availableStock === 'number' ? product.availableStock : 'Ilimitado'}
             </CardFooter>
         </Card>
       ))}
