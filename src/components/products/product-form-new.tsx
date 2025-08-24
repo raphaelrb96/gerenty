@@ -210,9 +210,9 @@ export function ProductFormNew({ product }: ProductFormProps) {
             const stockIsManaged = typeof product.availableStock === 'number';
             form.reset({
                 name: product.name,
-                slug: product.slug,
-                description: product.description || '',
-                sku: product.sku || '',
+                slug: product.slug ?? '',
+                description: product.description ?? '',
+                sku: product.sku ?? '',
                 pricing: product.pricing?.map(p => ({ 
                     label: p.label, 
                     price: p.price, 
@@ -222,11 +222,11 @@ export function ProductFormNew({ product }: ProductFormProps) {
                 availableStock: stockIsManaged ? (product?.availableStock as number || 0) : 0,
                 status: product.status,
                 visibility: product.visibility,
-                tags: product.tags?.join(', ') || '',
-                categoryIds: product.categoryIds || [],
-                collectionIds: product.collectionIds || [],
-                attributes: product.attributes?.map(a => ({ name: a.name, options: a.options.join(', ') })) || [],
-                companyIds: product.companyIds || [],
+                tags: product.tags?.join(', ') ?? '',
+                categoryIds: product.categoryIds ?? [],
+                collectionIds: product.collectionIds ?? [],
+                attributes: product.attributes?.map(a => ({ name: a.name, options: a.options.join(', ') })) ?? [],
+                companyIds: product.companyIds ?? [],
             });
             const existingImages: ImageState[] = [];
             if (product.images?.mainImage) {
@@ -669,3 +669,5 @@ export function ProductFormNew({ product }: ProductFormProps) {
         </Form>
     );
 }
+
+    
