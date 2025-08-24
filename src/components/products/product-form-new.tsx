@@ -251,8 +251,16 @@ export function ProductFormNew({ product }: ProductFormProps) {
     };
 
     const handleRemoveImage = (indexToRemove: number) => {
+        const urlToRemove = imagePreviews[indexToRemove];
         setImagePreviews(prev => prev.filter((_, index) => index !== indexToRemove));
-        setImageFiles(prev => prev.filter((_, index) => index !== indexToRemove));
+        
+        // If the removed preview was a local blob URL, remove the corresponding file
+        if (urlToRemove.startsWith('blob:')) {
+            const fileIndex = imagePreviews.filter(p => p.startsWith('blob:')).indexOf(urlToRemove);
+            if (fileIndex > -1) {
+                setImageFiles(prev => prev.filter((_, index) => index !== fileIndex));
+            }
+        }
     };
 
     const handleSetMainImage = (indexToSet: number) => {
@@ -334,38 +342,40 @@ export function ProductFormNew({ product }: ProductFormProps) {
             }
         }
         
-        // This logic needs to be smarter. It needs to differentiate between existing URLs and new files.
-        const uploadedUrls = await Promise.all(imageFiles.map(file => {
-            const path = `products/${user.uid}/gallery/${values.name.replace(/\s+/g, '-')}-${file.name}-${Date.now()}`;
-            return uploadFile(file, path);
-        }));
-
-        // Combine existing urls (that were not removed) with new urls
-        const finalImageUrls = imagePreviews.filter(p => p.startsWith('http')).concat(uploadedUrls);
-
-        const mainImageUrl = finalImageUrls[0] || "";
-        const galleryImageUrls = finalImageUrls.slice(1);
-        
-        const productData = {
-            ...values,
-            availableStock: values.manageStock ? values.availableStock : true, // Set to true for infinite stock
-            slug: values.slug || values.name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''),
-            isActive: true,
-            tags: values.tags?.split(',').map(tag => tag.trim()).filter(Boolean) || [],
-            categoryIds: values.categoryIds || [],
-            collectionIds: values.collectionIds || [],
-            attributes: values.attributes.map(a => ({...a, options: a.options.split(',').map(o => o.trim())})),
-            isVerified: false,
-            images: { mainImage: mainImageUrl, gallery: galleryImageUrls },
-        };
-        
         try {
+            const uploadedUrls = await Promise.all(
+                imageFiles.map(file => {
+                    const path = `products/${user.uid}/gallery/${values.name.replace(/\s+/g, '-')}-${file.name}-${Date.now()}`;
+                    return uploadFile(file, path);
+                })
+            );
+
+            // Filter out blob URLs from previews and combine with newly uploaded URLs
+            const existingUrls = imagePreviews.filter(p => !p.startsWith('blob:'));
+            const finalImageUrls = [...existingUrls, ...uploadedUrls];
+
+            const mainImageUrl = finalImageUrls[0] || "";
+            const galleryImageUrls = finalImageUrls.slice(1);
+            
+            const productData = {
+                ...values,
+                availableStock: values.manageStock ? values.availableStock : true,
+                slug: values.slug || values.name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''),
+                isActive: true,
+                tags: values.tags?.split(',').map(tag => tag.trim()).filter(Boolean) || [],
+                categoryIds: values.categoryIds || [],
+                collectionIds: values.collectionIds || [],
+                attributes: values.attributes.map(a => ({...a, options: a.options.split(',').map(o => o.trim())})),
+                isVerified: false,
+                images: { mainImage: mainImageUrl, gallery: galleryImageUrls },
+            };
+            
             if (product) {
                 await updateProduct(product.id, productData);
-                toast({ title: t('productForm.updateSuccess.title') });
+                toast({ title: t('productForm.updateSuccess.title', { productName: values.name }) });
             } else {
                 await addProduct(productData as Omit<Product, 'id'|'createdAt'|'updatedAt'>);
-                toast({ title: t('productForm.createSuccess.title') });
+                toast({ title: t('productForm.createSuccess.title', { productName: values.name }) });
             }
             router.push('/dashboard/products');
             router.refresh();

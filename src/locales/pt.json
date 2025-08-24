@@ -277,8 +277,8 @@
             "genericTitle": "Ocorreu um Erro",
             "genericDescription": "Não foi possível salvar o produto. Por favor, tente novamente."
         },
-        "updateSuccess": { "title": "Produto Atualizado", "description": "foi salvo com sucesso." },
-        "createSuccess": { "title": "Produto Criado", "description": "foi salvo com sucesso." }
+        "updateSuccess": { "title": "Produto '{productName}' Atualizado!" },
+        "createSuccess": { "title": "Produto '{productName}' Criado!" }
     },
     "orderStatus": {
         "pending": "Pendente",
