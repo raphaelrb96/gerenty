@@ -253,29 +253,23 @@ export function ProductFormNew({ product }: ProductFormProps) {
         
         setImagePreviews(prev => prev.filter((_, index) => index !== indexToRemove));
         
+        // Find if the removed URL corresponds to a new file upload
         const fileIndexToRemove = imageFiles.findIndex(file => URL.createObjectURL(file) === urlToRemove);
         if (fileIndexToRemove > -1) {
             setImageFiles(prev => prev.filter((_, index) => index !== fileIndexToRemove));
         }
     };
 
+
     const handleSetMainImage = (indexToSet: number) => {
         if (indexToSet === 0) return;
 
-        const newImagePreviews = [...imagePreviews];
-        const [itemToMove] = newImagePreviews.splice(indexToSet, 1);
-        newImagePreviews.unshift(itemToMove);
-        setImagePreviews(newImagePreviews);
-
-        const urlToMove = imagePreviews[indexToSet];
-        const correspondingFileIndex = imageFiles.findIndex(file => URL.createObjectURL(file) === urlToMove);
-
-        if (correspondingFileIndex > -1) {
-            const newImageFiles = [...imageFiles];
-            const [fileToMove] = newImageFiles.splice(correspondingFileIndex, 1);
-            newImageFiles.unshift(fileToMove);
-            setImageFiles(newImageFiles);
-        }
+        setImagePreviews(prevPreviews => {
+            const newImagePreviews = [...prevPreviews];
+            const [itemToMove] = newImagePreviews.splice(indexToSet, 1);
+            newImagePreviews.unshift(itemToMove);
+            return newImagePreviews;
+        });
     };
 
     const handleGenerateDescription = () => {
@@ -309,14 +303,12 @@ export function ProductFormNew({ product }: ProductFormProps) {
     };
 
     async function onSubmit(values: ProductFormValues) {
-        console.log('onsubmit');
+        setIsSaving(true);
         if (!user || values.companyIds.length === 0) {
-            console.log('erro: ', user, values.companyIds);
-            toast({ variant: "destructive", title: "Dados Incompletos", description: "Você precisa estar logado e selecionar pelo menos uma empresa." });
+            toast({ variant: "destructive", title: t('productForm.error.noUser'), description: "Você precisa estar logado e selecionar pelo menos uma empresa." });
+            setIsSaving(false);
             return;
         }
-        console.log('saving');
-        setIsSaving(true);
         
         try {
             if (!product) {
@@ -335,30 +327,34 @@ export function ProductFormNew({ product }: ProductFormProps) {
                     return;
                 }
             }
+            
+            // Step 1: Separate existing URLs and new files
+            const existingUrls = imagePreviews.filter(p => !p.startsWith('blob:'));
+            const newFilesToUpload = imageFiles.filter(file => imagePreviews.includes(URL.createObjectURL(file)));
 
-            const filesToUpload = imageFiles.filter(file => imagePreviews.includes(URL.createObjectURL(file)));
+            // Step 2: Upload new files and get their URLs
             const uploadedUrls = await Promise.all(
-                filesToUpload.map(file => {
+                newFilesToUpload.map(file => {
                     const path = `products/${user.uid}/gallery/${values.name.replace(/\s+/g, '-')}-${file.name}-${Date.now()}`;
                     return uploadFile(file, path);
                 })
             );
-            
-            const existingUrls = imagePreviews.filter(p => !p.startsWith('blob:'));
-            
-            const finalImageUrls = [...existingUrls];
-            const blobUrlMap = new Map(imageFiles.map((file, i) => [URL.createObjectURL(file), uploadedUrls[i]]));
-            
-            imagePreviews.forEach(preview => {
-                if (preview.startsWith('blob:')) {
-                    const url = blobUrlMap.get(preview);
-                    if (url) {
-                        const originalIndex = imagePreviews.indexOf(preview);
-                        finalImageUrls.splice(originalIndex, 0, url);
-                    }
-                }
+
+            // Create a map from blob URL to final storage URL for easy lookup
+            const blobUrlToStorageUrlMap = new Map();
+            newFilesToUpload.forEach((file, index) => {
+                blobUrlToStorageUrlMap.set(URL.createObjectURL(file), uploadedUrls[index]);
             });
 
+            // Step 3: Reconstruct the final image array in the correct order
+            const finalImageUrls = imagePreviews.map(previewUrl => {
+                if (previewUrl.startsWith('blob:')) {
+                    return blobUrlToStorageUrlMap.get(previewUrl);
+                }
+                return previewUrl;
+            }).filter(Boolean); // Filter out any potential undefineds
+
+            
             const mainImageUrl = finalImageUrls[0] || "";
             const galleryImageUrls = finalImageUrls.slice(1);
             
@@ -685,7 +681,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
                 
                 <CardFooter className="flex justify-end gap-2 mt-8 p-0">
                     <Button type="button" variant="outline" onClick={() => router.back()}>Cancelar</Button>
-                    <Button onClick={form.handleSubmit(onSubmit)} type="submit" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} disabled={isSaving}>
+                    <Button type="submit" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} disabled={isSaving}>
                         {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         {product ? "Salvar Alterações" : "Criar Produto"}
                     </Button>
