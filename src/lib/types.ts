@@ -156,51 +156,15 @@ export type Product = {
 };
 
 /**
- * Define uma faixa de preço baseada em quantidade mínima de compra.
- * Pode ser usada para aplicar preços diferentes no varejo, atacado, ou promoções específicas.
+ * Define uma faixa de preço com regras condicionais.
  */
 export type ProductPriceTier = {
-  /**
-   * Rótulo que identifica essa faixa de preço.
-   * Exemplo: "Varejo", "Atacado", "Promoção", "Atacarejo", "Black Friday", etc.
-   */
-  label: string;
-
-  /**
-   * Preço que será aplicado quando a regra for satisfeita.
-   */
-  price: number;
-
-  // Preço com desconto (opcional)
-  discountedPrice?: number;
-
-  //Moeda do preço
-  currency: 'BRL' | 'USD' | 'EUR' | 'GBP';
-
-  /**
-   * Quantidade mínima que deve ser atingida para ativar esse preço.
-   * A interpretação desta quantidade depende da regra `quantityRule`.
-   */
-  minQuantity: number;
-
-  /**
-   * Regra para validar a `minQuantity`:
-   * - `perItem`: aplica o preço se o cliente comprar a quantidade mínima deste produto individualmente.
-   * - `cartTotal`: aplica o preço se o total de produtos no carrinho atingir a quantidade mínima.
-   */
-  quantityRule: 'perItem' | 'cartTotal';
-
-  /**
-   * (Opcional) Data de início da validade desta faixa de preço.
-   * Útil para promoções com tempo limitado.
-   */
-  startDate?: string | Date | FieldValue;
-
-  /**
-   * (Opcional) Data final da validade desta faixa de preço.
-   */
-  endDate?: string | Date | FieldValue;
-
+  label: string; // Ex: "Varejo", "Atacado"
+  price: number; // Preço a ser aplicado
+  rule?: {
+    type: 'none' | 'minQuantity' | 'minCartValue' | 'paymentMethod' | 'purchaseType';
+    value?: any; // Pode ser número (para quantidade/valor) ou string (para método)
+  };
 };
 
 // variantes
@@ -564,5 +528,7 @@ export type Company = {
 
 
 
+
+    
 
     
