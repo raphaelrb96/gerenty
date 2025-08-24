@@ -305,8 +305,15 @@ export function ProductFormNew({ product }: ProductFormProps) {
             setIsSaving(false);
             return;
         }
+
+        if (images.length === 0) {
+            toast({ variant: "destructive", title: "Imagem Necessária", description: "Por favor, adicione pelo menos uma imagem para o produto." });
+            setIsSaving(false);
+            return;
+        }
         
         try {
+            // Check product limit only for new products
             if (!product) {
                 const productLimit = userData?.plan?.limits?.products ?? 0;
                 const allProducts = await Promise.all(values.companyIds.map(id => getProducts(id)));
@@ -324,15 +331,15 @@ export function ProductFormNew({ product }: ProductFormProps) {
                 }
             }
             
-            const uploadedUrls = await Promise.all(
-                images.map(image => {
-                    if (image.file) { // Only upload new files
-                        const path = `products/${user.uid}/gallery/${values.name.replace(/\s+/g, '-')}-${image.file.name}-${Date.now()}`;
-                        return uploadFile(image.file, path);
-                    }
-                    return Promise.resolve(image.url); // Keep existing URLs
-                })
-            );
+            const uploadPromises = images.map(imageState => {
+                if (imageState.file) { // It's a new image that needs to be uploaded
+                    const path = `products/${user.uid}/${values.name.replace(/\s+/g, '-')}-${Date.now()}`;
+                    return uploadFile(imageState.file, path);
+                }
+                return Promise.resolve(imageState.url); // It's an existing image, just return its URL
+            });
+            
+            const uploadedUrls = await Promise.all(uploadPromises);
             
             const mainImageUrl = uploadedUrls[0] || "";
             const galleryImageUrls = uploadedUrls.slice(1);
@@ -660,7 +667,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
                 
                 <CardFooter className="flex justify-end gap-2 mt-8 p-0">
                     <Button type="button" variant="outline" onClick={() => router.back()}>Cancelar</Button>
-                    <Button type="submit" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} disabled={isSaving}>
+                    <Button type="submit" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} disabled={isSaving || images.length === 0}>
                         {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         {product ? "Salvar Alterações" : "Criar Produto"}
                     </Button>
