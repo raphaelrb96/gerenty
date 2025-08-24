@@ -71,6 +71,11 @@ type ProductFormProps = {
     product?: Product | null;
 }
 
+type ImageState = {
+    file: File | null;
+    url: string;
+}
+
 const PriceRuleInput = ({ control, index, ruleType }: { control: any, index: number, ruleType: string }) => {
     const { t } = useTranslation();
     
@@ -163,8 +168,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
     const [isSaving, setIsSaving] = useState(false);
     const [isGenerating, startGenerateTransition] = useTransition();
     
-    const [imageFiles, setImageFiles] = useState<File[]>([]);
-    const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+    const [images, setImages] = useState<ImageState[]>([]);
 
 
     const form = useForm<ProductFormValues>({
@@ -224,14 +228,14 @@ export function ProductFormNew({ product }: ProductFormProps) {
                 attributes: product.attributes?.map(a => ({ name: a.name, options: a.options.join(', ') })) || [],
                 companyIds: product.companyIds || [],
             });
-            const existingImages = [];
+            const existingImages: ImageState[] = [];
             if (product.images?.mainImage) {
-                existingImages.push(product.images.mainImage);
+                existingImages.push({ file: null, url: product.images.mainImage });
             }
             if (product.images?.gallery) {
-                existingImages.push(...product.images.gallery);
+                existingImages.push(...product.images.gallery.map(url => ({ file: null, url })));
             }
-            setImagePreviews(existingImages);
+            setImages(existingImages);
 
         }
     }, [product, form]);
@@ -240,34 +244,27 @@ export function ProductFormNew({ product }: ProductFormProps) {
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (files) {
-            const newFiles = Array.from(files);
-            const newFilePreviews = newFiles.map(file => URL.createObjectURL(file));
-
-            setImageFiles(prev => [...prev, ...newFiles]);
-            setImagePreviews(prev => [...prev, ...newFilePreviews]);
+            const newImageStates: ImageState[] = Array.from(files).map(file => ({
+                file: file,
+                url: URL.createObjectURL(file)
+            }));
+            setImages(prev => [...prev, ...newImageStates]);
         }
     };
 
     const handleRemoveImage = (indexToRemove: number) => {
-        const urlToRemove = imagePreviews[indexToRemove];
-        
-        setImagePreviews(prev => prev.filter((_, index) => index !== indexToRemove));
-        
-        const fileIndexToRemove = imageFiles.findIndex(file => URL.createObjectURL(file) === urlToRemove);
-        if (fileIndexToRemove > -1) {
-            setImageFiles(prev => prev.filter((_, index) => index !== fileIndexToRemove));
-        }
+        setImages(prev => prev.filter((_, index) => index !== indexToRemove));
     };
 
 
     const handleSetMainImage = (indexToSet: number) => {
         if (indexToSet === 0) return;
 
-        setImagePreviews(prevPreviews => {
-            const newImagePreviews = [...prevPreviews];
-            const [itemToMove] = newImagePreviews.splice(indexToSet, 1);
-            newImagePreviews.unshift(itemToMove);
-            return newImagePreviews;
+        setImages(prevImages => {
+            const newImages = [...prevImages];
+            const [itemToMove] = newImages.splice(indexToSet, 1);
+            newImages.unshift(itemToMove);
+            return newImages;
         });
     };
 
@@ -327,31 +324,18 @@ export function ProductFormNew({ product }: ProductFormProps) {
                 }
             }
             
-            const existingUrls = imagePreviews.filter(p => p && !p.startsWith('blob:'));
-            const newFilesToUpload = imageFiles.filter(file => imagePreviews.includes(URL.createObjectURL(file)));
-
             const uploadedUrls = await Promise.all(
-                newFilesToUpload.map(file => {
-                    const path = `products/${user.uid}/gallery/${values.name.replace(/\s+/g, '-')}-${file.name}-${Date.now()}`;
-                    return uploadFile(file, path);
+                images.map(async (image) => {
+                    if (image.file) { // Only upload new files
+                        const path = `products/${user.uid}/gallery/${values.name.replace(/\s+/g, '-')}-${image.file.name}-${Date.now()}`;
+                        return uploadFile(image.file, path);
+                    }
+                    return image.url; // Keep existing URLs
                 })
             );
-
-            const blobUrlToStorageUrlMap = new Map();
-            newFilesToUpload.forEach((file, index) => {
-                blobUrlToStorageUrlMap.set(URL.createObjectURL(file), uploadedUrls[index]);
-            });
-
-            const finalImageUrls = imagePreviews.map(previewUrl => {
-                if (previewUrl?.startsWith('blob:')) {
-                    return blobUrlToStorageUrlMap.get(previewUrl);
-                }
-                return previewUrl;
-            }).filter(Boolean);
-
             
-            const mainImageUrl = finalImageUrls[0] || "";
-            const galleryImageUrls = finalImageUrls.slice(1);
+            const mainImageUrl = uploadedUrls[0] || "";
+            const galleryImageUrls = uploadedUrls.slice(1);
             
             const productData = {
                 ...values,
@@ -426,10 +410,10 @@ export function ProductFormNew({ product }: ProductFormProps) {
                                 <FormItem>
                                     <FormLabel>Galeria de Imagens</FormLabel>
                                     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
-                                        {imagePreviews.map((src, index) => (
-                                            <div key={src} className="relative group aspect-square">
+                                        {images.map((image, index) => (
+                                            <div key={image.url} className="relative group aspect-square">
                                                 <Image 
-                                                    src={src} 
+                                                    src={image.url} 
                                                     alt={`Preview ${index + 1}`} 
                                                     layout="fill" 
                                                     className={cn(
