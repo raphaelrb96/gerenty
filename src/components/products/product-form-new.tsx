@@ -2,7 +2,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, FieldErrors } from "react-hook-form";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from 'react';
@@ -253,7 +253,6 @@ export function ProductFormNew({ product }: ProductFormProps) {
         
         setImagePreviews(prev => prev.filter((_, index) => index !== indexToRemove));
         
-        // Find if the removed URL corresponds to a new file upload
         const fileIndexToRemove = imageFiles.findIndex(file => URL.createObjectURL(file) === urlToRemove);
         if (fileIndexToRemove > -1) {
             setImageFiles(prev => prev.filter((_, index) => index !== fileIndexToRemove));
@@ -301,6 +300,16 @@ export function ProductFormNew({ product }: ProductFormProps) {
             }
         });
     };
+    
+    const onInvalid: (errors: FieldErrors<ProductFormValues>) => void = (errors) => {
+        console.error("Validation Errors:", errors);
+        toast({
+            variant: "destructive",
+            title: "Erro de Validação",
+            description: "Por favor, corrija os campos marcados em vermelho e tente novamente.",
+        });
+    };
+
 
     async function onSubmit(values: ProductFormValues) {
         setIsSaving(true);
@@ -328,11 +337,9 @@ export function ProductFormNew({ product }: ProductFormProps) {
                 }
             }
             
-            // Step 1: Separate existing URLs and new files
-            const existingUrls = imagePreviews.filter(p => !p.startsWith('blob:'));
+            const existingUrls = imagePreviews.filter(p => p && !p.startsWith('blob:'));
             const newFilesToUpload = imageFiles.filter(file => imagePreviews.includes(URL.createObjectURL(file)));
 
-            // Step 2: Upload new files and get their URLs
             const uploadedUrls = await Promise.all(
                 newFilesToUpload.map(file => {
                     const path = `products/${user.uid}/gallery/${values.name.replace(/\s+/g, '-')}-${file.name}-${Date.now()}`;
@@ -340,19 +347,17 @@ export function ProductFormNew({ product }: ProductFormProps) {
                 })
             );
 
-            // Create a map from blob URL to final storage URL for easy lookup
             const blobUrlToStorageUrlMap = new Map();
             newFilesToUpload.forEach((file, index) => {
                 blobUrlToStorageUrlMap.set(URL.createObjectURL(file), uploadedUrls[index]);
             });
 
-            // Step 3: Reconstruct the final image array in the correct order
             const finalImageUrls = imagePreviews.map(previewUrl => {
-                if (previewUrl.startsWith('blob:')) {
+                if (previewUrl?.startsWith('blob:')) {
                     return blobUrlToStorageUrlMap.get(previewUrl);
                 }
                 return previewUrl;
-            }).filter(Boolean); // Filter out any potential undefineds
+            }).filter(Boolean);
 
             
             const mainImageUrl = finalImageUrls[0] || "";
@@ -397,7 +402,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)}>
+            <form onSubmit={form.handleSubmit(onSubmit, onInvalid)}>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Coluna Principal */}
                     <div className="lg:col-span-2 space-y-6">
