@@ -2,7 +2,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useFieldArray, FieldErrors } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from 'react';
@@ -12,6 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import { addProduct, updateProduct, getProducts } from "@/services/product-service";
 import type { Product } from "@/lib/types";
 import { generateProductDescription } from "@/ai/flows/generate-product-description";
+import { uploadFile } from "@/services/storage-service";
+import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -25,13 +27,15 @@ import { useTranslation } from "@/context/i18n-context";
 import { Label } from "../ui/label";
 import Image from "next/image";
 import { MultiSelect } from "../ui/multi-select";
-import { uploadFile } from "@/services/storage-service";
-import { cn } from "@/lib/utils";
 import { Switch } from "../ui/switch";
 import { CategorySelector } from "./category-selector";
 import { CollectionSelector } from "./collection-selector";
 
-// Esquema de validação com Zod
+const priceRuleSchema = z.object({
+  type: z.enum(["none", "minQuantity", "minCartValue", "paymentMethod", "purchaseType"]),
+  value: z.any().optional(),
+});
+
 const formSchema = z.object({
   name: z.string().min(3, "O nome do produto deve ter pelo menos 3 caracteres."),
   slug: z.string().optional(),
@@ -40,15 +44,12 @@ const formSchema = z.object({
   
   pricing: z.array(z.object({
     label: z.string().min(1, "O rótulo é obrigatório"),
-    price: z.preprocess((a) => parseFloat(z.string().parse(a || "0").replace(",", ".")), z.number().min(0)),
-    rule: z.object({
-        type: z.enum(["none", "minQuantity", "minCartValue", "paymentMethod", "purchaseType"]),
-        value: z.any().optional(),
-    }).optional(),
+    price: z.preprocess((a) => parseFloat(String(a || "0").replace(",", ".")), z.number().min(0)),
+    rule: priceRuleSchema.optional(),
   })).min(1, "Adicione pelo menos um preço."),
 
   manageStock: z.boolean().default(true),
-  availableStock: z.preprocess((a) => parseInt(z.string().parse(a || "0"), 10), z.number().int().nonnegative()),
+  availableStock: z.preprocess((a) => parseInt(String(a || "0"), 10), z.number().int().nonnegative()),
 
   status: z.enum(['available', 'out-of-stock', 'discontinued']),
   visibility: z.enum(['public', 'private']),
@@ -74,89 +75,26 @@ type ProductFormProps = {
 type ImageState = {
     file: File | null;
     url: string;
-}
+};
 
 const PriceRuleInput = ({ control, index, ruleType }: { control: any, index: number, ruleType: string }) => {
     const { t } = useTranslation();
     
-    if (index === 0) return null; // Não renderizar para o preço padrão
+    if (index === 0) return null;
 
     switch (ruleType) {
         case 'minQuantity':
-            return (
-                <FormField
-                    control={control}
-                    name={`pricing.${index}.rule.value`}
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Quantidade Mínima</FormLabel>
-                            <FormControl><Input type="number" placeholder="10" {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            );
+            return <FormField control={control} name={`pricing.${index}.rule.value`} render={({ field }) => (<FormItem><FormLabel>Quantidade Mínima</FormLabel><FormControl><Input type="number" placeholder="10" {...field} /></FormControl><FormMessage /></FormItem>)} />;
         case 'minCartValue':
-            return (
-                <FormField
-                    control={control}
-                    name={`pricing.${index}.rule.value`}
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Valor Mínimo (R$)</FormLabel>
-                            <FormControl><Input type="number" placeholder="100.00" {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            );
+            return <FormField control={control} name={`pricing.${index}.rule.value`} render={({ field }) => (<FormItem><FormLabel>Valor Mínimo (R$)</FormLabel><FormControl><Input type="number" placeholder="100.00" {...field} /></FormControl><FormMessage /></FormItem>)} />;
         case 'paymentMethod':
-            return (
-                <FormField
-                    control={control}
-                    name={`pricing.${index}.rule.value`}
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Forma de Pagamento</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                                <SelectContent>
-                                    <SelectItem value="pix">{t('paymentMethods.pix')}</SelectItem>
-                                    <SelectItem value="dinheiro">{t('paymentMethods.cash')}</SelectItem>
-                                    <SelectItem value="credito">{t('paymentMethods.credit')}</SelectItem>
-                                    <SelectItem value="debito">{t('paymentMethods.debit')}</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            );
+            return <FormField control={control} name={`pricing.${index}.rule.value`} render={({ field }) => (<FormItem><FormLabel>Forma de Pagamento</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="pix">{t('paymentMethods.pix')}</SelectItem><SelectItem value="dinheiro">{t('paymentMethods.cash')}</SelectItem><SelectItem value="credito">{t('paymentMethods.credit')}</SelectItem><SelectItem value="debito">{t('paymentMethods.debit')}</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />;
         case 'purchaseType':
-            return (
-                <FormField
-                    control={control}
-                    name={`pricing.${index}.rule.value`}
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Tipo de Compra</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                                <SelectContent>
-                                    <SelectItem value="presencial">Presencial</SelectItem>
-                                    <SelectItem value="delivery">Delivery</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            );
+            return <FormField control={control} name={`pricing.${index}.rule.value`} render={({ field }) => (<FormItem><FormLabel>Tipo de Compra</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="presencial">Presencial</SelectItem><SelectItem value="delivery">Delivery</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />;
         default:
             return null;
     }
-}
-
+};
 
 export function ProductFormNew({ product }: ProductFormProps) {
     const router = useRouter();
@@ -165,11 +103,9 @@ export function ProductFormNew({ product }: ProductFormProps) {
     const { companies, activeCompany, loading: loadingCompanies } = useCompany();
     const { toast } = useToast();
 
-    const [isSaving, setIsSaving] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
     const [isGenerating, startGenerateTransition] = useTransition();
-    
     const [images, setImages] = useState<ImageState[]>([]);
-
 
     const form = useForm<ProductFormValues>({
         resolver: zodResolver(formSchema),
@@ -190,44 +126,39 @@ export function ProductFormNew({ product }: ProductFormProps) {
             companyIds: activeCompany ? [activeCompany.id] : [],
         },
     });
-    
-    const { fields: priceFields, append: appendPrice, remove: removePrice } = useFieldArray({
-        control: form.control,
-        name: "pricing",
-    });
 
-    const { fields: attributeFields, append: appendAttribute, remove: removeAttribute } = useFieldArray({
-        control: form.control,
-        name: "attributes",
-    });
+    const { formState: { isSubmitting } } = form;
+    
+    const { fields: priceFields, append: appendPrice, remove: removePrice } = useFieldArray({ control: form.control, name: "pricing" });
+    const { fields: attributeFields, append: appendAttribute, remove: removeAttribute } = useFieldArray({ control: form.control, name: "attributes" });
 
     const watchManageStock = form.watch("manageStock");
     const watchedPricing = form.watch("pricing");
-
 
     useEffect(() => {
         if (product) {
             const stockIsManaged = typeof product.availableStock === 'number';
             form.reset({
-                name: product.name,
-                slug: product.slug ?? '',
-                description: product.description ?? '',
-                sku: product.sku ?? '',
+                name: product.name ?? "",
+                slug: product.slug ?? "",
+                description: product.description ?? "",
+                sku: product.sku ?? "",
                 pricing: product.pricing?.map(p => ({ 
                     label: p.label, 
                     price: p.price, 
                     rule: p.rule || { type: 'none' }
                 })) || [{ label: 'Padrão', price: 0, rule: { type: 'none' } }],
                 manageStock: stockIsManaged,
-                availableStock: stockIsManaged ? (product?.availableStock as number || 0) : 0,
-                status: product.status,
-                visibility: product.visibility,
-                tags: product.tags?.join(', ') ?? '',
+                availableStock: stockIsManaged ? (product?.availableStock || 0) : 0,
+                status: product.status ?? "available",
+                visibility: product.visibility ?? "public",
+                tags: product.tags?.join(', ') ?? "",
                 categoryIds: product.categoryIds ?? [],
                 collectionIds: product.collectionIds ?? [],
                 attributes: product.attributes?.map(a => ({ name: a.name, options: a.options.join(', ') })) ?? [],
                 companyIds: product.companyIds ?? [],
             });
+
             const existingImages: ImageState[] = [];
             if (product.images?.mainImage) {
                 existingImages.push({ file: null, url: product.images.mainImage });
@@ -236,10 +167,8 @@ export function ProductFormNew({ product }: ProductFormProps) {
                 existingImages.push(...product.images.gallery.map(url => ({ file: null, url })));
             }
             setImages(existingImages);
-
         }
     }, [product, form]);
-    
     
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
@@ -256,10 +185,8 @@ export function ProductFormNew({ product }: ProductFormProps) {
         setImages(prev => prev.filter((_, index) => index !== indexToRemove));
     };
 
-
     const handleSetMainImage = (indexToSet: number) => {
         if (indexToSet === 0) return;
-
         setImages(prevImages => {
             const newImages = [...prevImages];
             const [itemToMove] = newImages.splice(indexToSet, 1);
@@ -269,15 +196,11 @@ export function ProductFormNew({ product }: ProductFormProps) {
     };
 
     const handleGenerateDescription = () => {
-        const productName = form.watch('name');
-        const tags = form.watch('tags');
+        const productName = form.getValues('name');
+        const tags = form.getValues('tags');
     
         if (!productName) {
-            toast({
-                title: t('productForm.generateError.title'),
-                description: t('productForm.generateError.description'),
-                variant: "destructive",
-            });
+            toast({ title: t('productForm.generateError.title'), description: t('productForm.generateError.description'), variant: "destructive" });
             return;
         }
     
@@ -285,64 +208,46 @@ export function ProductFormNew({ product }: ProductFormProps) {
             try {
                 const result = await generateProductDescription({ productName, attributes: tags || '', language });
                 form.setValue('description', result.description, { shouldValidate: true });
-                toast({
-                    title: t('productForm.generateSuccess.title'),
-                });
+                toast({ title: t('productForm.generateSuccess.title') });
             } catch (error) {
-                toast({
-                    title: t('productForm.generateFailed.title'),
-                    description: t('productForm.generateFailed.description'),
-                    variant: "destructive",
-                });
+                toast({ title: t('productForm.generateFailed.title'), description: t('productForm.generateFailed.description'), variant: "destructive" });
             }
         });
     };
 
     async function onSubmit(values: ProductFormValues) {
-        setIsSaving(true);
         if (!user || values.companyIds.length === 0) {
             toast({ variant: "destructive", title: t('productForm.error.noUser'), description: "Você precisa estar logado e selecionar pelo menos uma empresa." });
-            setIsSaving(false);
             return;
         }
 
         if (images.length === 0) {
             toast({ variant: "destructive", title: "Imagem Necessária", description: "Por favor, adicione pelo menos uma imagem para o produto." });
-            setIsSaving(false);
             return;
         }
         
+        setIsUploading(true);
+
         try {
-            // Check product limit only for new products
             if (!product) {
                 const productLimit = userData?.plan?.limits?.products ?? 0;
                 const allProducts = await Promise.all(values.companyIds.map(id => getProducts(id)));
-                const totalProducts = allProducts.flat().length;
-
-                if (totalProducts >= productLimit) {
-                    toast({
-                        variant: "destructive",
-                        title: "Limite de Produtos Atingido",
-                        description: "Você atingiu o limite de produtos para o seu plano atual. Considere fazer um upgrade.",
-                    });
-                    setIsSaving(false);
+                if (allProducts.flat().length >= productLimit) {
+                    toast({ variant: "destructive", title: "Limite de Produtos Atingido", description: "Você atingiu o limite de produtos para o seu plano atual." });
                     router.push('/dashboard/products');
                     return;
                 }
             }
             
             const uploadPromises = images.map(imageState => {
-                if (imageState.file) { // It's a new image that needs to be uploaded
+                if (imageState.file) {
                     const path = `products/${user.uid}/${values.name.replace(/\s+/g, '-')}-${Date.now()}`;
                     return uploadFile(imageState.file, path);
                 }
-                return Promise.resolve(imageState.url); // It's an existing image, just return its URL
+                return Promise.resolve(imageState.url);
             });
             
             const uploadedUrls = await Promise.all(uploadPromises);
-            
-            const mainImageUrl = uploadedUrls[0] || "";
-            const galleryImageUrls = uploadedUrls.slice(1);
             
             const productData = {
                 ...values,
@@ -354,7 +259,10 @@ export function ProductFormNew({ product }: ProductFormProps) {
                 collectionIds: values.collectionIds || [],
                 attributes: values.attributes.map(a => ({...a, options: a.options.split(',').map(o => o.trim())})),
                 isVerified: false,
-                images: { mainImage: mainImageUrl, gallery: galleryImageUrls },
+                images: { 
+                    mainImage: uploadedUrls[0] || "",
+                    gallery: uploadedUrls.slice(1)
+                },
             };
             
             if (product) {
@@ -366,26 +274,21 @@ export function ProductFormNew({ product }: ProductFormProps) {
             }
             router.push('/dashboard/products');
             router.refresh();
-
         } catch (error) {
             console.error("Error saving product:", error);
-            toast({
-                variant: "destructive",
-                title: t('productForm.error.genericTitle'),
-                description: t('productForm.error.genericDescription'),
-            });
+            toast({ variant: "destructive", title: t('productForm.error.genericTitle'), description: t('productForm.error.genericDescription') });
         } finally {
-            setIsSaving(false);
+            setIsUploading(false);
         }
     }
 
     const companyOptions = companies.map(c => ({ value: c.id, label: c.name }));
+    const isButtonDisabled = isSubmitting || isUploading;
 
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Coluna Principal */}
                     <div className="lg:col-span-2 space-y-6">
                         <Card>
                             <CardHeader>
@@ -393,9 +296,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
                                 <CardDescription>Preencha os detalhes essenciais do seu produto.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <FormField control={form.control} name="name" render={({ field }) => (
-                                    <FormItem><FormLabel>Nome</FormLabel><FormControl><Input placeholder="Ex: Camiseta Básica de Algodão" {...field} /></FormControl><FormMessage /></FormItem>
-                                )}/>
+                                <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Nome</FormLabel><FormControl><Input placeholder="Ex: Camiseta Básica de Algodão" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                                 <div>
                                     <div className="flex items-center justify-between mb-2">
                                         <FormLabel>Descrição</FormLabel>
@@ -404,9 +305,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
                                             {t('productForm.generateButton')}
                                         </Button>
                                     </div>
-                                    <FormField control={form.control} name="description" render={({ field }) => (
-                                        <FormItem><FormControl><Textarea className="min-h-[150px]" {...field} /></FormControl><FormMessage /></FormItem>
-                                    )}/>
+                                    <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormControl><Textarea className="min-h-[150px]" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                                 </div>
                             </CardContent>
                         </Card>
@@ -419,42 +318,12 @@ export function ProductFormNew({ product }: ProductFormProps) {
                                     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
                                         {images.map((image, index) => (
                                             <div key={image.url} className="relative group aspect-square">
-                                                <Image 
-                                                    src={image.url} 
-                                                    alt={`Preview ${index + 1}`} 
-                                                    layout="fill" 
-                                                    className={cn(
-                                                        "rounded-md object-cover transition-all",
-                                                        index === 0 && "ring-2 ring-primary ring-offset-2"
-                                                    )}
-                                                />
+                                                <Image src={image.url} alt={`Preview ${index + 1}`} layout="fill" className={cn("rounded-md object-cover transition-all", index === 0 && "ring-2 ring-primary ring-offset-2")}/>
                                                 <div className="absolute top-1 right-1 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <Button 
-                                                        type="button" 
-                                                        variant="destructive" 
-                                                        size="icon" 
-                                                        className="h-6 w-6 rounded-full"
-                                                        onClick={() => handleRemoveImage(index)}
-                                                    >
-                                                        <Trash2 className="h-3 w-3" />
-                                                        <span className="sr-only">Remover Imagem</span>
-                                                    </Button>
-                                                    {index > 0 && (
-                                                        <Button 
-                                                            type="button" 
-                                                            variant="default" 
-                                                            size="icon" 
-                                                            className="h-6 w-6 rounded-full bg-primary/80 hover:bg-primary"
-                                                            onClick={() => handleSetMainImage(index)}
-                                                        >
-                                                            <Star className="h-3 w-3" />
-                                                            <span className="sr-only">Tornar Principal</span>
-                                                        </Button>
-                                                    )}
+                                                    <Button type="button" variant="destructive" size="icon" className="h-6 w-6 rounded-full" onClick={() => handleRemoveImage(index)}><Trash2 className="h-3 w-3" /><span className="sr-only">Remover Imagem</span></Button>
+                                                    {index > 0 && (<Button type="button" variant="default" size="icon" className="h-6 w-6 rounded-full bg-primary/80 hover:bg-primary" onClick={() => handleSetMainImage(index)}><Star className="h-3 w-3" /><span className="sr-only">Tornar Principal</span></Button>)}
                                                 </div>
-                                                {index === 0 && (
-                                                    <div className="absolute bottom-0 left-0 right-0 bg-primary/80 text-primary-foreground text-xs text-center py-0.5 rounded-b-md">Principal</div>
-                                                )}
+                                                {index === 0 && (<div className="absolute bottom-0 left-0 right-0 bg-primary/80 text-primary-foreground text-xs text-center py-0.5 rounded-b-md">Principal</div>)}
                                             </div>
                                         ))}
                                         <Label htmlFor="gallery-upload" className="cursor-pointer aspect-square border-2 border-dashed flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/50 transition-colors rounded-md">
@@ -473,66 +342,24 @@ export function ProductFormNew({ product }: ProductFormProps) {
                             <CardContent className="space-y-4">
                                 {priceFields.map((field, index) => (
                                     <div key={field.id} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-2 border rounded-md">
-                                        <FormField control={form.control} name={`pricing.${index}.label`} render={({ field }) => (
-                                            <FormItem className="col-span-1 sm:col-span-2 md:col-span-3">
-                                                <FormLabel>Rótulo</FormLabel>
-                                                <FormControl>
-                                                    <Input 
-                                                        placeholder="Varejo" 
-                                                        {...field} 
-                                                        disabled={index === 0} 
-                                                        value={index === 0 ? "Padrão" : field.value} 
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}/>
-                                        <FormField control={form.control} name={`pricing.${index}.price`} render={({ field }) => (
-                                            <FormItem><FormLabel>Preço</FormLabel><FormControl><Input type="number" placeholder="99.90" {...field} /></FormControl><FormMessage /></FormItem>
-                                        )}/>
-                                        <FormField
-                                            control={form.control}
-                                            name={`pricing.${index}.rule.type`}
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Regra</FormLabel>
-                                                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={index === 0}>
-                                                        <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                                                        <SelectContent>
-                                                            <SelectItem value="none">Padrão (Sem Regra)</SelectItem>
-                                                            <SelectItem value="minQuantity">Quantidade Mínima</SelectItem>
-                                                            <SelectItem value="minCartValue">Valor Mínimo do Carrinho</SelectItem>
-                                                            <SelectItem value="paymentMethod">Forma de Pagamento</SelectItem>
-                                                            <SelectItem value="purchaseType">Tipo de Compra</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
+                                        <FormField control={form.control} name={`pricing.${index}.label`} render={({ field }) => (<FormItem className="col-span-1 sm:col-span-2 md:col-span-3"><FormLabel>Rótulo</FormLabel><FormControl><Input placeholder="Varejo" {...field} disabled={index === 0} value={index === 0 ? "Padrão" : field.value} /></FormControl><FormMessage /></FormItem>)}/>
+                                        <FormField control={form.control} name={`pricing.${index}.price`} render={({ field }) => (<FormItem><FormLabel>Preço</FormLabel><FormControl><Input type="number" placeholder="99.90" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                        <FormField control={form.control} name={`pricing.${index}.rule.type`} render={({ field }) => (<FormItem><FormLabel>Regra</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value} disabled={index === 0}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="none">Padrão (Sem Regra)</SelectItem><SelectItem value="minQuantity">Quantidade Mínima</SelectItem><SelectItem value="minCartValue">Valor Mínimo do Carrinho</SelectItem><SelectItem value="paymentMethod">Forma de Pagamento</SelectItem><SelectItem value="purchaseType">Tipo de Compra</SelectItem></SelectContent></Select><FormMessage /></FormItem>)}/>
                                         <PriceRuleInput control={form.control} index={index} ruleType={watchedPricing[index]?.rule?.type ?? 'none'} />
-                                        
-                                        {index > 0 && (
-                                            <Button type="button" variant="destructive" size="icon" onClick={() => removePrice(index)} className="self-end"><Trash2 className="h-4 w-4" /></Button>
-                                        )}
+                                        {index > 0 && (<Button type="button" variant="destructive" size="icon" onClick={() => removePrice(index)} className="self-end"><Trash2 className="h-4 w-4" /></Button>)}
                                     </div>
                                 ))}
                                 <Button type="button" variant="outline" size="sm" onClick={() => appendPrice({ label: '', price: 0, rule: { type: 'none' } })}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Faixa de Preço</Button>
                             </CardContent>
                         </Card>
 
-
                         <Card>
                             <CardHeader><CardTitle>Atributos e Variações</CardTitle></CardHeader>
                             <CardContent className="space-y-4">
                                 {attributeFields.map((field, index) => (
                                      <div key={field.id} className="flex items-end gap-2 p-2 border rounded-md">
-                                         <FormField control={form.control} name={`attributes.${index}.name`} render={({ field }) => (
-                                            <FormItem className="flex-1"><FormLabel>Atributo</FormLabel><FormControl><Input placeholder="Cor" {...field} /></FormControl><FormMessage /></FormItem>
-                                        )}/>
-                                         <FormField control={form.control} name={`attributes.${index}.options`} render={({ field }) => (
-                                            <FormItem className="flex-1"><FormLabel>Opções (separadas por vírgula)</FormLabel><FormControl><Input placeholder="Azul, Verde, Preto" {...field} /></FormControl><FormMessage /></FormItem>
-                                        )}/>
+                                         <FormField control={form.control} name={`attributes.${index}.name`} render={({ field }) => (<FormItem className="flex-1"><FormLabel>Atributo</FormLabel><FormControl><Input placeholder="Cor" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                         <FormField control={form.control} name={`attributes.${index}.options`} render={({ field }) => (<FormItem className="flex-1"><FormLabel>Opções (separadas por vírgula)</FormLabel><FormControl><Input placeholder="Azul, Verde, Preto" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                                         <Button type="button" variant="destructive" size="icon" onClick={() => removeAttribute(index)}><Trash2 className="h-4 w-4" /></Button>
                                      </div>
                                 ))}
@@ -541,124 +368,31 @@ export function ProductFormNew({ product }: ProductFormProps) {
                         </Card>
                     </div>
 
-                    {/* Coluna Lateral */}
                     <div className="lg:col-span-1 space-y-6">
                         <Card>
                             <CardHeader><CardTitle>Organização</CardTitle></CardHeader>
                             <CardContent className="space-y-4">
-                                <FormField
-                                    control={form.control}
-                                    name="companyIds"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                        <FormLabel>Empresas</FormLabel>
-                                        <MultiSelect
-                                            options={companyOptions}
-                                            selected={field.value}
-                                            onChange={field.onChange}
-                                            placeholder="Selecione as empresas..."
-                                            className="w-full"
-                                            disabled={loadingCompanies}
-                                        />
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField control={form.control} name="status" render={({ field }) => (
-                                    <FormItem><FormLabel>Status do Produto</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="available">Disponível</SelectItem>
-                                                <SelectItem value="out-of-stock">Fora de Estoque</SelectItem>
-                                                <SelectItem value="discontinued">Descontinuado</SelectItem>
-                                            </SelectContent>
-                                        </Select><FormMessage /></FormItem>
-                                )}/>
-                                <FormField control={form.control} name="visibility" render={({ field }) => (
-                                    <FormItem><FormLabel>Visibilidade</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="public">Público</SelectItem>
-                                                <SelectItem value="private">Privado</SelectItem>
-                                            </SelectContent>
-                                        </Select><FormMessage /></FormItem>
-                                )}/>
-                                <FormField control={form.control} name="sku" render={({ field }) => (
-                                    <FormItem><FormLabel>SKU (Código)</FormLabel><FormControl><Input placeholder="SKU12345" {...field} /></FormControl><FormMessage /></FormItem>
-                                )}/>
-                                
-                                <FormField
-                                    control={form.control}
-                                    name="manageStock"
-                                    render={({ field }) => (
-                                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                                            <div className="space-y-0.5">
-                                                <FormLabel>Gerenciar Estoque</FormLabel>
-                                                <FormDescription className="text-xs">
-                                                    Ative para controlar a quantidade disponível.
-                                                </FormDescription>
-                                            </div>
-                                            <FormControl>
-                                                <Switch
-                                                    checked={field.value}
-                                                    onCheckedChange={field.onChange}
-                                                />
-                                            </FormControl>
-                                        </FormItem>
-                                    )}
-                                />
-                                {watchManageStock && (
-                                    <FormField control={form.control} name="availableStock" render={({ field }) => (
-                                        <FormItem><FormLabel>Estoque Disponível</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-                                    )}/>
-                                )}
-                                <FormField control={form.control} name="tags" render={({ field }) => (
-                                    <FormItem><FormLabel>Tags (separadas por vírgula)</FormLabel><FormControl><Input placeholder="Ex: promoção, unissex" {...field} /></FormControl><FormMessage /></FormItem>
-                                )}/>
+                                <FormField control={form.control} name="companyIds" render={({ field }) => (<FormItem><FormLabel>Empresas</FormLabel><MultiSelect options={companyOptions} selected={field.value} onChange={field.onChange} placeholder="Selecione as empresas..." className="w-full" disabled={loadingCompanies}/><FormMessage /></FormItem>)}/>
+                                <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status do Produto</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="available">Disponível</SelectItem><SelectItem value="out-of-stock">Fora de Estoque</SelectItem><SelectItem value="discontinued">Descontinuado</SelectItem></SelectContent></Select><FormMessage /></FormItem>)}/>
+                                <FormField control={form.control} name="visibility" render={({ field }) => (<FormItem><FormLabel>Visibilidade</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="public">Público</SelectItem><SelectItem value="private">Privado</SelectItem></SelectContent></Select><FormMessage /></FormItem>)}/>
+                                <FormField control={form.control} name="sku" render={({ field }) => (<FormItem><FormLabel>SKU (Código)</FormLabel><FormControl><Input placeholder="SKU12345" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                <FormField control={form.control} name="manageStock" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Gerenciar Estoque</FormLabel><FormDescription className="text-xs">Ative para controlar a quantidade disponível.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
+                                {watchManageStock && (<FormField control={form.control} name="availableStock" render={({ field }) => (<FormItem><FormLabel>Estoque Disponível</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)}/>)}
+                                <FormField control={form.control} name="tags" render={({ field }) => (<FormItem><FormLabel>Tags (separadas por vírgula)</FormLabel><FormControl><Input placeholder="Ex: promoção, unissex" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                             </CardContent>
                         </Card>
                         
                         <Card>
-                            <CardHeader>
-                                <CardTitle>Categorias</CardTitle>
-                            </CardHeader>
+                            <CardHeader><CardTitle>Categorias</CardTitle></CardHeader>
                             <CardContent>
-                                <FormField
-                                    control={form.control}
-                                    name="categoryIds"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <CategorySelector
-                                                selectedCategories={field.value}
-                                                onChange={field.onChange}
-                                            />
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                <FormField control={form.control} name="categoryIds" render={({ field }) => (<FormItem><CategorySelector selectedCategories={field.value} onChange={field.onChange} /><FormMessage /></FormItem>)}/>
                             </CardContent>
                         </Card>
                         
                         <Card>
-                            <CardHeader>
-                                <CardTitle>Coleções</CardTitle>
-                            </CardHeader>
+                            <CardHeader><CardTitle>Coleções</CardTitle></CardHeader>
                             <CardContent>
-                                <FormField
-                                    control={form.control}
-                                    name="collectionIds"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <CollectionSelector
-                                                selectedCollections={field.value}
-                                                onChange={field.onChange}
-                                            />
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                <FormField control={form.control} name="collectionIds" render={({ field }) => (<FormItem><CollectionSelector selectedCollections={field.value} onChange={field.onChange} /><FormMessage /></FormItem>)}/>
                             </CardContent>
                         </Card>
 
@@ -667,8 +401,8 @@ export function ProductFormNew({ product }: ProductFormProps) {
                 
                 <CardFooter className="flex justify-end gap-2 mt-8 p-0">
                     <Button type="button" variant="outline" onClick={() => router.back()}>Cancelar</Button>
-                    <Button type="submit" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} disabled={isSaving || images.length === 0}>
-                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    <Button type="submit" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} disabled={isButtonDisabled}>
+                        {isButtonDisabled && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         {product ? "Salvar Alterações" : "Criar Produto"}
                     </Button>
                 </CardFooter>
