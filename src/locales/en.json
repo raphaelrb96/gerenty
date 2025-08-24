@@ -321,15 +321,15 @@
         "updateOrder": "Update Order"
     },
     "pos": {
-        "title": "New Order (POS)",
+        "title": "Point of Sale (POS)",
         "customer": {
-            "title": "Customer",
+            "title": "Customer Details",
             "name": "Name",
             "namePlaceholder": "Customer Name",
             "email": "Email",
             "phone": "Phone",
             "document": "Document",
-            "documentPlaceholder": "CPF/CNPJ"
+            "documentPlaceholder": "ID/Passport"
         },
         "products": {
             "title": "Products",
@@ -337,6 +337,7 @@
             "selectPlaceholder": "Choose a product..."
         },
         "cart": {
+            "title": "Cart",
             "empty": "No products in the cart."
         },
         "payment": {

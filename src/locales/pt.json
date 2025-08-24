@@ -321,9 +321,9 @@
         "updateOrder": "Atualizar Pedido"
     },
     "pos": {
-        "title": "Novo Pedido (PDV)",
+        "title": "Ponto de Venda (PDV)",
         "customer": {
-            "title": "Cliente",
+            "title": "Dados do Cliente",
             "name": "Nome",
             "namePlaceholder": "Nome do Cliente",
             "email": "Email",
@@ -337,6 +337,7 @@
             "selectPlaceholder": "Escolha um produto..."
         },
         "cart": {
+            "title": "Carrinho",
             "empty": "Nenhum produto no carrinho."
         },
         "payment": {
