@@ -42,6 +42,8 @@ const formSchema = z.object({
     label: z.string().min(1, "O rótulo é obrigatório"),
     price: z.preprocess((a) => parseFloat(z.string().parse(a || "0").replace(",", ".")), z.number().min(0)),
     currency: z.enum(['BRL', 'USD', 'EUR', 'GBP']),
+    minQuantity: z.preprocess((a) => parseInt(z.string().parse(a || "0"), 10), z.number().int().min(0)),
+    quantityRule: z.enum(['perItem', 'cartTotal']),
   })).min(1, "Adicione pelo menos um preço."),
 
   manageStock: z.boolean().default(true),
@@ -90,7 +92,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
             slug: "",
             description: "",
             sku: "",
-            pricing: [{ label: 'Varejo', price: 0, currency: 'BRL' }],
+            pricing: [{ label: 'Varejo', price: 0, currency: 'BRL', minQuantity: 1, quantityRule: 'perItem' }],
             manageStock: true,
             availableStock: 0,
             status: "available",
@@ -123,7 +125,13 @@ export function ProductFormNew({ product }: ProductFormProps) {
                 slug: product.slug,
                 description: product.description || '',
                 sku: product.sku || '',
-                pricing: product.pricing?.map(p => ({ label: p.label, price: p.price, currency: p.currency })) || [{ label: 'Varejo', price: 0, currency: 'BRL' }],
+                pricing: product.pricing?.map(p => ({ 
+                    label: p.label, 
+                    price: p.price, 
+                    currency: p.currency,
+                    minQuantity: p.minQuantity,
+                    quantityRule: p.quantityRule
+                })) || [{ label: 'Varejo', price: 0, currency: 'BRL', minQuantity: 1, quantityRule: 'perItem' }],
                 manageStock: stockIsManaged,
                 availableStock: stockIsManaged ? product.availableStock : 0,
                 status: product.status,
@@ -260,7 +268,6 @@ export function ProductFormNew({ product }: ProductFormProps) {
             availableStock: values.manageStock ? values.availableStock : true, // Set to true for infinite stock
             slug: values.slug || values.name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''),
             isActive: true,
-            pricing: values.pricing.map(p => ({ ...p, minQuantity: 1, quantityRule: 'perItem' as const })),
             tags: values.tags?.split(',').map(tag => tag.trim()).filter(Boolean) || [],
             categoryIds: values.categoryIds || [],
             collectionIds: values.collectionIds || [],
@@ -381,31 +388,33 @@ export function ProductFormNew({ product }: ProductFormProps) {
                         </Card>
                         
                         <Card>
-                            <CardHeader><CardTitle>Preços</CardTitle></CardHeader>
+                            <CardHeader><CardTitle>Preços e Regras</CardTitle></CardHeader>
                             <CardContent className="space-y-4">
                                 {priceFields.map((field, index) => (
                                     <div key={field.id} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 items-end gap-2 p-2 border rounded-md">
                                         <FormField control={form.control} name={`pricing.${index}.label`} render={({ field }) => (
-                                            <FormItem className="col-span-1 sm:col-span-2"><FormLabel>Rótulo</FormLabel><FormControl><Input placeholder="Varejo" {...field} /></FormControl><FormMessage /></FormItem>
+                                            <FormItem className="col-span-1 sm:col-span-2 md:col-span-5"><FormLabel>Rótulo</FormLabel><FormControl><Input placeholder="Varejo" {...field} /></FormControl><FormMessage /></FormItem>
                                         )}/>
                                         <FormField control={form.control} name={`pricing.${index}.price`} render={({ field }) => (
-                                            <FormItem className="md:col-span-2"><FormLabel>Preço</FormLabel><FormControl><Input type="number" placeholder="99.90" {...field} /></FormControl><FormMessage /></FormItem>
+                                            <FormItem className="col-span-1 md:col-span-2"><FormLabel>Preço</FormLabel><FormControl><Input type="number" placeholder="99.90" {...field} /></FormControl><FormMessage /></FormItem>
                                         )}/>
-                                        <FormField control={form.control} name={`pricing.${index}.currency`} render={({ field }) => (
-                                            <FormItem><FormLabel>Moeda</FormLabel>
+                                        <FormField control={form.control} name={`pricing.${index}.minQuantity`} render={({ field }) => (
+                                            <FormItem className="col-span-1"><FormLabel>Qtd. Mínima</FormLabel><FormControl><Input type="number" placeholder="1" {...field} /></FormControl><FormMessage /></FormItem>
+                                        )}/>
+                                        <FormField control={form.control} name={`pricing.${index}.quantityRule`} render={({ field }) => (
+                                            <FormItem className="col-span-1"><FormLabel>Regra</FormLabel>
                                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                     <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                                                     <SelectContent>
-                                                        <SelectItem value="BRL">BRL</SelectItem>
-                                                        <SelectItem value="USD">USD</SelectItem>
-                                                        <SelectItem value="EUR">EUR</SelectItem>
+                                                        <SelectItem value="perItem">Por Item</SelectItem>
+                                                        <SelectItem value="cartTotal">Total Carrinho</SelectItem>
                                                     </SelectContent>
                                                 </Select><FormMessage /></FormItem>
                                         )}/>
                                         <Button type="button" variant="destructive" size="icon" onClick={() => removePrice(index)}><Trash2 className="h-4 w-4" /></Button>
                                     </div>
                                 ))}
-                                <Button type="button" variant="outline" size="sm" onClick={() => appendPrice({ label: '', price: 0, currency: 'BRL' })}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Faixa de Preço</Button>
+                                <Button type="button" variant="outline" size="sm" onClick={() => appendPrice({ label: '', price: 0, currency: 'BRL', minQuantity: 1, quantityRule: 'perItem' })}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Faixa de Preço</Button>
                             </CardContent>
                         </Card>
 
