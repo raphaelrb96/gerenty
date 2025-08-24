@@ -34,7 +34,7 @@ import { CollectionSelector } from "./collection-selector";
 // Esquema de validação com Zod
 const formSchema = z.object({
   name: z.string().min(3, "O nome do produto deve ter pelo menos 3 caracteres."),
-  slug: z.string().min(3, "O slug é obrigatório.").optional(),
+  slug: z.string().optional(),
   description: z.string().optional(),
   sku: z.string().optional(),
   
