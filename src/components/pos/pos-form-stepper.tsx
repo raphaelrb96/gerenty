@@ -235,27 +235,8 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
   };
 
   return (
-    <div className="flex flex-col bg-muted">
-        <header className="flex-shrink-0 bg-background border-b p-4">
-            <div className="flex items-center justify-center max-w-2xl mx-auto">
-                 {steps.map((step, index) => (
-                    <React.Fragment key={step.id}>
-                        <div className="flex flex-col items-center text-center">
-                            <div className={cn("w-10 h-10 rounded-full flex items-center justify-center border-2",
-                                currentStep > step.id ? "bg-primary border-primary text-primary-foreground" :
-                                currentStep === step.id ? "border-primary" : "bg-muted-foreground/20 border-muted-foreground/30"
-                            )}>
-                                <step.icon className="w-5 h-5"/>
-                            </div>
-                            <p className={cn("text-xs mt-1 w-16 truncate", currentStep >= step.id && "font-semibold")}>{step.name}</p>
-                        </div>
-                        {index < steps.length - 1 && <div className={cn("flex-1 h-0.5 mt-5 mx-2", currentStep > index + 1 ? "bg-primary" : "bg-muted-foreground/30")} />}
-                    </React.Fragment>
-                ))}
-            </div>
-        </header>
-
-        <main className="flex-1 p-4 md:p-6 overflow-y-auto">
+    <div className="flex flex-col h-screen bg-muted">
+        <main className="flex-1 p-4 md:p-6 overflow-y-hidden">
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="h-full">
                     {renderStepContent()}
@@ -263,11 +244,29 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
             </Form>
         </main>
         
-         <footer className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 w-full">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 max-w-6xl mx-auto">
+         <footer className="flex-shrink-0 bg-background border-t p-4 w-full">
+            <div className="flex items-center justify-between gap-4 max-w-6xl mx-auto">
                  <div className="w-full md:w-auto">
                     {currentStep > 1 && <Button type="button" variant="outline" onClick={handlePrevStep} className="w-full md:w-auto">Voltar</Button>}
                  </div>
+
+                 <div className="hidden md:flex items-center justify-center">
+                    {steps.map((step, index) => (
+                        <React.Fragment key={step.id}>
+                            <div className="flex flex-col items-center text-center">
+                                <div className={cn("w-8 h-8 rounded-full flex items-center justify-center border-2",
+                                    currentStep > step.id ? "bg-primary border-primary text-primary-foreground" :
+                                    currentStep === step.id ? "border-primary" : "bg-muted-foreground/20 border-muted-foreground/30"
+                                )}>
+                                    <step.icon className="w-4 h-4"/>
+                                </div>
+                                <p className={cn("text-xs mt-1 w-16 truncate", currentStep >= step.id && "font-semibold")}>{step.name}</p>
+                            </div>
+                            {index < steps.length - 1 && <div className={cn("flex-1 h-0.5 mt-4 mx-2 w-8 sm:w-16", currentStep > index + 1 ? "bg-primary" : "bg-muted-foreground/30")} />}
+                        </React.Fragment>
+                    ))}
+                </div>
+
                  <div className="flex items-center gap-4">
                      <span className="font-bold text-lg">{formatCurrency(total)}</span>
                     {currentStep < steps.length ? (
@@ -284,5 +283,3 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
     </div>
   );
 }
-
-    
