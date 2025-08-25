@@ -161,7 +161,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
   )
 
   return (
-    <div className="relative bg-muted/40 flex flex-col h-screen">
+    <div className="relative bg-muted/40 flex flex-col">
         <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-28">
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="h-full">
