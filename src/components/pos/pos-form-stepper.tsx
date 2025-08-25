@@ -303,11 +303,6 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                 </div>
 
                  <div className="flex items-center justify-end gap-2 sm:gap-4">
-                    {currentStep > 1 && (
-                        <Button type="button" variant="outline" onClick={handlePrevStep}>
-                            Voltar
-                        </Button>
-                    )}
                     <span className="text-md sm:text-lg font-bold">{formatCurrency(total)}</span>
                     {currentStep < steps.length ? (
                         <Button type="button" onClick={handleNextStep}>
