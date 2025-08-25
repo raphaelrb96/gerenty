@@ -20,15 +20,15 @@ export function CartItem({ item, onUpdateQuantity, onRemove }: CartItemProps) {
     return (
         <div className="flex items-start gap-4">
             <Image
-                src={item.imageUrl || "https://placehold.co/64x64.png"}
+                src={item.imageUrl || "https://placehold.co/48x48.png"}
                 alt={item.productName}
-                width={64}
-                height={64}
+                width={48}
+                height={48}
                 className="rounded-md aspect-square object-cover"
             />
-            <div className="flex-grow flex flex-col space-y-2">
+            <div className="flex-grow flex flex-col">
                 <p className="font-semibold text-sm leading-tight line-clamp-2">{item.productName}</p>
-                <div className="flex items-center gap-2">
+                <div className="mt-2 flex items-center gap-2">
                     <Button
                         type="button"
                         variant="outline"
@@ -54,7 +54,7 @@ export function CartItem({ item, onUpdateQuantity, onRemove }: CartItemProps) {
                         <Plus className="h-3 w-3" />
                     </Button>
                 </div>
-                 <div className="flex items-center justify-between">
+                 <div className="mt-2 flex items-center justify-between">
                     <p className="font-bold text-sm">{formatCurrency(item.totalPrice)}</p>
                     <Button
                         type="button"
