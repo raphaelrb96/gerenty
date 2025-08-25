@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, User, CreditCard, Truck, ShoppingCart } from "lucide-react";
+import { Loader2, User, CreditCard, Truck, ShoppingCart, ArrowLeft } from "lucide-react";
 import { Separator } from "../ui/separator";
 import { Textarea } from "../ui/textarea";
 import { useTranslation } from "@/context/i18n-context";
@@ -148,6 +148,17 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
     }
   }
 
+  const renderStepHeader = (title: string) => (
+    <div className="flex items-center gap-4 mb-6">
+        {currentStep > 1 && (
+            <Button type="button" variant="ghost" size="icon" onClick={handlePrevStep} className="h-8 w-8">
+                <ArrowLeft className="h-5 w-5" />
+            </Button>
+        )}
+        <h2 className="text-xl font-semibold">{title}</h2>
+    </div>
+  )
+
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
@@ -171,7 +182,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
       case 2:
         return (
              <div className="max-w-2xl mx-auto h-full overflow-y-auto p-1">
-                <h2 className="text-xl font-semibold mb-6">Informações do Cliente</h2>
+                {renderStepHeader("Informações do Cliente")}
                 <div className="space-y-4">
                     <FormField control={form.control} name="customerName" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.name')}</FormLabel><FormControl><Input placeholder={t('pos.customer.namePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>)}/>
                     <FormField control={form.control} name="customerEmail" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.email')}</FormLabel><FormControl><Input type="email" placeholder="email@cliente.com" {...field} /></FormControl><FormMessage /></FormItem>)}/>
@@ -183,7 +194,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
       case 3:
         return (
             <div className="max-w-2xl mx-auto h-full overflow-y-auto p-1">
-                <h2 className="text-xl font-semibold mb-6">Pagamento e Entrega</h2>
+                {renderStepHeader("Pagamento e Entrega")}
                 <div className="space-y-4">
                      <FormField control={form.control} name="paymentMethod" render={({ field }) => (
                         <FormItem><FormLabel>{t('pos.payment.method')}</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>
@@ -209,7 +220,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
       case 4:
          return (
             <div className="max-w-2xl mx-auto h-full overflow-y-auto p-1">
-                <h2 className="text-xl font-semibold mb-6">Revisar e Finalizar</h2>
+                {renderStepHeader("Revisar e Finalizar")}
                  <div className="space-y-4 rounded-lg border p-4">
                      <h3 className="font-medium">Resumo do Pedido</h3>
                      <div className="text-sm space-y-2">
@@ -287,11 +298,6 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                 </div>
 
                  <div className="flex items-center justify-end gap-2 sm:gap-4">
-                     {currentStep > 1 && (
-                        <Button type="button" variant="outline" onClick={handlePrevStep} className="hidden sm:inline-flex">
-                            Voltar
-                        </Button>
-                    )}
                     <span className="text-md sm:text-lg font-bold">{formatCurrency(total)}</span>
                     {currentStep < steps.length ? (
                         <Button type="button" onClick={handleNextStep}>
@@ -309,3 +315,5 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
     </div>
   );
 }
+
+    
