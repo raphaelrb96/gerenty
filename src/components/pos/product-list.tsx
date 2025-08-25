@@ -31,9 +31,9 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
         onChange={(e) => setSearchTerm(e.target.value)}
         className="w-full"
       />
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filteredProducts.length > 0 ? filteredProducts.map((product) => (
-          <Card key={product.id} className="overflow-hidden flex flex-col group">
+          <Card key={product.id} className="overflow-hidden flex flex-col group cursor-pointer" onClick={() => onAddToCart(product)}>
             <CardHeader className="p-0 relative aspect-square">
               <Image
                   src={product.images?.mainImage || "https://placehold.co/400x400.png"}
@@ -47,8 +47,8 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
               <p className="font-semibold text-sm leading-tight truncate" title={product.name}>{product.name}</p>
               <p className="text-sm font-bold text-primary mt-1">{formatCurrency(product.pricing[0]?.price)}</p>
             </CardContent>
-            <CardFooter className="p-2 pt-0">
-               <Button className="w-full" variant="outline" size="sm" onClick={() => onAddToCart(product)}>
+             <CardFooter className="p-2 pt-0">
+               <Button className="w-full" variant="outline" size="sm" >
                  <PlusCircle className="mr-2 h-4 w-4" /> Adicionar
                </Button>
             </CardFooter>
