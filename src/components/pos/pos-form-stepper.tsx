@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, User, CreditCard, Truck, ShoppingCart, ArrowLeft } from "lucide-react";
+import { Loader2, User, CreditCard, Truck, ShoppingCart, ArrowLeft, Package } from "lucide-react";
 import { Separator } from "../ui/separator";
 import { Textarea } from "../ui/textarea";
 import { useTranslation } from "@/context/i18n-context";
@@ -35,7 +35,39 @@ const formSchema = z.object({
   shippingCost: z.preprocess((a) => parseFloat(String(a || "0").replace(",", ".")), z.number().min(0)),
   discount: z.preprocess((a) => parseFloat(String(a || "0").replace(",", ".")), z.number().min(0)),
   notes: z.string().optional(),
+  address: z.object({
+    street: z.string().optional(),
+    number: z.string().optional(),
+    complement: z.string().optional(),
+    neighborhood: z.string().optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
+    zipCode: z.string().optional(),
+    country: z.string().optional(),
+  }).optional(),
+}).superRefine((data, ctx) => {
+    if (data.deliveryMethod !== 'retirada_loja' && data.deliveryMethod !== 'digital') {
+        if (!data.address?.street) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Rua é obrigatória', path: ['address.street'] });
+        }
+        if (!data.address?.number) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Número é obrigatório', path: ['address.number'] });
+        }
+        if (!data.address?.neighborhood) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Bairro é obrigatório', path: ['address.neighborhood'] });
+        }
+        if (!data.address?.city) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Cidade é obrigatória', path: ['address.city'] });
+        }
+        if (!data.address?.state) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Estado é obrigatório', path: ['address.state'] });
+        }
+        if (!data.address?.zipCode) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'CEP é obrigatório', path: ['address.zipCode'] });
+        }
+    }
 });
+
 
 type PosFormValues = z.infer<typeof formSchema>;
 
@@ -77,18 +109,29 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
       shippingCost: 0,
       discount: 0,
       notes: "",
+      address: {
+        street: "",
+        number: "",
+        complement: "",
+        neighborhood: "",
+        city: "",
+        state: "",
+        zipCode: "",
+        country: "Brasil",
+      }
     },
   });
 
   const watchedDiscount = form.watch('discount', 0);
   const watchedShippingCost = form.watch('shippingCost', 0);
+  const deliveryMethod = form.watch('deliveryMethod');
 
   const subtotal = cart.reduce((acc, item) => acc + item.totalPrice, 0);
   const total = subtotal - (Number(watchedDiscount) || 0) + (Number(watchedShippingCost) || 0);
 
 
   const handleNextStep = async () => {
-    let fieldsToValidate: (keyof PosFormValues)[] = [];
+    let fieldsToValidate: (keyof PosFormValues)[] | (string)[] = [];
     if (currentStep === 1 && cart.length === 0) {
         toast({ variant: "destructive", title: "Carrinho vazio", description: "Adicione produtos para continuar." });
         return;
@@ -96,9 +139,19 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
     if (currentStep === 2) {
         fieldsToValidate = ['customerName', 'customerPhone'];
     }
+    if (currentStep === 3) {
+        fieldsToValidate = ['paymentMethod', 'deliveryMethod', 'shippingCost', 'discount'];
+        if (deliveryMethod !== 'retirada_loja' && deliveryMethod !== 'digital') {
+            fieldsToValidate.push(
+                'address.street', 'address.number', 'address.neighborhood', 
+                'address.city', 'address.state', 'address.zipCode'
+            );
+        }
+    }
+
 
     if (fieldsToValidate.length > 0) {
-        const isValid = await form.trigger(fieldsToValidate);
+        const isValid = await form.trigger(fieldsToValidate as any);
         if (!isValid) return;
     }
 
@@ -127,7 +180,12 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
         items: cart.map(({imageUrl, ...item}) => item),
         status: 'completed' as OrderStatus,
         payment: { method: values.paymentMethod as PaymentMethod, status: values.paymentStatus, type: 'presencial' },
-        shipping: { method: values.deliveryMethod as DeliveryMethod, cost: values.shippingCost, estimatedDelivery: { type: 'dias', value: 0 } },
+        shipping: { 
+            method: values.deliveryMethod as DeliveryMethod, 
+            cost: values.shippingCost, 
+            estimatedDelivery: { type: 'dias', value: 0 },
+            address: (values.deliveryMethod !== 'retirada_loja' && values.deliveryMethod !== 'digital') ? values.address as any : undefined,
+        },
         subtotal,
         discount: values.discount,
         shippingCost: values.shippingCost,
@@ -160,6 +218,8 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
     </div>
   )
 
+  const needsShippingAddress = deliveryMethod !== 'retirada_loja' && deliveryMethod !== 'digital';
+
   return (
     <div className="relative bg-muted/40 flex flex-col">
         <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-28">
@@ -172,10 +232,13 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                             <ProductGrid products={products} onAddToCart={onAddToCart} />
                             </div>
                             <div className="lg:col-span-1 h-full flex flex-col bg-background rounded-lg border">
-                                <h3 className="p-4 text-lg font-semibold border-b flex-shrink-0">Carrinho</h3>
+                                <h3 className="p-4 text-lg font-semibold border-b flex-shrink-0 flex items-center gap-2"><ShoppingCart className="h-5 w-5" /> Carrinho</h3>
                                 <div className="flex-1 overflow-y-auto p-4">
                                     {cart.length === 0 ? (
-                                        <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Selecione produtos para começar.</div>
+                                        <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-sm">
+                                            <Package className="h-12 w-12 mb-4" />
+                                            <p>Selecione produtos para começar.</p>
+                                        </div>
                                     ) : (
                                         <div className="space-y-4">
                                             {cart.map((item, index) => (
@@ -206,45 +269,104 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                     <div style={{ display: currentStep === 3 ? 'block' : 'none' }}>
                         <div className="max-w-2xl mx-auto h-full overflow-y-auto p-1">
                             {renderStepHeader("Pagamento e Entrega")}
-                            <div className="space-y-4">
-                                <FormField control={form.control} name="paymentMethod" render={({ field }) => (
-                                    <FormItem><FormLabel>{t('pos.payment.method')}</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>
-                                        <SelectItem value="credito">{t('paymentMethods.credit')}</SelectItem>
-                                        <SelectItem value="debito">{t('paymentMethods.debit')}</SelectItem>
-                                        <SelectItem value="pix">{t('paymentMethods.pix')}</SelectItem>
-                                        <SelectItem value="dinheiro">{t('paymentMethods.cash')}</SelectItem>
-                                        <SelectItem value="outros">{t('paymentMethods.other')}</SelectItem>
-                                    </SelectContent></Select><FormMessage /></FormItem>
-                                )}/>
-                                <FormField control={form.control} name="deliveryMethod" render={({ field }) => (
-                                    <FormItem><FormLabel>{t('pos.payment.deliveryMethod')}</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>
-                                        <SelectItem value="retirada_loja">{t('deliveryMethods.pickup')}</SelectItem>
-                                        <SelectItem value="entrega_padrao">{t('deliveryMethods.standard')}</SelectItem>
-                                        <SelectItem value="logistica_propria">{t('deliveryMethods.own')}</SelectItem>
-                                    </SelectContent></Select><FormMessage /></FormItem>
-                                )}/>
-                                <FormField control={form.control} name="shippingCost" render={({ field }) => (<FormItem><FormLabel>{t('pos.summary.shippingCost')}</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                                <FormField control={form.control} name="discount" render={({ field }) => (<FormItem><FormLabel>{t('pos.summary.discount')}</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                            <div className="space-y-6">
+                                <div>
+                                    <h3 className="text-lg font-medium mb-4">Pagamento</h3>
+                                    <div className="space-y-4">
+                                        <FormField control={form.control} name="paymentMethod" render={({ field }) => (
+                                            <FormItem><FormLabel>{t('pos.payment.method')}</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>
+                                                <SelectItem value="credito">{t('paymentMethods.credit')}</SelectItem>
+                                                <SelectItem value="debito">{t('paymentMethods.debit')}</SelectItem>
+                                                <SelectItem value="pix">{t('paymentMethods.pix')}</SelectItem>
+                                                <SelectItem value="dinheiro">{t('paymentMethods.cash')}</SelectItem>
+                                                <SelectItem value="outros">{t('paymentMethods.other')}</SelectItem>
+                                            </SelectContent></Select><FormMessage /></FormItem>
+                                        )}/>
+                                         <FormField control={form.control} name="discount" render={({ field }) => (<FormItem><FormLabel>{t('pos.summary.discount')}</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                    </div>
+                                </div>
+                                <Separator />
+                                <div>
+                                    <h3 className="text-lg font-medium mb-4">Entrega</h3>
+                                    <div className="space-y-4">
+                                        <FormField control={form.control} name="deliveryMethod" render={({ field }) => (
+                                            <FormItem><FormLabel>{t('pos.payment.deliveryMethod')}</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>
+                                                <SelectItem value="retirada_loja">{t('deliveryMethods.pickup')}</SelectItem>
+                                                <SelectItem value="entrega_padrao">{t('deliveryMethods.standard')}</SelectItem>
+                                                <SelectItem value="logistica_propria">{t('deliveryMethods.own')}</SelectItem>
+                                            </SelectContent></Select><FormMessage /></FormItem>
+                                        )}/>
+                                        <FormField control={form.control} name="shippingCost" render={({ field }) => (<FormItem><FormLabel>{t('pos.summary.shippingCost')}</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                        
+                                        {needsShippingAddress && (
+                                            <div className="space-y-4 pt-4 border-t">
+                                                <h4 className="font-medium">Endereço de Entrega</h4>
+                                                <FormField control={form.control} name="address.zipCode" render={({ field }) => (<FormItem><FormLabel>CEP</FormLabel><FormControl><Input placeholder="00000-000" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                                <FormField control={form.control} name="address.street" render={({ field }) => (<FormItem><FormLabel>Rua</FormLabel><FormControl><Input placeholder="Av. Principal" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <FormField control={form.control} name="address.number" render={({ field }) => (<FormItem><FormLabel>Número</FormLabel><FormControl><Input placeholder="123" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                                    <FormField control={form.control} name="address.complement" render={({ field }) => (<FormItem><FormLabel>Complemento</FormLabel><FormControl><Input placeholder="Apto 101" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                                </div>
+                                                <FormField control={form.control} name="address.neighborhood" render={({ field }) => (<FormItem><FormLabel>Bairro</FormLabel><FormControl><Input placeholder="Centro" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <FormField control={form.control} name="address.city" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><FormControl><Input placeholder="São Paulo" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                                    <FormField control={form.control} name="address.state" render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><FormControl><Input placeholder="SP" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <div style={{ display: currentStep === 4 ? 'block' : 'none' }}>
-                         <div className="max-w-2xl mx-auto h-full overflow-y-auto p-1">
+                         <div className="max-w-3xl mx-auto h-full overflow-y-auto p-1">
                             {renderStepHeader("Revisar e Finalizar")}
-                            <div className="space-y-4 rounded-lg border p-4">
-                                <h3 className="font-medium">Resumo do Pedido</h3>
-                                <div className="text-sm space-y-2">
-                                    <p><strong>Cliente:</strong> {form.getValues('customerName')}</p>
-                                    <p><strong>Itens:</strong> {cart.reduce((sum, item) => sum + item.quantity, 0)}</p>
-                                    <p><strong>Pagamento:</strong> {form.getValues('paymentMethod')}</p>
-                                    <Separator/>
-                                    <div className="flex justify-between"><span>Subtotal:</span> <span>{formatCurrency(subtotal)}</span></div>
-                                    <div className="flex justify-between"><span>Desconto:</span> <span className="text-destructive">- {formatCurrency(Number(watchedDiscount))}</span></div>
-                                    <div className="flex justify-between"><span>Frete:</span> <span>{formatCurrency(Number(watchedShippingCost))}</span></div>
-                                    <Separator/>
-                                    <div className="flex justify-between font-bold text-lg"><span>Total:</span> <span>{formatCurrency(total)}</span></div>
+                            <div className="space-y-6">
+                                <div className="rounded-lg border p-4 space-y-4">
+                                    <h3 className="font-semibold text-lg">Itens do Pedido</h3>
+                                    {cart.map(item => (
+                                        <div key={item.productId} className="flex justify-between items-center text-sm">
+                                            <div>
+                                                <p className="font-medium">{item.productName}</p>
+                                                <p className="text-muted-foreground">Qtde: {item.quantity} x {formatCurrency(item.unitPrice)}</p>
+                                            </div>
+                                            <p className="font-medium">{formatCurrency(item.totalPrice)}</p>
+                                        </div>
+                                    ))}
                                 </div>
+                                <div className="grid md:grid-cols-2 gap-6">
+                                    <div className="rounded-lg border p-4 space-y-2">
+                                        <h3 className="font-semibold text-lg">Cliente</h3>
+                                        <p className="text-sm"><strong>Nome:</strong> {form.getValues('customerName')}</p>
+                                        <p className="text-sm"><strong>Telefone:</strong> {form.getValues('customerPhone')}</p>
+                                        <p className="text-sm"><strong>Email:</strong> {form.getValues('customerEmail') || 'N/A'}</p>
+                                    </div>
+                                     <div className="rounded-lg border p-4 space-y-2">
+                                        <h3 className="font-semibold text-lg">Entrega</h3>
+                                        <p className="text-sm"><strong>Método:</strong> {t(`deliveryMethods.${form.getValues('deliveryMethod') as keyof typeof t.deliveryMethods}`)}</p>
+                                        {needsShippingAddress && (
+                                             <address className="text-sm not-italic">
+                                                {form.getValues('address.street')}, {form.getValues('address.number')} <br />
+                                                {form.getValues('address.neighborhood')}, {form.getValues('address.city')} - {form.getValues('address.state')} <br/>
+                                                {form.getValues('address.zipCode')}
+                                            </address>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="rounded-lg border p-4">
+                                    <h3 className="font-semibold text-lg mb-2">Resumo Financeiro</h3>
+                                    <div className="text-sm space-y-1">
+                                        <div className="flex justify-between"><span>Subtotal:</span> <span>{formatCurrency(subtotal)}</span></div>
+                                        <div className="flex justify-between"><span>Desconto:</span> <span className="text-destructive">- {formatCurrency(Number(watchedDiscount))}</span></div>
+                                        <div className="flex justify-between"><span>Frete:</span> <span>{formatCurrency(Number(watchedShippingCost))}</span></div>
+                                        <Separator className="my-2"/>
+                                        <div className="flex justify-between font-bold text-lg"><span>Total:</span> <span>{formatCurrency(total)}</span></div>
+                                    </div>
+                                </div>
+
                                 <FormField control={form.control} name="notes" render={({ field }) => (
                                     <FormItem><FormLabel>Observações (opcional)</FormLabel><FormControl><Textarea placeholder="Alguma observação sobre o pedido..." {...field} /></FormControl><FormMessage /></FormItem>
                                 )}/>
@@ -314,3 +436,4 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
     </div>
   );
 }
+
