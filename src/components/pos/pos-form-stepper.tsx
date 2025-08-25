@@ -236,7 +236,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
 
   return (
     <div className="relative bg-muted h-screen">
-        <main className="p-4 md:p-6 overflow-y-auto h-full pb-24">
+        <main className="p-4 md:p-6 h-full pb-24">
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="h-full">
                     {renderStepContent()}
@@ -244,40 +244,61 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
             </Form>
         </main>
         
-         <footer className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 w-full">
-            <div className="flex items-center justify-between gap-4 max-w-6xl mx-auto">
-                 <div className="w-full md:w-auto">
-                    {currentStep > 1 && <Button type="button" variant="outline" onClick={handlePrevStep} className="w-full md:w-auto">Voltar</Button>}
-                 </div>
+        <footer className="fixed bottom-0 left-0 right-0 w-full border-t bg-background p-4">
+            <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4">
+                <div className="flex w-1/3 justify-start">
+                    {currentStep > 1 && (
+                        <Button type="button" variant="outline" onClick={handlePrevStep} className="w-full md:w-auto">
+                            Voltar
+                        </Button>
+                    )}
+                </div>
 
-                 <div className="hidden md:flex items-center justify-center gap-2">
+                <div className="hidden w-1/3 items-center justify-center gap-2 md:flex">
                     {steps.map((step, index) => (
                         <React.Fragment key={step.id}>
                             <div className="flex flex-col items-center text-center">
-                                <div className={cn("w-8 h-8 rounded-full flex items-center justify-center border-2",
-                                    currentStep > step.id ? "bg-primary border-primary text-primary-foreground" :
-                                    currentStep === step.id ? "border-primary" : "bg-muted-foreground/20 border-muted-foreground/30"
-                                )}>
-                                    <step.icon className="w-4 h-4"/>
+                                <div
+                                    className={cn(
+                                        'flex h-8 w-8 items-center justify-center rounded-full border-2',
+                                        currentStep > step.id
+                                            ? 'border-primary bg-primary text-primary-foreground'
+                                            : currentStep === step.id
+                                            ? 'border-primary'
+                                            : 'border-muted-foreground/30 bg-muted-foreground/20'
+                                    )}
+                                >
+                                    <step.icon className="h-4 w-4" />
                                 </div>
-                                <p className={cn("text-xs mt-1 w-16 truncate", currentStep >= step.id && "font-semibold")}>{step.name}</p>
+                                <p className={cn('mt-1 w-16 truncate text-xs', currentStep >= step.id && 'font-semibold')}>
+                                    {step.name}
+                                </p>
                             </div>
-                            {index < steps.length - 1 && <div className={cn("flex-1 h-0.5 mt-[-1rem] mx-2 w-8 sm:w-12", currentStep > index + 1 ? "bg-primary" : "bg-muted-foreground/30")} />}
+                            {index < steps.length - 1 && (
+                                <div
+                                    className={cn(
+                                        'mt-[-1rem] h-0.5 w-8 flex-1 sm:w-12',
+                                        currentStep > index + 1 ? 'bg-primary' : 'bg-muted-foreground/30'
+                                    )}
+                                />
+                            )}
                         </React.Fragment>
                     ))}
                 </div>
 
-                 <div className="flex items-center gap-4">
-                     <span className="font-bold text-lg">{formatCurrency(total)}</span>
+                <div className="flex w-1/3 items-center justify-end gap-4">
+                    <span className="text-lg font-bold">{formatCurrency(total)}</span>
                     {currentStep < steps.length ? (
-                        <Button type="button" onClick={handleNextStep}>Avançar</Button>
+                        <Button type="button" onClick={handleNextStep}>
+                            Avançar
+                        </Button>
                     ) : (
                         <Button type="button" onClick={form.handleSubmit(onSubmit)} disabled={isSaving}>
                             {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Finalizar Pedido
                         </Button>
                     )}
-                 </div>
+                </div>
             </div>
         </footer>
     </div>
