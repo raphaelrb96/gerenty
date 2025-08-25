@@ -153,12 +153,12 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
       case 1:
         return (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
-            <div className="lg:col-span-2 h-full overflow-auto pr-2 no-scrollbar">
+            <div className="lg:col-span-2 h-full overflow-y-auto pr-2 no-scrollbar">
               <ProductGrid products={products} onAddToCart={onAddToCart} />
             </div>
             <div className="lg:col-span-1 h-full flex flex-col bg-background rounded-lg border">
-                 <h3 className="p-4 text-lg font-semibold border-b">Carrinho</h3>
-                 <div className="flex-1 overflow-auto p-4 space-y-4">
+                 <h3 className="p-4 text-lg font-semibold border-b flex-shrink-0">Carrinho</h3>
+                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
                     {cart.length === 0 ? (
                         <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Selecione produtos para começar.</div>
                     ) : (
@@ -170,7 +170,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
         );
       case 2:
         return (
-             <div className="max-w-2xl mx-auto">
+             <div className="max-w-2xl mx-auto h-full overflow-y-auto p-1">
                 <h2 className="text-xl font-semibold mb-6">Informações do Cliente</h2>
                 <div className="space-y-4">
                     <FormField control={form.control} name="customerName" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.name')}</FormLabel><FormControl><Input placeholder={t('pos.customer.namePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>)}/>
@@ -182,7 +182,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
         );
       case 3:
         return (
-            <div className="max-w-2xl mx-auto">
+            <div className="max-w-2xl mx-auto h-full overflow-y-auto p-1">
                 <h2 className="text-xl font-semibold mb-6">Pagamento e Entrega</h2>
                 <div className="space-y-4">
                      <FormField control={form.control} name="paymentMethod" render={({ field }) => (
@@ -208,7 +208,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
         );
       case 4:
          return (
-            <div className="max-w-2xl mx-auto">
+            <div className="max-w-2xl mx-auto h-full overflow-y-auto p-1">
                 <h2 className="text-xl font-semibold mb-6">Revisar e Finalizar</h2>
                  <div className="space-y-4 rounded-lg border p-4">
                      <h3 className="font-medium">Resumo do Pedido</h3>
@@ -240,16 +240,16 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
             <div className="flex items-center justify-center max-w-2xl mx-auto">
                  {steps.map((step, index) => (
                     <React.Fragment key={step.id}>
-                        <div className="flex flex-col items-center">
+                        <div className="flex flex-col items-center text-center">
                             <div className={cn("w-10 h-10 rounded-full flex items-center justify-center border-2",
                                 currentStep > step.id ? "bg-primary border-primary text-primary-foreground" :
                                 currentStep === step.id ? "border-primary" : "bg-muted-foreground/20 border-muted-foreground/30"
                             )}>
                                 <step.icon className="w-5 h-5"/>
                             </div>
-                            <p className={cn("text-xs mt-1", currentStep >= step.id && "font-semibold")}>{step.name}</p>
+                            <p className={cn("text-xs mt-1 w-16 truncate", currentStep >= step.id && "font-semibold")}>{step.name}</p>
                         </div>
-                        {index < steps.length - 1 && <div className={cn("flex-1 h-0.5 mt-5", currentStep > index + 1 ? "bg-primary" : "bg-muted-foreground/30")} />}
+                        {index < steps.length - 1 && <div className={cn("flex-1 h-0.5 mt-5 mx-2", currentStep > index + 1 ? "bg-primary" : "bg-muted-foreground/30")} />}
                     </React.Fragment>
                 ))}
             </div>
@@ -264,9 +264,9 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
         </main>
         
          <footer className="flex-shrink-0 bg-background border-t p-4">
-            <div className="flex items-center justify-between max-w-6xl mx-auto">
-                 <div>
-                    {currentStep > 1 && <Button type="button" variant="outline" onClick={handlePrevStep}>Voltar</Button>}
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 max-w-6xl mx-auto">
+                 <div className="w-full md:w-auto">
+                    {currentStep > 1 && <Button type="button" variant="outline" onClick={handlePrevStep} className="w-full md:w-auto">Voltar</Button>}
                  </div>
                  <div className="flex items-center gap-4">
                      <span className="font-bold text-lg">{formatCurrency(total)}</span>
