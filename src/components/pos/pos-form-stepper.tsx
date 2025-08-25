@@ -176,7 +176,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
     
     const orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'> = {
         companyId: activeCompany.id,
-        customer: { name: values.customerName, email: values.customerEmail, phone: values.customerPhone, document: values.customerDocument },
+        customer: { name: values.customerName, email: values.customerEmail || '', phone: values.customerPhone, document: values.customerDocument },
         items: cart.map(({imageUrl, ...item}) => item),
         status: 'completed' as OrderStatus,
         payment: { method: values.paymentMethod as PaymentMethod, status: values.paymentStatus, type: 'presencial' },
@@ -224,14 +224,14 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
     <div className="relative bg-muted/40 flex flex-col">
         <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-28">
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="h-full">
+                <form onSubmit={form.handleSubmit(onSubmit)}>
                     
-                    <div style={{ display: currentStep === 1 ? 'block' : 'none' }} className="h-full">
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
-                            <div className="lg:col-span-2 h-full overflow-y-auto pr-2 no-scrollbar">
-                            <ProductGrid products={products} onAddToCart={onAddToCart} />
+                    <div style={{ display: currentStep === 1 ? 'block' : 'none' }}>
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div className="lg:col-span-2">
+                                <ProductGrid products={products} onAddToCart={onAddToCart} />
                             </div>
-                            <div className="lg:col-span-1 h-full flex flex-col bg-background rounded-lg border">
+                            <div className="lg:col-span-1 flex flex-col bg-background rounded-lg border">
                                 <h3 className="p-4 text-lg font-semibold border-b flex-shrink-0 flex items-center gap-2"><ShoppingCart className="h-5 w-5" /> Carrinho</h3>
                                 <div className="flex-1 overflow-y-auto p-4">
                                     {cart.length === 0 ? (
@@ -255,7 +255,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                     </div>
 
                     <div style={{ display: currentStep === 2 ? 'block' : 'none' }}>
-                        <div className="max-w-2xl mx-auto h-full overflow-y-auto p-1">
+                        <div className="max-w-2xl mx-auto p-1">
                             {renderStepHeader("Informações do Cliente")}
                             <div className="space-y-4">
                                 <FormField control={form.control} name="customerName" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.name')}</FormLabel><FormControl><Input placeholder={t('pos.customer.namePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>)}/>
@@ -267,7 +267,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                     </div>
                     
                     <div style={{ display: currentStep === 3 ? 'block' : 'none' }}>
-                        <div className="max-w-2xl mx-auto h-full overflow-y-auto p-1">
+                        <div className="max-w-2xl mx-auto p-1">
                             {renderStepHeader("Pagamento e Entrega")}
                             <div className="space-y-6">
                                 <div>
@@ -321,7 +321,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                     </div>
 
                     <div style={{ display: currentStep === 4 ? 'block' : 'none' }}>
-                         <div className="max-w-3xl mx-auto h-full overflow-y-auto p-1">
+                         <div className="max-w-3xl mx-auto p-1">
                             {renderStepHeader("Revisar e Finalizar")}
                             <div className="space-y-6">
                                 <div className="rounded-lg border p-4 space-y-4">
@@ -436,4 +436,3 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
     </div>
   );
 }
-
