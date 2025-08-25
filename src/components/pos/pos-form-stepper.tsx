@@ -26,8 +26,8 @@ import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   customerName: z.string().min(2, "Nome do cliente é obrigatório."),
-  customerEmail: z.string().email("Email inválido."),
-  customerPhone: z.string().optional(),
+  customerEmail: z.string().email("Email inválido.").optional().or(z.literal('')),
+  customerPhone: z.string().min(1, "Telefone é obrigatório."),
   customerDocument: z.string().optional(),
   paymentMethod: z.enum(["credito", "debito", "pix", "dinheiro", "boleto", "link", "outros"]),
   paymentStatus: z.enum(["aguardando", "aprovado", "recusado", "estornado"]),
@@ -84,7 +84,8 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
   const watchedShippingCost = form.watch('shippingCost', 0);
 
   const subtotal = cart.reduce((acc, item) => acc + item.totalPrice, 0);
-  const total = subtotal - watchedDiscount + watchedShippingCost;
+  const total = subtotal - (Number(watchedDiscount) || 0) + (Number(watchedShippingCost) || 0);
+
 
   const handleNextStep = async () => {
     let fieldsToValidate: (keyof PosFormValues)[] = [];
@@ -93,7 +94,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
         return;
     }
     if (currentStep === 2) {
-        fieldsToValidate = ['customerName', 'customerEmail'];
+        fieldsToValidate = ['customerName', 'customerPhone'];
     }
 
     if (fieldsToValidate.length > 0) {
@@ -159,146 +160,139 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
     </div>
   )
 
-  const renderStepContent = () => {
-    switch (currentStep) {
-      case 1:
-        return (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
-            <div className="lg:col-span-2 h-full overflow-y-auto pr-2 no-scrollbar">
-              <ProductGrid products={products} onAddToCart={onAddToCart} />
-            </div>
-            <div className="lg:col-span-1 h-full flex flex-col bg-background rounded-lg border">
-                 <h3 className="p-4 text-lg font-semibold border-b flex-shrink-0">Carrinho</h3>
-                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                    {cart.length === 0 ? (
-                        <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Selecione produtos para começar.</div>
-                    ) : (
-                        cart.map((item, index) => (
-                          <React.Fragment key={item.productId}>
-                            <CartItem item={item} onUpdateQuantity={onUpdateCartQuantity} onRemove={onRemoveFromCart} />
-                            {index < cart.length - 1 && <Separator className="my-4" />}
-                          </React.Fragment>
-                        ))
-                    )}
-                 </div>
-            </div>
-          </div>
-        );
-      case 2:
-        return (
-             <div className="max-w-2xl mx-auto h-full overflow-y-auto p-1">
-                {renderStepHeader("Informações do Cliente")}
-                <div className="space-y-4">
-                    <FormField control={form.control} name="customerName" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.name')}</FormLabel><FormControl><Input placeholder={t('pos.customer.namePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                    <FormField control={form.control} name="customerEmail" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.email')}</FormLabel><FormControl><Input type="email" placeholder="email@cliente.com" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                    <FormField control={form.control} name="customerPhone" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.phone')}</FormLabel><FormControl><Input placeholder="(00) 00000-0000" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                    <FormField control={form.control} name="customerDocument" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.document')}</FormLabel><FormControl><Input placeholder="CPF ou CNPJ" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                </div>
-            </div>
-        );
-      case 3:
-        return (
-            <div className="max-w-2xl mx-auto h-full overflow-y-auto p-1">
-                {renderStepHeader("Pagamento e Entrega")}
-                <div className="space-y-4">
-                     <FormField control={form.control} name="paymentMethod" render={({ field }) => (
-                        <FormItem><FormLabel>{t('pos.payment.method')}</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>
-                            <SelectItem value="credito">{t('paymentMethods.credit')}</SelectItem>
-                            <SelectItem value="debito">{t('paymentMethods.debit')}</SelectItem>
-                            <SelectItem value="pix">{t('paymentMethods.pix')}</SelectItem>
-                            <SelectItem value="dinheiro">{t('paymentMethods.cash')}</SelectItem>
-                            <SelectItem value="outros">{t('paymentMethods.other')}</SelectItem>
-                        </SelectContent></Select><FormMessage /></FormItem>
-                    )}/>
-                     <FormField control={form.control} name="deliveryMethod" render={({ field }) => (
-                        <FormItem><FormLabel>{t('pos.payment.deliveryMethod')}</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>
-                            <SelectItem value="retirada_loja">{t('deliveryMethods.pickup')}</SelectItem>
-                            <SelectItem value="entrega_padrao">{t('deliveryMethods.standard')}</SelectItem>
-                            <SelectItem value="logistica_propria">{t('deliveryMethods.own')}</SelectItem>
-                        </SelectContent></Select><FormMessage /></FormItem>
-                    )}/>
-                    <FormField control={form.control} name="shippingCost" render={({ field }) => (<FormItem><FormLabel>{t('pos.summary.shippingCost')}</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                    <FormField control={form.control} name="discount" render={({ field }) => (<FormItem><FormLabel>{t('pos.summary.discount')}</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                </div>
-            </div>
-        );
-      case 4:
-         return (
-            <div className="max-w-2xl mx-auto h-full overflow-y-auto p-1">
-                {renderStepHeader("Revisar e Finalizar")}
-                 <div className="space-y-4 rounded-lg border p-4">
-                     <h3 className="font-medium">Resumo do Pedido</h3>
-                     <div className="text-sm space-y-2">
-                        <p><strong>Cliente:</strong> {form.getValues('customerName')}</p>
-                        <p><strong>Itens:</strong> {cart.reduce((sum, item) => sum + item.quantity, 0)}</p>
-                        <p><strong>Pagamento:</strong> {form.getValues('paymentMethod')}</p>
-                        <Separator/>
-                        <div className="flex justify-between"><span>Subtotal:</span> <span>{formatCurrency(subtotal)}</span></div>
-                        <div className="flex justify-between"><span>Desconto:</span> <span className="text-destructive">- {formatCurrency(watchedDiscount)}</span></div>
-                        <div className="flex justify-between"><span>Frete:</span> <span>{formatCurrency(watchedShippingCost)}</span></div>
-                        <Separator/>
-                        <div className="flex justify-between font-bold text-lg"><span>Total:</span> <span>{formatCurrency(total)}</span></div>
-                    </div>
-                    <FormField control={form.control} name="notes" render={({ field }) => (
-                        <FormItem><FormLabel>Observações (opcional)</FormLabel><FormControl><Textarea placeholder="Alguma observação sobre o pedido..." {...field} /></FormControl><FormMessage /></FormItem>
-                    )}/>
-                 </div>
-            </div>
-         );
-      default:
-        return null;
-    }
-  };
-
   return (
     <div className="relative bg-muted/40 flex flex-col h-screen">
         <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-28">
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="h-full">
-                    {renderStepContent()}
+                    
+                    <div style={{ display: currentStep === 1 ? 'block' : 'none' }} className="h-full">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+                            <div className="lg:col-span-2 h-full overflow-y-auto pr-2 no-scrollbar">
+                            <ProductGrid products={products} onAddToCart={onAddToCart} />
+                            </div>
+                            <div className="lg:col-span-1 h-full flex flex-col bg-background rounded-lg border">
+                                <h3 className="p-4 text-lg font-semibold border-b flex-shrink-0">Carrinho</h3>
+                                <div className="flex-1 overflow-y-auto p-4">
+                                    {cart.length === 0 ? (
+                                        <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Selecione produtos para começar.</div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {cart.map((item, index) => (
+                                                <React.Fragment key={item.productId}>
+                                                    <CartItem item={item} onUpdateQuantity={onUpdateCartQuantity} onRemove={onRemoveFromCart} />
+                                                    {index < cart.length - 1 && <Separator />}
+                                                </React.Fragment>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style={{ display: currentStep === 2 ? 'block' : 'none' }}>
+                        <div className="max-w-2xl mx-auto h-full overflow-y-auto p-1">
+                            {renderStepHeader("Informações do Cliente")}
+                            <div className="space-y-4">
+                                <FormField control={form.control} name="customerName" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.name')}</FormLabel><FormControl><Input placeholder={t('pos.customer.namePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                <FormField control={form.control} name="customerPhone" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.phone')}</FormLabel><FormControl><Input placeholder="(00) 00000-0000" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                <FormField control={form.control} name="customerEmail" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.email')} (Opcional)</FormLabel><FormControl><Input type="email" placeholder="email@cliente.com" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                <FormField control={form.control} name="customerDocument" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.document')} (Opcional)</FormLabel><FormControl><Input placeholder="CPF ou CNPJ" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style={{ display: currentStep === 3 ? 'block' : 'none' }}>
+                        <div className="max-w-2xl mx-auto h-full overflow-y-auto p-1">
+                            {renderStepHeader("Pagamento e Entrega")}
+                            <div className="space-y-4">
+                                <FormField control={form.control} name="paymentMethod" render={({ field }) => (
+                                    <FormItem><FormLabel>{t('pos.payment.method')}</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>
+                                        <SelectItem value="credito">{t('paymentMethods.credit')}</SelectItem>
+                                        <SelectItem value="debito">{t('paymentMethods.debit')}</SelectItem>
+                                        <SelectItem value="pix">{t('paymentMethods.pix')}</SelectItem>
+                                        <SelectItem value="dinheiro">{t('paymentMethods.cash')}</SelectItem>
+                                        <SelectItem value="outros">{t('paymentMethods.other')}</SelectItem>
+                                    </SelectContent></Select><FormMessage /></FormItem>
+                                )}/>
+                                <FormField control={form.control} name="deliveryMethod" render={({ field }) => (
+                                    <FormItem><FormLabel>{t('pos.payment.deliveryMethod')}</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>
+                                        <SelectItem value="retirada_loja">{t('deliveryMethods.pickup')}</SelectItem>
+                                        <SelectItem value="entrega_padrao">{t('deliveryMethods.standard')}</SelectItem>
+                                        <SelectItem value="logistica_propria">{t('deliveryMethods.own')}</SelectItem>
+                                    </SelectContent></Select><FormMessage /></FormItem>
+                                )}/>
+                                <FormField control={form.control} name="shippingCost" render={({ field }) => (<FormItem><FormLabel>{t('pos.summary.shippingCost')}</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                <FormField control={form.control} name="discount" render={({ field }) => (<FormItem><FormLabel>{t('pos.summary.discount')}</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style={{ display: currentStep === 4 ? 'block' : 'none' }}>
+                         <div className="max-w-2xl mx-auto h-full overflow-y-auto p-1">
+                            {renderStepHeader("Revisar e Finalizar")}
+                            <div className="space-y-4 rounded-lg border p-4">
+                                <h3 className="font-medium">Resumo do Pedido</h3>
+                                <div className="text-sm space-y-2">
+                                    <p><strong>Cliente:</strong> {form.getValues('customerName')}</p>
+                                    <p><strong>Itens:</strong> {cart.reduce((sum, item) => sum + item.quantity, 0)}</p>
+                                    <p><strong>Pagamento:</strong> {form.getValues('paymentMethod')}</p>
+                                    <Separator/>
+                                    <div className="flex justify-between"><span>Subtotal:</span> <span>{formatCurrency(subtotal)}</span></div>
+                                    <div className="flex justify-between"><span>Desconto:</span> <span className="text-destructive">- {formatCurrency(Number(watchedDiscount))}</span></div>
+                                    <div className="flex justify-between"><span>Frete:</span> <span>{formatCurrency(Number(watchedShippingCost))}</span></div>
+                                    <Separator/>
+                                    <div className="flex justify-between font-bold text-lg"><span>Total:</span> <span>{formatCurrency(total)}</span></div>
+                                </div>
+                                <FormField control={form.control} name="notes" render={({ field }) => (
+                                    <FormItem><FormLabel>Observações (opcional)</FormLabel><FormControl><Textarea placeholder="Alguma observação sobre o pedido..." {...field} /></FormControl><FormMessage /></FormItem>
+                                )}/>
+                            </div>
+                        </div>
+                    </div>
                 </form>
             </Form>
         </main>
         
         <footer className="fixed bottom-0 left-0 right-0 z-10 border-t bg-background/80 backdrop-blur-sm p-4">
              <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4">
-                {/* Lado Esquerdo - Indicadores de Etapa */}
                 <div className="flex items-center gap-1 sm:gap-2">
-                     <div className="flex items-center gap-1 sm:gap-2">
-                        {steps.map((step, index) => (
-                            <React.Fragment key={step.id}>
-                                <div className="flex flex-col items-center text-center">
-                                    <div
-                                        className={cn(
-                                            'flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all',
-                                            'sm:h-10 sm:w-10',
-                                            currentStep > step.id
-                                                ? 'border-primary bg-primary text-primary-foreground'
-                                                : currentStep === step.id
-                                                ? 'border-primary'
-                                                : 'border-muted-foreground/30 bg-muted-foreground/20 text-muted-foreground'
-                                        )}
-                                    >
-                                        <step.icon className="h-4 w-4 sm:h-5 sm:w-5" />
-                                    </div>
-                                    <p className={cn(
-                                        'mt-1 w-16 truncate text-xs transition-colors hidden sm:block', 
-                                        currentStep >= step.id ? 'font-semibold text-foreground' : 'text-muted-foreground'
-                                    )}>
-                                        {step.name}
-                                    </p>
+                    <div className="flex items-center gap-1 sm:gap-2">
+                    {steps.map((step, index) => (
+                        <React.Fragment key={step.id}>
+                            <div className="flex flex-col items-center text-center">
+                                <div
+                                    className={cn(
+                                        'flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all',
+                                        'sm:h-10 sm:w-10',
+                                        currentStep > step.id
+                                            ? 'border-primary bg-primary text-primary-foreground'
+                                            : currentStep === step.id
+                                            ? 'border-primary'
+                                            : 'border-muted-foreground/30 bg-muted-foreground/20 text-muted-foreground'
+                                    )}
+                                >
+                                    <step.icon className="h-4 w-4 sm:h-5 sm:w-5" />
                                 </div>
-                                {index < steps.length - 1 && (
-                                    <div
-                                        className={cn(
-                                            'mt-[-1.5rem] h-0.5 w-4 flex-1 sm:w-12 transition-colors',
-                                            'hidden sm:block',
-                                            currentStep > index + 1 ? 'bg-primary' : 'bg-muted-foreground/30'
-                                        )}
-                                    />
-                                )}
-                            </React.Fragment>
-                        ))}
+                                <p className={cn(
+                                    'mt-1 w-16 truncate text-xs transition-colors hidden sm:block', 
+                                    currentStep >= step.id ? 'font-semibold text-foreground' : 'text-muted-foreground'
+                                )}>
+                                    {step.name}
+                                </p>
+                            </div>
+                            {index < steps.length - 1 && (
+                                <div
+                                    className={cn(
+                                        'mt-[-1.5rem] h-0.5 w-4 flex-1 sm:w-12 transition-colors',
+                                        'hidden sm:block',
+                                        currentStep > index + 1 ? 'bg-primary' : 'bg-muted-foreground/30'
+                                    )}
+                                />
+                            )}
+                        </React.Fragment>
+                    ))}
                     </div>
                 </div>
 
