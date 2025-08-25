@@ -29,12 +29,18 @@ const formSchema = z.object({
   customerEmail: z.string().email("Email inválido.").optional().or(z.literal('')),
   customerPhone: z.string().min(1, "Telefone é obrigatório."),
   customerDocument: z.string().optional(),
+  
   paymentMethod: z.enum(["credito", "debito", "pix", "dinheiro", "boleto", "link", "outros"]),
+  paymentType: z.enum(["presencial", "online"]),
   paymentStatus: z.enum(["aguardando", "aprovado", "recusado", "estornado"]),
+  
   deliveryMethod: z.enum(["retirada_loja", "entrega_padrao", "correios", "logistica_propria", "digital"]),
+  
   shippingCost: z.preprocess((a) => parseFloat(String(a || "0").replace(",", ".")), z.number().min(0)),
+  additionalFees: z.preprocess((a) => parseFloat(String(a || "0").replace(",", ".")), z.number().min(0)),
   discount: z.preprocess((a) => parseFloat(String(a || "0").replace(",", ".")), z.number().min(0)),
   notes: z.string().optional(),
+
   address: z.object({
     street: z.string().optional(),
     number: z.string().optional(),
@@ -76,6 +82,7 @@ type PosFormStepperProps = {
   cart: OrderItem[];
   onAddToCart: (product: Product) => void;
   onUpdateCartQuantity: (productId: string, quantity: number) => void;
+  onUpdateCartPrice: (productId: string, newPrice: number) => void;
   onRemoveFromCart: (productId: string) => void;
   onClearCart: () => void;
 };
@@ -87,7 +94,7 @@ const steps = [
   { id: 4, name: "Finalizar", icon: Truck },
 ];
 
-export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuantity, onRemoveFromCart, onClearCart }: PosFormStepperProps) {
+export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuantity, onUpdateCartPrice, onRemoveFromCart, onClearCart }: PosFormStepperProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { activeCompany } = useCompany();
@@ -104,9 +111,11 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
       customerPhone: "",
       customerDocument: "",
       paymentMethod: "credito",
+      paymentType: "presencial",
       paymentStatus: "aprovado",
       deliveryMethod: "retirada_loja",
       shippingCost: 0,
+      additionalFees: 0,
       discount: 0,
       notes: "",
       address: {
@@ -124,10 +133,11 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
 
   const watchedDiscount = form.watch('discount', 0);
   const watchedShippingCost = form.watch('shippingCost', 0);
+  const watchedAdditionalFees = form.watch('additionalFees', 0);
   const deliveryMethod = form.watch('deliveryMethod');
 
   const subtotal = cart.reduce((acc, item) => acc + item.totalPrice, 0);
-  const total = subtotal - (Number(watchedDiscount) || 0) + (Number(watchedShippingCost) || 0);
+  const total = subtotal - (Number(watchedDiscount) || 0) + (Number(watchedShippingCost) || 0) + (Number(watchedAdditionalFees) || 0);
 
 
   const handleNextStep = async () => {
@@ -179,7 +189,11 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
         customer: { name: values.customerName, email: values.customerEmail || '', phone: values.customerPhone, document: values.customerDocument },
         items: cart.map(({imageUrl, ...item}) => item),
         status: 'completed' as OrderStatus,
-        payment: { method: values.paymentMethod as PaymentMethod, status: values.paymentStatus, type: 'presencial' },
+        payment: { 
+            method: values.paymentMethod as PaymentMethod, 
+            status: values.paymentStatus, 
+            type: values.paymentType 
+        },
         shipping: { 
             method: values.deliveryMethod as DeliveryMethod, 
             cost: values.shippingCost, 
@@ -189,6 +203,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
         subtotal,
         discount: values.discount,
         shippingCost: values.shippingCost,
+        taxas: values.additionalFees,
         total,
         notes: values.notes,
     };
@@ -224,7 +239,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
     <div className="relative bg-muted/40 flex flex-col">
         <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-28">
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)}>
+                <form>
                     
                     <div style={{ display: currentStep === 1 ? 'block' : 'none' }}>
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -243,7 +258,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                                         <div className="space-y-4">
                                             {cart.map((item, index) => (
                                                 <React.Fragment key={item.productId}>
-                                                    <CartItem item={item} onUpdateQuantity={onUpdateCartQuantity} onRemove={onRemoveFromCart} />
+                                                    <CartItem item={item} onUpdateQuantity={onUpdateCartQuantity} onUpdatePrice={onUpdateCartPrice} onRemove={onRemoveFromCart} />
                                                     {index < cart.length - 1 && <Separator />}
                                                 </React.Fragment>
                                             ))}
@@ -267,11 +282,11 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                     </div>
                     
                     <div style={{ display: currentStep === 3 ? 'block' : 'none' }}>
-                        <div className="max-w-2xl mx-auto p-1">
+                        <div className="max-w-4xl mx-auto p-1">
                             {renderStepHeader("Pagamento e Entrega")}
-                            <div className="space-y-6">
-                                <div>
-                                    <h3 className="text-lg font-medium mb-4">Pagamento</h3>
+                            <div className="grid md:grid-cols-2 gap-8">
+                                <div className="space-y-6">
+                                    <h3 className="text-lg font-medium">Pagamento</h3>
                                     <div className="space-y-4">
                                         <FormField control={form.control} name="paymentMethod" render={({ field }) => (
                                             <FormItem><FormLabel>{t('pos.payment.method')}</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>
@@ -282,12 +297,18 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                                                 <SelectItem value="outros">{t('paymentMethods.other')}</SelectItem>
                                             </SelectContent></Select><FormMessage /></FormItem>
                                         )}/>
+                                         <FormField control={form.control} name="paymentType" render={({ field }) => (
+                                            <FormItem><FormLabel>Tipo de Pagamento</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>
+                                                <SelectItem value="presencial">Presencial</SelectItem>
+                                                <SelectItem value="online">Online</SelectItem>
+                                            </SelectContent></Select><FormMessage /></FormItem>
+                                        )}/>
+                                         <FormField control={form.control} name="additionalFees" render={({ field }) => (<FormItem><FormLabel>Taxas Adicionais (ex: máq. cartão)</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                                          <FormField control={form.control} name="discount" render={({ field }) => (<FormItem><FormLabel>{t('pos.summary.discount')}</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                                     </div>
                                 </div>
-                                <Separator />
-                                <div>
-                                    <h3 className="text-lg font-medium mb-4">Entrega</h3>
+                                <div className="space-y-6">
+                                    <h3 className="text-lg font-medium">Entrega</h3>
                                     <div className="space-y-4">
                                         <FormField control={form.control} name="deliveryMethod" render={({ field }) => (
                                             <FormItem><FormLabel>{t('pos.payment.deliveryMethod')}</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>
@@ -360,8 +381,9 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                                     <h3 className="font-semibold text-lg mb-2">Resumo Financeiro</h3>
                                     <div className="text-sm space-y-1">
                                         <div className="flex justify-between"><span>Subtotal:</span> <span>{formatCurrency(subtotal)}</span></div>
-                                        <div className="flex justify-between"><span>Desconto:</span> <span className="text-destructive">- {formatCurrency(Number(watchedDiscount))}</span></div>
+                                        <div className="flex justify-between"><span>Taxas Adicionais:</span> <span>{formatCurrency(Number(watchedAdditionalFees))}</span></div>
                                         <div className="flex justify-between"><span>Frete:</span> <span>{formatCurrency(Number(watchedShippingCost))}</span></div>
+                                        <div className="flex justify-between text-destructive"><span>Desconto:</span> <span>- {formatCurrency(Number(watchedDiscount))}</span></div>
                                         <Separator className="my-2"/>
                                         <div className="flex justify-between font-bold text-lg"><span>Total:</span> <span>{formatCurrency(total)}</span></div>
                                     </div>
@@ -436,4 +458,3 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
     </div>
   );
 }
-

@@ -11,10 +11,11 @@ import { useCurrency } from "@/context/currency-context";
 type CartItemProps = {
     item: OrderItem;
     onUpdateQuantity: (productId: string, quantity: number) => void;
+    onUpdatePrice: (productId: string, newPrice: number) => void;
     onRemove: (productId: string) => void;
 };
 
-export function CartItem({ item, onUpdateQuantity, onRemove }: CartItemProps) {
+export function CartItem({ item, onUpdateQuantity, onUpdatePrice, onRemove }: CartItemProps) {
     const { formatCurrency } = useCurrency();
 
     return (
@@ -55,6 +56,16 @@ export function CartItem({ item, onUpdateQuantity, onRemove }: CartItemProps) {
                     </Button>
                 </div>
                  <div className="mt-2 flex items-center justify-between">
+                    <div className="relative">
+                       <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">R$</span>
+                       <Input
+                            type="number"
+                            step="0.01"
+                            className="h-8 w-28 pl-7 font-bold text-sm"
+                            value={item.unitPrice.toFixed(2)}
+                            onChange={(e) => onUpdatePrice(item.productId, parseFloat(e.target.value) || 0)}
+                        />
+                    </div>
                     <p className="font-bold text-sm">{formatCurrency(item.totalPrice)}</p>
                     <Button
                         type="button"

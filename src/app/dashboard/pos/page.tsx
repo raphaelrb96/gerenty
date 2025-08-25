@@ -6,14 +6,12 @@ import { useAuth } from "@/context/auth-context";
 import { getProducts } from "@/services/product-service";
 import type { Product, OrderItem } from "@/lib/types";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
-import { useTranslation } from "@/context/i18n-context";
 import { useCompany } from "@/context/company-context";
 import { EmptyState } from "@/components/common/empty-state";
 import { Package } from "lucide-react";
 import { PosFormStepper } from "@/components/pos/pos-form-stepper";
 
 export default function PosPage() {
-  const { t } = useTranslation();
   const { user } = useAuth();
   const { activeCompany } = useCompany();
   const [products, setProducts] = useState<Product[]>([]);
@@ -87,6 +85,16 @@ export default function PosPage() {
     );
   };
 
+  const handleUpdatePrice = (productId: string, newPrice: number) => {
+      setCart(
+          cart.map((item) =>
+              item.productId === productId
+              ? { ...item, unitPrice: newPrice, totalPrice: newPrice * item.quantity }
+              : item
+          )
+      )
+  }
+
   const handleRemoveFromCart = (productId: string) => {
     setCart(cart.filter((item) => item.productId !== productId));
   };
@@ -98,7 +106,7 @@ export default function PosPage() {
 
   if (!activeCompany) {
     return (
-      <div className="flex items-center justify-center h-screen p-6">
+      <div className="flex items-center justify-center h-full p-6">
         <EmptyState
           icon={<Package className="h-16 w-16" />}
           title="Nenhuma Empresa Selecionada"
@@ -114,6 +122,7 @@ export default function PosPage() {
       cart={cart}
       onAddToCart={handleAddToCart}
       onUpdateCartQuantity={handleUpdateQuantity}
+      onUpdateCartPrice={handleUpdatePrice}
       onRemoveFromCart={handleRemoveFromCart}
       onClearCart={() => setCart([])}
     />
