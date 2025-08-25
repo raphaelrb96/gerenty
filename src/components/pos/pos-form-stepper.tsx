@@ -235,7 +235,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
   };
 
   return (
-    <div className="flex flex-col h-screen bg-muted">
+    <div className="flex flex-col bg-muted">
         <header className="flex-shrink-0 bg-background border-b p-4">
             <div className="flex items-center justify-center max-w-2xl mx-auto">
                  {steps.map((step, index) => (
@@ -263,7 +263,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
             </Form>
         </main>
         
-         <footer className="flex-shrink-0 bg-background border-t p-4">
+         <footer className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 w-full">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4 max-w-6xl mx-auto">
                  <div className="w-full md:w-auto">
                     {currentStep > 1 && <Button type="button" variant="outline" onClick={handlePrevStep} className="w-full md:w-auto">Voltar</Button>}
