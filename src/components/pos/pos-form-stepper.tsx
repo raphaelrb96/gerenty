@@ -173,7 +173,12 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                     {cart.length === 0 ? (
                         <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Selecione produtos para começar.</div>
                     ) : (
-                        cart.map(item => <CartItem key={item.productId} item={item} onUpdateQuantity={onUpdateCartQuantity} onRemove={onRemoveFromCart} />)
+                        cart.map((item, index) => (
+                          <React.Fragment key={item.productId}>
+                            <CartItem item={item} onUpdateQuantity={onUpdateCartQuantity} onRemove={onRemoveFromCart} />
+                            {index < cart.length - 1 && <Separator className="my-4" />}
+                          </React.Fragment>
+                        ))
                     )}
                  </div>
             </div>
@@ -298,6 +303,11 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                 </div>
 
                  <div className="flex items-center justify-end gap-2 sm:gap-4">
+                    {currentStep > 1 && (
+                        <Button type="button" variant="outline" onClick={handlePrevStep}>
+                            Voltar
+                        </Button>
+                    )}
                     <span className="text-md sm:text-lg font-bold">{formatCurrency(total)}</span>
                     {currentStep < steps.length ? (
                         <Button type="button" onClick={handleNextStep}>
@@ -315,5 +325,3 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
     </div>
   );
 }
-
-    
