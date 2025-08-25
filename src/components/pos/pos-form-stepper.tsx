@@ -235,8 +235,8 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
   };
 
   return (
-    <div className="flex flex-col h-screen bg-muted">
-        <main className="flex-1 p-4 md:p-6 overflow-y-hidden">
+    <div className="relative bg-muted h-screen">
+        <main className="p-4 md:p-6 overflow-y-auto h-full pb-24">
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="h-full">
                     {renderStepContent()}
@@ -244,13 +244,13 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
             </Form>
         </main>
         
-         <footer className="flex-shrink-0 bg-background border-t p-4 w-full">
+         <footer className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 w-full">
             <div className="flex items-center justify-between gap-4 max-w-6xl mx-auto">
                  <div className="w-full md:w-auto">
                     {currentStep > 1 && <Button type="button" variant="outline" onClick={handlePrevStep} className="w-full md:w-auto">Voltar</Button>}
                  </div>
 
-                 <div className="hidden md:flex items-center justify-center">
+                 <div className="hidden md:flex items-center justify-center gap-2">
                     {steps.map((step, index) => (
                         <React.Fragment key={step.id}>
                             <div className="flex flex-col items-center text-center">
@@ -262,7 +262,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                                 </div>
                                 <p className={cn("text-xs mt-1 w-16 truncate", currentStep >= step.id && "font-semibold")}>{step.name}</p>
                             </div>
-                            {index < steps.length - 1 && <div className={cn("flex-1 h-0.5 mt-4 mx-2 w-8 sm:w-16", currentStep > index + 1 ? "bg-primary" : "bg-muted-foreground/30")} />}
+                            {index < steps.length - 1 && <div className={cn("flex-1 h-0.5 mt-[-1rem] mx-2 w-8 sm:w-12", currentStep > index + 1 ? "bg-primary" : "bg-muted-foreground/30")} />}
                         </React.Fragment>
                     ))}
                 </div>
