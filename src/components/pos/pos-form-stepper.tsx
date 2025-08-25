@@ -202,7 +202,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                         </SelectContent></Select><FormMessage /></FormItem>
                     )}/>
                     <FormField control={form.control} name="shippingCost" render={({ field }) => (<FormItem><FormLabel>{t('pos.summary.shippingCost')}</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                    <FormField control={form.control} name="discount" render={({ field }) => (<FormItem><FormLabel>{t('pos.summary.discount')}</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormMessage>)}/>
+                    <FormField control={form.control} name="discount" render={({ field }) => (<FormItem><FormLabel>{t('pos.summary.discount')}</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                 </div>
             </div>
         );
@@ -235,8 +235,8 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
   };
 
   return (
-    <div className="relative bg-muted h-screen w-full flex flex-col">
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-24">
+    <div className="relative bg-muted/40 flex flex-col h-screen">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-28">
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="h-full">
                     {renderStepContent()}
@@ -248,43 +248,45 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
              <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4">
                 {/* Lado Esquerdo - Indicadores de Etapa */}
                 <div className="flex items-center gap-1 sm:gap-2">
-                    {steps.map((step, index) => (
-                        <React.Fragment key={step.id}>
-                            <div className="flex flex-col items-center text-center">
-                                <div
-                                    className={cn(
-                                        'flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all',
-                                        currentStep > step.id
-                                            ? 'border-primary bg-primary text-primary-foreground'
-                                            : currentStep === step.id
-                                            ? 'border-primary'
-                                            : 'border-muted-foreground/30 bg-muted-foreground/20 text-muted-foreground'
-                                    )}
-                                >
-                                    <step.icon className="h-4 w-4" />
+                     <div className="flex items-center gap-1 sm:gap-2">
+                        {steps.map((step, index) => (
+                            <React.Fragment key={step.id}>
+                                <div className="flex flex-col items-center text-center">
+                                    <div
+                                        className={cn(
+                                            'flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all',
+                                            'sm:h-10 sm:w-10',
+                                            currentStep > step.id
+                                                ? 'border-primary bg-primary text-primary-foreground'
+                                                : currentStep === step.id
+                                                ? 'border-primary'
+                                                : 'border-muted-foreground/30 bg-muted-foreground/20 text-muted-foreground'
+                                        )}
+                                    >
+                                        <step.icon className="h-4 w-4 sm:h-5 sm:w-5" />
+                                    </div>
+                                    <p className={cn(
+                                        'mt-1 w-16 truncate text-xs transition-colors hidden sm:block', 
+                                        currentStep >= step.id ? 'font-semibold text-foreground' : 'text-muted-foreground'
+                                    )}>
+                                        {step.name}
+                                    </p>
                                 </div>
-                                <p className={cn(
-                                    'mt-1 w-16 truncate text-xs transition-colors hidden sm:block', 
-                                    currentStep >= step.id ? 'font-semibold text-foreground' : 'text-muted-foreground'
-                                )}>
-                                    {step.name}
-                                </p>
-                            </div>
-                            {index < steps.length - 1 && (
-                                <div
-                                    className={cn(
-                                        'mt-[-1.5rem] h-0.5 w-4 flex-1 sm:w-12 transition-colors',
-                                        'hidden sm:block',
-                                        currentStep > index + 1 ? 'bg-primary' : 'bg-muted-foreground/30'
-                                    )}
-                                />
-                            )}
-                        </React.Fragment>
-                    ))}
+                                {index < steps.length - 1 && (
+                                    <div
+                                        className={cn(
+                                            'mt-[-1.5rem] h-0.5 w-4 flex-1 sm:w-12 transition-colors',
+                                            'hidden sm:block',
+                                            currentStep > index + 1 ? 'bg-primary' : 'bg-muted-foreground/30'
+                                        )}
+                                    />
+                                )}
+                            </React.Fragment>
+                        ))}
+                    </div>
                 </div>
 
-                {/* Lado Direito - Ações */}
-                <div className="flex items-center justify-end gap-2 sm:gap-4">
+                 <div className="flex items-center justify-end gap-2 sm:gap-4">
                      {currentStep > 1 && (
                         <Button type="button" variant="outline" onClick={handlePrevStep} className="hidden sm:inline-flex">
                             Voltar
