@@ -235,8 +235,8 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
   };
 
   return (
-    <div className="relative bg-muted h-screen">
-        <main className="p-4 md:p-6 h-full pb-24">
+    <div className="relative bg-muted h-screen flex flex-col">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-28">
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="h-full">
                     {renderStepContent()}
@@ -244,7 +244,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
             </Form>
         </main>
         
-        <footer className="fixed bottom-0 left-0 right-0 w-full border-t bg-background p-4">
+        <footer className="fixed bottom-0 left-0 right-0 w-full border-t bg-background p-4 shadow-t-lg">
             <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4">
                 <div className="flex w-1/3 justify-start">
                     {currentStep > 1 && (
@@ -254,13 +254,13 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                     )}
                 </div>
 
-                <div className="hidden w-1/3 items-center justify-center gap-2 md:flex">
+                 <div className="flex w-1/3 items-center justify-center gap-1 sm:gap-2">
                     {steps.map((step, index) => (
                         <React.Fragment key={step.id}>
                             <div className="flex flex-col items-center text-center">
                                 <div
                                     className={cn(
-                                        'flex h-8 w-8 items-center justify-center rounded-full border-2',
+                                        'flex h-6 w-6 sm:h-8 sm:w-8 items-center justify-center rounded-full border-2',
                                         currentStep > step.id
                                             ? 'border-primary bg-primary text-primary-foreground'
                                             : currentStep === step.id
@@ -268,16 +268,19 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                                             : 'border-muted-foreground/30 bg-muted-foreground/20'
                                     )}
                                 >
-                                    <step.icon className="h-4 w-4" />
+                                    <step.icon className="h-3 w-3 sm:h-4 sm:w-4" />
                                 </div>
-                                <p className={cn('mt-1 w-16 truncate text-xs', currentStep >= step.id && 'font-semibold')}>
+                                <p className={cn(
+                                    'mt-1 w-16 truncate text-xs hidden sm:block', 
+                                    currentStep >= step.id && 'font-semibold'
+                                )}>
                                     {step.name}
                                 </p>
                             </div>
                             {index < steps.length - 1 && (
                                 <div
                                     className={cn(
-                                        'mt-[-1rem] h-0.5 w-8 flex-1 sm:w-12',
+                                        'mt-[-1rem] h-0.5 w-4 flex-1 sm:w-12',
                                         currentStep > index + 1 ? 'bg-primary' : 'bg-muted-foreground/30'
                                     )}
                                 />
@@ -286,8 +289,8 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                     ))}
                 </div>
 
-                <div className="flex w-1/3 items-center justify-end gap-4">
-                    <span className="text-lg font-bold">{formatCurrency(total)}</span>
+                <div className="flex w-1/3 items-center justify-end gap-2 sm:gap-4">
+                    <span className="text-md sm:text-lg font-bold">{formatCurrency(total)}</span>
                     {currentStep < steps.length ? (
                         <Button type="button" onClick={handleNextStep}>
                             Avançar
