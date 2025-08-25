@@ -202,7 +202,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                         </SelectContent></Select><FormMessage /></FormItem>
                     )}/>
                     <FormField control={form.control} name="shippingCost" render={({ field }) => (<FormItem><FormLabel>{t('pos.summary.shippingCost')}</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                    <FormField control={form.control} name="discount" render={({ field }) => (<FormItem><FormLabel>{t('pos.summary.discount')}</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                    <FormField control={form.control} name="discount" render={({ field }) => (<FormItem><FormLabel>{t('pos.summary.discount')}</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormMessage>)}/>
                 </div>
             </div>
         );
@@ -235,8 +235,8 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
   };
 
   return (
-    <div className="relative bg-muted h-screen flex flex-col">
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-28">
+    <div className="relative bg-muted h-screen w-full flex flex-col">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-24">
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="h-full">
                     {renderStepContent()}
@@ -244,35 +244,28 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
             </Form>
         </main>
         
-        <footer className="fixed bottom-0 left-0 right-0 w-full border-t bg-background p-4 shadow-t-lg">
-            <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4">
-                <div className="flex w-1/3 justify-start">
-                    {currentStep > 1 && (
-                        <Button type="button" variant="outline" onClick={handlePrevStep} className="w-full md:w-auto">
-                            Voltar
-                        </Button>
-                    )}
-                </div>
-
-                 <div className="flex w-1/3 items-center justify-center gap-1 sm:gap-2">
+        <footer className="fixed bottom-0 left-0 right-0 z-10 border-t bg-background/80 backdrop-blur-sm p-4">
+             <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4">
+                {/* Lado Esquerdo - Indicadores de Etapa */}
+                <div className="flex items-center gap-1 sm:gap-2">
                     {steps.map((step, index) => (
                         <React.Fragment key={step.id}>
                             <div className="flex flex-col items-center text-center">
                                 <div
                                     className={cn(
-                                        'flex h-6 w-6 sm:h-8 sm:w-8 items-center justify-center rounded-full border-2',
+                                        'flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all',
                                         currentStep > step.id
                                             ? 'border-primary bg-primary text-primary-foreground'
                                             : currentStep === step.id
                                             ? 'border-primary'
-                                            : 'border-muted-foreground/30 bg-muted-foreground/20'
+                                            : 'border-muted-foreground/30 bg-muted-foreground/20 text-muted-foreground'
                                     )}
                                 >
-                                    <step.icon className="h-3 w-3 sm:h-4 sm:w-4" />
+                                    <step.icon className="h-4 w-4" />
                                 </div>
                                 <p className={cn(
-                                    'mt-1 w-16 truncate text-xs hidden sm:block', 
-                                    currentStep >= step.id && 'font-semibold'
+                                    'mt-1 w-16 truncate text-xs transition-colors hidden sm:block', 
+                                    currentStep >= step.id ? 'font-semibold text-foreground' : 'text-muted-foreground'
                                 )}>
                                     {step.name}
                                 </p>
@@ -280,7 +273,8 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                             {index < steps.length - 1 && (
                                 <div
                                     className={cn(
-                                        'mt-[-1rem] h-0.5 w-4 flex-1 sm:w-12',
+                                        'mt-[-1.5rem] h-0.5 w-4 flex-1 sm:w-12 transition-colors',
+                                        'hidden sm:block',
                                         currentStep > index + 1 ? 'bg-primary' : 'bg-muted-foreground/30'
                                     )}
                                 />
@@ -289,7 +283,13 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                     ))}
                 </div>
 
-                <div className="flex w-1/3 items-center justify-end gap-2 sm:gap-4">
+                {/* Lado Direito - Ações */}
+                <div className="flex items-center justify-end gap-2 sm:gap-4">
+                     {currentStep > 1 && (
+                        <Button type="button" variant="outline" onClick={handlePrevStep} className="hidden sm:inline-flex">
+                            Voltar
+                        </Button>
+                    )}
                     <span className="text-md sm:text-lg font-bold">{formatCurrency(total)}</span>
                     {currentStep < steps.length ? (
                         <Button type="button" onClick={handleNextStep}>
