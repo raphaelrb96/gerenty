@@ -40,9 +40,12 @@ export type User = {
 export type Product = {
   // Identificador único do produto (por exemplo, SKU, ID interno)
   id: string;
+  
+  // ID do usuário dono do produto
+  ownerId: string;
 
-  // IDs das empresas às quais o produto pertence
-  companyIds: string[];
+  // IDs das empresas às quais o produto pertence (opcional)
+  companyIds?: string[];
 
   // Nome do produto, ex: "Camiseta Preta Básica"
   name: string;
@@ -177,7 +180,7 @@ export type ProductAttribute = {
 // Tipo auxiliar para categorizar produtos com estrutura de ID e nome
 export type ProductCategory = {
   id: string;     // ID único da categoria
-  companyId: string; // ID da empresa à qual pertence
+  ownerId: string; // ID do usuário dono da categoria
   name: string;   // Nome visível da categoria (ex: "Roupas", "Calçados")
   slug: string;   // Slug gerado para URL (ex: "roupas-masculinas", "calçados-femininos")
   emoji?: string;  // Emoji ou ícone representativo da categoria
@@ -524,11 +527,3 @@ export type Company = {
   createdAt:  string | Date | Timestamp | FieldValue;
   updatedAt?:  string | Date | Timestamp | FieldValue; // Data da última atualização
 };
-
-
-
-
-
-    
-
-    

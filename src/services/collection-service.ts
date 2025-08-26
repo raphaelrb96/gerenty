@@ -9,7 +9,7 @@ import { collection, getDocs, query, where, addDoc, serverTimestamp, doc, getDoc
 export type ProductCollection = {
     id: string;
     name: string;
-    companyId: string;
+    ownerId: string;
     slug?: string;
     description?: string;
     createdAt?: string;
@@ -18,10 +18,10 @@ export type ProductCollection = {
 
 const collectionsCollection = collection(db, "collections");
 
-// Get all collections for a specific company
-export async function getCollectionsByCompany(companyId: string): Promise<ProductCollection[]> {
+// Get all collections for a specific user
+export async function getCollectionsByUser(ownerId: string): Promise<ProductCollection[]> {
     try {
-        const q = query(collectionsCollection, where("companyId", "==", companyId));
+        const q = query(collectionsCollection, where("ownerId", "==", ownerId));
         const querySnapshot = await getDocs(q);
         const collections: ProductCollection[] = [];
         querySnapshot.forEach((doc) => {

@@ -2,8 +2,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useCompany } from "@/context/company-context";
-import { getCollectionsByCompany } from "@/services/collection-service";
+import { useAuth } from "@/context/auth-context";
+import { getCollectionsByUser } from "@/services/collection-service";
 import type { ProductCollection } from "@/services/collection-service";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { Button } from "@/components/ui/button";
@@ -17,25 +17,25 @@ type CollectionSelectorProps = {
 };
 
 export function CollectionSelector({ selectedCollections, onChange }: CollectionSelectorProps) {
-    const { activeCompany } = useCompany();
+    const { user } = useAuth();
     const [collections, setCollections] = useState<ProductCollection[]>([]);
     const [loading, setLoading] = useState(false);
     const [openModal, setOpenModal] = useState(false);
     const [editingCollection, setEditingCollection] = useState<ProductCollection | null>(null);
 
     const fetchAndSetCollections = useCallback(async () => {
-        if (activeCompany) {
+        if (user) {
             setLoading(true);
             try {
-                const companyCollections = await getCollectionsByCompany(activeCompany.id);
-                setCollections(companyCollections);
+                const userCollections = await getCollectionsByUser(user.uid);
+                setCollections(userCollections);
             } catch (error) {
                 console.error("Failed to fetch collections", error);
             } finally {
                 setLoading(false);
             }
         }
-    }, [activeCompany]);
+    }, [user]);
 
     useEffect(() => {
         fetchAndSetCollections();

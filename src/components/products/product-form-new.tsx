@@ -9,7 +9,7 @@ import { useEffect, useState, useTransition } from 'react';
 import { useAuth } from "@/context/auth-context";
 import { useCompany } from "@/context/company-context";
 import { useToast } from "@/hooks/use-toast";
-import { addProduct, updateProduct, getProducts } from "@/services/product-service";
+import { addProduct, updateProduct, getProductsByUser } from "@/services/product-service";
 import type { Product } from "@/lib/types";
 import { generateProductDescription } from "@/ai/flows/generate-product-description";
 import { uploadFile } from "@/services/storage-service";
@@ -63,7 +63,7 @@ const formSchema = z.object({
       options: z.string().min(1, "Adicione pelo menos uma opção"),
   })),
 
-  companyIds: z.array(z.string()).min(1, "Selecione pelo menos uma empresa."),
+  companyIds: z.array(z.string()).optional(),
 });
 
 type ProductFormValues = z.infer<typeof formSchema>;
@@ -100,7 +100,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
     const router = useRouter();
     const { t, language } = useTranslation();
     const { user, userData } = useAuth();
-    const { companies, activeCompany, loading: loadingCompanies } = useCompany();
+    const { companies, loading: loadingCompanies } = useCompany();
     const { toast } = useToast();
 
     const [isUploading, setIsUploading] = useState(false);
@@ -123,7 +123,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
             categoryIds: [],
             collectionIds: [],
             attributes: [],
-            companyIds: activeCompany ? [activeCompany.id] : [],
+            companyIds: [],
         },
     });
 
@@ -216,8 +216,8 @@ export function ProductFormNew({ product }: ProductFormProps) {
     };
 
     async function onSubmit(values: ProductFormValues) {
-        if (!user || values.companyIds.length === 0) {
-            toast({ variant: "destructive", title: t('productForm.error.noUser'), description: "Você precisa estar logado e selecionar pelo menos uma empresa." });
+        if (!user) {
+            toast({ variant: "destructive", title: t('productForm.error.noUser'), description: "Você precisa estar logado para criar um produto." });
             return;
         }
 
@@ -231,8 +231,8 @@ export function ProductFormNew({ product }: ProductFormProps) {
         try {
             if (!product) {
                 const productLimit = userData?.plan?.limits?.products ?? 0;
-                const allProducts = await Promise.all(values.companyIds.map(id => getProducts(id)));
-                if (allProducts.flat().length >= productLimit) {
+                const userProducts = await getProductsByUser(user.uid);
+                if (userProducts.length >= productLimit) {
                     toast({ variant: "destructive", title: "Limite de Produtos Atingido", description: "Você atingiu o limite de produtos para o seu plano atual." });
                     router.push('/dashboard/products');
                     return;
@@ -249,8 +249,9 @@ export function ProductFormNew({ product }: ProductFormProps) {
             
             const uploadedUrls = await Promise.all(uploadPromises);
             
-            const productData = {
+            const productData: Partial<Product> = {
                 ...values,
+                ownerId: user.uid,
                 availableStock: values.manageStock ? values.availableStock : true,
                 slug: values.slug || values.name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''),
                 isActive: true,
@@ -372,7 +373,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
                         <Card>
                             <CardHeader><CardTitle>Organização</CardTitle></CardHeader>
                             <CardContent className="space-y-4">
-                                <FormField control={form.control} name="companyIds" render={({ field }) => (<FormItem><FormLabel>Empresas</FormLabel><MultiSelect options={companyOptions} selected={field.value} onChange={field.onChange} placeholder="Selecione as empresas..." className="w-full" disabled={loadingCompanies}/><FormMessage /></FormItem>)}/>
+                                <FormField control={form.control} name="companyIds" render={({ field }) => (<FormItem><FormLabel>Empresas (Opcional)</FormLabel><MultiSelect options={companyOptions} selected={field.value} onChange={field.onChange} placeholder="Selecione as empresas..." className="w-full" disabled={loadingCompanies}/><FormMessage /></FormItem>)}/>
                                 <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status do Produto</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="available">Disponível</SelectItem><SelectItem value="out-of-stock">Fora de Estoque</SelectItem><SelectItem value="discontinued">Descontinuado</SelectItem></SelectContent></Select><FormMessage /></FormItem>)}/>
                                 <FormField control={form.control} name="visibility" render={({ field }) => (<FormItem><FormLabel>Visibilidade</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="public">Público</SelectItem><SelectItem value="private">Privado</SelectItem></SelectContent></Select><FormMessage /></FormItem>)}/>
                                 <FormField control={form.control} name="sku" render={({ field }) => (<FormItem><FormLabel>SKU (Código)</FormLabel><FormControl><Input placeholder="SKU12345" {...field} /></FormControl><FormMessage /></FormItem>)}/>
@@ -410,5 +411,3 @@ export function ProductFormNew({ product }: ProductFormProps) {
         </Form>
     );
 }
-
-    

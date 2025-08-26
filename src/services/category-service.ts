@@ -7,10 +7,10 @@ import type { ProductCategory } from "@/lib/types";
 
 const categoriesCollection = collection(db, "categories");
 
-// Get all categories for a specific company
-export async function getCategoriesByCompany(companyId: string): Promise<ProductCategory[]> {
+// Get all categories for a specific user
+export async function getCategoriesByUser(ownerId: string): Promise<ProductCategory[]> {
     try {
-        const q = query(categoriesCollection, where("companyId", "==", companyId));
+        const q = query(categoriesCollection, where("ownerId", "==", ownerId));
         const querySnapshot = await getDocs(q);
         const categories: ProductCategory[] = [];
         querySnapshot.forEach((doc) => {
@@ -54,7 +54,7 @@ export async function getCategoryById(categoryId: string): Promise<ProductCatego
 }
 
 // Add a new category
-export async function addCategory(categoryData: Omit<ProductCategory, 'id' | 'createdAt' | 'updatedAt'> & { companyId: string }): Promise<ProductCategory> {
+export async function addCategory(categoryData: Omit<ProductCategory, 'id' | 'createdAt' | 'updatedAt'> & { ownerId: string }): Promise<ProductCategory> {
     try {
         const docRef = await addDoc(categoriesCollection, {
             ...categoryData,

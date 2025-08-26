@@ -2,12 +2,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useCompany } from "@/context/company-context";
-import { getCategoriesByCompany } from "@/services/category-service";
+import { useAuth } from "@/context/auth-context";
+import { getCategoriesByUser } from "@/services/category-service";
 import type { ProductCategory } from "@/lib/types";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CategoryForm } from "./category-form";
 import { PlusCircle, Pencil } from "lucide-react";
 
@@ -17,25 +17,25 @@ type CategorySelectorProps = {
 };
 
 export function CategorySelector({ selectedCategories, onChange }: CategorySelectorProps) {
-    const { activeCompany } = useCompany();
+    const { user } = useAuth();
     const [categories, setCategories] = useState<ProductCategory[]>([]);
     const [loading, setLoading] = useState(false);
     const [openModal, setOpenModal] = useState(false);
     const [editingCategory, setEditingCategory] = useState<ProductCategory | null>(null);
 
     const fetchAndSetCategories = useCallback(async () => {
-        if (activeCompany) {
+        if (user) {
             setLoading(true);
             try {
-                const companyCategories = await getCategoriesByCompany(activeCompany.id);
-                setCategories(companyCategories);
+                const userCategories = await getCategoriesByUser(user.uid);
+                setCategories(userCategories);
             } catch (error) {
                 console.error("Failed to fetch categories", error);
             } finally {
                 setLoading(false);
             }
         }
-    }, [activeCompany]);
+    }, [user]);
 
     useEffect(() => {
         fetchAndSetCategories();

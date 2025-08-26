@@ -53,6 +53,21 @@ export async function getProducts(companyId: string): Promise<Product[]> {
     }
 }
 
+export async function getProductsByUser(ownerId: string): Promise<Product[]> {
+    try {
+        const q = query(productsCollection, where("ownerId", "==", ownerId));
+        const querySnapshot = await getDocs(q);
+        const products: Product[] = [];
+        querySnapshot.forEach((doc) => {
+            products.push(convertProductTimestamps({ id: doc.id, ...doc.data() }) as Product);
+        });
+        return products;
+    } catch (error) {
+        console.error("Error getting products by user: ", error);
+        throw new Error("Failed to fetch products.");
+    }
+}
+
 export async function getProductById(productId: string): Promise<Product | null> {
     try {
         const productDocRef = doc(db, "products", productId);

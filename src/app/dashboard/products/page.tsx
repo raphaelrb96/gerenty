@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
-import { getProducts } from "@/services/product-service";
+import { getProductsByUser } from "@/services/product-service";
 import type { Product } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/common/page-header";
@@ -29,26 +29,27 @@ export default function ProductsPage() {
 
 
     const fetchProducts = async () => {
-        if (!user || !activeCompany) return;
+        if (!user) return;
         setLoading(true);
         try {
-            const userProducts = await getProducts(activeCompany.id);
+            // Fetch all products for the user
+            const userProducts = await getProductsByUser(user.uid);
             setProducts(userProducts);
         } catch (error) {
             console.error(error);
+            setProducts([]);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        if (user && activeCompany) {
+        if (user) {
             fetchProducts();
         } else {
-            setProducts([]);
             setLoading(false);
         }
-    }, [user, activeCompany]);
+    }, [user]);
 
 
     const handleAddProduct = () => {
@@ -70,9 +71,12 @@ export default function ProductsPage() {
 
     const isProductLimitReached = (userData?.plan?.limits?.products ?? 0) <= products.length;
 
-    const filteredProducts = products.filter(product =>
-        product.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Filter products based on search term and active company
+    const filteredProducts = products.filter(product => {
+        const nameMatch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const companyMatch = !activeCompany || (product.companyIds && product.companyIds.includes(activeCompany.id));
+        return nameMatch && companyMatch;
+    });
 
     return (
         <div className="space-y-4">
@@ -80,7 +84,7 @@ export default function ProductsPage() {
                 title={t('productsPage.title')}
                 description={t('productsPage.description')}
                 action={
-                    <Button onClick={handleAddProduct} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} disabled={!activeCompany || isProductLimitReached}>
+                    <Button onClick={handleAddProduct} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} disabled={isProductLimitReached}>
                         <PlusCircle className="mr-2 h-4 w-4" /> {t('productsPage.addProduct')}
                     </Button>
                 }
@@ -101,9 +105,9 @@ export default function ProductsPage() {
                 <EmptyState
                     icon={<Package className="h-16 w-16" />}
                     title={t('productsPage.empty.title')}
-                    description={!activeCompany ? "Selecione uma empresa para ver os produtos." : t('productsPage.empty.description')}
+                    description={t('productsPage.empty.description')}
                     action={
-                        <Button onClick={handleAddProduct} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} disabled={!activeCompany || isProductLimitReached}>
+                        <Button onClick={handleAddProduct} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} disabled={isProductLimitReached}>
                             <PlusCircle className="mr-2 h-4 w-4" /> {t('productsPage.empty.action')}
                         </Button>
                     }

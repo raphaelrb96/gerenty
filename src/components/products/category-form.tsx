@@ -5,7 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useAuth } from "@/context/auth-context";
-import { useCompany } from "@/context/company-context";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { addCategory, updateCategory } from "@/services/category-service";
@@ -30,7 +29,6 @@ type CategoryFormProps = {
 
 export function CategoryForm({ category, onFinished }: CategoryFormProps) {
   const { user } = useAuth();
-  const { activeCompany } = useCompany();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
 
@@ -54,8 +52,8 @@ export function CategoryForm({ category, onFinished }: CategoryFormProps) {
   }, [category, form]);
 
   async function onSubmit(values: CategoryFormValues) {
-    if (!user || !activeCompany) {
-      toast({ variant: "destructive", title: "Erro", description: "Empresa não selecionada." });
+    if (!user) {
+      toast({ variant: "destructive", title: "Erro", description: "Usuário não autenticado." });
       return;
     }
     setIsSaving(true);
@@ -63,7 +61,7 @@ export function CategoryForm({ category, onFinished }: CategoryFormProps) {
     const categoryData = {
         name: values.name,
         slug: values.slug || values.name.toLowerCase().replace(/\s+/g, '-'),
-        companyId: activeCompany.id,
+        ownerId: user.uid,
     }
 
     try {
