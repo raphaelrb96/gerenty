@@ -123,7 +123,7 @@ export default function PosPage() {
       onAddToCart={handleAddToCart}
       onUpdateCartQuantity={handleUpdateQuantity}
       onUpdateCartPrice={handleUpdatePrice}
-      onRemoveFromCart={onRemoveFromCart}
+      onRemoveFromCart={handleRemoveFromCart}
       onClearCart={() => setCart([])}
     />
   );
