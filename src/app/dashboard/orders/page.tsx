@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
-import { getOrders } from "@/services/order-service";
+import { getOrders, getOrdersForCompanies } from "@/services/order-service";
 import type { Order } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,7 @@ import { useCompany } from "@/context/company-context";
 export default function OrdersPage() {
     const { t } = useTranslation();
     const { user } = useAuth();
-    const { activeCompany } = useCompany();
+    const { activeCompany, companies } = useCompany();
     const { formatCurrency } = useCurrency();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
@@ -29,25 +29,35 @@ export default function OrdersPage() {
     const [isSheetOpen, setIsSheetOpen] = useState(false);
 
      useEffect(() => {
-        if (user && activeCompany) {
-            fetchOrders();
-        } else {
-            setLoading(false);
-        }
-    }, [user, activeCompany]);
+        const fetchOrders = async () => {
+            if (!user) {
+                setLoading(false);
+                return;
+            }
+            setLoading(true);
+            try {
+                let userOrders: Order[] = [];
+                if (activeCompany) {
+                    userOrders = await getOrders(activeCompany.id);
+                } else if (companies.length > 0) {
+                    const companyIds = companies.map(c => c.id);
+                    userOrders = await getOrdersForCompanies(companyIds);
+                }
+                setOrders(userOrders);
+            } catch (error) {
+                console.error(error);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    const fetchOrders = async () => {
-        if (!user || !activeCompany) return;
-        setLoading(true);
-        try {
-            const userOrders = await getOrders(activeCompany.id);
-            setOrders(userOrders);
-        } catch (error) {
-            console.error(error);
-        } finally {
+        if (user && companies) {
+           fetchOrders();
+        } else if (!user) {
             setLoading(false);
         }
-    };
+    }, [user, activeCompany, companies]);
+
 
     const handleViewDetails = (order: Order) => {
         setSelectedOrder(order);
@@ -103,7 +113,7 @@ export default function OrdersPage() {
         <EmptyState
             icon={<ShoppingCart className="h-16 w-16" />}
             title={t('ordersPage.empty.title')}
-            description={!activeCompany ? "Selecione uma empresa para ver os pedidos." : t('ordersPage.empty.description')}
+            description={!activeCompany ? "Selecione uma empresa para ver os pedidos ou veja todos." : t('ordersPage.empty.description')}
         />
       ) : (
         <div className="space-y-4">

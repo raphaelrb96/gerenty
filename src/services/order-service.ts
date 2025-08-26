@@ -8,7 +8,6 @@ import type { Order } from "@/lib/types";
 const ordersCollection = collection(db, "orders");
 
 // Get all orders for a specific company
-// NOTE: In a real-world scenario, you'd likely want to implement pagination.
 export async function getOrders(companyId: string): Promise<Order[]> {
     try {
         const q = query(ordersCollection, where("companyId", "==", companyId));
@@ -19,11 +18,9 @@ export async function getOrders(companyId: string): Promise<Order[]> {
             orders.push({ 
                 id: doc.id, 
                 ...data,
-                // Ensure date fields are handled correctly, they might be Timestamps
                 createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString(),
             } as Order);
         });
-        // Sort orders by date, most recent first
         orders.sort((a, b) => new Date(b.createdAt as string).getTime() - new Date(a.createdAt as string).getTime());
         return orders;
     } catch (error) {
@@ -31,6 +28,32 @@ export async function getOrders(companyId: string): Promise<Order[]> {
         throw new Error("Failed to fetch orders.");
     }
 }
+
+// Get all orders for a list of companies
+export async function getOrdersForCompanies(companyIds: string[]): Promise<Order[]> {
+    if (companyIds.length === 0) {
+        return [];
+    }
+    try {
+        const q = query(ordersCollection, where("companyId", "in", companyIds));
+        const querySnapshot = await getDocs(q);
+        const orders: Order[] = [];
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            orders.push({ 
+                id: doc.id, 
+                ...data,
+                createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString(),
+            } as Order);
+        });
+        orders.sort((a, b) => new Date(b.createdAt as string).getTime() - new Date(a.createdAt as string).getTime());
+        return orders;
+    } catch (error) {
+        console.error("Error getting orders for companies: ", error);
+        throw new Error("Failed to fetch orders.");
+    }
+}
+
 
 // Add a new order
 export async function addOrder(orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>): Promise<Order> {
@@ -69,5 +92,3 @@ export async function updateOrder(orderId: string, dataToUpdate: Partial<Order>)
         throw new Error("Failed to update order.");
     }
 }
-
-    
