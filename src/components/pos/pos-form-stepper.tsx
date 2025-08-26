@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Loader2, User, CreditCard, Truck, ShoppingCart, ArrowLeft, Package } from "lucide-react";
 import { Separator } from "../ui/separator";
 import { Textarea } from "../ui/textarea";
@@ -38,6 +39,7 @@ const formSchema = z.object({
   
   shippingCost: z.preprocess((a) => parseFloat(String(a || "0").replace(",", ".")), z.number().min(0)),
   additionalFees: z.preprocess((a) => parseFloat(String(a || "0").replace(",", ".")), z.number().min(0)),
+  additionalFeeType: z.enum(["fixed", "percentage"]).default("fixed"),
   discount: z.preprocess((a) => parseFloat(String(a || "0").replace(",", ".")), z.number().min(0)),
   notes: z.string().optional(),
 
@@ -116,6 +118,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
       deliveryMethod: "retirada_loja",
       shippingCost: 0,
       additionalFees: 0,
+      additionalFeeType: "fixed",
       discount: 0,
       notes: "",
       address: {
@@ -134,10 +137,16 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
   const watchedDiscount = form.watch('discount', 0);
   const watchedShippingCost = form.watch('shippingCost', 0);
   const watchedAdditionalFees = form.watch('additionalFees', 0);
+  const watchedAdditionalFeeType = form.watch('additionalFeeType');
   const deliveryMethod = form.watch('deliveryMethod');
 
   const subtotal = cart.reduce((acc, item) => acc + item.totalPrice, 0);
-  const total = subtotal - (Number(watchedDiscount) || 0) + (Number(watchedShippingCost) || 0) + (Number(watchedAdditionalFees) || 0);
+
+  const calculatedFees = watchedAdditionalFeeType === 'percentage'
+    ? subtotal * (Number(watchedAdditionalFees) / 100)
+    : Number(watchedAdditionalFees);
+  
+  const total = subtotal - (Number(watchedDiscount) || 0) + (Number(watchedShippingCost) || 0) + (calculatedFees || 0);
 
 
   const handleNextStep = async () => {
@@ -203,7 +212,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
         subtotal,
         discount: values.discount,
         shippingCost: values.shippingCost,
-        taxas: values.additionalFees,
+        taxas: calculatedFees,
         total,
         notes: values.notes,
     };
@@ -303,7 +312,32 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                                                 <SelectItem value="online">Online</SelectItem>
                                             </SelectContent></Select><FormMessage /></FormItem>
                                         )}/>
-                                         <FormField control={form.control} name="additionalFees" render={({ field }) => (<FormItem><FormLabel>Taxas Adicionais (ex: máq. cartão)</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                        <div className="space-y-2">
+                                            <FormLabel>Taxas Adicionais (ex: máq. cartão)</FormLabel>
+                                            <div className="flex items-center gap-4">
+                                                <FormField
+                                                    control={form.control}
+                                                    name="additionalFeeType"
+                                                    render={({ field }) => (
+                                                        <RadioGroup
+                                                            onValueChange={field.onChange}
+                                                            defaultValue={field.value}
+                                                            className="flex items-center"
+                                                        >
+                                                            <FormItem className="flex items-center space-x-2 space-y-0">
+                                                                <FormControl><RadioGroupItem value="fixed" /></FormControl>
+                                                                <FormLabel className="font-normal">Fixo (R$)</FormLabel>
+                                                            </FormItem>
+                                                            <FormItem className="flex items-center space-x-2 space-y-0">
+                                                                <FormControl><RadioGroupItem value="percentage" /></FormControl>
+                                                                <FormLabel className="font-normal">Percentual (%)</FormLabel>
+                                                            </FormItem>
+                                                        </RadioGroup>
+                                                    )}
+                                                />
+                                                <FormField control={form.control} name="additionalFees" render={({ field }) => (<FormItem className="flex-1"><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                            </div>
+                                        </div>
                                          <FormField control={form.control} name="discount" render={({ field }) => (<FormItem><FormLabel>{t('pos.summary.discount')}</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                                     </div>
                                 </div>
@@ -381,8 +415,8 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                                     <h3 className="font-semibold text-lg mb-2">Resumo Financeiro</h3>
                                     <div className="text-sm space-y-1">
                                         <div className="flex justify-between"><span>Subtotal:</span> <span>{formatCurrency(subtotal)}</span></div>
-                                        <div className="flex justify-between"><span>Taxas Adicionais:</span> <span>{formatCurrency(Number(watchedAdditionalFees))}</span></div>
-                                        <div className="flex justify-between"><span>Frete:</span> <span>{formatCurrency(Number(watchedShippingCost))}</span></div>
+                                        <div className="flex justify-between"><span>Taxas Adicionais:</span> <span>+ {formatCurrency(calculatedFees)}</span></div>
+                                        <div className="flex justify-between"><span>Frete:</span> <span>+ {formatCurrency(Number(watchedShippingCost))}</span></div>
                                         <div className="flex justify-between text-destructive"><span>Desconto:</span> <span>- {formatCurrency(Number(watchedDiscount))}</span></div>
                                         <Separator className="my-2"/>
                                         <div className="flex justify-between font-bold text-lg"><span>Total:</span> <span>{formatCurrency(total)}</span></div>
@@ -458,5 +492,3 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
     </div>
   );
 }
-
-    
