@@ -8,12 +8,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DollarSign, Package, ShoppingCart, ArrowUpRight, PlusCircle, ChevronsUpDown, Building } from "lucide-react";
+import { DollarSign, Package, ShoppingCart, ArrowRight, TrendingUp, BarChart, FileText, ChevronsUpDown, Building } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { getOrders } from "@/services/order-service";
 import { getProducts } from "@/services/product-service";
 import type { Order, Product } from "@/lib/types";
@@ -27,6 +26,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { DateRange } from "react-day-picker";
+import { subDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from "date-fns";
+import { Bar, BarChart as RechartsBarChart, Pie, PieChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, Cell } from "recharts";
+
 
 function CompanySelector() {
     const { t } = useTranslation();
@@ -101,9 +105,9 @@ function CompanySelector() {
                       </div>
                     </div>
                     <div className="flex-shrink-0">
-                         <Button asChild>
-                             <Link href="/dashboard/companies/create">
-                                <PlusCircle className="mr-2 h-4 w-4" /> {t('dashboard.createNewCompany')}
+                         <Button asChild size="lg" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
+                             <Link href="/dashboard/pos">
+                                Ir para o PDV <ArrowRight className="ml-2 h-4 w-4" />
                             </Link>
                         </Button>
                     </div>
@@ -119,46 +123,41 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const { activeCompany, companies } = useCompany();
   const { formatCurrency } = useCurrency();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
+  
+  const [allOrders, setAllOrders] = useState<Order[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const defaultDateRange = { from: subDays(new Date(), 29), to: new Date() };
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(defaultDateRange);
+
 
   useEffect(() => {
     async function fetchData() {
         if (!user) {
             setLoading(false);
-            setOrders([]);
-            setProducts([]);
+            setAllOrders([]);
+            setAllProducts([]);
             return;
         }
 
         setLoading(true);
         try {
-            let allOrders: Order[] = [];
-            let allProducts: Product[] = [];
+            const companyIds = activeCompany ? [activeCompany.id] : companies.map(c => c.id);
+            if (companyIds.length === 0 && !activeCompany) {
+                const userProducts = await getProducts(user.uid);
+                setAllProducts(userProducts);
+                setAllOrders([]);
+                return;
+            };
 
-            if (activeCompany) {
-                // Fetch data for a single active company
-                const [userOrders, userProducts] = await Promise.all([
-                    getOrders(activeCompany.id),
-                    getProducts(activeCompany.id),
-                ]);
-                allOrders = userOrders;
-                allProducts = userProducts;
-            } else {
-                // Fetch data for all companies and aggregate
-                const orderPromises = companies.map(c => getOrders(c.id));
-                const productPromises = companies.map(c => getProducts(c.id));
-
-                const ordersResults = await Promise.all(orderPromises);
-                const productsResults = await Promise.all(productPromises);
-
-                allOrders = ordersResults.flat();
-                allProducts = productsResults.flat();
-            }
-
-            setOrders(allOrders);
-            setProducts(allProducts);
+            const [ordersResults, productsResults] = await Promise.all([
+                Promise.all(companyIds.map(id => getOrders(id))),
+                Promise.all(companyIds.map(id => getProducts(id)))
+            ]);
+            
+            setAllOrders(ordersResults.flat());
+            setAllProducts(productsResults.flat());
 
         } catch (error) {
             console.error("Failed to fetch dashboard data", error);
@@ -167,24 +166,77 @@ export default function DashboardPage() {
         }
     }
 
-    if (companies) {
+    if (user && companies) {
        fetchData();
     }
   }, [user, activeCompany, companies]);
 
-  const totalRevenue = orders.reduce((acc, order) => acc + order.total, 0);
-  const totalSales = orders.length;
-  const productsInStock = products.length;
+  const filteredData = useMemo(() => {
+    const orders = allOrders.filter(order => {
+        const orderDate = new Date(order.createdAt as string);
+        if (dateRange?.from && dateRange?.to) {
+            return orderDate >= dateRange.from && orderDate <= dateRange.to;
+        }
+        return true;
+    });
+
+    const totalRevenue = orders.reduce((acc, order) => acc + order.total, 0);
+    const totalSales = orders.length;
+
+    const totalCost = orders.reduce((acc, order) => {
+        const orderCost = order.items.reduce((itemAcc, item) => {
+            const product = allProducts.find(p => p.id === item.productId);
+            return itemAcc + (product?.costPrice || 0) * item.quantity;
+        }, 0);
+        return acc + orderCost;
+    }, 0);
+
+    const totalProfit = totalRevenue - totalCost;
+    const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+    const averageTicket = totalSales > 0 ? totalRevenue / totalSales : 0;
+
+    const topProducts = orders
+        .flatMap(o => o.items)
+        .reduce((acc, item) => {
+            const existing = acc.find(p => p.productId === item.productId);
+            if (existing) {
+                existing.quantity += item.quantity;
+            } else {
+                acc.push({ productId: item.productId, productName: item.productName, quantity: item.quantity });
+            }
+            return acc;
+        }, [] as { productId: string; productName: string; quantity: number }[])
+        .sort((a, b) => b.quantity - a.quantity)
+        .slice(0, 10);
+    
+    return {
+        orders,
+        totalRevenue,
+        totalSales,
+        totalCost,
+        totalProfit,
+        profitMargin,
+        averageTicket,
+        topProducts,
+        totalRegisteredProducts: allProducts.length,
+    };
+}, [allOrders, allProducts, dateRange]);
+
 
   const stats = [
-    { title: t('dashboard.totalRevenue'), value: formatCurrency(totalRevenue), icon: <DollarSign className="h-4 w-4 text-muted-foreground" /> },
-    { title: t('dashboard.totalSales'), value: `+${totalSales}`, icon: <ShoppingCart className="h-4 w-4 text-muted-foreground" /> },
-    { title: t('dashboard.productsInStock'), value: `${productsInStock}`, icon: <Package className="h-4 w-4 text-muted-foreground" /> },
+    { title: "Receita Total", value: formatCurrency(filteredData.totalRevenue), icon: <DollarSign /> },
+    { title: "Lucro Total", value: formatCurrency(filteredData.totalProfit), icon: <TrendingUp /> },
+    { title: "Vendas", value: `+${filteredData.totalSales}`, icon: <ShoppingCart /> },
+    { title: "Ticket Médio", value: formatCurrency(filteredData.averageTicket), icon: <FileText /> },
+    { title: "Custo Total", value: formatCurrency(filteredData.totalCost), icon: <DollarSign className="opacity-50"/> },
+    { title: "Produtos Cadastrados", value: `${filteredData.totalRegisteredProducts}`, icon: <Package /> },
   ];
-
+  
   if (loading) {
     return <div className="flex h-full items-center justify-center"><LoadingSpinner /></div>;
   }
+
+  const PIE_COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#AF19FF"];
 
   return (
     <div className="space-y-8">
@@ -193,6 +245,19 @@ export default function DashboardPage() {
       </div>
 
       <CompanySelector />
+
+      <Card>
+          <CardHeader>
+              <CardTitle>Filtros</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-wrap items-center gap-4">
+              <DateRangePicker date={dateRange} onDateChange={setDateRange} />
+              <Button variant="outline" onClick={() => setDateRange({from: new Date(), to: new Date()})}>Hoje</Button>
+              <Button variant="outline" onClick={() => setDateRange({from: subDays(new Date(), 6), to: new Date()})}>Últimos 7 dias</Button>
+              <Button variant="outline" onClick={() => setDateRange({from: startOfMonth(new Date()), to: endOfMonth(new Date())})}>Este Mês</Button>
+          </CardContent>
+      </Card>
+
 
       {(activeCompany || companies.length > 0) && (
         <>
@@ -210,38 +275,43 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center">
-                <div className="grid gap-2">
-                    <CardTitle>{t('dashboard.recentActivity')}</CardTitle>
-                    <CardDescription>{t('dashboard.recentActivityDesc')}</CardDescription>
-                </div>
-                <Button asChild size="sm" className="ml-auto gap-1">
-                    <Link href="/dashboard/orders">{t('dashboard.viewAll')} <ArrowUpRight className="h-4 w-4" /></Link>
-                </Button>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {orders.slice(0, 5).map(activity => (
-                <div key={activity.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50">
-                    <div className="grid gap-1">
-                        <p className="font-medium">{activity.customer.name}</p>
-                        <p className="text-sm text-muted-foreground">{activity.id.substring(0, 7)}</p>
-                    </div>
-                    <div className="text-right">
-                        <p className="font-semibold">{formatCurrency(activity.total)}</p>
-                        <Badge variant={activity.status === "completed" ? "default" : activity.status === "processing" ? "secondary" : "outline"}
-                        className={activity.status === "completed" ? "bg-green-600/20 text-green-700 hover:bg-green-600/30" : activity.status === "processing" ? "bg-blue-600/20 text-blue-700 hover:bg-blue-600/30" : "bg-yellow-600/20 text-yellow-700 hover:bg-yellow-600/30"}>
-                          {t(`orderStatus.${activity.status}`)}
-                        </Badge>
-                    </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+            <Card className="lg:col-span-3">
+                <CardHeader>
+                    <CardTitle>Visão Geral da Receita</CardTitle>
+                </CardHeader>
+                <CardContent className="pl-2">
+                    <ResponsiveContainer width="100%" height={350}>
+                        <RechartsBarChart data={filteredData.orders.map(o => ({name: new Date(o.createdAt as string).toLocaleDateString(), Total: o.total}))}>
+                            <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                            <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
+                            <Tooltip />
+                            <Bar dataKey="Total" fill="var(--color-accent)" radius={[4, 4, 0, 0]} />
+                        </RechartsBarChart>
+                    </ResponsiveContainer>
+                </CardContent>
+            </Card>
+            <Card className="lg:col-span-2">
+                 <CardHeader>
+                    <CardTitle>Produtos Mais Vendidos</CardTitle>
+                </CardHeader>
+                <CardContent>
+                     <ResponsiveContainer width="100%" height={350}>
+                        <PieChart>
+                            <Pie data={filteredData.topProducts} dataKey="quantity" nameKey="productName" cx="50%" cy="50%" outerRadius={120} label>
+                               {filteredData.topProducts.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                                ))}
+                            </Pie>
+                            <Tooltip />
+                            <Legend />
+                        </PieChart>
+                    </ResponsiveContainer>
+                </CardContent>
+            </Card>
+        </div>
         </>
       )}
     </div>
   );
 }
-
-    
