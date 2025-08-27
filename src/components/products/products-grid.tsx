@@ -26,14 +26,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useCurrency } from "@/context/currency-context"
 import { useToast } from "@/hooks/use-toast"
 import { deleteProduct } from "@/services/product-service"
-import type { Product } from "@/lib/types"
+import type { Product, ProductCategory } from "@/lib/types"
 import { useTranslation } from "@/context/i18n-context"
 import { ProductDetails } from "./product-details"
+import { useAuth } from "@/context/auth-context"
+import { useCompany } from "@/context/company-context"
+import { getCategoriesByUser } from "@/services/category-service"
+import { getCollectionsByUser } from "@/services/collection-service"
+import type { ProductCollection } from "@/services/collection-service"
+
 
 type ProductsGridProps = {
   data: Product[];
@@ -45,9 +51,22 @@ export function ProductsGrid({ data, onProductDeleted }: ProductsGridProps) {
     const router = useRouter();
     const { toast } = useToast();
     const { t } = useTranslation();
+    const { user } = useAuth();
+    const { companies } = useCompany();
+
     const [productToDelete, setProductToDelete] = React.useState<Product | null>(null);
     const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(null);
     const [isSheetOpen, setIsSheetOpen] = React.useState(false);
+    
+    const [categories, setCategories] = React.useState<ProductCategory[]>([]);
+    const [collections, setCollections] = React.useState<ProductCollection[]>([]);
+
+    React.useEffect(() => {
+        if (user) {
+            getCategoriesByUser(user.uid).then(setCategories);
+            getCollectionsByUser(user.uid).then(setCollections);
+        }
+    }, [user]);
 
     const handleDeleteProduct = async (productId: string) => {
         try {
@@ -112,7 +131,13 @@ export function ProductsGrid({ data, onProductDeleted }: ProductsGridProps) {
                             {t('productsPage.edit')}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => setProductToDelete(product)} onSelect={(e) => e.preventDefault()} className="text-red-600">
+                            <DropdownMenuItem 
+                                onSelect={(e) => {
+                                    e.preventDefault();
+                                    setProductToDelete(product);
+                                }} 
+                                className="text-red-600"
+                            >
                                 {t('productsPage.delete')}
                             </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -138,7 +163,14 @@ export function ProductsGrid({ data, onProductDeleted }: ProductsGridProps) {
                     <SheetTitle>Detalhes do Produto</SheetTitle>
                 </SheetHeader>
                 <div className="flex-1 overflow-y-auto pr-6 -mr-6">
-                    {selectedProduct && <ProductDetails product={selectedProduct} />}
+                    {selectedProduct && (
+                        <ProductDetails
+                            product={selectedProduct}
+                            allCompanies={companies}
+                            allCategories={categories}
+                            allCollections={collections}
+                        />
+                    )}
                 </div>
                  <SheetFooter className="border-t pt-4">
                     <Button variant="outline" onClick={() => setIsSheetOpen(false)}>Fechar</Button>
