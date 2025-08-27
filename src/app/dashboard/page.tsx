@@ -18,13 +18,13 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { DollarSign, Package, ShoppingCart, ArrowRight, TrendingUp, BarChart, FileText, ChevronsUpDown, Building, Calendar, Users, History, AlertCircle } from "lucide-react";
+import { DollarSign, Package, ShoppingCart, ArrowRight, TrendingUp, BarChart, FileText, ChevronsUpDown, Building, Calendar, Users, History, AlertCircle, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
 import { useEffect, useState, useMemo } from "react";
 import { getOrders, getOrdersForCompanies } from "@/services/order-service";
 import { getProductsByUser } from "@/services/product-service";
-import type { Order, Product } from "@/lib/types";
+import type { Order, Product, OrderItem } from "@/lib/types";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { useTranslation } from "@/context/i18n-context";
 import { useCurrency } from "@/context/currency-context";
@@ -37,9 +37,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { DateRange } from "react-day-picker";
-import { subDays, startOfDay, endOfDay, eachDayOfInterval, format, differenceInDays, differenceInCalendarDays, parseISO } from "date-fns";
+import { subDays, startOfDay, endOfDay, eachDayOfInterval, eachHourOfInterval, format, differenceInDays, differenceInCalendarDays, parseISO } from "date-fns";
 import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { cn } from "@/lib/utils";
+import { ChartTooltipContent } from "@/components/ui/chart";
 
 
 function CompanySelector() {
@@ -177,8 +178,8 @@ export default function DashboardPage() {
                 return;
             };
 
-            const ordersResults = await Promise.all(companyIds.map(id => getOrders(id)));
-            setAllOrders(ordersResults.flat());
+            const ordersResults = await getOrdersForCompanies(companyIds);
+            setAllOrders(ordersResults);
 
         } catch (error) {
             console.error("Failed to fetch dashboard data", error);
@@ -193,7 +194,7 @@ export default function DashboardPage() {
   }, [user, activeCompany, companies]);
 
   const filteredData = useMemo(() => {
-    const orders = allOrders.filter(order => {
+    const ordersInDateRange = allOrders.filter(order => {
         const orderDate = new Date(order.createdAt as string);
         if (dateRange?.from && dateRange?.to) {
             return orderDate >= startOfDay(dateRange.from) && orderDate <= endOfDay(dateRange.to);
@@ -201,21 +202,20 @@ export default function DashboardPage() {
         return true;
     });
 
-    const totalRevenue = orders.reduce((acc, order) => acc + order.total, 0);
-    const totalSales = orders.length;
+    const completedOrders = ordersInDateRange.filter(o => o.status === 'completed');
+    const cancelledOrders = ordersInDateRange.filter(o => o.status === 'cancelled');
 
-    const totalCost = orders.reduce((acc, order) => {
-        const orderCost = order.items.reduce((itemAcc, item) => {
-            return itemAcc + (item.costPrice || 0) * item.quantity;
-        }, 0);
-        return acc + orderCost;
-    }, 0);
-
+    const totalRevenue = completedOrders.reduce((acc, order) => acc + order.total, 0);
+    const totalCost = completedOrders.reduce((acc, order) => acc + (order.items.reduce((itemAcc, item) => itemAcc + (item.costPrice || 0) * item.quantity, 0)), 0);
     const totalProfit = totalRevenue - totalCost;
-    const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
-    const averageTicket = totalSales > 0 ? totalRevenue / totalSales : 0;
+    const paidOrdersCount = completedOrders.length;
+    const averageTicket = paidOrdersCount > 0 ? totalRevenue / paidOrdersCount : 0;
+    const itemsSoldCount = completedOrders.reduce((acc, order) => acc + order.items.length, 0);
 
-    const topProducts = orders
+    const cancelledRevenue = cancelledOrders.reduce((acc, order) => acc + order.total, 0);
+    const cancelledOrdersCount = cancelledOrders.length;
+
+    const topProducts = ordersInDateRange
         .flatMap(o => o.items)
         .reduce((acc, item) => {
             const existing = acc.find(p => p.productId === item.productId);
@@ -226,50 +226,73 @@ export default function DashboardPage() {
                 acc.push({ ...item });
             }
             return acc;
-        }, [] as { productId: string; productName: string; quantity: number, totalPrice: number }[])
+        }, [] as OrderItem[])
         .sort((a, b) => b.quantity - a.quantity)
         .slice(0, 10);
     
-    const revenueByDay: { [key: string]: number } = {};
+    let revenueChartData: { name: string, Total: number }[] = [];
     if (dateRange?.from && dateRange?.to) {
         const diff = differenceInDays(dateRange.to, dateRange.from);
-        let intervalStart = dateRange.from;
-        if (diff < 6) {
-             const daysToAdd = 6 - diff;
-             intervalStart = subDays(dateRange.from, daysToAdd);
-        }
 
-        eachDayOfInterval({ start: intervalStart, end: dateRange.to }).forEach(day => {
-            revenueByDay[format(day, 'yyyy-MM-dd')] = 0;
-        });
+        if (diff <= 1) { // Today or Yesterday
+            const intervalStart = startOfDay(dateRange.from);
+            const intervalEnd = endOfDay(dateRange.from);
+            const revenueByHour: { [key: string]: number } = {};
+            
+            eachHourOfInterval({ start: intervalStart, end: intervalEnd }).forEach(hour => {
+                revenueByHour[format(hour, 'HH:00')] = 0;
+            });
+            
+            ordersInDateRange.forEach(order => {
+                const hourStr = format(new Date(order.createdAt as string), 'HH:00');
+                if (revenueByHour.hasOwnProperty(hourStr)) {
+                    revenueByHour[hourStr] += order.total;
+                }
+            });
+            revenueChartData = Object.entries(revenueByHour).map(([hour, total]) => ({ name: hour, Total: total }));
 
-        orders.forEach(order => {
-            const dateStr = format(new Date(order.createdAt as string), 'yyyy-MM-dd');
-            if (revenueByDay.hasOwnProperty(dateStr)) {
-                revenueByDay[dateStr] += order.total;
+        } else { // 7 days, 30 days, or custom range
+            const revenueByDay: { [key: string]: number } = {};
+            let intervalStart = dateRange.from;
+            if (diff < 6) {
+                 const daysToAdd = 6 - diff;
+                 intervalStart = subDays(dateRange.from, daysToAdd);
             }
-        });
-    }
+    
+            eachDayOfInterval({ start: intervalStart, end: dateRange.to }).forEach(day => {
+                revenueByDay[format(day, 'yyyy-MM-dd')] = 0;
+            });
+    
+            ordersInDateRange.forEach(order => {
+                const dateStr = format(new Date(order.createdAt as string), 'yyyy-MM-dd');
+                if (revenueByDay.hasOwnProperty(dateStr)) {
+                    revenueByDay[dateStr] += order.total;
+                }
+            });
 
-    const revenueChartData = Object.entries(revenueByDay)
-        .map(([date, total]) => ({
-            name: format(new Date(date), 'dd/MM'),
-            Total: total
-        }))
-        .sort((a,b) => {
-            const dateA = new Date(a.name.split('/').reverse().join('-') + `-${new Date().getFullYear()}`);
-            const dateB = new Date(b.name.split('/').reverse().join('-') + `-${new Date().getFullYear()}`);
-            return dateA.getTime() - dateB.getTime();
-        });
+            revenueChartData = Object.entries(revenueByDay)
+                .map(([date, total]) => ({
+                    name: format(new Date(date), 'dd/MM'),
+                    Total: total
+                }))
+                .sort((a,b) => {
+                    const dateA = new Date(a.name.split('/').reverse().join('-') + `-${new Date().getFullYear()}`);
+                    const dateB = new Date(b.name.split('/').reverse().join('-') + `-${new Date().getFullYear()}`);
+                    return dateA.getTime() - dateB.getTime();
+                });
+        }
+    }
         
     return {
-        orders,
         totalRevenue,
-        totalSales,
-        totalCost,
         totalProfit,
-        profitMargin,
+        paidOrdersCount,
         averageTicket,
+        totalCost,
+        itemsSoldCount,
+        cancelledRevenue,
+        cancelledOrdersCount,
+        totalSales: ordersInDateRange.length,
         topProducts,
         totalRegisteredProducts: allProducts.length,
         revenueChartData,
@@ -303,10 +326,13 @@ export default function DashboardPage() {
   const stats = [
     { title: "Receita Total", value: formatCurrency(filteredData.totalRevenue), icon: <DollarSign /> },
     { title: "Lucro Total", value: formatCurrency(filteredData.totalProfit), icon: <TrendingUp /> },
-    { title: "Vendas", value: `+${filteredData.totalSales}`, icon: <ShoppingCart /> },
+    { title: "Pedidos Pagos", value: `+${filteredData.paidOrdersCount}`, icon: <ShoppingCart /> },
     { title: "Ticket Médio", value: formatCurrency(filteredData.averageTicket), icon: <FileText /> },
     { title: "Custo Total", value: formatCurrency(filteredData.totalCost), icon: <DollarSign className="opacity-50"/> },
-    { title: "Produtos Cadastrados", value: `${filteredData.totalRegisteredProducts}`, icon: <Package /> },
+    { title: "Itens Vendidos", value: `${filteredData.itemsSoldCount}`, icon: <Package /> },
+    { title: "Receita Cancelada", value: formatCurrency(filteredData.cancelledRevenue), icon: <XCircle className="text-red-500" /> },
+    { title: "Cancelamentos", value: `${filteredData.cancelledOrdersCount}`, icon: <AlertCircle className="text-red-500" /> },
+    { title: "Vendas", value: `+${filteredData.totalSales}`, icon: <BarChart /> },
   ];
   
   if (loading) {
@@ -320,12 +346,12 @@ export default function DashboardPage() {
       </div>
 
       <CompanySelector />
-
+      
        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <AccountStatCard 
                 icon={<Package />}
                 title="Produtos"
-                value={`${allProducts.length} / ${userData?.plan?.limits?.products ?? '∞'}`}
+                value={`${filteredData.totalRegisteredProducts} / ${userData?.plan?.limits?.products ?? '∞'}`}
                 detail="Cadastrados vs Limite do plano"
             />
              <AccountStatCard 
@@ -390,8 +416,14 @@ export default function DashboardPage() {
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
                             <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => formatCurrency(Number(value))} />
-                            <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                            <Bar dataKey="Total" fill="var(--color-accent)" radius={[4, 4, 0, 0]} />
+                            <Tooltip 
+                                content={<ChartTooltipContent 
+                                    formatter={(value) => formatCurrency(Number(value))}
+                                    labelClassName="text-sm font-bold text-accent-foreground"
+                                />}
+                                cursor={{ fill: 'hsl(var(--accent) / 0.2)' }}
+                            />
+                            <Bar dataKey="Total" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
                         </RechartsBarChart>
                     </ResponsiveContainer>
                 </CardContent>

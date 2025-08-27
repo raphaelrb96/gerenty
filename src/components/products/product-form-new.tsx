@@ -2,7 +2,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useFieldArray, useWatch, Control, useFormContext, FormProvider } from "react-hook-form";
+import { useForm, useFieldArray, useWatch, Control, FormProvider, useFormContext } from "react-hook-form";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition, useCallback } from 'react';
@@ -109,7 +109,7 @@ function PricingCalculatorCard({ control }: { control: Control<ProductFormValues
     const calculateFromPrices = useCallback(() => {
         if (costPrice > 0 && sellingPrice > 0) {
             const profit = sellingPrice - costPrice;
-            const margin = (profit / costPrice) * 100;
+            const margin = (profit / sellingPrice) * 100;
             setProfitValue(parseFloat(profit.toFixed(2)));
             setProfitMargin(parseFloat(margin.toFixed(2)));
         } else {
@@ -125,8 +125,8 @@ function PricingCalculatorCard({ control }: { control: Control<ProductFormValues
     const handleMarginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newMargin = parseFloat(e.target.value) || 0;
         setProfitMargin(newMargin);
-        if (costPrice > 0) {
-            const newSellingPrice = costPrice * (1 + newMargin / 100);
+        if (costPrice > 0 && newMargin < 100) {
+            const newSellingPrice = costPrice / (1 - newMargin / 100);
             setValue('pricing.0.price', parseFloat(newSellingPrice.toFixed(2)), { shouldValidate: true });
         }
     };

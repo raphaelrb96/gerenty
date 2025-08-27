@@ -3,8 +3,8 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
-import { getOrders, getOrdersForCompanies } from "@/services/order-service";
-import type { Order } from "@/lib/types";
+import { getOrders, getOrdersForCompanies, updateOrder } from "@/services/order-service";
+import type { Order, OrderStatus } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -27,6 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { toast } from "@/hooks/use-toast";
 
 
 function CompanySelector() {
@@ -74,38 +75,39 @@ export default function OrdersPage() {
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [dateRange, setDateRange] = useState<DateRange | undefined>({ from: subDays(new Date(), 29), to: new Date() });
 
-     useEffect(() => {
-        const fetchOrders = async () => {
-            if (!user) {
-                setLoading(false);
-                return;
+    const fetchOrders = async () => {
+        if (!user) {
+            setLoading(false);
+            return;
+        }
+        setLoading(true);
+        try {
+            let userOrders: Order[] = [];
+            if (activeCompany) {
+                userOrders = await getOrders(activeCompany.id);
+            } else if (companies.length > 0) {
+                const companyIds = companies.map(c => c.id);
+                userOrders = await getOrdersForCompanies(companyIds);
             }
-            setLoading(true);
-            try {
-                let userOrders: Order[] = [];
-                if (activeCompany) {
-                    userOrders = await getOrders(activeCompany.id);
-                } else if (companies.length > 0) {
-                    const companyIds = companies.map(c => c.id);
-                    userOrders = await getOrdersForCompanies(companyIds);
+
+            const filteredOrders = userOrders.filter(order => {
+                const orderDate = new Date(order.createdAt as string);
+                 if (dateRange?.from && dateRange?.to) {
+                    return orderDate >= startOfDay(dateRange.from) && orderDate <= endOfDay(dateRange.to);
                 }
+                return true;
+            });
 
-                const filteredOrders = userOrders.filter(order => {
-                    const orderDate = new Date(order.createdAt as string);
-                     if (dateRange?.from && dateRange?.to) {
-                        return orderDate >= startOfDay(dateRange.from) && orderDate <= endOfDay(dateRange.to);
-                    }
-                    return true;
-                });
+            setOrders(filteredOrders);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-                setOrders(filteredOrders);
-            } catch (error) {
-                console.error(error);
-            } finally {
-                setLoading(false);
-            }
-        };
 
+     useEffect(() => {
         if (user && companies) {
            fetchOrders();
         } else if (!user) {
@@ -118,6 +120,29 @@ export default function OrdersPage() {
         setSelectedOrder(order);
         setIsSheetOpen(true);
     }
+
+    const handleUpdateStatus = async (orderId: string, newStatus: OrderStatus) => {
+        try {
+            await updateOrder(orderId, { status: newStatus });
+            // Update the local state to reflect the change immediately
+            setOrders(prevOrders => 
+                prevOrders.map(order => 
+                    order.id === orderId ? { ...order, status: newStatus } : order
+                )
+            );
+            toast({
+                title: "Status Atualizado",
+                description: `O pedido #${orderId.substring(0,7)} foi atualizado para "${t(`orderStatus.${newStatus}`)}".`
+            });
+        } catch (error) {
+            console.error("Failed to update order status", error);
+            toast({
+                variant: "destructive",
+                title: "Erro ao Atualizar",
+                description: "Não foi possível atualizar o status do pedido."
+            });
+        }
+    };
     
     const getStatusVariant = (status: Order['status']) => {
         switch (status) {
@@ -148,11 +173,6 @@ export default function OrdersPage() {
       <PageHeader 
         title={t('ordersPage.title')}
         description={t('ordersPage.description')}
-        action={
-             <Button variant="outline">
-                <File className="mr-2 h-4 w-4" /> {t('ordersPage.export')}
-            </Button>
-        }
       />
 
        <Card>
@@ -163,8 +183,12 @@ export default function OrdersPage() {
        </Card>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent className="sm:max-w-lg flex flex-col">
-            <OrderDetails order={selectedOrder} onFinished={() => setIsSheetOpen(false)} />
+        <SheetContent className="sm:max-w-lg flex flex-col p-0">
+            <OrderDetails 
+                order={selectedOrder} 
+                onStatusChange={handleUpdateStatus}
+                onFinished={() => setIsSheetOpen(false)} 
+            />
         </SheetContent>
       </Sheet>
 

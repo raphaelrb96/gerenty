@@ -158,11 +158,11 @@ export function ProductsGrid({ data, onProductDeleted }: ProductsGridProps) {
         </div>
 
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-            <SheetContent className="sm:max-w-xl flex flex-col">
-                <SheetHeader className="pr-12">
+            <SheetContent className="sm:max-w-xl flex flex-col p-0">
+                <SheetHeader className="p-6 pb-0 flex-shrink-0">
                     <SheetTitle>Detalhes do Produto</SheetTitle>
                 </SheetHeader>
-                <div className="flex-1 overflow-y-auto pr-6 -mr-6">
+                <div className="flex-1 overflow-y-auto px-6">
                     {selectedProduct && (
                         <ProductDetails
                             product={selectedProduct}
@@ -172,7 +172,7 @@ export function ProductsGrid({ data, onProductDeleted }: ProductsGridProps) {
                         />
                     )}
                 </div>
-                 <SheetFooter className="border-t pt-4">
+                 <SheetFooter className="border-t p-6 flex-shrink-0">
                     <Button variant="outline" onClick={() => setIsSheetOpen(false)}>Fechar</Button>
                     <Button onClick={() => {
                         setIsSheetOpen(false);

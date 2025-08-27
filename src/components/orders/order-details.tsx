@@ -15,26 +15,41 @@ import { useTranslation } from "@/context/i18n-context";
 import { useCurrency } from "@/context/currency-context";
 import { ScrollArea } from "../ui/scroll-area";
 import { SheetFooter, SheetHeader, SheetTitle } from "../ui/sheet";
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
 
 type OrderDetailsProps = {
     order?: Order | null,
     onFinished: () => void;
+    onStatusChange: (orderId: string, newStatus: OrderStatus) => Promise<void>;
 }
 
 const statuses: OrderStatus[] = ["pending", "confirmed", "processing", "shipped", "delivered", "completed", "cancelled", "refunded"];
 
-export function OrderDetails({ order, onFinished }: OrderDetailsProps) {
+export function OrderDetails({ order, onFinished, onStatusChange }: OrderDetailsProps) {
   const { t } = useTranslation();
   const { formatCurrency } = useCurrency();
+  const [currentStatus, setCurrentStatus] = useState(order?.status);
+  const [isSaving, setIsSaving] = useState(false);
+  
   if (!order) return null;
+
+  const handleSave = async () => {
+    if (currentStatus && currentStatus !== order.status) {
+        setIsSaving(true);
+        await onStatusChange(order.id, currentStatus);
+        setIsSaving(false);
+    }
+    onFinished();
+  };
 
   return (
     <>
-      <SheetHeader className="pr-12">
+      <SheetHeader className="pr-6 pl-6 pt-6 flex-shrink-0">
           <SheetTitle>{t('orderDetails.orderId', { id: order.id.substring(0,7) })}</SheetTitle>
       </SheetHeader>
-      <ScrollArea className="flex-1 pr-6 -mr-6">
-        <div className="space-y-6 py-4">
+      <ScrollArea className="flex-1">
+        <div className="space-y-6 py-4 px-6">
             <div className="space-y-2">
                 <p className="text-muted-foreground">{new Date(order.createdAt as string).toLocaleString()}</p>
             </div>
@@ -90,7 +105,7 @@ export function OrderDetails({ order, onFinished }: OrderDetailsProps) {
 
             <div className="grid gap-4">
                 <div className="font-semibold">{t('orderDetails.updateStatus')}</div>
-                 <Select defaultValue={order.status}>
+                 <Select value={currentStatus} onValueChange={(value) => setCurrentStatus(value as OrderStatus)}>
                     <SelectTrigger>
                         <SelectValue placeholder={t('orderDetails.selectStatus')} />
                     </SelectTrigger>
@@ -103,10 +118,13 @@ export function OrderDetails({ order, onFinished }: OrderDetailsProps) {
             </div>
         </div>
       </ScrollArea>
-      <SheetFooter className="border-t pt-4">
+      <SheetFooter className="border-t pt-4 p-6 flex-shrink-0">
         <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={onFinished}>{t('orderDetails.close')}</Button>
-            <Button type="button" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} onClick={onFinished}>{t('orderDetails.updateOrder')}</Button>
+            <Button type="button" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} onClick={handleSave} disabled={isSaving}>
+                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {t('orderDetails.updateOrder')}
+            </Button>
         </div>
       </SheetFooter>
     </>
