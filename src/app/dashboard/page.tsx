@@ -17,12 +17,12 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { DollarSign, Package, ShoppingCart, ArrowRight, TrendingUp, BarChart, FileText, ChevronsUpDown, Building } from "lucide-react";
+import { DollarSign, Package, ShoppingCart, ArrowRight, TrendingUp, BarChart, FileText, ChevronsUpDown, Building, Calendar, Users, History, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
 import { useEffect, useState, useMemo } from "react";
-import { getOrders } from "@/services/order-service";
-import { getProducts, getProductsByUser } from "@/services/product-service";
+import { getOrders, getOrdersForCompanies } from "@/services/order-service";
+import { getProductsByUser } from "@/services/product-service";
 import type { Order, Product } from "@/lib/types";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { useTranslation } from "@/context/i18n-context";
@@ -36,8 +36,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { DateRange } from "react-day-picker";
-import { subDays, startOfDay, endOfDay, eachDayOfInterval, format, differenceInDays } from "date-fns";
+import { subDays, startOfDay, endOfDay, eachDayOfInterval, format, differenceInDays, differenceInCalendarDays, parseISO } from "date-fns";
 import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import { cn } from "@/lib/utils";
 
 
 function CompanySelector() {
@@ -74,7 +75,7 @@ function CompanySelector() {
     return (
         <Card>
             <CardContent className="p-4">
-                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div className="flex flex-col gap-4">
                       <div className="flex items-center gap-4">
                           <div className="p-3 rounded-md bg-muted">
@@ -112,7 +113,7 @@ function CompanySelector() {
                           </Button>
                       </div>
                     </div>
-                    <div className="flex-shrink-0">
+                    <div className="flex-shrink-0 self-start md:self-center">
                          <Button asChild size="lg" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
                              <Link href="/dashboard/pos">
                                 Frente de Caixa <ArrowRight className="ml-2 h-4 w-4" />
@@ -125,10 +126,24 @@ function CompanySelector() {
     )
 }
 
+const AccountStatCard = ({ icon, title, value, detail, warning }: { icon: React.ReactNode, title: string, value: string, detail: string, warning?: boolean }) => (
+    <Card>
+        <CardContent className="p-4 flex items-center gap-4">
+            <div className={cn("p-3 rounded-md bg-muted", warning && "bg-destructive/20")}>
+                {React.cloneElement(icon as React.ReactElement, { className: cn("h-6 w-6 text-muted-foreground", warning && "text-destructive")})}
+            </div>
+            <div>
+                <p className="text-sm font-medium">{title}</p>
+                <p className="text-lg font-bold">{value}</p>
+                <p className="text-xs text-muted-foreground">{detail}</p>
+            </div>
+        </CardContent>
+    </Card>
+);
 
 export default function DashboardPage() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
   const { activeCompany, companies } = useCompany();
   const { formatCurrency } = useCurrency();
   
@@ -138,6 +153,7 @@ export default function DashboardPage() {
 
   const defaultDateRange = { from: subDays(new Date(), 29), to: new Date() };
   const [dateRange, setDateRange] = useState<DateRange | undefined>(defaultDateRange);
+  const [activeFilter, setActiveFilter] = useState<string>('30d');
 
 
   useEffect(() => {
@@ -151,11 +167,9 @@ export default function DashboardPage() {
 
         setLoading(true);
         try {
-            // Fetch all products owned by the user for the "registered products" card
             const userProducts = await getProductsByUser(user.uid);
             setAllProducts(userProducts);
 
-            // Fetch orders based on company selection
             const companyIds = activeCompany ? [activeCompany.id] : companies.map(c => c.id);
             if (companyIds.length === 0 && !activeCompany) {
                 setAllOrders([]);
@@ -215,19 +229,16 @@ export default function DashboardPage() {
         .sort((a, b) => b.quantity - a.quantity)
         .slice(0, 10);
     
-    // Revenue chart data
     const revenueByDay: { [key: string]: number } = {};
     if (dateRange?.from && dateRange?.to) {
-        const intervalDays = eachDayOfInterval({ start: dateRange.from, end: dateRange.to });
-
-        // Ensure at least 7 days are shown, expand interval if needed
         const diff = differenceInDays(dateRange.to, dateRange.from);
+        let intervalStart = dateRange.from;
         if (diff < 6) {
              const daysToAdd = 6 - diff;
-             dateRange.from = subDays(dateRange.from, daysToAdd);
+             intervalStart = subDays(dateRange.from, daysToAdd);
         }
 
-        eachDayOfInterval({ start: dateRange.from, end: dateRange.to }).forEach(day => {
+        eachDayOfInterval({ start: intervalStart, end: dateRange.to }).forEach(day => {
             revenueByDay[format(day, 'yyyy-MM-dd')] = 0;
         });
 
@@ -244,7 +255,11 @@ export default function DashboardPage() {
             name: format(new Date(date), 'dd/MM'),
             Total: total
         }))
-        .sort((a,b) => new Date(a.name.split('/').reverse().join('-')).getTime() - new Date(b.name.split('/').reverse().join('-')).getTime());
+        .sort((a,b) => {
+            const dateA = new Date(a.name.split('/').reverse().join('-') + `-${new Date().getFullYear()}`);
+            const dateB = new Date(b.name.split('/').reverse().join('-') + `-${new Date().getFullYear()}`);
+            return dateA.getTime() - dateB.getTime();
+        });
         
     return {
         orders,
@@ -260,6 +275,29 @@ export default function DashboardPage() {
     };
 }, [allOrders, allProducts, dateRange]);
 
+    const handleDateFilterClick = (filter: string) => {
+        setActiveFilter(filter);
+        const today = new Date();
+        switch (filter) {
+            case 'today':
+                setDateRange({ from: startOfDay(today), to: endOfDay(today) });
+                break;
+            case 'yesterday':
+                const yesterday = subDays(today, 1);
+                setDateRange({ from: startOfDay(yesterday), to: endOfDay(yesterday) });
+                break;
+            case '7d':
+                setDateRange({ from: startOfDay(subDays(today, 6)), to: endOfDay(today) });
+                break;
+            case '30d':
+                setDateRange({ from: startOfDay(subDays(today, 29)), to: endOfDay(today) });
+                break;
+        }
+    };
+  
+    const daysUntilExpiry = userData?.validityDate
+    ? differenceInCalendarDays(parseISO(userData.validityDate as string), new Date())
+    : null;
 
   const stats = [
     { title: "Receita Total", value: formatCurrency(filteredData.totalRevenue), icon: <DollarSign /> },
@@ -282,16 +320,44 @@ export default function DashboardPage() {
 
       <CompanySelector />
 
+       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <AccountStatCard 
+                icon={<Package />}
+                title="Produtos"
+                value={`${allProducts.length} / ${userData?.plan?.limits?.products ?? '∞'}`}
+                detail="Cadastrados vs Limite do plano"
+            />
+             <AccountStatCard 
+                icon={<Calendar />}
+                title="Assinatura"
+                value={daysUntilExpiry !== null ? `${daysUntilExpiry} dias` : "Vitalício"}
+                detail={userData?.validityDate ? `Vence em ${new Date(userData.validityDate as string).toLocaleDateString()}` : `Plano ${userData?.plan?.name}`}
+                warning={daysUntilExpiry !== null && daysUntilExpiry < 7}
+            />
+             <AccountStatCard 
+                icon={<Building />}
+                title="Empresas"
+                value={`${companies.length} / ${userData?.plan?.limits?.companies ?? '∞'}`}
+                detail="Criadas vs Limite do plano"
+            />
+             <AccountStatCard 
+                icon={<History />}
+                title="Pedidos"
+                value={`${allOrders.length} / ${userData?.plan?.limits?.ordersPerMonth ?? '∞'}`}
+                detail="Pedidos no ciclo vs Limite do plano"
+            />
+        </div>
+
       <Card>
           <CardHeader>
               <CardTitle>Filtros</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap items-center gap-4">
-              <DateRangePicker date={dateRange} onDateChange={setDateRange} />
-              <Button variant="outline" onClick={() => setDateRange({from: startOfDay(new Date()), to: endOfDay(new Date())})}>Hoje</Button>
-              <Button variant="outline" onClick={() => setDateRange({from: startOfDay(subDays(new Date(), 1)), to: endOfDay(subDays(new Date(), 1))})}>Ontem</Button>
-              <Button variant="outline" onClick={() => setDateRange({from: startOfDay(subDays(new Date(), 6)), to: endOfDay(new Date())})}>7 dias</Button>
-              <Button variant="outline" onClick={() => setDateRange({from: startOfDay(subDays(new Date(), 29)), to: endOfDay(new Date())})}>30 dias</Button>
+              <DateRangePicker date={dateRange} onDateChange={(range) => { setDateRange(range); setActiveFilter(''); }} />
+              <Button variant={activeFilter === 'today' ? 'default' : 'outline'} onClick={() => handleDateFilterClick('today')}>Hoje</Button>
+              <Button variant={activeFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleDateFilterClick('yesterday')}>Ontem</Button>
+              <Button variant={activeFilter === '7d' ? 'default' : 'outline'} onClick={() => handleDateFilterClick('7d')}>7 dias</Button>
+              <Button variant={activeFilter === '30d' ? 'default' : 'outline'} onClick={() => handleDateFilterClick('30d')}>30 dias</Button>
           </CardContent>
       </Card>
 
@@ -313,7 +379,7 @@ export default function DashboardPage() {
           </div>
 
         <div className="grid grid-cols-1 gap-4">
-            <Card>
+            <Card className="col-span-1">
                 <CardHeader>
                     <CardTitle>Visão Geral da Receita</CardTitle>
                 </CardHeader>
@@ -329,7 +395,7 @@ export default function DashboardPage() {
                     </ResponsiveContainer>
                 </CardContent>
             </Card>
-            <Card>
+            <Card className="col-span-1">
                  <CardHeader>
                     <CardTitle>Produtos Mais Vendidos</CardTitle>
                 </CardHeader>

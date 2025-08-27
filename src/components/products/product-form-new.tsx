@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormProvider, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -362,7 +362,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
     const isButtonDisabled = isSubmitting || isUploading;
 
     return (
-        <Form {...form}>
+        <FormProvider {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-2 space-y-6">
@@ -451,8 +451,8 @@ export function ProductFormNew({ product }: ProductFormProps) {
                             <CardHeader><CardTitle>Organização</CardTitle></CardHeader>
                             <CardContent className="space-y-4">
                                 <FormField control={form.control} name="companyIds" render={({ field }) => (<FormItem><FormLabel>Empresas (Opcional)</FormLabel><MultiSelect options={companyOptions} selected={field.value} onChange={field.onChange} placeholder="Selecione as empresas..." className="w-full" disabled={loadingCompanies}/><FormMessage /></FormItem>)}/>
-                                <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status do Produto</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="available">Disponível</SelectItem><SelectItem value="out-of-stock">Fora de Estoque</SelectItem><SelectItem value="discontinued">Descontinuado</SelectItem></SelectContent></Select><FormMessage /></FormItem>)}/>
-                                <FormField control={form.control} name="visibility" render={({ field }) => (<FormItem><FormLabel>Visibilidade</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="public">Público</SelectItem><SelectItem value="private">Privado</SelectItem></SelectContent></Select><FormMessage /></FormItem>)}/>
+                                <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status do Produto</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="available">Disponível</SelectItem><SelectItem value="out-of-stock">Fora de Estoque</SelectItem><SelectItem value="discontinued">Descontinuado</SelectItem></SelectContent></Select><FormMessage /></FormItem>)}/>
+                                <FormField control={form.control} name="visibility" render={({ field }) => (<FormItem><FormLabel>Visibilidade</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="public">Público</SelectItem><SelectItem value="private">Privado</SelectItem></SelectContent></Select><FormMessage /></FormItem>)}/>
                                 <FormField control={form.control} name="sku" render={({ field }) => (<FormItem><FormLabel>SKU (Código)</FormLabel><FormControl><Input placeholder="SKU12345" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                                 <FormField control={form.control} name="manageStock" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Gerenciar Estoque</FormLabel><FormDescription className="text-xs">Ative para controlar a quantidade disponível.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
                                 {watchManageStock && (<FormField control={form.control} name="availableStock" render={({ field }) => (<FormItem><FormLabel>Estoque Disponível</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)}/>)}
@@ -485,8 +485,6 @@ export function ProductFormNew({ product }: ProductFormProps) {
                     </Button>
                 </CardFooter>
             </form>
-        </Form>
+        </FormProvider>
     );
 }
-
-    

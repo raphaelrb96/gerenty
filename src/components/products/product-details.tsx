@@ -55,6 +55,17 @@ export function ProductDetails({ product, allCompanies, allCategories, allCollec
         return product.collectionIds.map(id => allCollections.find(c => c.id === id)?.name).filter(Boolean).join(', ');
     }
 
+    const getFriendlyRuleName = (type: string, value: any) => {
+        switch (type) {
+            case 'minQuantity': return `A partir de ${value} un.`;
+            case 'minCartValue': return `Compras acima de ${formatCurrency(value)}`;
+            case 'paymentMethod': return `Pagando com ${t(`paymentMethods.${value}`)}`;
+            case 'purchaseType': return `Tipo de compra: ${value}`;
+            default: return 'N/A';
+        }
+    }
+
+
     const costPrice = product.costPrice || 0;
     const sellingPrice = product.pricing?.[0]?.price || 0;
     const profitValue = sellingPrice - costPrice;
@@ -141,11 +152,10 @@ export function ProductDetails({ product, allCompanies, allCategories, allCollec
                                     <TableCell>{p.label}</TableCell>
                                     <TableCell>{formatCurrency(p.price)}</TableCell>
                                     <TableCell>
-                                        {p.rule?.type !== 'none' ? (
-                                            `${p.rule?.type}: ${p.rule?.value}`
-                                        ) : (
-                                            'N/A'
-                                        )}
+                                        {p.rule?.type && p.rule.type !== 'none' 
+                                            ? getFriendlyRuleName(p.rule.type, p.rule.value) 
+                                            : 'N/A'
+                                        }
                                     </TableCell>
                                 </TableRow>
                             ))}

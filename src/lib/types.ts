@@ -1,5 +1,4 @@
 
-
 import type { FieldValue, Timestamp } from "firebase/firestore";
 
 export type User = {
@@ -531,5 +530,3 @@ export type Company = {
   createdAt:  string | Date | Timestamp | FieldValue;
   updatedAt?:  string | Date | Timestamp | FieldValue; // Data da última atualização
 };
-
-    

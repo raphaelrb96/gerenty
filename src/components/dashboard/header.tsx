@@ -17,7 +17,7 @@ import { useTranslation } from "@/context/i18n-context";
 import { useAuth } from "@/context/auth-context";
 import { useRouter } from "next/navigation";
 import { signOut } from "@/services/auth-service";
-import { CreditCard } from "lucide-react";
+import { SquareTerminal, UserCircle } from "lucide-react";
 
 export function Header() {
   const { t } = useTranslation();
@@ -44,19 +44,21 @@ export function Header() {
         {/* Can add breadcrumbs or page title here */}
       </div>
 
-      <div className="flex items-center gap-4">
-        <Button asChild variant="outline" size="sm">
+      <div className="flex items-center gap-2">
+        <Button asChild variant="default" size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90">
             <Link href="/dashboard/pos">
-              <CreditCard className="mr-2 h-4 w-4" />
-              PDV
+              <SquareTerminal className="mr-2 h-4 w-4" />
+              Frente de Caixa
             </Link>
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={user?.photoURL || "https://placehold.co/40x40.png"} alt={user?.displayName || "User"} data-ai-hint="user avatar" />
-                <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
+              <Avatar className="h-9 w-9">
+                <AvatarImage src={user?.photoURL || ""} alt={user?.displayName || "User"} />
+                <AvatarFallback>
+                    <UserCircle className="h-6 w-6 text-muted-foreground" />
+                </AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>

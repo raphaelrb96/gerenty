@@ -13,6 +13,8 @@ import { Separator } from "../ui/separator";
 import type { Order, OrderStatus } from "@/lib/types";
 import { useTranslation } from "@/context/i18n-context";
 import { useCurrency } from "@/context/currency-context";
+import { ScrollArea } from "../ui/scroll-area";
+import { SheetFooter, SheetHeader, SheetTitle } from "../ui/sheet";
 
 type OrderDetailsProps = {
     order?: Order | null,
@@ -27,79 +29,86 @@ export function OrderDetails({ order, onFinished }: OrderDetailsProps) {
   if (!order) return null;
 
   return (
-    <div className="space-y-6 py-4">
-        <div className="space-y-2">
-            <h3 className="font-semibold text-lg">{t('orderDetails.orderId', { id: order.id.substring(0,7) })}</h3>
-            <p className="text-muted-foreground">{new Date(order.createdAt as string).toLocaleString()}</p>
-        </div>
-      
-        <Separator />
-        
-        <div className="grid gap-4">
-            <div className="font-semibold">{t('orderDetails.customerDetails')}</div>
-            <dl className="grid gap-2 text-sm">
-                <div className="flex items-center justify-between">
-                    <dt className="text-muted-foreground">{t('orderDetails.customer')}</dt>
-                    <dd>{order.customer.name}</dd>
-                </div>
-                 <div className="flex items-center justify-between">
-                    <dt className="text-muted-foreground">{t('orderDetails.email')}</dt>
-                    <dd><a href={`mailto:${order.customer.email}`} className="text-primary hover:underline">{order.customer.email}</a></dd>
-                </div>
-                 <div className="flex items-center justify-between">
-                    <dt className="text-muted-foreground">{t('orderDetails.phone')}</dt>
-                    <dd>{order.customer.phone || 'N/A'}</dd>
-                </div>
-            </dl>
-        </div>
-        
-        <Separator />
-        
-        <div className="grid gap-4">
-            <div className="font-semibold">{t('orderDetails.orderSummary')}</div>
-             <dl className="grid gap-2 text-sm">
-                {order.items.map(item => (
-                    <div key={item.productId} className="flex items-center justify-between">
-                        <dt className="text-muted-foreground">{item.quantity}x {item.productName}</dt>
-                        <dd>{formatCurrency(item.totalPrice)}</dd>
+    <>
+      <SheetHeader className="pr-12">
+          <SheetTitle>{t('orderDetails.orderId', { id: order.id.substring(0,7) })}</SheetTitle>
+      </SheetHeader>
+      <ScrollArea className="flex-1 pr-6 -mr-6">
+        <div className="space-y-6 py-4">
+            <div className="space-y-2">
+                <p className="text-muted-foreground">{new Date(order.createdAt as string).toLocaleString()}</p>
+            </div>
+          
+            <Separator />
+            
+            <div className="grid gap-4">
+                <div className="font-semibold">{t('orderDetails.customerDetails')}</div>
+                <dl className="grid gap-2 text-sm">
+                    <div className="flex items-center justify-between">
+                        <dt className="text-muted-foreground">{t('orderDetails.customer')}</dt>
+                        <dd>{order.customer.name}</dd>
                     </div>
-                ))}
-                <Separator className="my-2" />
-                <div className="flex items-center justify-between">
-                    <dt className="text-muted-foreground">{t('orderDetails.subtotal')}</dt>
-                    <dd>{formatCurrency(order.subtotal)}</dd>
-                </div>
-                 <div className="flex items-center justify-between">
-                    <dt className="text-muted-foreground">{t('orderDetails.shipping')}</dt>
-                    <dd>{formatCurrency(order.shippingCost || 0)}</dd>
-                </div>
-                <div className="flex items-center justify-between font-semibold">
-                    <dt>{t('orderDetails.total')}</dt>
-                    <dd>{formatCurrency(order.total)}</dd>
-                </div>
-            </dl>
-        </div>
-
-        <Separator />
-
-        <div className="grid gap-4">
-            <div className="font-semibold">{t('orderDetails.updateStatus')}</div>
-             <Select defaultValue={order.status}>
-                <SelectTrigger>
-                    <SelectValue placeholder={t('orderDetails.selectStatus')} />
-                </SelectTrigger>
-                <SelectContent>
-                    {statuses.map(status => (
-                        <SelectItem key={status} value={status}>{t(`orderStatus.${status}`)}</SelectItem>
+                     <div className="flex items-center justify-between">
+                        <dt className="text-muted-foreground">{t('orderDetails.email')}</dt>
+                        <dd><a href={`mailto:${order.customer.email}`} className="text-primary hover:underline">{order.customer.email}</a></dd>
+                    </div>
+                     <div className="flex items-center justify-between">
+                        <dt className="text-muted-foreground">{t('orderDetails.phone')}</dt>
+                        <dd>{order.customer.phone || 'N/A'}</dd>
+                    </div>
+                </dl>
+            </div>
+            
+            <Separator />
+            
+            <div className="grid gap-4">
+                <div className="font-semibold">{t('orderDetails.orderSummary')}</div>
+                 <dl className="grid gap-2 text-sm">
+                    {order.items.map(item => (
+                        <div key={item.productId} className="flex items-center justify-between">
+                            <dt className="text-muted-foreground">{item.quantity}x {item.productName}</dt>
+                            <dd>{formatCurrency(item.totalPrice)}</dd>
+                        </div>
                     ))}
-                </SelectContent>
-            </Select>
-        </div>
+                    <Separator className="my-2" />
+                    <div className="flex items-center justify-between">
+                        <dt className="text-muted-foreground">{t('orderDetails.subtotal')}</dt>
+                        <dd>{formatCurrency(order.subtotal)}</dd>
+                    </div>
+                     <div className="flex items-center justify-between">
+                        <dt className="text-muted-foreground">{t('orderDetails.shipping')}</dt>
+                        <dd>{formatCurrency(order.shippingCost || 0)}</dd>
+                    </div>
+                    <div className="flex items-center justify-between font-semibold">
+                        <dt>{t('orderDetails.total')}</dt>
+                        <dd>{formatCurrency(order.total)}</dd>
+                    </div>
+                </dl>
+            </div>
 
-        <div className="flex justify-end gap-2 pt-4">
+            <Separator />
+
+            <div className="grid gap-4">
+                <div className="font-semibold">{t('orderDetails.updateStatus')}</div>
+                 <Select defaultValue={order.status}>
+                    <SelectTrigger>
+                        <SelectValue placeholder={t('orderDetails.selectStatus')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {statuses.map(status => (
+                            <SelectItem key={status} value={status}>{t(`orderStatus.${status}`)}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+        </div>
+      </ScrollArea>
+      <SheetFooter className="border-t pt-4">
+        <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={onFinished}>{t('orderDetails.close')}</Button>
             <Button type="button" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} onClick={onFinished}>{t('orderDetails.updateOrder')}</Button>
         </div>
-    </div>
+      </SheetFooter>
+    </>
   );
 }

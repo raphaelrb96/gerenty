@@ -20,6 +20,9 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageToggle } from "@/components/language-toggle";
 import { CurrencyToggle } from "@/components/currency-toggle";
 import { Badge } from "@/components/ui/badge";
+import { differenceInCalendarDays, parseISO } from 'date-fns';
+import { Calendar, AlertCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function ProfilePage() {
   const { t } = useTranslation();
@@ -41,7 +44,11 @@ export default function ProfilePage() {
         default:
             return 'bg-red-600/20 text-red-700 hover:bg-red-600/30';
     }
-  }
+  };
+
+    const daysUntilExpiry = userData?.validityDate
+    ? differenceInCalendarDays(parseISO(userData.validityDate as string), new Date())
+    : null;
 
   return (
     <div className="space-y-8">
@@ -89,21 +96,39 @@ export default function ProfilePage() {
 
         <Card className="md:col-span-1 h-fit">
           <CardHeader>
-            <CardTitle>{t('profilePage.subscription.title')}</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                {t('profilePage.subscription.title')}
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-             <div className="space-y-2">
-                <span className="text-muted-foreground text-sm">{t('profilePage.subscription.status')}</span>
+          <CardContent className="space-y-4 text-center">
+             <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">{t('profilePage.subscription.status')}</p>
                 <Badge className={getStatusVariant(userData?.statusPlan)}>{userData?.statusPlan || 'inativo'}</Badge>
             </div>
-             <p className="text-sm text-muted-foreground pt-2">
-                {userData?.statusPlan === 'ativo' ? t('profilePage.subscription.renewalDate', {date: new Date(userData?.validityDate as any).toLocaleDateString()}) : t('profilePage.subscription.inactiveText')}
+             <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Plano Atual</p>
+                <p className="font-semibold">{userData?.plan?.name || "Nenhum"}</p>
+            </div>
+
+            {userData?.statusPlan === 'ativo' && (
+                <div className="space-y-1">
+                     <p className="text-sm text-muted-foreground">
+                        {daysUntilExpiry !== null ? "Dias Restantes" : "Validade"}
+                    </p>
+                    <p className={cn("font-bold text-lg", daysUntilExpiry !== null && daysUntilExpiry < 7 && "text-destructive")}>
+                        {daysUntilExpiry !== null ? `${daysUntilExpiry} dias` : "Vitalício"}
+                    </p>
+                </div>
+            )}
+             <p className="text-xs text-muted-foreground pt-2">
+                {userData?.statusPlan === 'ativo' && userData.validityDate ? t('profilePage.subscription.renewalDate', {date: new Date(userData?.validityDate as any).toLocaleDateString()}) : t('profilePage.subscription.inactiveText')}
             </p>
           </CardContent>
-          {(userData?.statusPlan === 'inativo' || userData?.statusPlan === 'pendente') && (
+          {(userData?.statusPlan === 'inativo' || userData?.statusPlan === 'pendente' || (daysUntilExpiry !== null && daysUntilExpiry < 15)) && (
              <CardFooter className="border-t pt-4">
                 <Button onClick={() => router.push('/dashboard/billing')} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="w-full">
-                {t('profilePage.manageButton')}
+                    {userData?.statusPlan === 'ativo' ? "Renovar Plano" : t('profilePage.manageButton')}
                 </Button>
             </CardFooter>
           )}
