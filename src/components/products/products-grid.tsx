@@ -9,6 +9,17 @@ import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -33,25 +44,25 @@ export function ProductsGrid({ data, onProductDeleted }: ProductsGridProps) {
     const router = useRouter();
     const { toast } = useToast();
     const { t } = useTranslation();
+    const [productToDelete, setProductToDelete] = React.useState<Product | null>(null);
 
     const handleDeleteProduct = async (productId: string) => {
-        const confirmed = window.confirm(t('productsPage.deleteConfirm.message'));
-        if (confirmed) {
-            try {
-                await deleteProduct(productId);
-                toast({
-                    title: t('productsPage.deleteConfirm.successTitle'),
-                    description: t('productsPage.deleteConfirm.successDescription'),
-                });
-                onProductDeleted();
-            } catch (error) {
-                console.error("Failed to delete product:", error);
-                toast({
-                    variant: "destructive",
-                    title: t('productsPage.deleteConfirm.errorTitle'),
-                    description: t('productsPage.deleteConfirm.errorDescription'),
-                });
-            }
+        try {
+            await deleteProduct(productId);
+            toast({
+                title: t('productsPage.deleteConfirm.successTitle'),
+                description: t('productsPage.deleteConfirm.successDescription'),
+            });
+            onProductDeleted();
+        } catch (error) {
+            console.error("Failed to delete product:", error);
+            toast({
+                variant: "destructive",
+                title: t('productsPage.deleteConfirm.errorTitle'),
+                description: t('productsPage.deleteConfirm.errorDescription'),
+            });
+        } finally {
+            setProductToDelete(null);
         }
     };
 
@@ -69,47 +80,66 @@ export function ProductsGrid({ data, onProductDeleted }: ProductsGridProps) {
 
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-      {data.map((product) => (
-        <Card key={product.id} className="overflow-hidden flex flex-col">
-            <CardHeader className="p-0 relative aspect-square">
-                 <Image
-                    src={product.images?.mainImage || "https://placehold.co/400x400.png"}
-                    alt={product.name}
-                    layout="fill"
-                    objectFit="cover"
-                    className="w-full h-full"
-                />
-                 <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="secondary" size="icon" className="absolute top-2 right-2 h-8 w-8 rounded-full">
-                        <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>{t('productsPage.actionsLabel')}</DropdownMenuLabel>
-                        <DropdownMenuItem onSelect={() => router.push(`/dashboard/products/${product.id}/edit`)}>
-                        {t('productsPage.edit')}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleDeleteProduct(product.id)} onSelect={(e) => e.preventDefault()} className="text-red-600">
-                            {t('productsPage.delete')}
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </CardHeader>
-            <CardContent className="p-3 flex-grow">
-                <CardTitle className="text-base font-semibold truncate" title={product.name}>{product.name}</CardTitle>
-                <div className="flex items-center justify-between mt-2">
-                    <p className="text-lg font-bold text-primary">{formatCurrency(product.pricing?.[0]?.price ?? 0)}</p>
-                    <Badge variant="outline" className={getStatusVariant(product.status)}>{t(`productStatus.${product.status}`)}</Badge>
-                </div>
-            </CardContent>
-            <CardFooter className="p-3 pt-0 text-xs text-muted-foreground">
-               {t('productsPage.stockLabel')}: {typeof product.availableStock === 'number' ? product.availableStock : 'Ilimitado'}
-            </CardFooter>
-        </Card>
-      ))}
-    </div>
+    <>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        {data.map((product) => (
+            <Card key={product.id} className="overflow-hidden flex flex-col">
+                <CardHeader className="p-0 relative aspect-square">
+                    <Image
+                        src={product.images?.mainImage || "https://placehold.co/400x400.png"}
+                        alt={product.name}
+                        layout="fill"
+                        objectFit="cover"
+                        className="w-full h-full"
+                    />
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="secondary" size="icon" className="absolute top-2 right-2 h-8 w-8 rounded-full">
+                            <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>{t('productsPage.actionsLabel')}</DropdownMenuLabel>
+                            <DropdownMenuItem onSelect={() => router.push(`/dashboard/products/${product.id}/edit`)}>
+                            {t('productsPage.edit')}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => setProductToDelete(product)} onSelect={(e) => e.preventDefault()} className="text-red-600">
+                                {t('productsPage.delete')}
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </CardHeader>
+                <CardContent className="p-3 flex-grow">
+                    <CardTitle className="text-base font-semibold truncate" title={product.name}>{product.name}</CardTitle>
+                    <div className="flex items-center justify-between mt-2">
+                        <p className="text-lg font-bold text-primary">{formatCurrency(product.pricing?.[0]?.price ?? 0)}</p>
+                        <Badge variant="outline" className={getStatusVariant(product.status)}>{t(`productStatus.${product.status}`)}</Badge>
+                    </div>
+                </CardContent>
+                <CardFooter className="p-3 pt-0 text-xs text-muted-foreground">
+                {t('productsPage.stockLabel')}: {typeof product.availableStock === 'number' ? product.availableStock : 'Ilimitado'}
+                </CardFooter>
+            </Card>
+        ))}
+        </div>
+
+        <AlertDialog open={!!productToDelete} onOpenChange={(isOpen) => !isOpen && setProductToDelete(null)}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    {t('productsPage.deleteConfirm.message')}
+                </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={() => { if(productToDelete) handleDeleteProduct(productToDelete.id)}}>
+                    Confirmar
+                </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    </>
   )
 }
