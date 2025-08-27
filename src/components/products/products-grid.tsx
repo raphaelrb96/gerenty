@@ -35,7 +35,8 @@ export function ProductsGrid({ data, onProductDeleted }: ProductsGridProps) {
     const { t } = useTranslation();
 
     const handleDeleteProduct = async (productId: string) => {
-        if (!confirm(t('productsPage.deleteConfirm.message'))) {
+        const confirmed = confirm(t('productsPage.deleteConfirm.message'));
+        if (!confirmed) {
             return;
         }
 
@@ -47,6 +48,7 @@ export function ProductsGrid({ data, onProductDeleted }: ProductsGridProps) {
             });
             onProductDeleted();
         } catch (error) {
+            console.error("Failed to delete product:", error);
             toast({
                 variant: "destructive",
                 title: t('productsPage.deleteConfirm.errorTitle'),
