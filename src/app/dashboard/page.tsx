@@ -40,7 +40,7 @@ import { DateRange } from "react-day-picker";
 import { subDays, startOfDay, endOfDay, eachDayOfInterval, eachHourOfInterval, format, differenceInDays, differenceInCalendarDays, parseISO } from "date-fns";
 import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { cn } from "@/lib/utils";
-import { ChartTooltipContent } from "@/components/ui/chart";
+import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 
 
 function CompanySelector() {
@@ -411,21 +411,21 @@ export default function DashboardPage() {
                     <CardTitle>Visão Geral da Receita</CardTitle>
                 </CardHeader>
                 <CardContent className="pl-2">
-                    <ResponsiveContainer width="100%" height={350}>
-                        <RechartsBarChart data={filteredData.revenueChartData}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                            <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => formatCurrency(Number(value))} />
-                            <Tooltip 
+                    <ChartContainer config={{}} className="min-h-[200px] w-full">
+                        <RechartsBarChart accessibilityLayer data={filteredData.revenueChartData}>
+                            <CartesianGrid vertical={false} />
+                            <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} />
+                            <YAxis tickLine={false} axisLine={false} tickMargin={10} tickFormatter={(value) => formatCurrency(Number(value))} />
+                            <ChartTooltip 
+                                cursor={false} 
                                 content={<ChartTooltipContent 
                                     formatter={(value) => formatCurrency(Number(value))}
                                     labelClassName="text-sm font-bold text-accent-foreground"
                                 />}
-                                cursor={{ fill: 'hsl(var(--accent) / 0.2)' }}
                             />
-                            <Bar dataKey="Total" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="Total" fill="hsl(var(--primary))" radius={4} />
                         </RechartsBarChart>
-                    </ResponsiveContainer>
+                    </ChartContainer>
                 </CardContent>
             </Card>
             <Card className="col-span-1">
