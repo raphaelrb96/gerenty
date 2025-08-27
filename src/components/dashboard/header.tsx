@@ -54,9 +54,6 @@ export function Header() {
               <span className="sr-only">Frente de Caixa</span>
             </Link>
         </Button>
-        <ThemeToggle />
-        <LanguageToggle />
-        <CurrencyToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="icon" className="relative h-9 w-9 rounded-full">

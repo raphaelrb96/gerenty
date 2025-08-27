@@ -18,7 +18,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { DollarSign, Package, ShoppingCart, ArrowRight, TrendingUp, BarChart, FileText, ChevronsUpDown, Building, Calendar, Users, History, AlertCircle, XCircle } from "lucide-react";
+import { DollarSign, Package, ShoppingCart, ArrowRight, TrendingUp, BarChart, FileText, ChevronsUpDown, Building, Calendar, Users, History, AlertCircle, XCircle, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
 import { useEffect, useState, useMemo } from "react";
@@ -204,18 +204,21 @@ export default function DashboardPage() {
 
     const completedOrders = ordersInDateRange.filter(o => o.status === 'completed');
     const cancelledOrders = ordersInDateRange.filter(o => o.status === 'cancelled');
+    const refundedOrders = ordersInDateRange.filter(o => o.status === 'refunded');
 
     const totalRevenue = completedOrders.reduce((acc, order) => acc + order.total, 0);
     const totalCost = completedOrders.reduce((acc, order) => acc + (order.items.reduce((itemAcc, item) => itemAcc + (item.costPrice || 0) * item.quantity, 0)), 0);
     const totalProfit = totalRevenue - totalCost;
     const paidOrdersCount = completedOrders.length;
     const averageTicket = paidOrdersCount > 0 ? totalRevenue / paidOrdersCount : 0;
-    const itemsSoldCount = completedOrders.reduce((acc, order) => acc + order.items.length, 0);
+    const itemsSoldCount = completedOrders.reduce((acc, order) => acc + order.items.reduce((itemAcc, item) => itemAcc + item.quantity, 0), 0);
 
     const cancelledRevenue = cancelledOrders.reduce((acc, order) => acc + order.total, 0);
     const cancelledOrdersCount = cancelledOrders.length;
+    
+    const refundedRevenue = refundedOrders.reduce((acc, order) => acc + order.total, 0);
 
-    const topProducts = ordersInDateRange
+    const topProducts = completedOrders
         .flatMap(o => o.items)
         .reduce((acc, item) => {
             const existing = acc.find(p => p.productId === item.productId);
@@ -292,6 +295,7 @@ export default function DashboardPage() {
         itemsSoldCount,
         cancelledRevenue,
         cancelledOrdersCount,
+        refundedRevenue,
         totalSales: ordersInDateRange.length,
         topProducts,
         totalRegisteredProducts: allProducts.length,
@@ -330,9 +334,9 @@ export default function DashboardPage() {
     { title: "Ticket Médio", value: formatCurrency(filteredData.averageTicket), icon: <FileText /> },
     { title: "Custo Total", value: formatCurrency(filteredData.totalCost), icon: <DollarSign className="opacity-50"/> },
     { title: "Itens Vendidos", value: `${filteredData.itemsSoldCount}`, icon: <Package /> },
-    { title: "Receita Cancelada", value: formatCurrency(filteredData.cancelledRevenue), icon: <XCircle className="text-red-500" /> },
-    { title: "Cancelamentos", value: `${filteredData.cancelledOrdersCount}`, icon: <AlertCircle className="text-red-500" /> },
-    { title: "Vendas", value: `+${filteredData.totalSales}`, icon: <BarChart /> },
+    { title: "Receita Cancelada", value: formatCurrency(filteredData.cancelledRevenue), icon: <XCircle /> },
+    { title: "Cancelamentos", value: `${filteredData.cancelledOrdersCount}`, icon: <AlertCircle /> },
+    { title: "Reembolso", value: formatCurrency(filteredData.refundedRevenue), icon: <RotateCcw /> },
   ];
   
   if (loading) {
@@ -396,7 +400,7 @@ export default function DashboardPage() {
               <Card key={stat.title}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                  {stat.icon}
+                  {React.cloneElement(stat.icon as React.ReactElement, { className: "h-4 w-4 text-muted-foreground"})}
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stat.value}</div>
@@ -420,7 +424,7 @@ export default function DashboardPage() {
                                 cursor={false} 
                                 content={<ChartTooltipContent 
                                     formatter={(value) => formatCurrency(Number(value))}
-                                    labelClassName="text-sm font-bold text-accent-foreground"
+                                    labelClassName="text-sm font-bold text-popover-foreground dark:text-popover-foreground"
                                 />}
                             />
                             <Bar dataKey="Total" fill="hsl(var(--primary))" radius={4} />
