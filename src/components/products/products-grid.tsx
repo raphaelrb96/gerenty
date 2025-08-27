@@ -35,25 +35,23 @@ export function ProductsGrid({ data, onProductDeleted }: ProductsGridProps) {
     const { t } = useTranslation();
 
     const handleDeleteProduct = async (productId: string) => {
-        const confirmed = confirm(t('productsPage.deleteConfirm.message'));
-        if (!confirmed) {
-            return;
-        }
-
-        try {
-            await deleteProduct(productId);
-            toast({
-                title: t('productsPage.deleteConfirm.successTitle'),
-                description: t('productsPage.deleteConfirm.successDescription'),
-            });
-            onProductDeleted();
-        } catch (error) {
-            console.error("Failed to delete product:", error);
-            toast({
-                variant: "destructive",
-                title: t('productsPage.deleteConfirm.errorTitle'),
-                description: t('productsPage.deleteConfirm.errorDescription'),
-            });
+        const confirmed = window.confirm(t('productsPage.deleteConfirm.message'));
+        if (confirmed) {
+            try {
+                await deleteProduct(productId);
+                toast({
+                    title: t('productsPage.deleteConfirm.successTitle'),
+                    description: t('productsPage.deleteConfirm.successDescription'),
+                });
+                onProductDeleted();
+            } catch (error) {
+                console.error("Failed to delete product:", error);
+                toast({
+                    variant: "destructive",
+                    title: t('productsPage.deleteConfirm.errorTitle'),
+                    description: t('productsPage.deleteConfirm.errorDescription'),
+                });
+            }
         }
     };
 
