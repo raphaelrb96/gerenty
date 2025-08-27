@@ -2,7 +2,7 @@
 'use server';
 
 import { db } from "@/lib/firebase";
-import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, query, where, serverTimestamp, Timestamp } from "firebase/firestore";
+import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, query, where, serverTimestamp, Timestamp, setDoc } from "firebase/firestore";
 import type { Product } from "@/lib/types";
 
 const productsCollection = collection(db, "products");
@@ -19,20 +19,25 @@ const convertProductTimestamps = (product: any) => {
 
 export async function addProduct(productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<Product> {
     try {
-        const docRef = await addDoc(productsCollection, {
+        // Generate a new document reference with a unique ID on the client
+        const docRef = doc(productsCollection);
+        
+        // Create the full product object, including the generated ID
+        const newProductData = {
             ...productData,
+            id: docRef.id, // Add the generated ID to the document data
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
-        });
-        
-        // Now, update the document with its own ID
-        await updateDoc(docRef, { id: docRef.id });
+        };
+
+        // Use setDoc to create the document with the specific ID in a single request
+        await setDoc(docRef, newProductData);
 
         const newDocSnap = await getDoc(docRef);
-        const newDocData = newDocSnap.data();
+        const savedData = newDocSnap.data();
+
         return convertProductTimestamps({
-            id: docRef.id,
-            ...newDocData,
+            ...savedData,
         }) as Product;
 
     } catch (error) {
