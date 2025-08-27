@@ -25,6 +25,9 @@ export async function addProduct(productData: Omit<Product, 'id' | 'createdAt' |
             updatedAt: serverTimestamp(),
         });
         
+        // Now, update the document with its own ID
+        await updateDoc(docRef, { id: docRef.id });
+
         const newDocSnap = await getDoc(docRef);
         const newDocData = newDocSnap.data();
         return convertProductTimestamps({
@@ -90,6 +93,7 @@ export async function updateProduct(productId: string, productData: Partial<Prod
         const productDoc = doc(db, "products", productId);
         await updateDoc(productDoc, {
             ...productData,
+            id: productId, // Ensure the ID is persisted on update as well
             updatedAt: serverTimestamp(),
         });
     } catch (error) {
