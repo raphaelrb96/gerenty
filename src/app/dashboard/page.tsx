@@ -9,6 +9,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
 import { DollarSign, Package, ShoppingCart, ArrowRight, TrendingUp, BarChart, FileText, ChevronsUpDown, Building } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
@@ -28,8 +36,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { DateRange } from "react-day-picker";
-import { subDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from "date-fns";
-import { Bar, BarChart as RechartsBarChart, Pie, PieChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, Cell } from "recharts";
+import { subDays, startOfMonth, endOfMonth, eachDayOfInterval, format, differenceInDays } from "date-fns";
+import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 
 
 function CompanySelector() {
@@ -185,8 +193,7 @@ export default function DashboardPage() {
 
     const totalCost = orders.reduce((acc, order) => {
         const orderCost = order.items.reduce((itemAcc, item) => {
-            const product = allProducts.find(p => p.id === item.productId);
-            return itemAcc + (product?.costPrice || 0) * item.quantity;
+            return itemAcc + (item.costPrice || 0) * item.quantity;
         }, 0);
         return acc + orderCost;
     }, 0);
@@ -201,14 +208,46 @@ export default function DashboardPage() {
             const existing = acc.find(p => p.productId === item.productId);
             if (existing) {
                 existing.quantity += item.quantity;
+                existing.totalPrice += item.totalPrice;
             } else {
-                acc.push({ productId: item.productId, productName: item.productName, quantity: item.quantity });
+                acc.push({ ...item });
             }
             return acc;
-        }, [] as { productId: string; productName: string; quantity: number }[])
+        }, [] as { productId: string; productName: string; quantity: number, totalPrice: number }[])
         .sort((a, b) => b.quantity - a.quantity)
         .slice(0, 10);
     
+    // Revenue chart data
+    const revenueByDay: { [key: string]: number } = {};
+    if (dateRange?.from && dateRange?.to) {
+        const intervalDays = eachDayOfInterval({ start: dateRange.from, end: dateRange.to });
+
+        // Ensure at least 7 days are shown, expand interval if needed
+        const diff = differenceInDays(dateRange.to, dateRange.from);
+        if (diff < 6) {
+             const daysToAdd = 6 - diff;
+             dateRange.from = subDays(dateRange.from, daysToAdd);
+        }
+
+        eachDayOfInterval({ start: dateRange.from, end: dateRange.to }).forEach(day => {
+            revenueByDay[format(day, 'yyyy-MM-dd')] = 0;
+        });
+
+        orders.forEach(order => {
+            const dateStr = format(new Date(order.createdAt as string), 'yyyy-MM-dd');
+            if (revenueByDay.hasOwnProperty(dateStr)) {
+                revenueByDay[dateStr] += order.total;
+            }
+        });
+    }
+
+    const revenueChartData = Object.entries(revenueByDay)
+        .map(([date, total]) => ({
+            name: format(new Date(date), 'dd/MM'),
+            Total: total
+        }))
+        .sort((a,b) => new Date(a.name.split('/').reverse().join('-')).getTime() - new Date(b.name.split('/').reverse().join('-')).getTime());
+        
     return {
         orders,
         totalRevenue,
@@ -219,6 +258,7 @@ export default function DashboardPage() {
         averageTicket,
         topProducts,
         totalRegisteredProducts: allProducts.length,
+        revenueChartData,
     };
 }, [allOrders, allProducts, dateRange]);
 
@@ -235,8 +275,6 @@ export default function DashboardPage() {
   if (loading) {
     return <div className="flex h-full items-center justify-center"><LoadingSpinner /></div>;
   }
-
-  const PIE_COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#AF19FF"];
 
   return (
     <div className="space-y-8">
@@ -282,10 +320,11 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent className="pl-2">
                     <ResponsiveContainer width="100%" height={350}>
-                        <RechartsBarChart data={filteredData.orders.map(o => ({name: new Date(o.createdAt as string).toLocaleDateString(), Total: o.total}))}>
+                        <RechartsBarChart data={filteredData.revenueChartData}>
+                            <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                            <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
-                            <Tooltip />
+                            <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => formatCurrency(Number(value))} />
+                            <Tooltip formatter={(value) => formatCurrency(Number(value))} />
                             <Bar dataKey="Total" fill="var(--color-accent)" radius={[4, 4, 0, 0]} />
                         </RechartsBarChart>
                     </ResponsiveContainer>
@@ -296,17 +335,24 @@ export default function DashboardPage() {
                     <CardTitle>Produtos Mais Vendidos</CardTitle>
                 </CardHeader>
                 <CardContent>
-                     <ResponsiveContainer width="100%" height={350}>
-                        <PieChart>
-                            <Pie data={filteredData.topProducts} dataKey="quantity" nameKey="productName" cx="50%" cy="50%" outerRadius={120} label>
-                               {filteredData.topProducts.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                                ))}
-                            </Pie>
-                            <Tooltip />
-                            <Legend />
-                        </PieChart>
-                    </ResponsiveContainer>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Produto</TableHead>
+                                <TableHead className="text-center">Vendas</TableHead>
+                                <TableHead className="text-right">Total</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredData.topProducts.map(product => (
+                                <TableRow key={product.productId}>
+                                    <TableCell className="font-medium">{product.productName}</TableCell>
+                                    <TableCell className="text-center">{product.quantity}</TableCell>
+                                    <TableCell className="text-right">{formatCurrency(product.totalPrice)}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
                 </CardContent>
             </Card>
         </div>

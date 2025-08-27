@@ -264,6 +264,7 @@ export type OrderItem = {
   quantity: number; // Quantidade comprada
   unitPrice: number; // Preço unitário no momento da compra
   totalPrice: number; // Preço total (unitPrice * quantity)
+  costPrice?: number; // Preço de custo do produto
 
   variant?: {
     name: string; // Nome da variação (ex: "Cor", "Tamanho")

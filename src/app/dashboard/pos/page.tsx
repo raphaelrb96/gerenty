@@ -120,6 +120,7 @@ export default function PosPage() {
           totalPrice: product.pricing[0].price,
           isDigital: false,
           imageUrl: product.images?.mainImage,
+          costPrice: product.costPrice || 0,
         };
         return [...prevCart, newItem];
       }
@@ -188,7 +189,7 @@ export default function PosPage() {
             onAddToCart={handleAddToCart}
             onUpdateCartQuantity={handleUpdateQuantity}
             onUpdateCartPrice={handleUpdatePrice}
-            onRemoveFromCart={handleRemoveFromCart}
+            onRemoveFromCart={onRemoveFromCart}
             onClearCart={() => setCart([])}
         />
     </div>
