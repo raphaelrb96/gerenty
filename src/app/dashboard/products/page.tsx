@@ -20,7 +20,6 @@ import { Input } from "@/components/ui/input";
 export default function ProductsPage() {
     const { t } = useTranslation();
     const { user, userData } = useAuth();
-    const { activeCompany } = useCompany();
     const { toast } = useToast();
     const router = useRouter();
     const [products, setProducts] = useState<Product[]>([]);
@@ -74,8 +73,7 @@ export default function ProductsPage() {
     // Filter products based on search term and active company
     const filteredProducts = products.filter(product => {
         const nameMatch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-        const companyMatch = !activeCompany || (product.companyIds && product.companyIds.includes(activeCompany.id));
-        return nameMatch && companyMatch;
+        return nameMatch;
     });
 
     return (
