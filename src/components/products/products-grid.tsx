@@ -17,7 +17,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import {
   DropdownMenu,
@@ -27,12 +26,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter } from "@/components/ui/sheet"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useCurrency } from "@/context/currency-context"
 import { useToast } from "@/hooks/use-toast"
 import { deleteProduct } from "@/services/product-service"
 import type { Product } from "@/lib/types"
 import { useTranslation } from "@/context/i18n-context"
+import { ProductDetails } from "./product-details"
 
 type ProductsGridProps = {
   data: Product[];
@@ -45,6 +46,8 @@ export function ProductsGrid({ data, onProductDeleted }: ProductsGridProps) {
     const { toast } = useToast();
     const { t } = useTranslation();
     const [productToDelete, setProductToDelete] = React.useState<Product | null>(null);
+    const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(null);
+    const [isSheetOpen, setIsSheetOpen] = React.useState(false);
 
     const handleDeleteProduct = async (productId: string) => {
         try {
@@ -65,6 +68,11 @@ export function ProductsGrid({ data, onProductDeleted }: ProductsGridProps) {
             setProductToDelete(null);
         }
     };
+    
+    const handleViewDetails = (product: Product) => {
+        setSelectedProduct(product);
+        setIsSheetOpen(true);
+    }
 
     const getStatusVariant = (status: Product['status']) => {
         switch (status) {
@@ -83,7 +91,7 @@ export function ProductsGrid({ data, onProductDeleted }: ProductsGridProps) {
     <>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {data.map((product) => (
-            <Card key={product.id} className="overflow-hidden flex flex-col">
+            <Card key={product.id} className="overflow-hidden flex flex-col cursor-pointer" onClick={() => handleViewDetails(product)}>
                 <CardHeader className="p-0 relative aspect-square">
                     <Image
                         src={product.images?.mainImage || "https://placehold.co/400x400.png"}
@@ -94,11 +102,11 @@ export function ProductsGrid({ data, onProductDeleted }: ProductsGridProps) {
                     />
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="secondary" size="icon" className="absolute top-2 right-2 h-8 w-8 rounded-full">
+                            <Button variant="secondary" size="icon" className="absolute top-2 right-2 h-8 w-8 rounded-full" onClick={(e) => e.stopPropagation()}>
                             <MoreHorizontal className="h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
+                        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
                             <DropdownMenuLabel>{t('productsPage.actionsLabel')}</DropdownMenuLabel>
                             <DropdownMenuItem onSelect={() => router.push(`/dashboard/products/${product.id}/edit`)}>
                             {t('productsPage.edit')}
@@ -123,6 +131,24 @@ export function ProductsGrid({ data, onProductDeleted }: ProductsGridProps) {
             </Card>
         ))}
         </div>
+
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+            <SheetContent className="sm:max-w-xl flex flex-col">
+                <SheetHeader className="pr-12">
+                    <SheetTitle>Detalhes do Produto</SheetTitle>
+                </SheetHeader>
+                <div className="flex-1 overflow-y-auto pr-6 -mr-6">
+                    {selectedProduct && <ProductDetails product={selectedProduct} />}
+                </div>
+                 <SheetFooter className="border-t pt-4">
+                    <Button variant="outline" onClick={() => setIsSheetOpen(false)}>Fechar</Button>
+                    <Button onClick={() => {
+                        setIsSheetOpen(false);
+                        router.push(`/dashboard/products/${selectedProduct?.id}/edit`);
+                    }}>Editar Produto</Button>
+                </SheetFooter>
+            </SheetContent>
+        </Sheet>
 
         <AlertDialog open={!!productToDelete} onOpenChange={(isOpen) => !isOpen && setProductToDelete(null)}>
             <AlertDialogContent>
