@@ -40,7 +40,7 @@ import { DateRange } from "react-day-picker";
 import { subDays, startOfDay, endOfDay, eachDayOfInterval, eachHourOfInterval, format, differenceInDays, differenceInCalendarDays, parseISO } from "date-fns";
 import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { cn } from "@/lib/utils";
-import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
 
 function CompanySelector() {
