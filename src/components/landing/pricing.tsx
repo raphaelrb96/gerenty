@@ -14,7 +14,7 @@ export function Pricing() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const router = useRouter();
-  const { formatCurrency } = useCurrency();
+  const { formatPlanPrice } = useCurrency();
 
   const tiers = [
      {
@@ -97,7 +97,7 @@ export function Pricing() {
                 <CardTitle className="font-headline text-2xl">{tier.name}</CardTitle>
                 <CardDescription className="mt-2 h-12">{tier.description}</CardDescription>
                  <div className="flex items-baseline justify-center gap-2 mt-4">
-                    <span className="text-4xl font-bold">{tier.price > 0 ? formatCurrency(tier.price) : t('landing.pricing.free.price')}</span>
+                    <span className="text-4xl font-bold">{tier.price > 0 ? formatPlanPrice(tier.price) : t('landing.pricing.free.price')}</span>
                      {tier.price > 0 && <span className="text-muted-foreground">{tier.priceSuffix}</span>}
                 </div>
               </CardHeader>

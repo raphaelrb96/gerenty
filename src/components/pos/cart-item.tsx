@@ -81,5 +81,3 @@ export function CartItem({ item, onUpdateQuantity, onUpdatePrice, onRemove }: Ca
         </div>
     );
 }
-
-    

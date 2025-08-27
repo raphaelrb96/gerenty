@@ -356,7 +356,7 @@ export default function DashboardPage() {
             <AccountStatCard 
                 icon={<Package />}
                 title="Produtos"
-                value={`${filteredData.totalRegisteredProducts} / ${userData?.plan?.limits?.products ?? '∞'}`}
+                value={`${allProducts.length} / ${userData?.plan?.limits?.products ?? '∞'}`}
                 detail="Cadastrados vs Limite do plano"
             />
              <AccountStatCard 

@@ -17,7 +17,7 @@ export default function BillingPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
-  const { formatCurrency } = useCurrency();
+  const { formatPlanPrice } = useCurrency();
 
   const tiers = [
     {
@@ -109,7 +109,7 @@ export default function BillingPage() {
               <CardHeader>
                 <CardTitle className="font-headline text-2xl">{tier.name}</CardTitle>
                  <div className="flex items-baseline gap-2 mt-4">
-                    <span className="text-4xl font-bold">{formatCurrency(tier.price)}</span>
+                    <span className="text-4xl font-bold">{formatPlanPrice(tier.price)}</span>
                     <span className="text-muted-foreground">{tier.priceSuffix}</span>
                 </div>
                 <CardDescription className="mt-2 h-12">{tier.description}</CardDescription>

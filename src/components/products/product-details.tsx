@@ -69,7 +69,7 @@ export function ProductDetails({ product, allCompanies, allCategories, allCollec
     const costPrice = product.costPrice || 0;
     const sellingPrice = product.pricing?.[0]?.price || 0;
     const profitValue = sellingPrice - costPrice;
-    const profitMargin = costPrice > 0 ? (profitValue / costPrice) * 100 : 0;
+    const profitMargin = sellingPrice > 0 ? (profitValue / sellingPrice) * 100 : 0;
 
     return (
         <div className="space-y-6">

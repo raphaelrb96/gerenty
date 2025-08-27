@@ -181,7 +181,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
 
   const handlePrevStep = () => {
     if (currentStep > 1) {
-        setCurrentStep(currentStep - 1);
+        setCurrentStep(currentStep + 1);
     }
   };
   

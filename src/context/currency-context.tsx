@@ -21,7 +21,8 @@ const currencySymbols: Record<Currency, string> = {
 interface CurrencyContextType {
   currency: Currency;
   setCurrency: (currency: Currency) => void;
-  formatCurrency: (valueInUsd: number) => string;
+  formatPlanPrice: (valueInUsd: number) => string;
+  formatCurrency: (value: number) => string;
 }
 
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
@@ -29,19 +30,21 @@ const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined
 export const CurrencyProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currency, setCurrency] = useState<Currency>('USD');
 
-  const formatCurrency = (valueInUsd: number) => {
+  const formatPlanPrice = (valueInUsd: number) => {
     const rate = exchangeRates[currency];
     const convertedValue = valueInUsd * rate;
     const symbol = currencySymbols[currency];
     
-    // For BRL, the symbol comes before the number. For others, it might be different.
-    // This simple logic works for USD, BRL, and EUR.
     return `${symbol}${convertedValue.toFixed(2)}`;
+  };
+
+  const formatCurrency = (value: number) => {
+    return `R$${(value || 0).toFixed(2)}`;
   };
   
 
   return (
-    <CurrencyContext.Provider value={{ currency, setCurrency, formatCurrency }}>
+    <CurrencyContext.Provider value={{ currency, setCurrency, formatPlanPrice, formatCurrency }}>
       {children}
     </CurrencyContext.Provider>
   );
