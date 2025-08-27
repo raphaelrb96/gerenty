@@ -175,6 +175,7 @@ export default function DashboardPage() {
             const companyIds = activeCompany ? [activeCompany.id] : companies.map(c => c.id);
             if (companyIds.length === 0 && !activeCompany) {
                 setAllOrders([]);
+                setLoading(false);
                 return;
             };
 
@@ -188,7 +189,7 @@ export default function DashboardPage() {
         }
     }
 
-    if (user && companies) {
+    if (user && companies !== undefined) {
        fetchData();
     }
   }, [user, activeCompany, companies]);
@@ -332,11 +333,11 @@ export default function DashboardPage() {
     { title: "Lucro Total", value: formatCurrency(filteredData.totalProfit), icon: <TrendingUp /> },
     { title: "Pedidos Pagos", value: `+${filteredData.paidOrdersCount}`, icon: <ShoppingCart /> },
     { title: "Ticket Médio", value: formatCurrency(filteredData.averageTicket), icon: <FileText /> },
-    { title: "Custo Total", value: formatCurrency(filteredData.totalCost), icon: <DollarSign className="opacity-50"/> },
+    { title: "Custo Total", value: formatCurrency(filteredData.totalCost), icon: <DollarSign /> },
     { title: "Itens Vendidos", value: `${filteredData.itemsSoldCount}`, icon: <Package /> },
     { title: "Receita Cancelada", value: formatCurrency(filteredData.cancelledRevenue), icon: <XCircle /> },
-    { title: "Cancelamentos", value: `${filteredData.cancelledOrdersCount}`, icon: <AlertCircle /> },
     { title: "Reembolso", value: formatCurrency(filteredData.refundedRevenue), icon: <RotateCcw /> },
+    { title: "Cancelamentos", value: `${filteredData.cancelledOrdersCount}`, icon: <AlertCircle /> },
   ];
   
   if (loading) {

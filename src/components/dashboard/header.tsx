@@ -18,9 +18,6 @@ import { useAuth } from "@/context/auth-context";
 import { useRouter } from "next/navigation";
 import { signOut } from "@/services/auth-service";
 import { Store, UserCircle } from "lucide-react";
-import { ThemeToggle } from "../theme-toggle";
-import { LanguageToggle } from "../language-toggle";
-import { CurrencyToggle } from "../currency-toggle";
 
 export function Header() {
   const { t } = useTranslation();
@@ -56,7 +53,7 @@ export function Header() {
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" className="relative h-9 w-9 rounded-full">
+            <Button variant="outline" size="icon" className="relative h-10 w-10 rounded-full">
                <UserCircle className="h-6 w-6 text-muted-foreground" />
                <span className="sr-only">Abrir menu do usuário</span>
             </Button>
