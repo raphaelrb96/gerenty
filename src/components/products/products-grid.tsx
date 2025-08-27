@@ -92,8 +92,8 @@ export function ProductsGrid({ data, onProductDeleted }: ProductsGridProps) {
                         {t('productsPage.edit')}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onSelect={() => handleDeleteProduct(product.id)} className="text-red-600">
-                        {t('productsPage.delete')}
+                        <DropdownMenuItem onClick={() => handleDeleteProduct(product.id)} onSelect={(e) => e.preventDefault()} className="text-red-600">
+                            {t('productsPage.delete')}
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
