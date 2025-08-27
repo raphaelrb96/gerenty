@@ -13,13 +13,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
-import { ThemeToggle } from "../theme-toggle";
-import { LanguageToggle } from "../language-toggle";
 import { useTranslation } from "@/context/i18n-context";
 import { useAuth } from "@/context/auth-context";
 import { useRouter } from "next/navigation";
 import { signOut } from "@/services/auth-service";
-import { CurrencyToggle } from "../currency-toggle";
+import { CreditCard } from "lucide-react";
 
 export function Header() {
   const { t } = useTranslation();
@@ -46,9 +44,13 @@ export function Header() {
         {/* Can add breadcrumbs or page title here */}
       </div>
 
-      <div className="flex items-center gap-2">
-        <ThemeToggle />
-        <LanguageToggle />
+      <div className="flex items-center gap-4">
+        <Button asChild variant="outline" size="sm">
+            <Link href="/dashboard/pos">
+              <CreditCard className="mr-2 h-4 w-4" />
+              PDV
+            </Link>
+        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-8 w-8 rounded-full">

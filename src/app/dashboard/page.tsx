@@ -22,7 +22,7 @@ import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
 import { useEffect, useState, useMemo } from "react";
 import { getOrders } from "@/services/order-service";
-import { getProducts } from "@/services/product-service";
+import { getProducts, getProductsByUser } from "@/services/product-service";
 import type { Order, Product } from "@/lib/types";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { useTranslation } from "@/context/i18n-context";
@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { DateRange } from "react-day-picker";
-import { subDays, startOfMonth, endOfMonth, eachDayOfInterval, format, differenceInDays } from "date-fns";
+import { subDays, startOfDay, endOfDay, eachDayOfInterval, format, differenceInDays } from "date-fns";
 import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 
 
@@ -115,7 +115,7 @@ function CompanySelector() {
                     <div className="flex-shrink-0">
                          <Button asChild size="lg" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
                              <Link href="/dashboard/pos">
-                                Ir para o PDV <ArrowRight className="ml-2 h-4 w-4" />
+                                Frente de Caixa <ArrowRight className="ml-2 h-4 w-4" />
                             </Link>
                         </Button>
                     </div>
@@ -151,21 +151,19 @@ export default function DashboardPage() {
 
         setLoading(true);
         try {
+            // Fetch all products owned by the user for the "registered products" card
+            const userProducts = await getProductsByUser(user.uid);
+            setAllProducts(userProducts);
+
+            // Fetch orders based on company selection
             const companyIds = activeCompany ? [activeCompany.id] : companies.map(c => c.id);
             if (companyIds.length === 0 && !activeCompany) {
-                const userProducts = await getProducts(user.uid);
-                setAllProducts(userProducts);
                 setAllOrders([]);
                 return;
             };
 
-            const [ordersResults, productsResults] = await Promise.all([
-                Promise.all(companyIds.map(id => getOrders(id))),
-                Promise.all(companyIds.map(id => getProducts(id)))
-            ]);
-            
+            const ordersResults = await Promise.all(companyIds.map(id => getOrders(id)));
             setAllOrders(ordersResults.flat());
-            setAllProducts(productsResults.flat());
 
         } catch (error) {
             console.error("Failed to fetch dashboard data", error);
@@ -183,7 +181,7 @@ export default function DashboardPage() {
     const orders = allOrders.filter(order => {
         const orderDate = new Date(order.createdAt as string);
         if (dateRange?.from && dateRange?.to) {
-            return orderDate >= dateRange.from && orderDate <= dateRange.to;
+            return orderDate >= startOfDay(dateRange.from) && orderDate <= endOfDay(dateRange.to);
         }
         return true;
     });
@@ -290,9 +288,10 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="flex flex-wrap items-center gap-4">
               <DateRangePicker date={dateRange} onDateChange={setDateRange} />
-              <Button variant="outline" onClick={() => setDateRange({from: new Date(), to: new Date()})}>Hoje</Button>
-              <Button variant="outline" onClick={() => setDateRange({from: subDays(new Date(), 6), to: new Date()})}>Últimos 7 dias</Button>
-              <Button variant="outline" onClick={() => setDateRange({from: startOfMonth(new Date()), to: endOfMonth(new Date())})}>Este Mês</Button>
+              <Button variant="outline" onClick={() => setDateRange({from: startOfDay(new Date()), to: endOfDay(new Date())})}>Hoje</Button>
+              <Button variant="outline" onClick={() => setDateRange({from: startOfDay(subDays(new Date(), 1)), to: endOfDay(subDays(new Date(), 1))})}>Ontem</Button>
+              <Button variant="outline" onClick={() => setDateRange({from: startOfDay(subDays(new Date(), 6)), to: endOfDay(new Date())})}>7 dias</Button>
+              <Button variant="outline" onClick={() => setDateRange({from: startOfDay(subDays(new Date(), 29)), to: endOfDay(new Date())})}>30 dias</Button>
           </CardContent>
       </Card>
 
@@ -313,8 +312,8 @@ export default function DashboardPage() {
             ))}
           </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-            <Card className="lg:col-span-3">
+        <div className="grid grid-cols-1 gap-4">
+            <Card>
                 <CardHeader>
                     <CardTitle>Visão Geral da Receita</CardTitle>
                 </CardHeader>
@@ -330,7 +329,7 @@ export default function DashboardPage() {
                     </ResponsiveContainer>
                 </CardContent>
             </Card>
-            <Card className="lg:col-span-2">
+            <Card>
                  <CardHeader>
                     <CardTitle>Produtos Mais Vendidos</CardTitle>
                 </CardHeader>
