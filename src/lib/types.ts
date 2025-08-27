@@ -61,6 +61,9 @@ export type Product = {
 
   // Status se o produto está ativo ou não
   isActive: boolean;
+  
+  // Preço de custo do produto
+  costPrice?: number;
 
   // Preço do produto em diferentes faixas (ex: Varejo, Atacado)
   pricing: ProductPriceTier[];
@@ -527,3 +530,5 @@ export type Company = {
   createdAt:  string | Date | Timestamp | FieldValue;
   updatedAt?:  string | Date | Timestamp | FieldValue; // Data da última atualização
 };
+
+    

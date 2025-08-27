@@ -2,10 +2,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, useWatch, Control, useFormContext } from "react-hook-form";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useState, useTransition, useCallback } from 'react';
 import { useAuth } from "@/context/auth-context";
 import { useCompany } from "@/context/company-context";
 import { useToast } from "@/hooks/use-toast";
@@ -42,6 +42,8 @@ const formSchema = z.object({
   description: z.string().optional(),
   sku: z.string().optional(),
   
+  costPrice: z.preprocess((a) => parseFloat(String(a || "0").replace(",", ".")), z.number().min(0)),
+
   pricing: z.array(z.object({
     label: z.string().min(1, "O rótulo é obrigatório"),
     price: z.preprocess((a) => parseFloat(String(a || "0").replace(",", ".")), z.number().min(0)),
@@ -96,6 +98,77 @@ const PriceRuleInput = ({ control, index, ruleType }: { control: any, index: num
     }
 };
 
+function PricingCalculatorCard({ control }: { control: Control<ProductFormValues> }) {
+    const { setValue } = useFormContext<ProductFormValues>();
+    const costPrice = useWatch({ control, name: 'costPrice' });
+    const sellingPrice = useWatch({ control, name: 'pricing.0.price' });
+
+    const [profitMargin, setProfitMargin] = useState(0);
+    const [profitValue, setProfitValue] = useState(0);
+
+    const calculateFromPrices = useCallback(() => {
+        if (costPrice > 0 && sellingPrice > 0) {
+            const profit = sellingPrice - costPrice;
+            const margin = (profit / costPrice) * 100;
+            setProfitValue(parseFloat(profit.toFixed(2)));
+            setProfitMargin(parseFloat(margin.toFixed(2)));
+        } else {
+            setProfitValue(0);
+            setProfitMargin(0);
+        }
+    }, [costPrice, sellingPrice]);
+
+    useEffect(() => {
+        calculateFromPrices();
+    }, [costPrice, sellingPrice, calculateFromPrices]);
+
+    const handleMarginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newMargin = parseFloat(e.target.value) || 0;
+        setProfitMargin(newMargin);
+        if (costPrice > 0) {
+            const newSellingPrice = costPrice * (1 + newMargin / 100);
+            setValue('pricing.0.price', parseFloat(newSellingPrice.toFixed(2)), { shouldValidate: true });
+        }
+    };
+    
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Custo e Lucro</CardTitle>
+                <CardDescription>Defina seu custo para calcular a margem de lucro.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <FormField
+                    control={control}
+                    name="costPrice"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Preço de Custo</FormLabel>
+                            <FormControl><Input type="number" placeholder="19.90" {...field} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <div className="grid grid-cols-2 gap-4">
+                     <FormItem>
+                        <FormLabel>Margem de Lucro (%)</FormLabel>
+                        <FormControl>
+                            <Input type="number" placeholder="100" value={profitMargin} onChange={handleMarginChange} />
+                        </FormControl>
+                    </FormItem>
+                    <FormItem>
+                        <FormLabel>Lucro (R$)</FormLabel>
+                        <FormControl>
+                            <Input type="number" value={profitValue} disabled className="font-bold" />
+                        </FormControl>
+                    </FormItem>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+
 export function ProductFormNew({ product }: ProductFormProps) {
     const router = useRouter();
     const { t, language } = useTranslation();
@@ -114,6 +187,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
             slug: "",
             description: "",
             sku: "",
+            costPrice: 0,
             pricing: [{ label: 'Padrão', price: 0, rule: { type: 'none' } }],
             manageStock: true,
             availableStock: 0,
@@ -127,7 +201,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
         },
     });
 
-    const { formState: { isSubmitting } } = form;
+    const { formState: { isSubmitting }, control } = form;
     
     const { fields: priceFields, append: appendPrice, remove: removePrice } = useFieldArray({ control: form.control, name: "pricing" });
     const { fields: attributeFields, append: appendAttribute, remove: removeAttribute } = useFieldArray({ control: form.control, name: "attributes" });
@@ -143,6 +217,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
                 slug: product.slug ?? "",
                 description: product.description ?? "",
                 sku: product.sku ?? "",
+                costPrice: product.costPrice ?? 0,
                 pricing: product.pricing?.map(p => ({ 
                     label: p.label, 
                     price: p.price, 
@@ -338,7 +413,9 @@ export function ProductFormNew({ product }: ProductFormProps) {
                             </CardContent>
                         </Card>
                         
-                         <Card>
+                        <PricingCalculatorCard control={control} />
+
+                        <Card>
                             <CardHeader><CardTitle>Preços e Regras</CardTitle></CardHeader>
                             <CardContent className="space-y-4">
                                 {priceFields.map((field, index) => (
@@ -411,3 +488,5 @@ export function ProductFormNew({ product }: ProductFormProps) {
         </Form>
     );
 }
+
+    
