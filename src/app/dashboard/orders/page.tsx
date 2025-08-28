@@ -184,7 +184,7 @@ export default function OrdersPage() {
        </Card>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent className="sm:max-w-lg flex flex-col p-0">
+        <SheetContent className="p-4 sm:max-w-lg flex flex-col">
             <OrderDetails 
                 order={selectedOrder} 
                 onStatusChange={handleUpdateStatus}
@@ -200,7 +200,7 @@ export default function OrdersPage() {
             description={!activeCompany ? "Selecione uma empresa para ver os pedidos ou veja todos." : t('ordersPage.empty.description')}
         />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {orders.map((order) => (
                 <Card key={order.id} className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleViewDetails(order)}>
                     <CardHeader className="flex flex-row items-start justify-between p-4">
