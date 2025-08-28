@@ -7,7 +7,7 @@ import { getOrders, getOrdersForCompanies, updateOrder } from "@/services/order-
 import type { Order, OrderStatus } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { OrderDetails } from "@/components/orders/order-details";
 import { File, MoreVertical, ShoppingCart, ChevronsUpDown, Building } from "lucide-react";
@@ -200,55 +200,51 @@ export default function OrdersPage() {
             description={!activeCompany ? "Selecione uma empresa para ver os pedidos ou veja todos." : t('ordersPage.empty.description')}
         />
       ) : (
-        <div className="space-y-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {orders.map((order) => (
-            <Card key={order.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4 grid grid-cols-[1fr,auto] md:grid-cols-[2fr,1fr,1fr,1fr,auto] items-center gap-4">
-                    {/* Customer Info - always visible */}
-                    <div className="flex items-center gap-3">
-                        <Avatar>
-                            <AvatarFallback>{order.customer.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                            <p className="font-semibold">#{order.id.substring(0, 7)}</p>
-                            <p className="text-sm text-muted-foreground truncate">{order.customer.name}</p>
+                <Card key={order.id} className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleViewDetails(order)}>
+                    <CardHeader className="flex flex-row items-start justify-between p-4">
+                        <div className="flex items-center gap-3">
+                            <Avatar className="w-10 h-10 border">
+                                <AvatarFallback>{order.customer.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                                <CardTitle className="text-base">#{order.id.substring(0, 7)}</CardTitle>
+                                <p className="text-sm text-muted-foreground">{order.customer.name}</p>
+                            </div>
                         </div>
-                    </div>
-                    
-                    {/* Status - Desktop */}
-                    <div className="hidden md:flex md:justify-center">
-                        <Badge variant="secondary" className={getStatusVariant(order.status)}>
-                            {t(`orderStatus.${order.status}`)}
-                        </Badge>
-                    </div>
-
-                    {/* Date - Desktop */}
-                    <div className="hidden md:block text-sm text-muted-foreground text-center">
-                        {order.createdAt ? new Date(order.createdAt as string).toLocaleDateString() : 'N/A'}
-                    </div>
-                    
-                    {/* Total - Desktop */}
-                    <div className="hidden md:block text-right font-semibold">
-                        {formatCurrency(order.total)}
-                    </div>
-                    
-                    {/* Mobile: Total, Status & Details Button */}
-                    <div className="flex flex-col items-end gap-1 justify-self-end md:hidden">
-                        <p className="font-semibold">{formatCurrency(order.total)}</p>
-                        <Badge variant="secondary" className={`md:hidden ${getStatusVariant(order.status)}`}>
-                            {t(`orderStatus.${order.status}`)}
-                        </Badge>
-                    </div>
-
-                     {/* Details Button - always visible, but different position */}
-                    <div className="col-span-2 md:col-span-1 flex justify-end">
-                        <Button variant="outline" size="sm" onClick={() => handleViewDetails(order)}>
-                            {t('ordersPage.detailsButton')}
-                        </Button>
-                    </div>
-
-                </CardContent>
-            </Card>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
+                                    <MoreVertical className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                <DropdownMenuItem onSelect={() => handleViewDetails(order)}>
+                                    Ver Detalhes
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </CardHeader>
+                    <CardFooter className="p-4 pt-0 border-t flex justify-between text-sm">
+                       <div className="flex flex-col items-center">
+                            <span className="text-muted-foreground text-xs">Status</span>
+                             <Badge variant="secondary" className={`mt-1 ${getStatusVariant(order.status)}`}>
+                                {t(`orderStatus.${order.status}`)}
+                            </Badge>
+                       </div>
+                       <div className="flex flex-col items-center">
+                            <span className="text-muted-foreground text-xs">Data</span>
+                            <span className="font-medium mt-1">
+                                {order.createdAt ? new Date(order.createdAt as string).toLocaleDateString() : 'N/A'}
+                            </span>
+                       </div>
+                       <div className="flex flex-col items-center">
+                            <span className="text-muted-foreground text-xs">Total</span>
+                            <span className="font-bold text-base mt-1">{formatCurrency(order.total)}</span>
+                       </div>
+                    </CardFooter>
+                </Card>
             ))}
         </div>
       )}
