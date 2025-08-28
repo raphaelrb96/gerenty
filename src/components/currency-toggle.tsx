@@ -11,20 +11,26 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
+import { useTranslation } from "@/context/i18n-context"
 
 export function CurrencyToggle() {
-  const { setCurrency } = useCurrency();
+  const { setCurrency, currency } = useCurrency();
+  const { t } = useTranslation();
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <CircleDollarSign className="h-[1.2rem] w-[1.2rem]" />
-          <span className="sr-only">Toggle currency</span>
+        <Button variant="outline" className="h-8">
+          <CircleDollarSign className="h-[1.2rem] w-[1.2rem] mr-2" />
+          <span>{t('preferencesPage.currency')}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuLabel>{t('preferencesPage.selectCurrency')}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => setCurrency('USD')}>
           USD ($)
         </DropdownMenuItem>

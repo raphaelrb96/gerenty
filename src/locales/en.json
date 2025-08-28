@@ -64,14 +64,10 @@
     },
     "landing": {
         "hero": {
-            "title": {
-                "line1": "Stop putting out fires!",
-                "line2": "Transform your business."
-            },
-            "subtitle": "A single platform to manage sales, inventory, and finances with full control, from anywhere.",
+            "title": "The Manager",
+            "subtitle": "A platform for managing products, orders, finances, and companies, allowing for centralization and management of a multi-company portfolio.",
             "ctaPrimary": "Get Started Now for Free",
-            "ctaSecondary": "See Pricing",
-            "videoAlt": "Animated product video placeholder"
+            "ctaSecondary": "See Pricing"
         },
         "socialProof": {
             "title": "The trust of those who have already transformed their business",
@@ -121,36 +117,36 @@
                 "price": "Free",
                 "priceSuffix": "",
                 "description": "For those getting started",
-                "features": ["10 products", "50 orders/month", "1 user", "50 customers"],
+                "features": ["1 Company", "10 products", "50 orders/month", "1 user", "50 customers"],
                 "cta": "Get Started"
             },
             "bronze": {
                 "name": "Bronze",
                 "priceSuffix": "/month",
                 "description": "For small teams",
-                "features": ["50 products", "300 orders/month", "3 users", "300 customers"],
+                "features": ["3 Companies", "50 products", "300 orders/month", "3 users", "300 customers"],
                 "cta": "Choose Plan"
             },
             "silver": {
                 "name": "Silver",
                 "priceSuffix": "/month",
                 "description": "For growing businesses",
-                "features": ["300 products", "1000 orders/month", "5 users", "1000 customers"],
+                "features": ["5 Companies", "300 products", "1000 orders/month", "5 users", "1000 customers"],
                 "cta": "Choose Plan"
             },
             "gold": {
                 "name": "Gold",
                 "priceSuffix": "/month",
                 "description": "For established businesses",
-                "features": ["500 products", "5000 orders/month", "10 users", "5000 customers", "Multi-company management"],
+                "features": ["10 Companies", "500 products", "5000 orders/month", "10 users", "5000 customers", "Multi-company management"],
                 "cta": "Choose Plan"
             },
             "premium": {
                 "name": "Premium",
                 "priceSuffix": "/month",
                 "description": "For large-scale operations",
-                "features": ["Unlimited products", "Unlimited orders", "Up to 20 users", "Unlimited customers", "Multi-company management"],
-                "cta": "Contact Us"
+                "features": ["Unlimited Companies", "Unlimited products", "Unlimited orders", "Up to 20 users", "Unlimited customers", "Multi-company management"],
+                "cta": "Choose Plan"
             },
             "pro": {
                 "cta": "Choose Plan"
@@ -191,6 +187,9 @@
         }
     },
     "dashboard": {
+        "openUserMenu": "Open user menu",
+        "posButton": "POS",
+        "allCompanies": "All Companies Overview",
         "totalRevenue": "Total Revenue",
         "totalSales": "Total Sales",
         "productsInStock": "Products in Stock",
@@ -208,7 +207,45 @@
         "createNewCompany": "Create New Company",
         "viewAllCompanies": "View All",
         "myCompanies": "My Companies",
-        "manageCompany": "Manage"
+        "manageCompany": "Manage",
+        "accountCards": {
+            "products": "Products",
+            "productsDetail": "Registered vs Plan Limit",
+            "subscription": "Subscription",
+            "days": "days",
+            "lifetime": "Lifetime",
+            "expiresOn": "Expires on",
+            "plan": "Plan",
+            "companies": "Companies",
+            "companiesDetail": "Created vs Plan Limit",
+            "orders": "Orders",
+            "ordersDetail": "Cycle Orders vs Plan Limit"
+        },
+        "filters": {
+            "title": "Filters",
+            "today": "Today",
+            "yesterday": "Yesterday",
+            "sevenDays": "7 days",
+            "thirtyDays": "30 days"
+        },
+        "stats": {
+            "totalRevenue": "Total Revenue",
+            "totalProfit": "Total Profit",
+            "paidOrders": "Paid Orders",
+            "averageTicket": "Average Ticket",
+            "totalCost": "Total Cost",
+            "itemsSold": "Items Sold",
+            "cancelledRevenue": "Cancelled Revenue",
+            "refundedRevenue": "Refunded Revenue",
+            "cancellations": "Cancellations"
+        },
+        "charts": {
+            "revenueOverview": "Revenue Overview",
+            "topSellingProducts": "Top Selling Products",
+            "product": "Product",
+            "sales": "Sales",
+            "total": "Total"
+        }
     },
     "profilePage": {
         "title": "Profile & Settings",
@@ -219,7 +256,11 @@
             "title": "Subscription",
             "status": "Plan Status",
             "renewalDate": "Your plan renews on {date}.",
-            "inactiveText": "You do not have an active plan."
+            "inactiveText": "You do not have an active plan.",
+            "currentPlan": "Current Plan",
+            "daysRemaining": "Days Remaining",
+            "validity": "Validity",
+            "renew": "Renew Plan"
         },
         "manageButton": "Manage",
         "updateSuccess": { "title": "Profile Updated", "description": "Your information has been saved successfully." },
@@ -230,7 +271,8 @@
         "description": "Customize your experience.",
         "theme": "Theme",
         "language": "Language",
-        "currency": "Currency"
+        "currency": "Currency",
+        "selectCurrency": "Select Currency"
     },
     "productsPage": {
         "title": "Products",

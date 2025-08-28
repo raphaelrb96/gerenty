@@ -96,28 +96,27 @@ export default function ProfilePage() {
 
         <Card className="md:col-span-1 h-fit">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
+            <CardTitle>
                 {t('profilePage.subscription.title')}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4 text-center">
+          <CardContent className="space-y-4 text-left">
              <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">{t('profilePage.subscription.status')}</p>
                 <Badge className={getStatusVariant(userData?.statusPlan)}>{userData?.statusPlan || 'inativo'}</Badge>
             </div>
              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Plano Atual</p>
+                <p className="text-sm text-muted-foreground">{t('profilePage.subscription.currentPlan')}</p>
                 <p className="font-semibold">{userData?.plan?.name || "Nenhum"}</p>
             </div>
 
             {userData?.statusPlan === 'ativo' && (
                 <div className="space-y-1">
                      <p className="text-sm text-muted-foreground">
-                        {daysUntilExpiry !== null ? "Dias Restantes" : "Validade"}
+                        {daysUntilExpiry !== null ? t('profilePage.subscription.daysRemaining') : t('profilePage.subscription.validity')}
                     </p>
                     <p className={cn("font-bold text-lg", daysUntilExpiry !== null && daysUntilExpiry < 7 && "text-destructive")}>
-                        {daysUntilExpiry !== null ? `${daysUntilExpiry} dias` : "Vitalício"}
+                        {daysUntilExpiry !== null ? `${daysUntilExpiry} dias` : t('dashboard.accountCards.lifetime')}
                     </p>
                 </div>
             )}
@@ -128,7 +127,7 @@ export default function ProfilePage() {
           {(userData?.statusPlan === 'inativo' || userData?.statusPlan === 'pendente' || (daysUntilExpiry !== null && daysUntilExpiry < 15)) && (
              <CardFooter className="border-t pt-4">
                 <Button onClick={() => router.push('/dashboard/billing')} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="w-full">
-                    {userData?.statusPlan === 'ativo' ? "Renovar Plano" : t('profilePage.manageButton')}
+                    {userData?.statusPlan === 'ativo' ? t('profilePage.subscription.renew') : t('profilePage.manageButton')}
                 </Button>
             </CardFooter>
           )}

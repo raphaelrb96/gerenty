@@ -48,14 +48,14 @@ export function Header() {
         <Button asChild variant="outline" size="icon">
             <Link href="/dashboard/pos">
               <Store className="h-5 w-5" />
-              <span className="sr-only">Frente de Caixa</span>
+              <span className="sr-only">{t('dashboard.posButton')}</span>
             </Link>
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" className="relative h-10 w-10 rounded-full">
+            <Button variant="outline" size="icon" className="relative h-10 w-10">
                <UserCircle className="h-6 w-6 text-muted-foreground" />
-               <span className="sr-only">Abrir menu do usuário</span>
+               <span className="sr-only">{t('dashboard.openUserMenu')}</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">

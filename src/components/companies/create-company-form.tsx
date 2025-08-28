@@ -74,12 +74,6 @@ const formSchema = z.object({
       pickupEnabled: z.boolean().default(false),
       minimumOrderValue: z.preprocess((a) => parseFloat(z.string().parse(a || "0").replace(",", ".")), z.number().min(0)).optional(),
   }).optional(),
-
-  // Configurações do Catálogo
-  catalogSettings: z.object({
-      themeColor: z.string().optional(),
-      layout: z.enum(['grid', 'list', 'carousel']).default('grid'),
-  }).optional(),
 });
 
 type CreateCompanyFormValues = z.infer<typeof formSchema>;
@@ -129,10 +123,6 @@ export function CreateCompanyForm() {
                 deliveryEnabled: true,
                 pickupEnabled: false,
                 minimumOrderValue: 0,
-            },
-            catalogSettings: {
-                themeColor: "#45A0A0",
-                layout: 'grid',
             }
         },
     });
@@ -201,7 +191,7 @@ export function CreateCompanyForm() {
                     shippingDetails: { methods: [] }, 
                     acceptedPayments: [], 
                 },
-                catalogSettings: values.catalogSettings,
+                catalogSettings: { layout: 'grid' },
                 isVerified: false,
                 isActive: true,
             };
@@ -392,37 +382,6 @@ export function CreateCompanyForm() {
                                     </div>
                                 </AccordionContent>
                             </AccordionItem>
-                             <AccordionItem value="item-5">
-                                <AccordionTrigger className="font-semibold text-lg">Configurações do Catálogo</AccordionTrigger>
-                                <AccordionContent className="pt-4 space-y-4">
-                                     <FormField control={form.control} name="catalogSettings.themeColor" render={({ field }) => (
-                                        <FormItem>
-                                            <Label>Cor do Tema</Label>
-                                            <FormControl>
-                                                <div className="relative">
-                                                     <div className="absolute left-2 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full border" style={{ backgroundColor: field.value || 'transparent' }}/>
-                                                     <Input type="text" placeholder="#45A0A0" className="pl-9" {...field} />
-                                                </div>
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}/>
-                                      <FormField control={form.control} name="catalogSettings.layout" render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Layout Padrão</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="grid">Grade</SelectItem>
-                                                    <SelectItem value="list">Lista</SelectItem>
-                                                    <SelectItem value="carousel">Carrossel</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}/>
-                                </AccordionContent>
-                            </AccordionItem>
                         </Accordion>
                         <CardFooter className="p-0 pt-6 flex justify-end">
                             <Button type="submit" disabled={isLoading} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
@@ -436,5 +395,3 @@ export function CreateCompanyForm() {
         </Card>
     );
 }
-
-    

@@ -27,7 +27,7 @@ export default function BillingPage() {
       priceSuffix: t('landing.pricing.premium.priceSuffix'),
       description: t('landing.pricing.premium.description'),
       features: t('landing.pricing.premium.features', { returnObjects: true }) as unknown as string[],
-      cta: t('landing.pricing.enterprise.cta'),
+      cta: t('landing.pricing.pro.cta'),
       isFeatured: true,
     },
     {

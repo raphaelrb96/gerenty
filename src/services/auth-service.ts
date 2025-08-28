@@ -27,10 +27,10 @@ export async function signUpWithEmail(name: string, email: string, password:stri
     const userDocRef = doc(db, "users", firebaseUser.uid);
 
     const freePlan: Plan = {
-      name: "Plano Gratuito",
+      name: "Grátis",
       type: 'free',
       price: 0,
-      features: ["1 Empresa", "10 Produtos", "50 Pedidos/mês"],
+      features: ["1 Empresa", "10 Produtos", "50 Pedidos/mês", "1 Usuário", "50 Clientes"],
       limits: {
         companies: 1,
         products: 10,

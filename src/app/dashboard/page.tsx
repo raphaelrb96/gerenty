@@ -49,7 +49,7 @@ function CompanySelector() {
 
     const getDisplayName = () => {
         if (!activeCompany) {
-            return "Visão Geral de Todas as Empresas";
+            return t('dashboard.allCompanies');
         }
         return activeCompany.name;
     };
@@ -99,7 +99,7 @@ function CompanySelector() {
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                   <DropdownMenuItem onSelect={() => setActiveCompany(null)}>
-                                    Visão Geral de Todas as Empresas
+                                    {t('dashboard.allCompanies')}
                                   </DropdownMenuItem>
                                   {companies.map((company) => (
                                       <DropdownMenuItem key={company.id} onSelect={() => setActiveCompany(company)}>
@@ -118,7 +118,7 @@ function CompanySelector() {
                     <div className="flex-shrink-0 self-start md:self-center">
                          <Button asChild size="lg" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
                              <Link href="/dashboard/pos">
-                                Frente de Caixa <ArrowRight className="ml-2 h-4 w-4" />
+                                {t('dashboard.posButton')} <ArrowRight className="ml-2 h-4 w-4" />
                             </Link>
                         </Button>
                     </div>
@@ -329,15 +329,15 @@ export default function DashboardPage() {
     : null;
 
   const stats = [
-    { title: "Receita Total", value: formatCurrency(filteredData.totalRevenue), icon: <DollarSign /> },
-    { title: "Lucro Total", value: formatCurrency(filteredData.totalProfit), icon: <TrendingUp /> },
-    { title: "Pedidos Pagos", value: `+${filteredData.paidOrdersCount}`, icon: <ShoppingCart /> },
-    { title: "Ticket Médio", value: formatCurrency(filteredData.averageTicket), icon: <FileText /> },
-    { title: "Custo Total", value: formatCurrency(filteredData.totalCost), icon: <DollarSign /> },
-    { title: "Itens Vendidos", value: `${filteredData.itemsSoldCount}`, icon: <Package /> },
-    { title: "Receita Cancelada", value: formatCurrency(filteredData.cancelledRevenue), icon: <XCircle /> },
-    { title: "Reembolso", value: formatCurrency(filteredData.refundedRevenue), icon: <RotateCcw /> },
-    { title: "Cancelamentos", value: `${filteredData.cancelledOrdersCount}`, icon: <AlertCircle /> },
+    { title: t('dashboard.stats.totalRevenue'), value: formatCurrency(filteredData.totalRevenue), icon: <DollarSign /> },
+    { title: t('dashboard.stats.totalProfit'), value: formatCurrency(filteredData.totalProfit), icon: <TrendingUp /> },
+    { title: t('dashboard.stats.paidOrders'), value: `+${filteredData.paidOrdersCount}`, icon: <ShoppingCart /> },
+    { title: t('dashboard.stats.averageTicket'), value: formatCurrency(filteredData.averageTicket), icon: <FileText /> },
+    { title: t('dashboard.stats.totalCost'), value: formatCurrency(filteredData.totalCost), icon: <DollarSign /> },
+    { title: t('dashboard.stats.itemsSold'), value: `${filteredData.itemsSoldCount}`, icon: <Package /> },
+    { title: t('dashboard.stats.cancelledRevenue'), value: formatCurrency(filteredData.cancelledRevenue), icon: <XCircle /> },
+    { title: t('dashboard.stats.refundedRevenue'), value: formatCurrency(filteredData.refundedRevenue), icon: <RotateCcw /> },
+    { title: t('dashboard.stats.cancellations'), value: `${filteredData.cancelledOrdersCount}`, icon: <AlertCircle /> },
   ];
   
   if (loading) {
@@ -355,41 +355,41 @@ export default function DashboardPage() {
        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <AccountStatCard 
                 icon={<Package />}
-                title="Produtos"
+                title={t('dashboard.accountCards.products')}
                 value={`${allProducts.length} / ${userData?.plan?.limits?.products ?? '∞'}`}
-                detail="Cadastrados vs Limite do plano"
+                detail={t('dashboard.accountCards.productsDetail')}
             />
              <AccountStatCard 
                 icon={<Calendar />}
-                title="Assinatura"
-                value={daysUntilExpiry !== null ? `${daysUntilExpiry} dias` : "Vitalício"}
-                detail={userData?.validityDate ? `Vence em ${new Date(userData.validityDate as string).toLocaleDateString()}` : `Plano ${userData?.plan?.name}`}
+                title={t('dashboard.accountCards.subscription')}
+                value={daysUntilExpiry !== null ? `${daysUntilExpiry} ${t('dashboard.accountCards.days')}` : t('dashboard.accountCards.lifetime')}
+                detail={userData?.validityDate ? `${t('dashboard.accountCards.expiresOn')} ${new Date(userData.validityDate as string).toLocaleDateString()}` : `${t('dashboard.accountCards.plan')} ${userData?.plan?.name}`}
                 warning={daysUntilExpiry !== null && daysUntilExpiry < 7}
             />
              <AccountStatCard 
                 icon={<Building />}
-                title="Empresas"
+                title={t('dashboard.accountCards.companies')}
                 value={`${companies.length} / ${userData?.plan?.limits?.companies ?? '∞'}`}
-                detail="Criadas vs Limite do plano"
+                detail={t('dashboard.accountCards.companiesDetail')}
             />
              <AccountStatCard 
                 icon={<History />}
-                title="Pedidos"
+                title={t('dashboard.accountCards.orders')}
                 value={`${allOrders.length} / ${userData?.plan?.limits?.ordersPerMonth ?? '∞'}`}
-                detail="Pedidos no ciclo vs Limite do plano"
+                detail={t('dashboard.accountCards.ordersDetail')}
             />
         </div>
 
       <Card>
           <CardHeader>
-              <CardTitle>Filtros</CardTitle>
+              <CardTitle>{t('dashboard.filters.title')}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap items-center gap-4">
               <DateRangePicker date={dateRange} onDateChange={(range) => { setDateRange(range); setActiveFilter(''); }} />
-              <Button variant={activeFilter === 'today' ? 'default' : 'outline'} onClick={() => handleDateFilterClick('today')}>Hoje</Button>
-              <Button variant={activeFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleDateFilterClick('yesterday')}>Ontem</Button>
-              <Button variant={activeFilter === '7d' ? 'default' : 'outline'} onClick={() => handleDateFilterClick('7d')}>7 dias</Button>
-              <Button variant={activeFilter === '30d' ? 'default' : 'outline'} onClick={() => handleDateFilterClick('30d')}>30 dias</Button>
+              <Button variant={activeFilter === 'today' ? 'default' : 'outline'} onClick={() => handleDateFilterClick('today')}>{t('dashboard.filters.today')}</Button>
+              <Button variant={activeFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleDateFilterClick('yesterday')}>{t('dashboard.filters.yesterday')}</Button>
+              <Button variant={activeFilter === '7d' ? 'default' : 'outline'} onClick={() => handleDateFilterClick('7d')}>{t('dashboard.filters.sevenDays')}</Button>
+              <Button variant={activeFilter === '30d' ? 'default' : 'outline'} onClick={() => handleDateFilterClick('30d')}>{t('dashboard.filters.thirtyDays')}</Button>
           </CardContent>
       </Card>
 
@@ -413,10 +413,10 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 gap-4">
             <Card className="col-span-1">
                 <CardHeader>
-                    <CardTitle>Visão Geral da Receita</CardTitle>
+                    <CardTitle>{t('dashboard.charts.revenueOverview')}</CardTitle>
                 </CardHeader>
                 <CardContent className="pl-2">
-                    <ChartContainer config={{}} className="min-h-[200px] w-full">
+                    <ChartContainer config={{}} className="h-[250px] w-full">
                         <RechartsBarChart accessibilityLayer data={filteredData.revenueChartData}>
                             <CartesianGrid vertical={false} />
                             <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} />
@@ -435,15 +435,15 @@ export default function DashboardPage() {
             </Card>
             <Card className="col-span-1">
                  <CardHeader>
-                    <CardTitle>Produtos Mais Vendidos</CardTitle>
+                    <CardTitle>{t('dashboard.charts.topSellingProducts')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Produto</TableHead>
-                                <TableHead className="text-center">Vendas</TableHead>
-                                <TableHead className="text-right">Total</TableHead>
+                                <TableHead>{t('dashboard.charts.product')}</TableHead>
+                                <TableHead className="text-center">{t('dashboard.charts.sales')}</TableHead>
+                                <TableHead className="text-right">{t('dashboard.charts.total')}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>

@@ -54,7 +54,7 @@ export default function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
               >
-                {t('landing.hero.title.line1')} <span className="mt-2 block text-primary sm:inline-block">{t('landing.hero.title.line2')}</span>
+                {t('landing.hero.title')}
               </motion.h1>
               <motion.p 
                 className="mx-auto mb-8 max-w-3xl text-lg text-muted-foreground sm:text-xl md:text-2xl"
@@ -76,16 +76,6 @@ export default function Home() {
                 <Button asChild size="lg" variant="outline" className="transform transition-transform hover:scale-105">
                   <Link href="#planos">{t('landing.hero.ctaSecondary')}</Link>
                 </Button>
-              </motion.div>
-              <motion.div 
-                className="mx-auto mt-16 w-full max-w-4xl overflow-hidden rounded-xl bg-muted shadow-2xl"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
-              >
-                <div className="aspect-video flex items-center justify-center">
-                  <Image src="https://placehold.co/1280x720.png" alt={t('landing.hero.videoAlt')} width={1280} height={720} className="object-cover" data-ai-hint="dashboard analytics" />
-                </div>
               </motion.div>
             </div>
           </div>

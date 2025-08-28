@@ -64,14 +64,10 @@
     },
     "landing": {
         "hero": {
-            "title": {
-                "line1": "¡Deja de apagar fuegos!",
-                "line2": "Transforma tu negocio."
-            },
-            "subtitle": "Una única plataforma para gestionar ventas, inventario y finanzas con control total, desde cualquier lugar.",
+            "title": "El Gerente",
+            "subtitle": "Una plataforma para la gestión de productos, pedidos, finanzas y empresas, que permite la centralización y gestión de un portafolio multiempresarial.",
             "ctaPrimary": "Comenzar Ahora Gratis",
-            "ctaSecondary": "Ver valores",
-            "videoAlt": "Video animado del producto"
+            "ctaSecondary": "Ver Precios"
         },
         "socialProof": {
             "title": "La confianza de quienes ya han transformado su negocio",
@@ -121,36 +117,36 @@
                 "price": "Gratis",
                 "priceSuffix": "",
                 "description": "Para quienes están comenzando",
-                "features": ["10 productos", "50 pedidos/mes", "1 usuario", "50 clientes"],
+                "features": ["1 Empresa", "10 productos", "50 pedidos/mes", "1 usuario", "50 clientes"],
                 "cta": "Comenzar"
             },
             "bronze": {
                 "name": "Bronce",
                 "priceSuffix": "/mes",
                 "description": "Para equipos pequeños",
-                "features": ["50 productos", "300 pedidos/mes", "3 usuarios", "300 clientes"],
+                "features": ["3 Empresas", "50 productos", "300 pedidos/mes", "3 usuarios", "300 clientes"],
                 "cta": "Elegir Plan"
             },
             "silver": {
                 "name": "Plata",
                 "priceSuffix": "/mes",
                 "description": "Para empresas en crecimiento",
-                "features": ["300 productos", "1000 pedidos/mes", "5 usuarios", "1000 clientes"],
+                "features": ["5 Empresas", "300 productos", "1000 pedidos/mes", "5 usuarios", "1000 clientes"],
                 "cta": "Elegir Plan"
             },
             "gold": {
                 "name": "Oro",
                 "priceSuffix": "/mes",
                 "description": "Para empresas establecidas",
-                "features": ["500 productos", "5000 pedidos/mes", "10 usuarios", "5000 clientes", "Gestión multiempresa"],
+                "features": ["10 Empresas", "500 productos", "5000 pedidos/mes", "10 usuarios", "5000 clientes", "Gestión multiempresa"],
                 "cta": "Elegir Plan"
             },
             "premium": {
                 "name": "Premium",
                 "priceSuffix": "/mes",
                 "description": "Para operaciones a gran escala",
-                "features": ["Productos ilimitados", "Pedidos ilimitados", "Hasta 20 usuarios", "Clientes ilimitados", "Gestión multiempresa"],
-                "cta": "Contáctanos"
+                "features": ["Empresas ilimitadas", "Productos ilimitados", "Pedidos ilimitados", "Hasta 20 usuarios", "Clientes ilimitados", "Gestión multiempresa"],
+                "cta": "Elegir Plan"
             },
             "pro": {
                 "cta": "Elegir Plan"
@@ -191,6 +187,9 @@
         }
     },
     "dashboard": {
+        "openUserMenu": "Abrir menú de usuario",
+        "posButton": "PDV",
+        "allCompanies": "Visión General de Todas las Empresas",
         "totalRevenue": "Ingresos Totales",
         "totalSales": "Ventas Totales",
         "productsInStock": "Productos en Stock",
@@ -208,7 +207,45 @@
         "createNewCompany": "Crear Nueva Empresa",
         "viewAllCompanies": "Ver Todas",
         "myCompanies": "Mis Empresas",
-        "manageCompany": "Gestionar"
+        "manageCompany": "Gestionar",
+         "accountCards": {
+            "products": "Productos",
+            "productsDetail": "Registrados vs Límite del plan",
+            "subscription": "Suscripción",
+            "days": "días",
+            "lifetime": "Vitalicio",
+            "expiresOn": "Vence el",
+            "plan": "Plan",
+            "companies": "Empresas",
+            "companiesDetail": "Creadas vs Límite del plan",
+            "orders": "Pedidos",
+            "ordersDetail": "Pedidos del ciclo vs Límite del plan"
+        },
+        "filters": {
+            "title": "Filtros",
+            "today": "Hoy",
+            "yesterday": "Ayer",
+            "sevenDays": "7 días",
+            "thirtyDays": "30 días"
+        },
+        "stats": {
+            "totalRevenue": "Ingresos Totales",
+            "totalProfit": "Beneficio Total",
+            "paidOrders": "Pedidos Pagados",
+            "averageTicket": "Ticket Promedio",
+            "totalCost": "Costo Total",
+            "itemsSold": "Artículos Vendidos",
+            "cancelledRevenue": "Ingresos Cancelados",
+            "refundedRevenue": "Ingresos Reembolsados",
+            "cancellations": "Cancelaciones"
+        },
+        "charts": {
+            "revenueOverview": "Resumen de Ingresos",
+            "topSellingProducts": "Productos Más Vendidos",
+            "product": "Producto",
+            "sales": "Ventas",
+            "total": "Total"
+        }
     },
     "profilePage": {
         "title": "Perfil y Configuración",
@@ -219,7 +256,11 @@
             "title": "Suscripción",
             "status": "Estado del Plan",
             "renewalDate": "Tu plan se renueva el {date}.",
-            "inactiveText": "No tienes un plan activo."
+            "inactiveText": "No tienes un plan activo.",
+            "currentPlan": "Plan Actual",
+            "daysRemaining": "Días Restantes",
+            "validity": "Validez",
+            "renew": "Renovar Plan"
         },
         "manageButton": "Gestionar",
         "updateSuccess": { "title": "Perfil Actualizado", "description": "Tu información ha sido guardada exitosamente." },
@@ -230,7 +271,8 @@
         "description": "Personaliza tu experiencia.",
         "theme": "Tema",
         "language": "Idioma",
-        "currency": "Moneda"
+        "currency": "Moneda",
+        "selectCurrency": "Seleccionar Moneda"
     },
     "productsPage": {
         "title": "Productos",
