@@ -202,7 +202,8 @@ export default function OrdersPage() {
         <div className="space-y-4">
             {orders.map((order) => (
             <Card key={order.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4 grid grid-cols-[auto_1fr_auto] md:grid-cols-[1fr_1fr_1fr_1fr_auto] items-center gap-x-4 gap-y-2">
+                <CardContent className="p-4 grid grid-cols-2 md:grid-cols-[1fr_1fr_1fr_1fr_auto] items-center gap-4">
+                    {/* Customer Info - always visible */}
                     <div className="flex items-center gap-3">
                         <Avatar>
                             <AvatarFallback>{order.customer.name.charAt(0)}</AvatarFallback>
@@ -213,28 +214,30 @@ export default function OrdersPage() {
                         </div>
                     </div>
                     
+                    {/* Status - Desktop */}
                     <div className="hidden md:flex md:justify-center">
                         <Badge variant="secondary" className={getStatusVariant(order.status)}>
                             {t(`orderStatus.${order.status}`)}
                         </Badge>
                     </div>
 
+                    {/* Date - Desktop */}
                     <div className="hidden md:block text-sm text-muted-foreground text-center">
                         {new Date(order.createdAt as string).toLocaleDateString()}
                     </div>
                     
+                    {/* Total - Desktop */}
                     <div className="hidden md:block text-right font-semibold">
                         {formatCurrency(order.total)}
                     </div>
                     
-                    <div className="flex justify-end items-center gap-2 col-start-3 md:col-start-auto">
-                        <div className="md:hidden text-right">
-                             <p className="font-semibold">{formatCurrency(order.total)}</p>
-                             <Badge variant="secondary" className={`mt-1 ${getStatusVariant(order.status)}`}>
-                                {t(`orderStatus.${order.status}`)}
-                            </Badge>
-                        </div>
-                        <Button variant="outline" size="sm" onClick={() => handleViewDetails(order)}>
+                    {/* Mobile: Total, Status & Details Button */}
+                    <div className="flex flex-col items-end gap-1 justify-self-end md:justify-self-auto md:flex-row md:items-center md:gap-2">
+                        <p className="font-semibold md:hidden">{formatCurrency(order.total)}</p>
+                        <Badge variant="secondary" className={`md:hidden ${getStatusVariant(order.status)}`}>
+                            {t(`orderStatus.${order.status}`)}
+                        </Badge>
+                        <Button variant="outline" size="sm" onClick={() => handleViewDetails(order)} className="mt-1 md:mt-0">
                             {t('ordersPage.detailsButton')}
                         </Button>
                     </div>
