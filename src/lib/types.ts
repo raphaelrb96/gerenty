@@ -229,6 +229,7 @@ export type Order = {
 
   companyId: string; // Empresa responsável por este pedido
   catalogId?: string; // Catálogo relacionado, se aplicável
+  employeeId?: string; // ID do funcionário (vendedor) que realizou a venda
 
   customer: OrderCustomer; // Dados do cliente no momento do pedido
   items: OrderItem[]; // Lista de itens comprados
@@ -329,6 +330,7 @@ export type DeliveryMethod =
 // Detalhes da entrega
 export type ShippingDetails = {
   method: DeliveryMethod; // Método de entrega escolhido
+  routeId?: string; // ID da rota de logística
   trackingCode?: string; // Código de rastreio
   cost: number; // Valor do frete
   estimatedDelivery: {
@@ -350,7 +352,7 @@ export type ShippingDetails = {
 
 // Dados do cliente no momento da compra
 export type OrderCustomer = {
-  userId?: string; // ID do usuário (se for logado)
+  id?: string;
   name: string;
   email: string;
   phone?: string;
@@ -530,3 +532,53 @@ export type Company = {
   createdAt:  string | Date | Timestamp | FieldValue;
   updatedAt?:  string | Date | Timestamp | FieldValue; // Data da última atualização
 };
+
+// CRM Types
+export type Customer = {
+    id: string;
+    ownerId: string;
+    name: string;
+    email?: string;
+    phone?: string;
+    document?: string;
+    profileImageUrl?: string;
+    status: 'Lead' | 'Contact' | 'Active' | 'VIP';
+    tags?: string[];
+    lastInteraction?: string | Date | Timestamp | FieldValue;
+    createdAt: string | Date | Timestamp | FieldValue;
+    updatedAt: string | Date | Timestamp | FieldValue;
+};
+
+// Team Management Types
+export type Employee = {
+    id: string;
+    ownerId: string;
+    userId?: string; // Link to a Firebase Auth user if they have an account
+    name: string;
+    email: string;
+    phone?: string;
+    role: 'Vendedor' | 'Entregador' | 'Afiliado' | 'Outro';
+    isActive: boolean;
+    performanceMetrics?: {
+        totalSales?: number;
+        ordersDelivered?: number;
+        commission?: number;
+    };
+    createdAt: string | Date | Timestamp | FieldValue;
+    updatedAt: string | Date | Timestamp | FieldValue;
+}
+
+// Logistics Types
+export type Route = {
+    id: string;
+    ownerId: string;
+    driverId: string; // Employee ID of the driver
+    driverName: string;
+    orders: Order[]; // The orders included in this route
+    status: 'A Processar' | 'Em Trânsito' | 'Entregue' | 'Outro';
+    totalValue: number;
+    totalFee: number;
+    createdAt: string | Date | Timestamp | FieldValue;
+    startedAt?: string | Date | Timestamp | FieldValue;
+    finishedAt?: string | Date | Timestamp | FieldValue;
+}

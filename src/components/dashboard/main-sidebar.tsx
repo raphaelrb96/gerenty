@@ -21,6 +21,9 @@ import {
   Settings,
   CreditCard,
   Building,
+  Users,
+  Truck,
+  HeartHandshake
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -48,6 +51,9 @@ export function MainSidebar() {
     { href: "/dashboard", label: t("Dashboard"), icon: LayoutDashboard },
     { href: "/dashboard/products", label: t("Products"), icon: Package },
     { href: "/dashboard/orders", label: t("Orders"), icon: ShoppingCart },
+    { href: "/dashboard/crm", label: "CRM", icon: HeartHandshake },
+    { href: "/dashboard/logistics", label: "Logística", icon: Truck },
+    { href: "/dashboard/team", label: "Equipe", icon: Users },
     { href: "/dashboard/billing", label: t("Billing"), icon: CreditCard },
     { href: "/dashboard/companies", label: t("companiesPage.sidebarTitle"), icon: Building },
     { href: "/dashboard/profile", label: t("Profile"), icon: User },

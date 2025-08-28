@@ -9,13 +9,14 @@ import * as z from "zod";
 import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { addOrder } from "@/services/order-service";
+import { getCustomersByUser, addCustomer, Customer } from "@/services/customer-service";
 import type { Product, OrderItem, OrderStatus, PaymentMethod, DeliveryMethod, Order } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Loader2, User, CreditCard, Truck, ShoppingCart, ArrowLeft, Package } from "lucide-react";
+import { Loader2, User, CreditCard, Truck, ShoppingCart, ArrowLeft, Package, Search } from "lucide-react";
 import { Separator } from "../ui/separator";
 import { Textarea } from "../ui/textarea";
 import { useTranslation } from "@/context/i18n-context";
@@ -24,6 +25,8 @@ import { useCompany } from "@/context/company-context";
 import { ProductGrid } from "./product-list";
 import { CartItem } from "./cart-item";
 import { cn } from "@/lib/utils";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 
 const formSchema = z.object({
   customerName: z.string().min(2, "Nome do cliente é obrigatório."),
@@ -96,6 +99,61 @@ const steps = [
   { id: 4, name: "Finalizar", icon: Truck },
 ];
 
+function CustomerSearch({ onCustomerSelect }: { onCustomerSelect: (customer: Customer) => void }) {
+    const { user } = useAuth();
+    const [customers, setCustomers] = useState<Customer[]>([]);
+    const [open, setOpen] = useState(false);
+    
+    useEffect(() => {
+        const fetchCustomers = async () => {
+            if (user) {
+                const userCustomers = await getCustomersByUser(user.uid);
+                setCustomers(userCustomers);
+            }
+        };
+        fetchCustomers();
+    }, [user]);
+
+    const handleSelect = (customer: Customer) => {
+        onCustomerSelect(customer);
+        setOpen(false);
+    }
+
+    return (
+        <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+                <Button variant="outline" className="w-full justify-start">
+                    <Search className="mr-2 h-4 w-4" />
+                    Buscar cliente existente...
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                 <Command>
+                    <CommandInput placeholder="Buscar por nome, email ou telefone..." />
+                    <CommandList>
+                        <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
+                        <CommandGroup>
+                            {customers.map((customer) => (
+                                <CommandItem
+                                    key={customer.id}
+                                    value={`${customer.name} ${customer.email} ${customer.phone}`}
+                                    onSelect={() => handleSelect(customer)}
+                                >
+                                    <div className="flex flex-col">
+                                        <span className="font-medium">{customer.name}</span>
+                                        <span className="text-xs text-muted-foreground">{customer.phone}</span>
+                                    </div>
+                                </CommandItem>
+                            ))}
+                        </CommandGroup>
+                    </CommandList>
+                </Command>
+            </PopoverContent>
+        </Popover>
+    )
+}
+
+
 export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuantity, onUpdateCartPrice, onRemoveFromCart, onClearCart }: PosFormStepperProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -104,6 +162,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
   const { formatCurrency } = useCurrency();
   const [isSaving, setIsSaving] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
 
   const form = useForm<PosFormValues>({
     resolver: zodResolver(formSchema),
@@ -133,6 +192,13 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
       }
     },
   });
+
+  const handleCustomerSelect = (customer: Customer) => {
+    form.setValue("customerName", customer.name);
+    form.setValue("customerEmail", customer.email || "");
+    form.setValue("customerPhone", customer.phone || "");
+    setSelectedCustomerId(customer.id);
+  }
 
   const watchedDiscount = form.watch('discount', 0);
   const watchedShippingCost = form.watch('shippingCost', 0);
@@ -193,9 +259,28 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
     
     setIsSaving(true);
     
+    let customerId = selectedCustomerId;
+    if (!customerId) {
+        try {
+            const newCustomer = await addCustomer({
+                ownerId: user.uid,
+                name: values.customerName,
+                email: values.customerEmail,
+                phone: values.customerPhone,
+                document: values.customerDocument,
+                status: 'Active',
+            });
+            customerId = newCustomer.id;
+        } catch (error) {
+             toast({ variant: "destructive", title: "Erro ao criar cliente", description: "Não foi possível cadastrar o novo cliente." });
+             setIsSaving(false);
+             return;
+        }
+    }
+
     const orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'> = {
         companyId: activeCompany.id,
-        customer: { name: values.customerName, email: values.customerEmail || '', phone: values.customerPhone, document: values.customerDocument },
+        customer: { id: customerId, name: values.customerName, email: values.customerEmail || '', phone: values.customerPhone, document: values.customerDocument },
         items: cart.map(({imageUrl, ...item}) => item),
         status: 'completed' as OrderStatus,
         payment: { 
@@ -223,6 +308,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
         onClearCart();
         form.reset();
         setCurrentStep(1);
+        setSelectedCustomerId(null);
     } catch(error) {
         console.error(error);
         toast({ variant: "destructive", title: t('pos.error.title'), description: t('pos.error.description') });
@@ -282,6 +368,9 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                         <div className="max-w-2xl mx-auto p-1">
                             {renderStepHeader("Informações do Cliente")}
                             <div className="space-y-4">
+                                <CustomerSearch onCustomerSelect={handleCustomerSelect} />
+                                <Separator />
+                                <p className="text-center text-sm text-muted-foreground">Ou preencha os dados manualmente</p>
                                 <FormField control={form.control} name="customerName" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.name')}</FormLabel><FormControl><Input placeholder={t('pos.customer.namePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>)}/>
                                 <FormField control={form.control} name="customerPhone" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.phone')}</FormLabel><FormControl><Input placeholder="(00) 00000-0000" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                                 <FormField control={form.control} name="customerEmail" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.email')} (Opcional)</FormLabel><FormControl><Input type="email" placeholder="email@cliente.com" {...field} /></FormControl><FormMessage /></FormItem>)}/>

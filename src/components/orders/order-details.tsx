@@ -16,8 +16,9 @@ import { useCurrency } from "@/context/currency-context";
 import { ScrollArea } from "../ui/scroll-area";
 import { SheetFooter, SheetHeader, SheetTitle } from "../ui/sheet";
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, User, Truck, Handshake } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 type OrderDetailsProps = {
     order?: Order | null,
@@ -48,6 +49,7 @@ const getStatusVariant = (status: Order['status']) => {
 
 export function OrderDetails({ order, onFinished, onStatusChange }: OrderDetailsProps) {
   const { t } = useTranslation();
+  const router = useRouter();
   const { formatCurrency } = useCurrency();
   const [currentStatus, setCurrentStatus] = useState(order?.status);
   const [isSaving, setIsSaving] = useState(false);
@@ -63,6 +65,11 @@ export function OrderDetails({ order, onFinished, onStatusChange }: OrderDetails
     onFinished();
   };
 
+  const handleNavigation = (path: string) => {
+    onFinished();
+    router.push(path);
+  }
+
   return (
     <>
       <SheetHeader className="pr-6 pl-6 pt-6 flex-shrink-0">
@@ -70,6 +77,27 @@ export function OrderDetails({ order, onFinished, onStatusChange }: OrderDetails
       </SheetHeader>
       <ScrollArea className="flex-1">
         <div className="space-y-6 py-4 px-6">
+
+            <div className="grid grid-cols-2 gap-2">
+                {order.customer.id && (
+                    <Button variant="outline" size="sm" onClick={() => handleNavigation(`/dashboard/crm?customerId=${order.customer.id}`)}>
+                        <User className="mr-2 h-4 w-4" /> Ver Cliente
+                    </Button>
+                )}
+                 {order.shipping?.routeId && (
+                    <Button variant="outline" size="sm" onClick={() => handleNavigation(`/dashboard/logistics?routeId=${order.shipping.routeId}`)}>
+                        <Truck className="mr-2 h-4 w-4" /> Ver Logística
+                    </Button>
+                )}
+                 {order.employeeId && (
+                    <Button variant="outline" size="sm" onClick={() => handleNavigation(`/dashboard/team?employeeId=${order.employeeId}`)}>
+                        <Handshake className="mr-2 h-4 w-4" /> Ver Vendedor
+                    </Button>
+                )}
+            </div>
+
+            <Separator />
+
             <div className="space-y-2">
                 <p className="text-muted-foreground">{new Date(order.createdAt as string).toLocaleString()}</p>
             </div>
