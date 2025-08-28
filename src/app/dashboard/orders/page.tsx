@@ -91,6 +91,7 @@ export default function OrdersPage() {
             }
 
             const filteredOrders = userOrders.filter(order => {
+                if (!order.createdAt) return false;
                 const orderDate = new Date(order.createdAt as string);
                  if (dateRange?.from && dateRange?.to) {
                     return orderDate >= startOfDay(dateRange.from) && orderDate <= endOfDay(dateRange.to);
@@ -202,7 +203,7 @@ export default function OrdersPage() {
         <div className="space-y-4">
             {orders.map((order) => (
             <Card key={order.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4 grid grid-cols-2 md:grid-cols-[1fr_1fr_1fr_1fr_auto] items-center gap-4">
+                <CardContent className="p-4 grid grid-cols-[1fr,auto] md:grid-cols-[2fr,1fr,1fr,1fr,auto] items-center gap-4">
                     {/* Customer Info - always visible */}
                     <div className="flex items-center gap-3">
                         <Avatar>
@@ -223,7 +224,7 @@ export default function OrdersPage() {
 
                     {/* Date - Desktop */}
                     <div className="hidden md:block text-sm text-muted-foreground text-center">
-                        {new Date(order.createdAt as string).toLocaleDateString()}
+                        {order.createdAt ? new Date(order.createdAt as string).toLocaleDateString() : 'N/A'}
                     </div>
                     
                     {/* Total - Desktop */}
@@ -232,15 +233,20 @@ export default function OrdersPage() {
                     </div>
                     
                     {/* Mobile: Total, Status & Details Button */}
-                    <div className="flex flex-col items-end gap-1 justify-self-end md:justify-self-auto md:flex-row md:items-center md:gap-2">
-                        <p className="font-semibold md:hidden">{formatCurrency(order.total)}</p>
+                    <div className="flex flex-col items-end gap-1 justify-self-end md:hidden">
+                        <p className="font-semibold">{formatCurrency(order.total)}</p>
                         <Badge variant="secondary" className={`md:hidden ${getStatusVariant(order.status)}`}>
                             {t(`orderStatus.${order.status}`)}
                         </Badge>
-                        <Button variant="outline" size="sm" onClick={() => handleViewDetails(order)} className="mt-1 md:mt-0">
+                    </div>
+
+                     {/* Details Button - always visible, but different position */}
+                    <div className="col-span-2 md:col-span-1 flex justify-end">
+                        <Button variant="outline" size="sm" onClick={() => handleViewDetails(order)}>
                             {t('ordersPage.detailsButton')}
                         </Button>
                     </div>
+
                 </CardContent>
             </Card>
             ))}
