@@ -202,7 +202,7 @@ export default function OrdersPage() {
         <div className="space-y-4">
             {orders.map((order) => (
             <Card key={order.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4 grid grid-cols-[auto_1fr_auto] md:grid-cols-[1fr_1fr_1fr_1fr_auto] items-center gap-4">
+                <CardContent className="p-4 grid grid-cols-[auto_1fr_auto] md:grid-cols-[1fr_1fr_1fr_1fr_auto] items-center gap-x-4 gap-y-2">
                     <div className="flex items-center gap-3">
                         <Avatar>
                             <AvatarFallback>{order.customer.name.charAt(0)}</AvatarFallback>
@@ -227,7 +227,7 @@ export default function OrdersPage() {
                         {formatCurrency(order.total)}
                     </div>
                     
-                    <div className="flex justify-end items-center gap-2">
+                    <div className="flex justify-end items-center gap-2 col-start-3 md:col-start-auto">
                         <div className="md:hidden text-right">
                              <p className="font-semibold">{formatCurrency(order.total)}</p>
                              <Badge variant="secondary" className={`mt-1 ${getStatusVariant(order.status)}`}>

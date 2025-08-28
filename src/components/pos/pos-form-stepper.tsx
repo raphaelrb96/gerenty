@@ -181,7 +181,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
 
   const handlePrevStep = () => {
     if (currentStep > 1) {
-        setCurrentStep(currentStep + 1);
+        setCurrentStep(currentStep - 1);
     }
   };
   
@@ -443,7 +443,6 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                                 <div
                                     className={cn(
                                         'flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all',
-                                        'sm:h-10 sm:w-10',
                                         currentStep > step.id
                                             ? 'border-primary bg-primary text-primary-foreground'
                                             : currentStep === step.id
@@ -451,7 +450,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                                             : 'border-muted-foreground/30 bg-muted-foreground/20 text-muted-foreground'
                                     )}
                                 >
-                                    <step.icon className="h-4 w-4 sm:h-5 sm:w-5" />
+                                    <step.icon className="h-4 w-4" />
                                 </div>
                                 <p className={cn(
                                     'mt-1 w-16 truncate text-xs transition-colors hidden sm:block', 
@@ -459,7 +458,6 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                                 )}>
                                     {step.name}
                                 </p>
-    y
                             </div>
                             {index < steps.length - 1 && (
                                 <div

@@ -17,6 +17,7 @@ import { ScrollArea } from "../ui/scroll-area";
 import { SheetFooter, SheetHeader, SheetTitle } from "../ui/sheet";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type OrderDetailsProps = {
     order?: Order | null,
@@ -25,6 +26,25 @@ type OrderDetailsProps = {
 }
 
 const statuses: OrderStatus[] = ["pending", "confirmed", "processing", "shipped", "delivered", "completed", "cancelled", "refunded"];
+
+const getStatusVariant = (status: Order['status']) => {
+    switch (status) {
+        case 'completed':
+        case 'delivered':
+            return 'bg-green-600/20 text-green-700 hover:bg-green-600/30 border-green-600/30';
+        case 'processing':
+        case 'shipped':
+        case 'confirmed':
+            return 'bg-blue-600/20 text-blue-700 hover:bg-blue-600/30 border-blue-600/30';
+        case 'pending':
+            return 'bg-yellow-600/20 text-yellow-700 hover:bg-yellow-600/30 border-yellow-600/30';
+        case 'cancelled':
+        case 'refunded':
+            return 'bg-red-600/20 text-red-700 hover:bg-red-600/30 border-red-600/30';
+        default:
+            return 'bg-gray-600/20 text-gray-700 hover:bg-gray-600/30 border-gray-600/30';
+    }
+}
 
 export function OrderDetails({ order, onFinished, onStatusChange }: OrderDetailsProps) {
   const { t } = useTranslation();
@@ -106,7 +126,7 @@ export function OrderDetails({ order, onFinished, onStatusChange }: OrderDetails
             <div className="grid gap-4">
                 <div className="font-semibold">{t('orderDetails.updateStatus')}</div>
                  <Select value={currentStatus} onValueChange={(value) => setCurrentStatus(value as OrderStatus)}>
-                    <SelectTrigger>
+                    <SelectTrigger className={cn(currentStatus && getStatusVariant(currentStatus))}>
                         <SelectValue placeholder={t('orderDetails.selectStatus')} />
                     </SelectTrigger>
                     <SelectContent>
