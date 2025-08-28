@@ -7,6 +7,17 @@ import type { Order } from "@/lib/types";
 
 const ordersCollection = collection(db, "orders");
 
+const convertOrderTimestamps = (data: any): Order => {
+    const order = { id: data.id, ...data };
+    for (const key of ['createdAt', 'updatedAt', 'completedAt', 'cancelledAt']) {
+        if (order[key]?.toDate) {
+            order[key] = order[key].toDate().toISOString();
+        }
+    }
+    return order as Order;
+}
+
+
 // Get all orders for a specific company
 export async function getOrders(companyId: string): Promise<Order[]> {
     try {
@@ -14,12 +25,7 @@ export async function getOrders(companyId: string): Promise<Order[]> {
         const querySnapshot = await getDocs(q);
         const orders: Order[] = [];
         querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            orders.push({ 
-                id: doc.id, 
-                ...data,
-                createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString(),
-            } as Order);
+            orders.push(convertOrderTimestamps({ id: doc.id, ...doc.data() }));
         });
         orders.sort((a, b) => new Date(b.createdAt as string).getTime() - new Date(a.createdAt as string).getTime());
         return orders;
@@ -39,12 +45,7 @@ export async function getOrdersForCompanies(companyIds: string[]): Promise<Order
         const querySnapshot = await getDocs(q);
         const orders: Order[] = [];
         querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            orders.push({ 
-                id: doc.id, 
-                ...data,
-                createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString(),
-            } as Order);
+            orders.push(convertOrderTimestamps({ id: doc.id, ...doc.data() }));
         });
         orders.sort((a, b) => new Date(b.createdAt as string).getTime() - new Date(a.createdAt as string).getTime());
         return orders;
