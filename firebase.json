@@ -1,0 +1,12 @@
+{
+  "hosting": {
+    "source": ".",
+    "site": "gerenty",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+  }
+}
+

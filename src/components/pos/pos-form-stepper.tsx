@@ -459,6 +459,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                                 )}>
                                     {step.name}
                                 </p>
+    y
                             </div>
                             {index < steps.length - 1 && (
                                 <div
