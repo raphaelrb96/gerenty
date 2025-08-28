@@ -75,24 +75,24 @@
         },
         "socialProof": {
             "title": "La confianza de quienes ya han transformado su negocio",
-            "subtitle": "MÁS DE 100 NEGOCIOS YA USAN ENTERPRISY"
+            "subtitle": "MÁS DE 100 NEGOCIOS YA USAN Gerenty"
         },
         "testimonials": {
-            "quote1": "Antes de Enterprisy, perdía horas en hojas de cálculo. Hoy, tengo el control total de mi negocio. ¡Simplemente cambió mi juego!",
+            "quote1": "Antes de Gerenty, perdía horas en hojas de cálculo. Hoy, tengo el control total de mi negocio. ¡Simplemente cambió mi juego!",
             "author1": "Ana P., Propietaria de E-commerce",
-            "quote2": "Pensé que los ERP eran solo para grandes empresas. Enterprisy es intuitivo, asequible y me ayudó a profesionalizar mi tienda online. ¡Increíble!",
+            "quote2": "Pensé que los ERP eran solo para grandes empresas. Gerenty es intuitivo, asequible y me ayudó a profesionalizar mi tienda online. ¡Increíble!",
             "author2": "João V., Vendedor Autónomo",
             "quote3": "La transición fue súper fluida. La gestión de inventario y pedidos se volvió mucho más eficiente, y el panel me da la visión que necesito para tomar decisiones.",
             "author3": "Maria S., Gerente de Bazar"
         },
         "painSolution": {
             "title": "¡Deja de sufrir con el desorden!",
-            "subtitle": "Enterprisy es la solución completa para tus mayores desafíos.",
+            "subtitle": "Gerenty es la solución completa para tus mayores desafíos.",
             "realityToday": "Tu realidad hoy:",
             "pain1": "¿Perdiste una venta por falta de stock?",
             "pain2": "¿Pasas horas en hojas de cálculo financieras, sin estar seguro de las ganancias?",
             "pain3": "¿Te sientes perdido con el ir y venir de los pedidos?",
-            "realityWithEnterprisy": "Tu realidad con Enterprisy:",
+            "realityWithEnterprisy": "Tu realidad con Gerenty:",
             "solution1": "Inventario actualizado en tiempo real. No vuelvas a perder una venta.",
             "solution2": "Informes automáticos y precisos. Sabe exactamente cuánto ganas.",
             "solution3": "Pedidos organizados, estados actualizados y un flujo de trabajo intuitivo."
@@ -162,12 +162,12 @@
         "faq": {
             "title": "Respuestas a tus preguntas",
             "subtitle": "Todo lo que necesitas saber para tomar la mejor decisión.",
-            "question1": "¿Es Enterprisy adecuado para mi tipo de negocio?",
+            "question1": "¿Es Gerenty adecuado para mi tipo de negocio?",
             "answer1": "¡Sí! Nuestra plataforma fue desarrollada para atender desde pequeños emprendedores hasta tiendas en línea más robustas, con funcionalidades escalables para acompañar tu crecimiento.",
-            "question2": "¿Es fácil migrar mis datos a Enterprisy?",
+            "question2": "¿Es fácil migrar mis datos a Gerenty?",
             "answer2": "¡Nuestro equipo está listo para ayudarte! Ofrecemos un proceso de migración guiado para que puedas traer tus productos y clientes sin complicaciones.",
             "question3": "¿Cómo funciona el período de prueba?",
-            "answer3": "Ofrecemos un plan gratuito que puedes usar todo el tiempo que quieras. Incluye funcionalidades básicas para que sientas el poder de Enterprisy sin compromiso. Solo te suscribes si quieres evolucionar.",
+            "answer3": "Ofrecemos un plan gratuito que puedes usar todo el tiempo que quieras. Incluye funcionalidades básicas para que sientas el poder de Gerenty sin compromiso. Solo te suscribes si quieres evolucionar.",
             "question4": "¿Puedo cancelar mi plan en cualquier momento?",
             "answer4": "Sí, puedes cancelar tu suscripción en cualquier momento, sin burocracia. Continuarás teniendo acceso a las funcionalidades de tu plan hasta el final del ciclo de facturación actual.",
             "question5": "¿Qué métodos de pago se aceptan?",
@@ -177,7 +177,7 @@
         },
         "finalCta": {
             "title": "¿Listo para despegar?",
-            "subtitle": "Únete a miles de emprendedores que están transformando sus negocios con Enterprisy.",
+            "subtitle": "Únete a miles de emprendedores que están transformando sus negocios con Gerenty.",
             "cta": "Comienza tu Viaje"
         },
         "header": {
@@ -185,7 +185,7 @@
             "signup": "Regístrate Gratis"
         },
         "footer": {
-            "copy": "© {year} Enterprisy Lite. Todos los derechos reservados.",
+            "copy": "© {year} Gerenty. Todos los derechos reservados.",
             "terms": "Términos",
             "privacy": "Privacidad"
         }

@@ -17,7 +17,7 @@ export function Logo({ href = "/", className }: LogoProps) {
       )}
     >
       <Building2 className="h-6 w-6" />
-      <span className="font-headline text-2xl ml-1 font-bold">Enterprisy</span>
+      <span className="font-headline text-2xl ml-1 font-bold">Gerenty</span>
     </Link>
   );
 }

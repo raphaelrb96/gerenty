@@ -8,7 +8,7 @@ import { AuthProvider } from "@/context/auth-context";
 import { CurrencyProvider } from "@/context/currency-context";
 
 export const metadata: Metadata = {
-  title: "Enterprisy Lite",
+  title: "Gerenty",
   description: "Simplify your business operations.",
 };
 
