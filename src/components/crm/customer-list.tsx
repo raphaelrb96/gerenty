@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Customer } from "@/services/customer-service";
@@ -13,11 +14,11 @@ type CustomerListProps = {
 export function CustomerList({ customers, onCardClick }: CustomerListProps) {
     if (customers.length === 0) {
         return (
-            <div className="h-full flex items-center justify-center">
+            <div className="h-full flex items-center justify-center p-4">
                 <EmptyState
                     icon={<HeartHandshake className="h-12 w-12" />}
                     title="Nenhum cliente neste estágio"
-                    description="Arraste um cliente para cá ou adicione um novo cliente."
+                    description="Arraste um cliente para esta coluna ou adicione um novo cliente."
                 />
             </div>
         );

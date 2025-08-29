@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Customer } from "@/services/customer-service";
@@ -23,13 +24,14 @@ export function CustomerCard({ customer, isOverlay }: CustomerCardProps) {
     } = useSortable({ 
         id: customer.id,
         data: {
-            customer, // Pass customer data for drag overlay
+            type: 'Customer',
+            customer,
         }
     });
 
     const style = {
         transform: CSS.Transform.toString(transform),
-        transition: transition,
+        transition,
     };
     
     const getInitials = (name: string) => {
@@ -48,9 +50,9 @@ export function CustomerCard({ customer, isOverlay }: CustomerCardProps) {
                         <AvatarImage src={customer.profileImageUrl} />
                         <AvatarFallback>{getInitials(customer.name)}</AvatarFallback>
                     </Avatar>
-                    <div className="flex-1">
+                    <div className="flex-1 overflow-hidden">
                         <p className="font-semibold text-sm truncate">{customer.name}</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-muted-foreground truncate">
                             Última Interação: {customer.lastInteraction ? new Date(customer.lastInteraction as string).toLocaleDateString() : 'N/A'}
                         </p>
                     </div>
