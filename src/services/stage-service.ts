@@ -104,7 +104,6 @@ export async function batchUpdateStageOrder(stages: { id: string; order: number 
             batch.update(docRef, { order: stage.order, updatedAt: serverTimestamp() });
         });
         await batch.commit();
-        revalidatePath('/dashboard/crm');
     } catch (error) {
         console.error("Error batch updating stage order: ", error);
         throw new Error("Failed to update stage order.");

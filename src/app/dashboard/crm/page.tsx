@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { getCustomersByUser, Customer, updateCustomerStatus } from "@/services/customer-service";
-import { getStagesByUser, addStage, updateStage, deleteStage, Stage } from "@/services/stage-service";
+import { getStagesByUser, addStage, updateStage, deleteStage, Stage, batchUpdateStageOrder } from "@/services/stage-service";
 
 import { DndContext, DragEndEvent, DragOverlay, closestCorners, DragStartEvent, DragOverEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
@@ -53,8 +53,9 @@ export default function CrmPage() {
 
 
     useEffect(() => {
+        if (!user) return;
+
         const fetchAndInitializeData = async () => {
-            if (!user) return;
             setLoading(true);
             try {
                 const [userCustomers, userStages] = await Promise.all([
@@ -78,7 +79,10 @@ export default function CrmPage() {
                     setActiveStageId(createdStages[0]?.id || null);
                 } else {
                     setStages(userStages.sort((a, b) => a.order - b.order));
-                    setActiveStageId(userStages[0]?.id || null);
+                    // Set active stage to the first one if not already set or invalid
+                    if (!activeStageId || !userStages.some(s => s.id === activeStageId)) {
+                        setActiveStageId(userStages[0]?.id || null);
+                    }
                 }
                 
                 setCustomers(userCustomers);
@@ -90,8 +94,9 @@ export default function CrmPage() {
                 setLoading(false);
             }
         };
-        if(user) fetchAndInitializeData();
-    }, [user, toast, t]);
+        
+        fetchAndInitializeData();
+    }, [user, t]);
 
     const activeCustomer = activeId ? customers.find(c => c.id === activeId) : null;
     const activeItemType = activeId ? (stages.some(s => s.id === activeId) ? 'Stage' : 'Customer') : null;
@@ -129,9 +134,11 @@ export default function CrmPage() {
         if (!stageToDelete) return;
         try {
             await deleteStage(stageToDelete.id);
-            setStages(prev => prev.filter(s => s.id !== stageToDelete.id));
+            const remainingStages = stages.filter(s => s.id !== stageToDelete.id);
+            setStages(remainingStages);
+
             if (activeStageId === stageToDelete.id) {
-                setActiveStageId(stages.length > 1 ? stages.filter(s => s.id !== stageToDelete.id)[0].id : null);
+                setActiveStageId(remainingStages.length > 0 ? remainingStages[0].id : null);
             }
             toast({ title: "Estágio excluído com sucesso!" });
         } catch (error) {
@@ -152,12 +159,14 @@ export default function CrmPage() {
 
         const isActiveAStage = stages.some(s => s.id === active.id);
         const isOverAStage = stages.some(s => s.id === over.id || over.data.current?.type === 'Stage');
-
+        
         if (isActiveAStage && isOverAStage) {
             setStages((currentStages) => {
                 const oldIndex = currentStages.findIndex(s => s.id === active.id);
+                // The over.id can be the stage item itself or the droppable container
                 const overId = over.id.toString().replace('stage-drop-', '');
                 const newIndex = currentStages.findIndex(s => s.id === overId);
+
                 if (oldIndex !== -1 && newIndex !== -1) {
                     return arrayMove(currentStages, oldIndex, newIndex);
                 }
@@ -170,11 +179,13 @@ export default function CrmPage() {
         const { active, over } = event;
 
         if (activeItemType === 'Stage' && over && active.id !== over.id) {
-            // Persist the new order after visual reordering is done
-            const updatedStages = stages.map((stage, index) => ({ ...stage, order: index }));
-            setStages(updatedStages); 
-            // In a real app, you would batch update the 'order' property in Firestore here.
-            console.log("Persisting new stage order to DB...");
+            const finalStages = stages.map((stage, index) => ({ ...stage, order: index }));
+            setStages(finalStages); // Optimistic update
+            try {
+                await batchUpdateStageOrder(finalStages.map(s => ({ id: s.id, order: s.order })));
+            } catch (error) {
+                 console.error("Error persisting stage order:", error);
+            }
         }
 
         if (activeItemType === 'Customer' && over?.data.current?.type === 'Stage') {
@@ -289,5 +300,3 @@ export default function CrmPage() {
         </DndContext>
     );
 }
-
-    
