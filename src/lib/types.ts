@@ -1,4 +1,5 @@
 
+
 import type { FieldValue, Timestamp } from "firebase/firestore";
 
 export type User = {
@@ -566,8 +567,19 @@ export type Employee = {
     name: string;
     email: string;
     phone?: string;
+    document?: string;
+    type: 'Fixo' | 'Freelancer';
     role: 'Vendedor' | 'Entregador' | 'Afiliado' | 'Outro';
     isActive: boolean;
+    address?: {
+        street?: string;
+        number?: string;
+        complement?: string;
+        neighborhood?: string;
+        city?: string;
+        state?: string;
+        zipCode?: string;
+    };
     performanceMetrics?: {
         totalSales?: number;
         ordersDelivered?: number;

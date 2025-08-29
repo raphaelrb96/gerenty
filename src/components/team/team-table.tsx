@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -32,6 +33,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { cn } from "@/lib/utils";
 
 type TeamTableProps = {
   data: Employee[];
@@ -49,6 +51,10 @@ export function TeamTable({ data, onEdit, onDelete }: TeamTableProps) {
     }
   }
 
+  const getStatusVariant = (isActive: boolean) => {
+    return isActive ? "bg-green-600/20 text-green-700" : "bg-red-600/20 text-red-700";
+  }
+
   return (
     <>
       <div className="rounded-lg border">
@@ -57,6 +63,7 @@ export function TeamTable({ data, onEdit, onDelete }: TeamTableProps) {
             <TableRow>
               <TableHead>Nome</TableHead>
               <TableHead>Função</TableHead>
+              <TableHead>Vínculo</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Contato</TableHead>
               <TableHead><span className="sr-only">Ações</span></TableHead>
@@ -67,8 +74,9 @@ export function TeamTable({ data, onEdit, onDelete }: TeamTableProps) {
               <TableRow key={member.id}>
                 <TableCell className="font-medium">{member.name}</TableCell>
                 <TableCell>{member.role}</TableCell>
+                <TableCell>{member.type}</TableCell>
                 <TableCell>
-                  <Badge variant={member.isActive ? "secondary" : "outline"} className={member.isActive ? "bg-green-600/20 text-green-700" : ""}>
+                  <Badge variant={"secondary"} className={cn(getStatusVariant(member.isActive))}>
                     {member.isActive ? "Ativo" : "Inativo"}
                   </Badge>
                 </TableCell>
