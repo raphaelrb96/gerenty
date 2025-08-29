@@ -27,9 +27,11 @@ export function CustomerList({ customers, onCardClick }: CustomerListProps) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-1">
             {customers.map(customer => (
-                <div key={customer.id} onClick={() => onCardClick(customer)}>
-                    <CustomerCard customer={customer} />
-                </div>
+                <CustomerCard 
+                    key={customer.id} 
+                    customer={customer}
+                    onClick={() => onCardClick(customer)} 
+                />
             ))}
         </div>
     );
