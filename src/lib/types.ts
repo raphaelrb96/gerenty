@@ -542,7 +542,7 @@ export type Customer = {
     phone?: string;
     document?: string;
     profileImageUrl?: string;
-    status: 'Lead' | 'Contact' | 'Active' | 'VIP';
+    status: string;
     tags?: string[];
     lastInteraction?: string | Date | Timestamp | FieldValue;
     createdAt: string | Date | Timestamp | FieldValue;

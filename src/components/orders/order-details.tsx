@@ -78,7 +78,7 @@ export function OrderDetails({ order, onFinished, onStatusChange }: OrderDetails
       <ScrollArea className="flex-1">
         <div className="space-y-6 py-4 px-6">
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {order.customer.id && (
                     <Button variant="outline" size="sm" onClick={() => handleNavigation(`/dashboard/crm?customerId=${order.customer.id}`)}>
                         <User className="mr-2 h-4 w-4" /> Ver Cliente
