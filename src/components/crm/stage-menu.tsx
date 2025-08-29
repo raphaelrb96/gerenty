@@ -23,9 +23,10 @@ type StageMenuProps = {
     onAddStage: () => void;
     onEditStage: (stage: Stage) => void;
     onDeleteStage: (stage: Stage) => void;
+    activeItemType: string | null;
 };
 
-export function StageMenu({ stages, activeStageId, onSelectStage, onAddStage, onEditStage, onDeleteStage }: StageMenuProps) {
+export function StageMenu({ stages, activeStageId, onSelectStage, onAddStage, onEditStage, onDeleteStage, activeItemType }: StageMenuProps) {
     return (
         <Card className="h-full">
             <CardContent className="p-2">
@@ -49,6 +50,7 @@ export function StageMenu({ stages, activeStageId, onSelectStage, onAddStage, on
                             onClick={() => onSelectStage(stage.id)}
                             onEdit={() => onEditStage(stage)}
                             onDelete={() => onDeleteStage(stage)}
+                            activeItemType={activeItemType}
                         />
                     ))}
                     <Button variant="outline" size="sm" className="mt-2" onClick={onAddStage}>
@@ -62,7 +64,7 @@ export function StageMenu({ stages, activeStageId, onSelectStage, onAddStage, on
 }
 
 
-function StageMenuItem({ stage, isActive, onClick, onEdit, onDelete }: { stage: Stage, isActive: boolean, onClick: () => void, onEdit: () => void, onDelete: () => void }) {
+function StageMenuItem({ stage, isActive, onClick, onEdit, onDelete, activeItemType }: { stage: Stage, isActive: boolean, onClick: () => void, onEdit: () => void, onDelete: () => void, activeItemType: string | null }) {
     const { setNodeRef: setDroppableNodeRef, isOver } = useDroppable({
         id: `stage-drop-${stage.id}`,
         data: {
@@ -89,6 +91,8 @@ function StageMenuItem({ stage, isActive, onClick, onEdit, onDelete }: { stage: 
         transform: CSS.Transform.toString(transform),
         transition,
     };
+    
+    const showDropIndicator = isOver && activeItemType === 'Customer';
 
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
@@ -98,7 +102,7 @@ function StageMenuItem({ stage, isActive, onClick, onEdit, onDelete }: { stage: 
                 className={cn(
                     "w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors flex justify-between items-center group",
                     isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted/50",
-                    isOver && "ring-2 ring-primary ring-offset-2"
+                    showDropIndicator && "ring-2 ring-primary ring-offset-2"
                 )}
             >
                 <div className="flex items-center gap-2">
@@ -124,5 +128,3 @@ function StageMenuItem({ stage, isActive, onClick, onEdit, onDelete }: { stage: 
         </div>
     )
 }
-
-    

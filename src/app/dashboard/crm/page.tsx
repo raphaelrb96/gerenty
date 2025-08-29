@@ -30,10 +30,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useTranslation } from "@/context/i18n-context";
 
 export default function CrmPage() {
     const { user } = useAuth();
     const { toast } = useToast();
+    const { t } = useTranslation();
 
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [stages, setStages] = useState<Stage[]>([]);
@@ -50,37 +52,46 @@ export default function CrmPage() {
     const [isStageModalOpen, setIsStageModalOpen] = useState(false);
 
 
-    const fetchInitialData = async () => {
-        if (!user) return;
-        setLoading(true);
-        try {
-            const [userCustomers, userStages] = await Promise.all([
-                getCustomersByUser(user.uid),
-                getStagesByUser(user.uid)
-            ]);
-
-            setCustomers(userCustomers);
-            // Sort stages by order property
-            setStages(userStages.sort((a, b) => a.order - b.order));
-            
-            // Set the first stage as active, or null if no stages
-            if (userStages.length > 0) {
-                setActiveStageId(userStages.sort((a, b) => a.order - b.order)[0].id);
-            } else {
-                setActiveStageId(null);
-            }
-
-        } catch (error) {
-            console.error(error);
-            toast({ variant: "destructive", title: "Erro ao carregar dados", description: "Não foi possível buscar os dados do CRM." });
-        } finally {
-            setLoading(false);
-        }
-    };
-
     useEffect(() => {
-        if(user) fetchInitialData();
-    }, [user]);
+        const fetchAndInitializeData = async () => {
+            if (!user) return;
+            setLoading(true);
+            try {
+                const [userCustomers, userStages] = await Promise.all([
+                    getCustomersByUser(user.uid),
+                    getStagesByUser(user.uid)
+                ]);
+
+                if (userStages.length === 0) {
+                    // If no stages exist, create default ones
+                    const defaultStageNames = ['Lead', 'Contact', 'Active', 'VIP'];
+                    const createdStages: Stage[] = [];
+                    for (let i = 0; i < defaultStageNames.length; i++) {
+                        const newStage = await addStage({ 
+                            name: t(`crmStages.${defaultStageNames[i].toLowerCase()}`), 
+                            ownerId: user.uid, 
+                            order: i 
+                        });
+                        createdStages.push(newStage);
+                    }
+                    setStages(createdStages);
+                    setActiveStageId(createdStages[0]?.id || null);
+                } else {
+                    setStages(userStages.sort((a, b) => a.order - b.order));
+                    setActiveStageId(userStages[0]?.id || null);
+                }
+                
+                setCustomers(userCustomers);
+
+            } catch (error) {
+                console.error(error);
+                toast({ variant: "destructive", title: "Erro ao carregar dados", description: "Não foi possível buscar os dados do CRM." });
+            } finally {
+                setLoading(false);
+            }
+        };
+        if(user) fetchAndInitializeData();
+    }, [user, toast, t]);
 
     const activeCustomer = activeId ? customers.find(c => c.id === activeId) : null;
     const activeItemType = activeId ? (stages.some(s => s.id === activeId) ? 'Stage' : 'Customer') : null;
@@ -137,51 +148,44 @@ export default function CrmPage() {
 
     const handleDragOver = (event: DragOverEvent) => {
         const { active, over } = event;
-        if (!over) return;
+        if (!over || active.id === over.id) return;
 
-        const activeId = active.id;
-        const overId = over.id;
+        const isActiveAStage = stages.some(s => s.id === active.id);
+        const isOverAStage = stages.some(s => s.id === over.id || over.data.current?.type === 'Stage');
 
-        if (activeId === overId) return;
-
-        const isActiveAStage = stages.some(s => s.id === activeId);
-        const isOverAStage = stages.some(s => s.id === overId);
-
-        if (!isActiveAStage || !isOverAStage) return;
-
-        setStages((currentStages) => {
-            const oldIndex = currentStages.findIndex(s => s.id === activeId);
-            const newIndex = currentStages.findIndex(s => s.id === overId);
-            return arrayMove(currentStages, oldIndex, newIndex);
-        });
+        if (isActiveAStage && isOverAStage) {
+            setStages((currentStages) => {
+                const oldIndex = currentStages.findIndex(s => s.id === active.id);
+                const overId = over.id.toString().replace('stage-drop-', '');
+                const newIndex = currentStages.findIndex(s => s.id === overId);
+                if (oldIndex !== -1 && newIndex !== -1) {
+                    return arrayMove(currentStages, oldIndex, newIndex);
+                }
+                return currentStages;
+            });
+        }
     };
 
     const handleDragEnd = async (event: DragEndEvent) => {
-        setActiveId(null);
         const { active, over } = event;
 
-        if (!over) return;
-        
-        const isOverAStageDropZone = over.data.current?.type === 'Stage';
-
-        if (activeItemType === 'Stage' && isOverAStageDropZone) {
-            if (active.id !== over.id) {
-                // The visual reordering is done in onDragOver.
-                // Here we just persist the final order.
-                const updatedStages = stages.map((stage, index) => ({ ...stage, order: index }));
-                setStages(updatedStages); // update state with new order
-                 // In a real app, you would batch update the 'order' property in Firestore here.
-                 console.log("Persisting new stage order to DB...");
-            }
-            return;
+        if (activeItemType === 'Stage' && over && active.id !== over.id) {
+            // Persist the new order after visual reordering is done
+            const updatedStages = stages.map((stage, index) => ({ ...stage, order: index }));
+            setStages(updatedStages); 
+            // In a real app, you would batch update the 'order' property in Firestore here.
+            console.log("Persisting new stage order to DB...");
         }
-            
-        if (activeItemType === 'Customer' && isOverAStageDropZone) {
-            const newStageId = over.id.replace('stage-drop-', '');
+
+        if (activeItemType === 'Customer' && over?.data.current?.type === 'Stage') {
+            const newStageId = over.id.toString().replace('stage-drop-', '');
             const customerId = active.id as string;
             const originalCustomer = customers.find(c => c.id === customerId);
 
-            if (!originalCustomer || originalCustomer.status === newStageId) return;
+            if (!originalCustomer || originalCustomer.status === newStageId) {
+                setActiveId(null);
+                return;
+            }
 
             setCustomers(prev => prev.map(c => c.id === customerId ? { ...c, status: newStageId } : c));
 
@@ -194,6 +198,8 @@ export default function CrmPage() {
                 setCustomers(prev => prev.map(c => c.id === customerId ? originalCustomer : c));
             }
         }
+        
+        setActiveId(null);
     };
 
 
@@ -228,6 +234,7 @@ export default function CrmPage() {
                            onAddStage={() => handleOpenStageModal()}
                            onEditStage={(stage) => handleOpenStageModal(stage)}
                            onDeleteStage={setStageToDelete}
+                           activeItemType={activeItemType}
                          />
                        </SortableContext>
                     </div>
