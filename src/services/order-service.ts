@@ -3,7 +3,7 @@
 
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where, addDoc, serverTimestamp, doc, updateDoc, Timestamp } from "firebase/firestore";
-import type { Order } from "@/lib/types";
+import type { Order, OrderStatus } from "@/lib/types";
 
 const ordersCollection = collection(db, "orders");
 
@@ -32,6 +32,28 @@ export async function getOrders(companyId: string): Promise<Order[]> {
     } catch (error) {
         console.error("Error getting orders: ", error);
         throw new Error("Failed to fetch orders.");
+    }
+}
+
+// Get all orders that are ready to be assigned to a route
+export async function getUnassignedOrders(companyIds: string[]): Promise<Order[]> {
+    if (companyIds.length === 0) return [];
+    try {
+        const q = query(
+            ordersCollection,
+            where("companyId", "in", companyIds),
+            where("shipping.routeId", "==", null), // Not assigned to a route yet
+            where("status", "in", ["confirmed", "processing"]) // Ready for delivery
+        );
+        const querySnapshot = await getDocs(q);
+        const orders: Order[] = [];
+        querySnapshot.forEach((doc) => {
+            orders.push(convertOrderTimestamps({ id: doc.id, ...doc.data() }));
+        });
+        return orders;
+    } catch (error) {
+        console.error("Error getting unassigned orders: ", error);
+        throw new Error("Failed to fetch unassigned orders.");
     }
 }
 
