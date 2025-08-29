@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { getCustomersByUser, Customer, updateCustomerStatus } from "@/services/customer-service";
-import { DndContext, DragEndEvent, DragOverlay, closestCorners } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, DragOverlay, closestCorners, DragStartEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 
 import { PageHeader } from "@/components/common/page-header";
@@ -33,9 +33,10 @@ export default function CrmPage() {
     const [detailsModalCustomer, setDetailsModalCustomer] = useState<Customer | null>(null);
 
     const [activeId, setActiveId] = useState<string | null>(null);
-    const [activeItemType, setActiveItemType] = useState<string | null>(null);
 
-    const activeCustomer = customers.find(c => c.id === activeId);
+    const activeCustomer = activeId ? customers.find(c => c.id === activeId) : null;
+    const activeItemType = activeId ? (stages.includes(activeId) ? 'Stage' : 'Customer') : null;
+
 
     const fetchCustomers = async () => {
         if (!user) return;
@@ -61,49 +62,56 @@ export default function CrmPage() {
 
     const handleCustomerCreated = (newCustomer: Customer) => {
         setCustomers(prev => [...prev, newCustomer]);
+        if (!stages.includes(newCustomer.status)) {
+            setStages(prev => [...prev, newCustomer.status]);
+        }
     };
 
-    const handleDragStart = (event: any) => {
-        setActiveId(event.active.id);
-        setActiveItemType(event.active.data.current?.type);
+    const handleDragStart = (event: DragStartEvent) => {
+        setActiveId(event.active.id as string);
     };
 
     const handleDragEnd = async (event: DragEndEvent) => {
         setActiveId(null);
-        setActiveItemType(null);
         const { active, over } = event;
 
         if (!over) return;
         
-        if (active.id !== over.id) {
-             // Reordering stages
-            if (active.data.current?.type === 'Stage' && over.data.current?.type === 'Stage') {
-                setStages((prevStages) => {
-                    const oldIndex = prevStages.indexOf(active.id as string);
-                    const newIndex = prevStages.indexOf(over.id as string);
-                    return arrayMove(prevStages, oldIndex, newIndex);
-                });
-                // Here you would typically save the new stage order to user preferences or a database
-            }
+        // Item dropped on itself
+        if (active.id === over.id) return;
+        
+        const isActiveAStage = stages.includes(active.id as string);
+        const isOverAStage = stages.includes(over.id as string);
+        const isOverACustomerDropZone = over.data.current?.type === 'Stage';
+
+
+        // Reordering stages
+        if (isActiveAStage && isOverAStage) {
+            setStages((currentStages) => {
+                const oldIndex = currentStages.indexOf(active.id as string);
+                const newIndex = currentStages.indexOf(over.id as string);
+                return arrayMove(currentStages, oldIndex, newIndex);
+            });
+            // Here you would typically save the new stage order to user preferences or a database
+        }
             
-            // Dropping a customer onto a stage in the menu
-            if (over.data.current?.type === 'Stage' && active.data.current?.type === 'Customer') {
-                const newStage = over.data.current.stage;
-                const customerId = active.id as string;
-                const originalCustomer = customers.find(c => c.id === customerId);
+        // Dropping a customer onto a stage in the menu
+        if (isOverACustomerDropZone && !isActiveAStage) {
+            const newStage = over.data.current.stage;
+            const customerId = active.id as string;
+            const originalCustomer = customers.find(c => c.id === customerId);
 
-                if (!originalCustomer || originalCustomer.status === newStage) return;
+            if (!originalCustomer || originalCustomer.status === newStage) return;
 
-                setCustomers(prev => prev.map(c => c.id === customerId ? { ...c, status: newStage } : c));
+            setCustomers(prev => prev.map(c => c.id === customerId ? { ...c, status: newStage } : c));
 
-                try {
-                    await updateCustomerStatus(customerId, newStage);
-                    toast({ title: "Status do cliente atualizado!" });
-                } catch (error) {
-                    console.error("Error updating customer status:", error);
-                    toast({ variant: "destructive", title: "Erro ao atualizar o status do cliente" });
-                    setCustomers(prev => prev.map(c => c.id === customerId ? originalCustomer : c));
-                }
+            try {
+                await updateCustomerStatus(customerId, newStage);
+                toast({ title: "Status do cliente atualizado!" });
+            } catch (error) {
+                console.error("Error updating customer status:", error);
+                toast({ variant: "destructive", title: "Erro ao atualizar o status do cliente" });
+                setCustomers(prev => prev.map(c => c.id === customerId ? originalCustomer : c));
             }
         }
     };
@@ -128,21 +136,18 @@ export default function CrmPage() {
                         </Button>
                     }
                 />
-                <div className="flex-1 mt-4 grid grid-cols-1 lg:grid-cols-4 gap-6 h-full overflow-hidden">
+                <div className="flex-1 mt-4 grid grid-cols-1 lg:grid-cols-5 gap-6 h-full overflow-hidden">
                     <div className="lg:col-span-1 h-full overflow-y-auto no-scrollbar">
                        <SortableContext items={stages} strategy={verticalListSortingStrategy}>
                          <StageMenu 
                            stages={stages}
                            activeStage={activeStage}
                            onSelectStage={setActiveStage}
-                           customerCount={stages.reduce((acc, stage) => {
-                              acc[stage] = customers.filter(c => c.status === stage).length;
-                              return acc;
-                           }, {} as Record<string, number>)}
+                           activeItemType={activeItemType}
                          />
                        </SortableContext>
                     </div>
-                    <div className="lg:col-span-3 h-full overflow-y-auto no-scrollbar">
+                    <div className="lg:col-span-4 h-full overflow-y-auto no-scrollbar">
                         <SortableContext items={filteredCustomers.map(c => c.id)} strategy={verticalListSortingStrategy}>
                             <CustomerList
                                 customers={filteredCustomers}
@@ -164,6 +169,9 @@ export default function CrmPage() {
             />
              <DragOverlay>
                 {activeId && activeItemType === 'Customer' && activeCustomer ? <CustomerCard customer={activeCustomer} isOverlay /> : null}
+                {activeId && activeItemType === 'Stage' ? (
+                     <div className="bg-primary text-primary-foreground p-2 rounded-md shadow-lg">{activeId}</div>
+                 ) : null}
              </DragOverlay>
         </DndContext>
     );

@@ -4,7 +4,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { useDroppable, useDraggable } from "@dnd-kit/core";
+import { useDroppable } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Badge } from "../ui/badge";
@@ -20,10 +20,10 @@ type StageMenuProps = {
     stages: string[];
     activeStage: string;
     onSelectStage: (stage: string) => void;
-    customerCount: Record<string, number>;
+    activeItemType: string | null;
 };
 
-export function StageMenu({ stages, activeStage, onSelectStage, customerCount }: StageMenuProps) {
+export function StageMenu({ stages, activeStage, onSelectStage, activeItemType }: StageMenuProps) {
     return (
         <Card className="h-full">
             <CardContent className="p-2">
@@ -34,7 +34,7 @@ export function StageMenu({ stages, activeStage, onSelectStage, customerCount }:
                             stage={stage}
                             isActive={activeStage === stage}
                             onClick={() => onSelectStage(stage)}
-                            count={customerCount[stage] || 0}
+                            activeItemType={activeItemType}
                         />
                     ))}
                      <Button variant="outline" size="sm" className="mt-2">
@@ -48,9 +48,9 @@ export function StageMenu({ stages, activeStage, onSelectStage, customerCount }:
 }
 
 
-function StageMenuItem({ stage, isActive, onClick, count }: { stage: string, isActive: boolean, onClick: () => void, count: number }) {
+function StageMenuItem({ stage, isActive, onClick, activeItemType }: { stage: string, isActive: boolean, onClick: () => void, activeItemType: string | null }) {
     const { setNodeRef: setDroppableNodeRef, isOver } = useDroppable({
-        id: `stage-${stage}`,
+        id: `stage-drop-${stage}`,
         data: {
             type: 'Stage',
             stage: stage
@@ -76,6 +76,7 @@ function StageMenuItem({ stage, isActive, onClick, count }: { stage: string, isA
         transition,
     };
 
+    const canAcceptDrop = isOver && activeItemType === 'Customer';
 
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
@@ -85,7 +86,7 @@ function StageMenuItem({ stage, isActive, onClick, count }: { stage: string, isA
                 className={cn(
                     "w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors flex justify-between items-center group",
                     isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted/50",
-                    isOver && "ring-2 ring-primary ring-offset-2"
+                    canAcceptDrop && "ring-2 ring-primary ring-offset-2"
                 )}
             >
                 <div className="flex items-center gap-2">
@@ -95,7 +96,6 @@ function StageMenuItem({ stage, isActive, onClick, count }: { stage: string, isA
                     <span>{stage}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Badge variant={isActive ? "primary" : "secondary"}>{count}</Badge>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={e => e.stopPropagation()}>
