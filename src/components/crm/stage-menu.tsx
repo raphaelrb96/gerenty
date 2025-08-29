@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 import { useDroppable } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Badge } from "../ui/badge";
 import { GripVertical, PlusCircle, MoreHorizontal } from "lucide-react";
 import { 
     DropdownMenu, 
@@ -16,24 +15,29 @@ import {
     DropdownMenuTrigger 
 } from "../ui/dropdown-menu";
 
+type Stage = {
+    id: string;
+    label: string;
+};
+
 type StageMenuProps = {
-    stages: string[];
-    activeStage: string;
-    onSelectStage: (stage: string) => void;
+    stages: Stage[];
+    activeStageId: string;
+    onSelectStage: (stageId: string) => void;
     activeItemType: string | null;
 };
 
-export function StageMenu({ stages, activeStage, onSelectStage, activeItemType }: StageMenuProps) {
+export function StageMenu({ stages, activeStageId, onSelectStage, activeItemType }: StageMenuProps) {
     return (
         <Card className="h-full">
             <CardContent className="p-2">
                 <div className="flex flex-col gap-1">
                     {stages.map(stage => (
                         <StageMenuItem
-                            key={stage}
+                            key={stage.id}
                             stage={stage}
-                            isActive={activeStage === stage}
-                            onClick={() => onSelectStage(stage)}
+                            isActive={activeStageId === stage.id}
+                            onClick={() => onSelectStage(stage.id)}
                             activeItemType={activeItemType}
                         />
                     ))}
@@ -48,9 +52,9 @@ export function StageMenu({ stages, activeStage, onSelectStage, activeItemType }
 }
 
 
-function StageMenuItem({ stage, isActive, onClick, activeItemType }: { stage: string, isActive: boolean, onClick: () => void, activeItemType: string | null }) {
+function StageMenuItem({ stage, isActive, onClick, activeItemType }: { stage: Stage, isActive: boolean, onClick: () => void, activeItemType: string | null }) {
     const { setNodeRef: setDroppableNodeRef, isOver } = useDroppable({
-        id: `stage-drop-${stage}`,
+        id: `stage-drop-${stage.id}`,
         data: {
             type: 'Stage',
             stage: stage
@@ -64,7 +68,7 @@ function StageMenuItem({ stage, isActive, onClick, activeItemType }: { stage: st
         transform,
         transition,
     } = useSortable({
-        id: stage,
+        id: stage.id,
         data: {
             type: 'Stage',
             stage: stage,
@@ -93,7 +97,7 @@ function StageMenuItem({ stage, isActive, onClick, activeItemType }: { stage: st
                     <div {...listeners} className="cursor-grab touch-none p-1">
                         <GripVertical className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
                     </div>
-                    <span>{stage}</span>
+                    <span>{stage.label}</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <DropdownMenu>

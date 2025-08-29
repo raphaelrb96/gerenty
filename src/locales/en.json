@@ -476,5 +476,11 @@
             "description": "Get started by creating your first company profile. It's the first step to organizing your business.",
             "action": "Create First Company"
         }
+    },
+    "crmStages": {
+        "lead": "Lead",
+        "contact": "Contact",
+        "active": "Active",
+        "vip": "VIP"
     }
 }

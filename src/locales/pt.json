@@ -476,5 +476,11 @@
             "description": "Comece criando o perfil da sua primeira empresa. É o primeiro passo para organizar o seu negócio.",
             "action": "Criar Primeira Empresa"
         }
+    },
+    "crmStages": {
+        "lead": "Lead",
+        "contact": "Contato",
+        "active": "Ativo",
+        "vip": "VIP"
     }
 }
