@@ -42,8 +42,8 @@ export async function getUnassignedOrders(companyIds: string[]): Promise<Order[]
         const q = query(
             ordersCollection,
             where("companyId", "in", companyIds),
-            where("shipping.routeId", "==", null), // Not assigned to a route yet
-            where("status", "in", ["confirmed", "processing"]) // Ready for delivery
+            where("shipping.routeId", "==", null || undefined),
+            where("status", "in", ["confirmed", "processing"])
         );
         const querySnapshot = await getDocs(q);
         const orders: Order[] = [];

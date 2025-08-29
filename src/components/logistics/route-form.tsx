@@ -7,8 +7,10 @@ import { useCompany } from "@/context/company-context";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { getEmployeesByUser, Employee } from "@/services/employee-service";
-import { getUnassignedOrders, Order } from "@/services/order-service";
+import { getUnassignedOrders, Order, OrderStatus } from "@/lib/types";
 import { createRoute } from "@/services/logistics-service";
+import { DateRange } from "react-day-picker";
+import { startOfDay, endOfDay, subDays } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,9 +20,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SheetFooter } from "@/components/ui/sheet";
-import { Loader2, UserPlus, Search, ShoppingCart, Info } from "lucide-react";
+import { Loader2, UserPlus, Search, ShoppingCart, Info, Calendar } from "lucide-react";
 import { useCurrency } from "@/context/currency-context";
 import { EmptyState } from "../common/empty-state";
+import { DateRangePicker } from "../ui/date-range-picker";
+import { useTranslation } from "@/context/i18n-context";
 
 
 type RouteFormProps = {
@@ -29,6 +33,7 @@ type RouteFormProps = {
 
 export function RouteForm({ onFinished }: RouteFormProps) {
     const { user } = useAuth();
+    const { t } = useTranslation();
     const { companies } = useCompany();
     const router = useRouter();
     const { toast } = useToast();
@@ -37,11 +42,19 @@ export function RouteForm({ onFinished }: RouteFormProps) {
     const [drivers, setDrivers] = useState<Employee[]>([]);
     const [orders, setOrders] = useState<Order[]>([]);
     const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
+    
+    // Form state
     const [selectedDriver, setSelectedDriver] = useState<string>("");
     const [title, setTitle] = useState("");
     const [notes, setNotes] = useState("");
-    const [searchTerm, setSearchTerm] = useState("");
     const [selectedOrders, setSelectedOrders] = useState<Record<string, boolean>>({});
+    
+    // Filter state
+    const [searchTerm, setSearchTerm] = useState("");
+    const [dateRange, setDateRange] = useState<DateRange | undefined>({ from: subDays(new Date(), 30), to: new Date() });
+    const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all");
+
+    // Loading states
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -58,7 +71,6 @@ export function RouteForm({ onFinished }: RouteFormProps) {
                 const availableDrivers = allEmployees.filter(e => e.role === "Entregador" && e.isActive);
                 setDrivers(availableDrivers);
                 setOrders(unassignedOrders);
-                setFilteredOrders(unassignedOrders);
             } catch (error) {
                 console.error("Failed to load data for route form", error);
                 toast({ variant: "destructive", title: "Erro ao carregar dados", description: "Não foi possível buscar motoristas e pedidos." });
@@ -71,12 +83,23 @@ export function RouteForm({ onFinished }: RouteFormProps) {
 
     useEffect(() => {
         const lowercasedFilter = searchTerm.toLowerCase();
-        const filtered = orders.filter(order =>
-            order.customer.name.toLowerCase().includes(lowercasedFilter) ||
-            order.id.toLowerCase().includes(lowercasedFilter)
-        );
+        
+        const filtered = orders.filter(order => {
+            const searchMatch = order.customer.name.toLowerCase().includes(lowercasedFilter) ||
+                                order.id.toLowerCase().includes(lowercasedFilter);
+
+            const statusMatch = statusFilter === 'all' || order.status === statusFilter;
+
+            const orderDate = new Date(order.createdAt as string);
+            const dateMatch = dateRange?.from && dateRange?.to
+                ? orderDate >= startOfDay(dateRange.from) && orderDate <= endOfDay(dateRange.to)
+                : true;
+            
+            return searchMatch && statusMatch && dateMatch;
+        });
+
         setFilteredOrders(filtered);
-    }, [searchTerm, orders]);
+    }, [searchTerm, orders, dateRange, statusFilter]);
 
     const handleSelectOrder = (orderId: string, checked: boolean) => {
         setSelectedOrders(prev => {
@@ -178,14 +201,29 @@ export function RouteForm({ onFinished }: RouteFormProps) {
                     <CardHeader>
                         <CardTitle>Pedidos Disponíveis</CardTitle>
                         <CardDescription>Selecione os pedidos para incluir nesta rota.</CardDescription>
-                         <div className="relative">
-                            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                placeholder="Buscar por cliente ou ID do pedido..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-8"
-                            />
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="relative">
+                                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    placeholder="Buscar por cliente ou ID do pedido..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="pl-8"
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                                <DateRangePicker date={dateRange} onDateChange={setDateRange} />
+                                 <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as any)}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Filtrar status..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Todos Status</SelectItem>
+                                        <SelectItem value="confirmed">{t('orderStatus.confirmed')}</SelectItem>
+                                        <SelectItem value="processing">{t('orderStatus.processing')}</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
                     </CardHeader>
                     <CardContent className="flex-1 overflow-hidden p-2">
@@ -211,6 +249,7 @@ export function RouteForm({ onFinished }: RouteFormProps) {
                                                 <div className="text-xs text-muted-foreground space-y-1 mt-1">
                                                     <div className="flex items-center gap-1.5"><ShoppingCart className="h-3 w-3" /> <span>{order.items.map(i => `${i.quantity}x ${i.productName}`).join(', ')}</span></div>
                                                     <div className="flex items-center gap-1.5"><Info className="h-3 w-3" /> <span>ID: #{order.id.substring(0, 7)}</span></div>
+                                                    <div className="flex items-center gap-1.5"><Calendar className="h-3 w-3" /> <span>{new Date(order.createdAt as string).toLocaleDateString()}</span></div>
                                                 </div>
                                             </label>
                                         </Card>
@@ -218,7 +257,7 @@ export function RouteForm({ onFinished }: RouteFormProps) {
                                 </div>
                            ) : (
                                <div className="flex items-center justify-center h-full text-center text-muted-foreground">
-                                   <p>Nenhum pedido aguardando rota ou correspondente à busca.</p>
+                                   <p>Nenhum pedido aguardando rota ou correspondente aos filtros.</p>
                                </div>
                            )}
                         </ScrollArea>
