@@ -74,34 +74,36 @@ export default function CrmPage() {
         const { active, over } = event;
 
         if (!over) return;
-
-        // Reordering stages
-        if (active.id !== over.id && active.data.current?.type === 'Stage' && over.data.current?.type === 'Stage') {
-            setStages((prevStages) => {
-                const oldIndex = prevStages.indexOf(active.id as string);
-                const newIndex = prevStages.indexOf(over.id as string);
-                return arrayMove(prevStages, oldIndex, newIndex);
-            });
-            // Here you would typically save the new stage order to user preferences or a database
-        }
         
-        // Dropping a customer onto a stage in the menu
-        if (over.data.current?.type === 'Stage' && active.data.current?.type === 'Customer') {
-            const newStage = over.data.current.stage;
-            const customerId = active.id as string;
-            const originalCustomer = customers.find(c => c.id === customerId);
+        if (active.id !== over.id) {
+             // Reordering stages
+            if (active.data.current?.type === 'Stage' && over.data.current?.type === 'Stage') {
+                setStages((prevStages) => {
+                    const oldIndex = prevStages.indexOf(active.id as string);
+                    const newIndex = prevStages.indexOf(over.id as string);
+                    return arrayMove(prevStages, oldIndex, newIndex);
+                });
+                // Here you would typically save the new stage order to user preferences or a database
+            }
+            
+            // Dropping a customer onto a stage in the menu
+            if (over.data.current?.type === 'Stage' && active.data.current?.type === 'Customer') {
+                const newStage = over.data.current.stage;
+                const customerId = active.id as string;
+                const originalCustomer = customers.find(c => c.id === customerId);
 
-            if (!originalCustomer || originalCustomer.status === newStage) return;
+                if (!originalCustomer || originalCustomer.status === newStage) return;
 
-            setCustomers(prev => prev.map(c => c.id === customerId ? { ...c, status: newStage } : c));
+                setCustomers(prev => prev.map(c => c.id === customerId ? { ...c, status: newStage } : c));
 
-            try {
-                await updateCustomerStatus(customerId, newStage);
-                toast({ title: "Status do cliente atualizado!" });
-            } catch (error) {
-                console.error("Error updating customer status:", error);
-                toast({ variant: "destructive", title: "Erro ao atualizar o status do cliente" });
-                setCustomers(prev => prev.map(c => c.id === customerId ? originalCustomer : c));
+                try {
+                    await updateCustomerStatus(customerId, newStage);
+                    toast({ title: "Status do cliente atualizado!" });
+                } catch (error) {
+                    console.error("Error updating customer status:", error);
+                    toast({ variant: "destructive", title: "Erro ao atualizar o status do cliente" });
+                    setCustomers(prev => prev.map(c => c.id === customerId ? originalCustomer : c));
+                }
             }
         }
     };
@@ -126,7 +128,7 @@ export default function CrmPage() {
                         </Button>
                     }
                 />
-                <div className="flex-1 mt-4 grid grid-cols-1 lg:grid-cols-3 gap-6 h-full overflow-hidden">
+                <div className="flex-1 mt-4 grid grid-cols-1 lg:grid-cols-4 gap-6 h-full overflow-hidden">
                     <div className="lg:col-span-1 h-full overflow-y-auto no-scrollbar">
                        <SortableContext items={stages} strategy={verticalListSortingStrategy}>
                          <StageMenu 
@@ -140,7 +142,7 @@ export default function CrmPage() {
                          />
                        </SortableContext>
                     </div>
-                    <div className="lg:col-span-2 h-full overflow-y-auto no-scrollbar">
+                    <div className="lg:col-span-3 h-full overflow-y-auto no-scrollbar">
                         <SortableContext items={filteredCustomers.map(c => c.id)} strategy={verticalListSortingStrategy}>
                             <CustomerList
                                 customers={filteredCustomers}
