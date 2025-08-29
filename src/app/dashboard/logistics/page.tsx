@@ -1,17 +1,28 @@
 
 "use client";
 
+import { useState } from "react";
 import { PageHeader } from "@/components/common/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Truck } from "lucide-react";
+import { Truck, PlusCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 export default function LogisticsPage() {
+    const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+
     return (
         <div className="space-y-4">
             <PageHeader 
                 title="Logística e Entregas"
                 description="Gerencie suas rotas e acompanhe o status das entregas."
+                action={
+                    <Button onClick={() => setCreateModalOpen(true)}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Nova Rota
+                    </Button>
+                }
             />
 
             <Tabs defaultValue="processing">
@@ -87,6 +98,18 @@ export default function LogisticsPage() {
                     </Card>
                 </TabsContent>
             </Tabs>
+
+            <Sheet open={isCreateModalOpen} onOpenChange={setCreateModalOpen}>
+                <SheetContent className="sm:max-w-lg">
+                    <SheetHeader>
+                        <SheetTitle>Criar Nova Rota</SheetTitle>
+                    </SheetHeader>
+                    <div className="py-4">
+                        {/* O formulário de criação de rota será adicionado aqui */}
+                        <p className="text-muted-foreground">Formulário de criação de rota em breve.</p>
+                    </div>
+                </SheetContent>
+            </Sheet>
         </div>
     );
 }
