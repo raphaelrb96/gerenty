@@ -595,6 +595,8 @@ export type Route = {
     ownerId: string;
     driverId: string; // Employee ID of the driver
     driverName: string;
+    title?: string;
+    notes?: string;
     orders: Order[]; // The orders included in this route
     status: 'A Processar' | 'Em Trânsito' | 'Entregue' | 'Outro';
     totalValue: number;

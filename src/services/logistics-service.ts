@@ -38,7 +38,9 @@ export async function createRoute(
     ownerId: string, 
     driverId: string, 
     driverName: string, 
-    orders: Order[]
+    orders: Order[],
+    title?: string,
+    notes?: string
 ): Promise<void> {
     const batch = writeBatch(db);
 
@@ -52,6 +54,8 @@ export async function createRoute(
             ownerId,
             driverId,
             driverName,
+            title: title || `Rota de ${driverName} - ${new Date().toLocaleDateString()}`,
+            notes,
             orders,
             status: "A Processar",
             totalValue,

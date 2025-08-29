@@ -12,12 +12,13 @@ import { createRoute } from "@/services/logistics-service";
 
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SheetFooter } from "@/components/ui/sheet";
-import { Loader2, UserPlus } from "lucide-react";
+import { Loader2, UserPlus, Search, ShoppingCart, Info } from "lucide-react";
 import { useCurrency } from "@/context/currency-context";
 import { EmptyState } from "../common/empty-state";
 
@@ -35,7 +36,11 @@ export function RouteForm({ onFinished }: RouteFormProps) {
 
     const [drivers, setDrivers] = useState<Employee[]>([]);
     const [orders, setOrders] = useState<Order[]>([]);
+    const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
     const [selectedDriver, setSelectedDriver] = useState<string>("");
+    const [title, setTitle] = useState("");
+    const [notes, setNotes] = useState("");
+    const [searchTerm, setSearchTerm] = useState("");
     const [selectedOrders, setSelectedOrders] = useState<Record<string, boolean>>({});
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -53,6 +58,7 @@ export function RouteForm({ onFinished }: RouteFormProps) {
                 const availableDrivers = allEmployees.filter(e => e.role === "Entregador" && e.isActive);
                 setDrivers(availableDrivers);
                 setOrders(unassignedOrders);
+                setFilteredOrders(unassignedOrders);
             } catch (error) {
                 console.error("Failed to load data for route form", error);
                 toast({ variant: "destructive", title: "Erro ao carregar dados", description: "Não foi possível buscar motoristas e pedidos." });
@@ -63,25 +69,29 @@ export function RouteForm({ onFinished }: RouteFormProps) {
         fetchData();
     }, [user, companies, toast]);
 
-    const handleSelectAll = (checked: boolean) => {
-        const newSelectedOrders: Record<string, boolean> = {};
-        if (checked) {
-            orders.forEach(order => {
-                newSelectedOrders[order.id] = true;
-            });
-        }
-        setSelectedOrders(newSelectedOrders);
-    };
+    useEffect(() => {
+        const lowercasedFilter = searchTerm.toLowerCase();
+        const filtered = orders.filter(order =>
+            order.customer.name.toLowerCase().includes(lowercasedFilter) ||
+            order.id.toLowerCase().includes(lowercasedFilter)
+        );
+        setFilteredOrders(filtered);
+    }, [searchTerm, orders]);
 
     const handleSelectOrder = (orderId: string, checked: boolean) => {
-        setSelectedOrders(prev => ({
-            ...prev,
-            [orderId]: checked,
-        }));
+        setSelectedOrders(prev => {
+            const newSelected = { ...prev };
+            if (checked) {
+                newSelected[orderId] = true;
+            } else {
+                delete newSelected[orderId];
+            }
+            return newSelected;
+        });
     };
 
     const handleSubmit = async () => {
-        const finalSelectedOrderIds = Object.keys(selectedOrders).filter(id => selectedOrders[id]);
+        const finalSelectedOrderIds = Object.keys(selectedOrders);
         
         if (!selectedDriver) {
             toast({ variant: "destructive", title: "Selecione um motorista" });
@@ -99,7 +109,7 @@ export function RouteForm({ onFinished }: RouteFormProps) {
             
             const ordersToAssign = orders.filter(o => finalSelectedOrderIds.includes(o.id));
             
-            await createRoute(user!.uid, driver.id, driver.name, ordersToAssign);
+            await createRoute(user!.uid, driver.id, driver.name, ordersToAssign, title, notes);
 
             toast({ title: "Rota criada com sucesso!" });
             onFinished();
@@ -133,6 +143,14 @@ export function RouteForm({ onFinished }: RouteFormProps) {
         <>
             <div className="flex-1 flex flex-col overflow-hidden p-6">
                 <div className="space-y-4 mb-4">
+                     <div>
+                        <label className="text-sm font-medium">Título da Rota (opcional)</label>
+                        <Input 
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            placeholder={`Rota de ${drivers.find(d => d.id === selectedDriver)?.name || 'Entregas'}`}
+                        />
+                    </div>
                     <div>
                         <label className="text-sm font-medium">Motorista Responsável</label>
                         <Select value={selectedDriver} onValueChange={setSelectedDriver}>
@@ -146,50 +164,63 @@ export function RouteForm({ onFinished }: RouteFormProps) {
                             </SelectContent>
                         </Select>
                     </div>
+                     <div>
+                        <label className="text-sm font-medium">Observações (opcional)</label>
+                        <Textarea 
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                            placeholder="Adicione observações sobre a rota, como horários ou instruções especiais."
+                        />
+                    </div>
                 </div>
 
                 <Card className="flex-1 flex flex-col overflow-hidden">
                     <CardHeader>
                         <CardTitle>Pedidos Disponíveis</CardTitle>
                         <CardDescription>Selecione os pedidos para incluir nesta rota.</CardDescription>
+                         <div className="relative">
+                            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Buscar por cliente ou ID do pedido..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="pl-8"
+                            />
+                        </div>
                     </CardHeader>
-                    <CardContent className="flex-1 overflow-hidden p-0">
+                    <CardContent className="flex-1 overflow-hidden p-2">
                         <ScrollArea className="h-full">
-                           <Table>
-                               <TableHeader>
-                                   <TableRow>
-                                       <TableHead className="w-[50px]">
+                           {filteredOrders.length > 0 ? (
+                                <div className="grid grid-cols-1 gap-2">
+                                    {filteredOrders.map(order => (
+                                        <Card 
+                                            key={order.id} 
+                                            className={`flex items-start gap-3 p-3 transition-colors ${selectedOrders[order.id] ? 'bg-muted border-primary' : 'hover:bg-muted/50'}`}
+                                        >
                                             <Checkbox
-                                                onCheckedChange={(checked) => handleSelectAll(checked === true)}
-                                                checked={Object.keys(selectedOrders).length > 0 && Object.keys(selectedOrders).every(k => selectedOrders[k])}
-                                                indeterminate={Object.keys(selectedOrders).length > 0 && !Object.keys(selectedOrders).every(k => selectedOrders[k])}
+                                                id={`order-${order.id}`}
+                                                checked={selectedOrders[order.id] || false}
+                                                onCheckedChange={(checked) => handleSelectOrder(order.id, checked === true)}
+                                                className="mt-1"
                                             />
-                                       </TableHead>
-                                       <TableHead>Pedido</TableHead>
-                                       <TableHead>Cliente</TableHead>
-                                       <TableHead className="text-right">Total</TableHead>
-                                   </TableRow>
-                               </TableHeader>
-                               <TableBody>
-                                   {orders.length > 0 ? orders.map(order => (
-                                       <TableRow key={order.id} data-state={selectedOrders[order.id] && "selected"}>
-                                           <TableCell>
-                                                <Checkbox
-                                                    checked={selectedOrders[order.id] || false}
-                                                    onCheckedChange={(checked) => handleSelectOrder(order.id, checked === true)}
-                                                />
-                                           </TableCell>
-                                           <TableCell>#{order.id.substring(0, 7)}</TableCell>
-                                           <TableCell>{order.customer.name}</TableCell>
-                                           <TableCell className="text-right">{formatCurrency(order.total)}</TableCell>
-                                       </TableRow>
-                                   )) : (
-                                       <TableRow>
-                                           <TableCell colSpan={4} className="h-24 text-center">Nenhum pedido aguardando rota.</TableCell>
-                                       </TableRow>
-                                   )}
-                               </TableBody>
-                           </Table>
+                                            <label htmlFor={`order-${order.id}`} className="flex-1 cursor-pointer">
+                                                <div className="flex justify-between items-start">
+                                                    <p className="font-semibold">{order.customer.name}</p>
+                                                    <p className="font-bold text-sm">{formatCurrency(order.total)}</p>
+                                                </div>
+                                                <div className="text-xs text-muted-foreground space-y-1 mt-1">
+                                                    <div className="flex items-center gap-1.5"><ShoppingCart className="h-3 w-3" /> <span>{order.items.map(i => `${i.quantity}x ${i.productName}`).join(', ')}</span></div>
+                                                    <div className="flex items-center gap-1.5"><Info className="h-3 w-3" /> <span>ID: #{order.id.substring(0, 7)}</span></div>
+                                                </div>
+                                            </label>
+                                        </Card>
+                                    ))}
+                                </div>
+                           ) : (
+                               <div className="flex items-center justify-center h-full text-center text-muted-foreground">
+                                   <p>Nenhum pedido aguardando rota ou correspondente à busca.</p>
+                               </div>
+                           )}
                         </ScrollArea>
                     </CardContent>
                 </Card>
@@ -198,7 +229,7 @@ export function RouteForm({ onFinished }: RouteFormProps) {
                 <Button variant="ghost" onClick={onFinished}>Cancelar</Button>
                 <Button onClick={handleSubmit} disabled={isSaving}>
                     {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Criar Rota
+                    Criar Rota ({Object.keys(selectedOrders).length})
                 </Button>
             </SheetFooter>
         </>
