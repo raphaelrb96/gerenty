@@ -96,7 +96,7 @@ export default function CrmPage() {
         };
         
         fetchAndInitializeData();
-    }, [user, t]);
+    }, [user]);
 
     const activeCustomer = activeId ? customers.find(c => c.id === activeId) : null;
     const activeItemType = activeId ? (stages.some(s => s.id === activeId) ? 'Stage' : 'Customer') : null;
@@ -202,10 +202,8 @@ export default function CrmPage() {
 
             try {
                 await updateCustomerStatus(customerId, newStageId);
-                toast({ title: "Status do cliente atualizado!" });
             } catch (error) {
                 console.error("Error updating customer status:", error);
-                toast({ variant: "destructive", title: "Erro ao atualizar o status do cliente" });
                 setCustomers(prev => prev.map(c => c.id === customerId ? originalCustomer : c));
             }
         }
@@ -221,6 +219,11 @@ export default function CrmPage() {
     const filteredCustomers = activeStageId === null 
         ? customers 
         : customers.filter(c => c.status === activeStageId);
+
+    const getStageName = (stageId: string | null) => {
+        if (!stageId) return '';
+        return stages.find(s => s.id === stageId)?.name || '';
+    };
 
     return (
         <DndContext onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd} collisionDetection={closestCorners}>
@@ -253,6 +256,7 @@ export default function CrmPage() {
                         <SortableContext items={filteredCustomers.map(c => c.id)} strategy={verticalListSortingStrategy}>
                             <CustomerList
                                 customers={filteredCustomers}
+                                getStageName={getStageName}
                                 onCardClick={setDetailsModalCustomer}
                             />
                         </SortableContext>
@@ -292,7 +296,7 @@ export default function CrmPage() {
                 </AlertDialogContent>
             </AlertDialog>
              <DragOverlay>
-                {activeId && activeItemType === 'Customer' && activeCustomer ? <CustomerCard customer={activeCustomer} isOverlay /> : null}
+                {activeId && activeItemType === 'Customer' && activeCustomer ? <CustomerCard customer={activeCustomer} stageName={getStageName(activeCustomer.status)} isOverlay /> : null}
                 {activeId && activeItemType === 'Stage' && stages.find(s => s.id === activeId) ? (
                      <div className="bg-primary text-primary-foreground p-2 rounded-md shadow-lg">{stages.find(s => s.id === activeId)?.name}</div>
                  ) : null}

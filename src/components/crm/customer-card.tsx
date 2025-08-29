@@ -11,11 +11,12 @@ import { GripVertical } from "lucide-react";
 
 type CustomerCardProps = {
     customer: Customer;
+    stageName: string;
     isOverlay?: boolean;
     onClick?: () => void;
 };
 
-export function CustomerCard({ customer, isOverlay, onClick }: CustomerCardProps) {
+export function CustomerCard({ customer, stageName, isOverlay, onClick }: CustomerCardProps) {
     const {
         attributes,
         listeners,
@@ -62,7 +63,7 @@ export function CustomerCard({ customer, isOverlay, onClick }: CustomerCardProps
                     <div className="flex-1 overflow-hidden">
                         <p className="font-semibold text-sm truncate">{customer.name}</p>
                         <p className="text-xs text-muted-foreground truncate">
-                            Última Interação: {customer.lastInteraction ? new Date(customer.lastInteraction as string).toLocaleDateString() : 'N/A'}
+                            {stageName}
                         </p>
                     </div>
                 </CardContent>

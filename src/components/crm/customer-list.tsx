@@ -8,10 +8,11 @@ import { HeartHandshake } from "lucide-react";
 
 type CustomerListProps = {
     customers: Customer[];
+    getStageName: (stageId: string) => string;
     onCardClick: (customer: Customer) => void;
 };
 
-export function CustomerList({ customers, onCardClick }: CustomerListProps) {
+export function CustomerList({ customers, getStageName, onCardClick }: CustomerListProps) {
     if (customers.length === 0) {
         return (
             <div className="h-full flex items-center justify-center p-4">
@@ -30,6 +31,7 @@ export function CustomerList({ customers, onCardClick }: CustomerListProps) {
                 <CustomerCard 
                     key={customer.id} 
                     customer={customer}
+                    stageName={getStageName(customer.status)}
                     onClick={() => onCardClick(customer)} 
                 />
             ))}
