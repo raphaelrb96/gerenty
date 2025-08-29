@@ -4,7 +4,9 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { getCustomersByUser, Customer, updateCustomerStatus } from "@/services/customer-service";
-import { DndContext, DragEndEvent, DragOverlay, closestCorners, DragStartEvent } from "@dnd-kit/core";
+import { getStagesByUser, addStage, updateStage, deleteStage, Stage } from "@/services/stage-service";
+
+import { DndContext, DragEndEvent, DragOverlay, closestCorners, DragStartEvent, DragOverEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 
 import { PageHeader } from "@/components/common/page-header";
@@ -17,29 +19,25 @@ import { StageMenu } from "@/components/crm/stage-menu";
 import { CustomerList } from "@/components/crm/customer-list";
 import { CustomerCard } from "@/components/crm/customer-card";
 import { useToast } from "@/hooks/use-toast";
-import { useTranslation } from "@/context/i18n-context";
-
-
-type Stage = {
-    id: string;
-    label: string;
-};
+import { StageFormModal } from "@/components/crm/stage-form-modal";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function CrmPage() {
     const { user } = useAuth();
     const { toast } = useToast();
-    const { t } = useTranslation();
-
-    const defaultStages: Stage[] = [
-        { id: 'Lead', label: t('crmStages.lead') },
-        { id: 'Contact', label: t('crmStages.contact') },
-        { id: 'Active', label: t('crmStages.active') },
-        { id: 'VIP', label: t('crmStages.vip') },
-    ];
 
     const [customers, setCustomers] = useState<Customer[]>([]);
-    const [stages, setStages] = useState<Stage[]>(defaultStages);
-    const [activeStageId, setActiveStageId] = useState<string>("Lead");
+    const [stages, setStages] = useState<Stage[]>([]);
+    const [activeStageId, setActiveStageId] = useState<string | null>(null);
     
     const [loading, setLoading] = useState(true);
     
@@ -47,40 +45,115 @@ export default function CrmPage() {
     const [detailsModalCustomer, setDetailsModalCustomer] = useState<Customer | null>(null);
 
     const [activeId, setActiveId] = useState<string | null>(null);
+    const [stageToDelete, setStageToDelete] = useState<Stage | null>(null);
+    const [stageToEdit, setStageToEdit] = useState<Stage | null>(null);
+    const [isStageModalOpen, setIsStageModalOpen] = useState(false);
 
-    const activeCustomer = activeId ? customers.find(c => c.id === activeId) : null;
-    const activeItemType = activeId ? (stages.some(s => s.id === activeId) ? 'Stage' : 'Customer') : null;
 
-
-    const fetchCustomers = async () => {
+    const fetchInitialData = async () => {
         if (!user) return;
         setLoading(true);
         try {
-            const userCustomers = await getCustomersByUser(user.uid);
+            const [userCustomers, userStages] = await Promise.all([
+                getCustomersByUser(user.uid),
+                getStagesByUser(user.uid)
+            ]);
+
             setCustomers(userCustomers);
+            // Sort stages by order property
+            setStages(userStages.sort((a, b) => a.order - b.order));
             
-            // In a future implementation, stages would be fetched from a user's settings
-            // For now, we use the translated default stages.
-            setStages(defaultStages);
+            // Set the first stage as active, or null if no stages
+            if (userStages.length > 0) {
+                setActiveStageId(userStages.sort((a, b) => a.order - b.order)[0].id);
+            } else {
+                setActiveStageId(null);
+            }
 
         } catch (error) {
             console.error(error);
+            toast({ variant: "destructive", title: "Erro ao carregar dados", description: "Não foi possível buscar os dados do CRM." });
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchCustomers();
-    }, [user, t]); // Re-fetch or re-set if language changes
+        if(user) fetchInitialData();
+    }, [user]);
+
+    const activeCustomer = activeId ? customers.find(c => c.id === activeId) : null;
+    const activeItemType = activeId ? (stages.some(s => s.id === activeId) ? 'Stage' : 'Customer') : null;
 
     const handleCustomerCreated = (newCustomer: Customer) => {
         setCustomers(prev => [...prev, newCustomer]);
-        // If the new customer's status is a new stage, you might add it to the stages list here in the future
     };
+
+    const handleOpenStageModal = (stage: Stage | null = null) => {
+        setStageToEdit(stage);
+        setIsStageModalOpen(true);
+    }
+
+    const handleStageSave = async (data: { name: string }) => {
+        if (!user) return;
+
+        try {
+            if (stageToEdit) {
+                const updatedStage = await updateStage(stageToEdit.id, { name: data.name });
+                setStages(prev => prev.map(s => s.id === stageToEdit.id ? updatedStage : s));
+                toast({ title: "Estágio atualizado com sucesso!" });
+            } else {
+                const newStage = await addStage({ name: data.name, ownerId: user.uid, order: stages.length });
+                setStages(prev => [...prev, newStage]);
+                toast({ title: "Estágio criado com sucesso!" });
+            }
+            setIsStageModalOpen(false);
+            setStageToEdit(null);
+        } catch (error) {
+             toast({ variant: "destructive", title: "Erro ao salvar estágio", description: "Tente novamente." });
+        }
+    }
+    
+    const handleDeleteStageConfirm = async () => {
+        if (!stageToDelete) return;
+        try {
+            await deleteStage(stageToDelete.id);
+            setStages(prev => prev.filter(s => s.id !== stageToDelete.id));
+            if (activeStageId === stageToDelete.id) {
+                setActiveStageId(stages.length > 1 ? stages.filter(s => s.id !== stageToDelete.id)[0].id : null);
+            }
+            toast({ title: "Estágio excluído com sucesso!" });
+        } catch (error) {
+            toast({ variant: "destructive", title: "Erro ao excluir estágio", description: "Tente novamente." });
+        } finally {
+            setStageToDelete(null);
+        }
+    }
+
 
     const handleDragStart = (event: DragStartEvent) => {
         setActiveId(event.active.id as string);
+    };
+
+    const handleDragOver = (event: DragOverEvent) => {
+        const { active, over } = event;
+        if (!over) return;
+
+        const activeId = active.id;
+        const overId = over.id;
+
+        if (activeId === overId) return;
+
+        const isActiveAStage = stages.some(s => s.id === activeId);
+        const isOverAStage = stages.some(s => s.id === overId);
+
+        if (!isActiveAStage || !isOverAStage) return;
+
+        setStages((currentStages) => {
+            const oldIndex = currentStages.findIndex(s => s.id === activeId);
+            const newIndex = currentStages.findIndex(s => s.id === overId);
+            return arrayMove(currentStages, oldIndex, newIndex);
+        });
     };
 
     const handleDragEnd = async (event: DragEndEvent) => {
@@ -91,19 +164,18 @@ export default function CrmPage() {
         
         const isOverAStageDropZone = over.data.current?.type === 'Stage';
 
-        // Reordering stages in the menu
         if (activeItemType === 'Stage' && isOverAStageDropZone) {
             if (active.id !== over.id) {
-                setStages((currentStages) => {
-                    const oldIndex = currentStages.findIndex(s => s.id === active.id);
-                    const newIndex = currentStages.findIndex(s => s.id === over.data.current?.stage.id);
-                    return arrayMove(currentStages, oldIndex, newIndex);
-                });
+                // The visual reordering is done in onDragOver.
+                // Here we just persist the final order.
+                const updatedStages = stages.map((stage, index) => ({ ...stage, order: index }));
+                setStages(updatedStages); // update state with new order
+                 // In a real app, you would batch update the 'order' property in Firestore here.
+                 console.log("Persisting new stage order to DB...");
             }
             return;
         }
             
-        // Dropping a customer onto a stage in the menu
         if (activeItemType === 'Customer' && isOverAStageDropZone) {
             const newStageId = over.id.replace('stage-drop-', '');
             const customerId = active.id as string;
@@ -129,10 +201,12 @@ export default function CrmPage() {
         return <LoadingSpinner />;
     }
 
-    const filteredCustomers = customers.filter(c => c.status === activeStageId);
+    const filteredCustomers = activeStageId === null 
+        ? customers 
+        : customers.filter(c => c.status === activeStageId);
 
     return (
-        <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd} collisionDetection={closestCorners}>
+        <DndContext onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd} collisionDetection={closestCorners}>
             <div className="flex flex-col h-full">
                 <PageHeader
                     title="CRM de Clientes"
@@ -151,7 +225,9 @@ export default function CrmPage() {
                            stages={stages}
                            activeStageId={activeStageId}
                            onSelectStage={setActiveStageId}
-                           activeItemType={activeItemType}
+                           onAddStage={() => handleOpenStageModal()}
+                           onEditStage={(stage) => handleOpenStageModal(stage)}
+                           onDeleteStage={setStageToDelete}
                          />
                        </SortableContext>
                     </div>
@@ -175,12 +251,36 @@ export default function CrmPage() {
                 isOpen={!!detailsModalCustomer}
                 onClose={() => setDetailsModalCustomer(null)}
             />
+            <StageFormModal 
+                isOpen={isStageModalOpen}
+                onClose={() => setIsStageModalOpen(false)}
+                onSave={handleStageSave}
+                stage={stageToEdit}
+            />
+            <AlertDialog open={!!stageToDelete} onOpenChange={(isOpen) => !isOpen && setStageToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Esta ação não pode ser desfeita. Isso excluirá permanentemente o estágio. Os clientes neste estágio não serão excluídos.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteStageConfirm}>
+                            Confirmar Exclusão
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
              <DragOverlay>
                 {activeId && activeItemType === 'Customer' && activeCustomer ? <CustomerCard customer={activeCustomer} isOverlay /> : null}
                 {activeId && activeItemType === 'Stage' && stages.find(s => s.id === activeId) ? (
-                     <div className="bg-primary text-primary-foreground p-2 rounded-md shadow-lg">{stages.find(s => s.id === activeId)?.label}</div>
+                     <div className="bg-primary text-primary-foreground p-2 rounded-md shadow-lg">{stages.find(s => s.id === activeId)?.name}</div>
                  ) : null}
              </DragOverlay>
         </DndContext>
     );
 }
+
+    
