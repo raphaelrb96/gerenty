@@ -77,26 +77,23 @@ export default function CrmPage() {
 
         if (!over) return;
         
-        // Item dropped on itself
-        if (active.id === over.id) return;
-        
         const isActiveAStage = stages.includes(active.id as string);
-        const isOverAStage = stages.includes(over.id as string);
-        const isOverACustomerDropZone = over.data.current?.type === 'Stage';
-
+        const isOverAStage = over ? stages.includes(over.id as string) : false;
 
         // Reordering stages
-        if (isActiveAStage && isOverAStage) {
+        if (isActiveAStage && isOverAStage && active.id !== over.id) {
             setStages((currentStages) => {
                 const oldIndex = currentStages.indexOf(active.id as string);
                 const newIndex = currentStages.indexOf(over.id as string);
                 return arrayMove(currentStages, oldIndex, newIndex);
             });
             // Here you would typically save the new stage order to user preferences or a database
+            return;
         }
             
         // Dropping a customer onto a stage in the menu
-        if (isOverACustomerDropZone && !isActiveAStage) {
+        const isOverAStageDropZone = over.data.current?.type === 'Stage';
+        if (isOverAStageDropZone && !isActiveAStage) {
             const newStage = over.data.current.stage;
             const customerId = active.id as string;
             const originalCustomer = customers.find(c => c.id === customerId);
@@ -136,8 +133,8 @@ export default function CrmPage() {
                         </Button>
                     }
                 />
-                <div className="flex-1 mt-4 grid grid-cols-1 lg:grid-cols-5 gap-6 h-full overflow-hidden">
-                    <div className="lg:col-span-1 h-full overflow-y-auto no-scrollbar">
+                <div className="flex-1 mt-4 grid grid-cols-1 md:grid-cols-4 gap-6 h-full overflow-hidden">
+                    <div className="md:col-span-1 h-full overflow-y-auto no-scrollbar">
                        <SortableContext items={stages} strategy={verticalListSortingStrategy}>
                          <StageMenu 
                            stages={stages}
@@ -147,7 +144,7 @@ export default function CrmPage() {
                          />
                        </SortableContext>
                     </div>
-                    <div className="lg:col-span-4 h-full overflow-y-auto no-scrollbar">
+                    <div className="md:col-span-3 h-full overflow-y-auto no-scrollbar">
                         <SortableContext items={filteredCustomers.map(c => c.id)} strategy={verticalListSortingStrategy}>
                             <CustomerList
                                 customers={filteredCustomers}
