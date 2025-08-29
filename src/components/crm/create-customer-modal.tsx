@@ -26,7 +26,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2 } from "lucide-react";
 import { getStagesByUser, Stage } from "@/services/stage-service";
@@ -39,9 +46,19 @@ type CreateCustomerModalProps = {
 
 const formSchema = z.object({
     name: z.string().min(2, "Nome é obrigatório."),
+    phone: z.string().min(1, "Telefone é obrigatório."),
     email: z.string().email("Email inválido.").optional().or(z.literal('')),
-    phone: z.string().optional(),
+    document: z.string().optional(),
     status: z.string().min(1, "O estágio é obrigatório"),
+    address: z.object({
+        street: z.string().optional(),
+        number: z.string().optional(),
+        complement: z.string().optional(),
+        neighborhood: z.string().optional(),
+        city: z.string().optional(),
+        state: z.string().optional(),
+        zipCode: z.string().optional(),
+    }).optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -58,16 +75,27 @@ export function CreateCustomerModal({ isOpen, onClose, onCustomerCreated }: Crea
       name: "",
       email: "",
       phone: "",
+      document: "",
       status: "",
+      address: {
+        street: "",
+        number: "",
+        complement: "",
+        neighborhood: "",
+        city: "",
+        state: "",
+        zipCode: "",
+      },
     },
   });
   
   React.useEffect(() => {
     if (user && isOpen) {
         getStagesByUser(user.uid).then(userStages => {
-            setStages(userStages);
-            if (userStages.length > 0 && !form.getValues('status')) {
-                form.setValue('status', userStages[0].id);
+            const sortedStages = userStages.sort((a, b) => a.order - b.order);
+            setStages(sortedStages);
+            if (sortedStages.length > 0 && !form.getValues('status')) {
+                form.setValue('status', sortedStages[0].id);
             }
         });
     }
@@ -86,7 +114,6 @@ export function CreateCustomerModal({ isOpen, onClose, onCustomerCreated }: Crea
 
     setIsSaving(true);
     try {
-        // Check for duplicates
         const existingCustomers = await getCustomersByUser(user.uid);
         const isDuplicate = existingCustomers.some(customer => 
             (values.email && customer.email === values.email) ||
@@ -103,15 +130,21 @@ export function CreateCustomerModal({ isOpen, onClose, onCustomerCreated }: Crea
             return;
         }
 
-
       const newCustomerData: Omit<Customer, 'id' | 'createdAt' | 'updatedAt' | 'lastInteraction'> = {
         ownerId: user.uid,
-        ...values,
+        name: values.name,
+        email: values.email,
+        phone: values.phone,
+        document: values.document,
+        status: values.status,
+        address: values.address,
       };
+
       const newCustomer = await addCustomer(newCustomerData);
       toast({ title: "Cliente criado com sucesso!" });
       onCustomerCreated(newCustomer);
       handleClose();
+
     } catch (error) {
       console.error(error);
       toast({ variant: "destructive", title: "Erro ao criar cliente" });
@@ -121,23 +154,27 @@ export function CreateCustomerModal({ isOpen, onClose, onCustomerCreated }: Crea
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg flex flex-col h-full md:h-auto">
-        <DialogHeader>
-          <DialogTitle>Adicionar Novo Cliente</DialogTitle>
-          <DialogDescription>Preencha os dados abaixo para criar um novo cliente no seu funil.</DialogDescription>
-        </DialogHeader>
+    <Sheet open={isOpen} onOpenChange={handleClose}>
+      <SheetContent className="sm:max-w-lg flex flex-col">
+        <SheetHeader className="px-6 pt-6">
+          <SheetTitle>Adicionar Novo Cliente</SheetTitle>
+          <SheetDescription>Preencha os dados abaixo para criar um novo cliente no seu funil.</SheetDescription>
+        </SheetHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 overflow-hidden flex flex-col">
-             <ScrollArea className="flex-1 pr-6 -mr-6">
+             <ScrollArea className="flex-1 px-6 py-4">
                 <div className="space-y-4">
+                    <h4 className="text-sm font-medium">Informações de Contato</h4>
                     <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Nome</FormLabel><FormControl><Input placeholder="Nome completo do cliente" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                    <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="cliente@email.com" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                     <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Telefone</FormLabel><FormControl><Input placeholder="(00) 00000-0000" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                    <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email (Opcional)</FormLabel><FormControl><Input type="email" placeholder="cliente@email.com" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                    <FormField control={form.control} name="document" render={({ field }) => (<FormItem><FormLabel>CPF/CNPJ (Opcional)</FormLabel><FormControl><Input placeholder="Documento do cliente" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                    
+                    <h4 className="text-sm font-medium pt-4">Estágio e Endereço</h4>
                     <FormField control={form.control} name="status" render={({ field }) => (<FormItem>
                         <FormLabel>Estágio Inicial</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
-                            <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                            <FormControl><SelectTrigger><SelectValue placeholder="Selecione um estágio" /></SelectTrigger></FormControl>
                             <SelectContent>
                                 {stages.map(stage => (
                                     <SelectItem key={stage.id} value={stage.id}>{stage.name}</SelectItem>
@@ -146,18 +183,32 @@ export function CreateCustomerModal({ isOpen, onClose, onCustomerCreated }: Crea
                         </Select>
                         <FormMessage /></FormItem>
                     )}/>
+
+                    <div className="space-y-4">
+                        <FormField control={form.control} name="address.zipCode" render={({ field }) => (<FormItem><FormLabel>CEP (Opcional)</FormLabel><FormControl><Input placeholder="00000-000" {...field} /></FormControl></FormItem>)}/>
+                        <FormField control={form.control} name="address.street" render={({ field }) => (<FormItem><FormLabel>Rua (Opcional)</FormLabel><FormControl><Input placeholder="Avenida Principal" {...field} /></FormControl></FormItem>)}/>
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField control={form.control} name="address.number" render={({ field }) => (<FormItem><FormLabel>Nº (Opcional)</FormLabel><FormControl><Input placeholder="123" {...field} /></FormControl></FormItem>)}/>
+                            <FormField control={form.control} name="address.complement" render={({ field }) => (<FormItem><FormLabel>Compl. (Opcional)</FormLabel><FormControl><Input placeholder="Sala 101" {...field} /></FormControl></FormItem>)}/>
+                        </div>
+                        <FormField control={form.control} name="address.neighborhood" render={({ field }) => (<FormItem><FormLabel>Bairro (Opcional)</FormLabel><FormControl><Input placeholder="Centro" {...field} /></FormControl></FormItem>)}/>
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField control={form.control} name="address.city" render={({ field }) => (<FormItem><FormLabel>Cidade (Opcional)</FormLabel><FormControl><Input placeholder="São Paulo" {...field} /></FormControl></FormItem>)}/>
+                            <FormField control={form.control} name="address.state" render={({ field }) => (<FormItem><FormLabel>Estado (Opcional)</FormLabel><FormControl><Input placeholder="SP" {...field} /></FormControl></FormItem>)}/>
+                        </div>
+                    </div>
                 </div>
             </ScrollArea>
-            <DialogFooter className="pt-6 border-t">
+            <SheetFooter className="px-6 py-4 border-t mt-auto">
                 <Button type="button" variant="ghost" onClick={handleClose}>Cancelar</Button>
                 <Button type="submit" disabled={isSaving}>
                     {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Salvar Cliente
                 </Button>
-            </DialogFooter>
+            </SheetFooter>
           </form>
         </Form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

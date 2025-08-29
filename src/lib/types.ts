@@ -544,6 +544,15 @@ export type Customer = {
     profileImageUrl?: string;
     status: string;
     tags?: string[];
+    address?: {
+        street?: string;
+        number?: string;
+        complement?: string;
+        neighborhood?: string;
+        city?: string;
+        state?: string;
+        zipCode?: string;
+    };
     lastInteraction?: string | Date | Timestamp | FieldValue;
     createdAt: string | Date | Timestamp | FieldValue;
     updatedAt: string | Date | Timestamp | FieldValue;

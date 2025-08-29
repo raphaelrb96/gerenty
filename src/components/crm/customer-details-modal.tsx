@@ -1,24 +1,31 @@
+
 "use client";
 
 import type { Customer } from "@/services/customer-service";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Separator } from "../ui/separator";
+import { Home, Phone, Mail } from "lucide-react";
+import { useTranslation } from "@/context/i18n-context";
 
 type CustomerDetailsModalProps = {
     customer: Customer | null;
     isOpen: boolean;
     onClose: () => void;
+    stages: { id: string; name: string }[];
 };
 
-export function CustomerDetailsModal({ customer, isOpen, onClose }: CustomerDetailsModalProps) {
+export function CustomerDetailsModal({ customer, isOpen, onClose, stages }: CustomerDetailsModalProps) {
+    const { t } = useTranslation();
     if (!customer) return null;
 
     const getInitials = (name: string) => {
         return name.split(' ').map(n => n[0]).join('').toUpperCase();
     }
+    
+    const stageName = stages.find(s => s.id === customer.status)?.name || customer.status;
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -31,7 +38,9 @@ export function CustomerDetailsModal({ customer, isOpen, onClose }: CustomerDeta
                         </Avatar>
                         <div>
                              <DialogTitle className="text-2xl">{customer.name}</DialogTitle>
-                             <p className="text-muted-foreground">{customer.email}</p>
+                             <DialogDescription>
+                                <span className="font-medium text-primary">{stageName}</span>
+                             </DialogDescription>
                         </div>
                     </div>
                 </DialogHeader>
@@ -40,21 +49,38 @@ export function CustomerDetailsModal({ customer, isOpen, onClose }: CustomerDeta
                         <Separator />
                         <div className="space-y-2">
                             <h4 className="font-semibold">Informações de Contato</h4>
-                            <p className="text-sm"><strong>Telefone:</strong> {customer.phone || 'N/A'}</p>
-                            <p className="text-sm"><strong>Status:</strong> <span className="font-medium text-primary">{customer.status}</span></p>
-                        </div>
-                        <Separator />
-                         <div className="space-y-2">
-                            <h4 className="font-semibold">Histórico de Pedidos</h4>
-                             <div className="text-sm text-muted-foreground text-center py-8">
-                                Histórico de pedidos em breve.
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <Mail className="h-4 w-4"/>
+                                <span>{customer.email || 'N/A'}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <Phone className="h-4 w-4"/>
+                                <span>{customer.phone || 'N/A'}</span>
                             </div>
                         </div>
+
+                         {customer.address && (
+                            <>
+                                <Separator />
+                                <div className="space-y-2">
+                                    <h4 className="font-semibold">Endereço</h4>
+                                    <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                                        <Home className="h-4 w-4 mt-1 flex-shrink-0" />
+                                        <address className="not-italic">
+                                            {customer.address.street}, {customer.address.number}<br/>
+                                            {customer.address.neighborhood}, {customer.address.city} - {customer.address.state}<br/>
+                                            CEP: {customer.address.zipCode}
+                                        </address>
+                                    </div>
+                                </div>
+                            </>
+                         )}
+
                          <Separator />
                          <div className="space-y-2">
-                            <h4 className="font-semibold">Notas</h4>
+                            <h4 className="font-semibold">Histórico</h4>
                              <div className="text-sm text-muted-foreground text-center py-8">
-                                Seção de notas em breve.
+                                Histórico em breve.
                             </div>
                         </div>
                     </div>

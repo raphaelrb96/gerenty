@@ -58,13 +58,10 @@ export default function CrmPage() {
         const fetchAndInitializeData = async () => {
             setLoading(true);
             try {
-                const [userCustomers, userStages] = await Promise.all([
-                    getCustomersByUser(user.uid),
-                    getStagesByUser(user.uid)
-                ]);
+                const userStages = await getStagesByUser(user.uid);
+                const userCustomers = await getCustomersByUser(user.uid);
 
                 if (userStages.length === 0) {
-                    // If no stages exist, create default ones
                     const defaultStageNames = ['Lead', 'Contact', 'Active', 'VIP'];
                     const createdStages: Stage[] = [];
                     for (let i = 0; i < defaultStageNames.length; i++) {
@@ -79,9 +76,8 @@ export default function CrmPage() {
                     setActiveStageId(createdStages[0]?.id || null);
                 } else {
                     setStages(userStages.sort((a, b) => a.order - b.order));
-                    // Set active stage to the first one if not already set or invalid
                     if (!activeStageId || !userStages.some(s => s.id === activeStageId)) {
-                        setActiveStageId(userStages[0]?.id || null);
+                        setActiveStageId(userStages.sort((a,b) => a.order - b.order)[0]?.id || null);
                     }
                 }
                 
@@ -163,7 +159,6 @@ export default function CrmPage() {
         if (isActiveAStage && isOverAStage) {
             setStages((currentStages) => {
                 const oldIndex = currentStages.findIndex(s => s.id === active.id);
-                // The over.id can be the stage item itself or the droppable container
                 const overId = over.id.toString().replace('stage-drop-', '');
                 const newIndex = currentStages.findIndex(s => s.id === overId);
 
@@ -180,7 +175,7 @@ export default function CrmPage() {
 
         if (activeItemType === 'Stage' && over && active.id !== over.id) {
             const finalStages = stages.map((stage, index) => ({ ...stage, order: index }));
-            setStages(finalStages); // Optimistic update
+            setStages(finalStages);
             try {
                 await batchUpdateStageOrder(finalStages.map(s => ({ id: s.id, order: s.order })));
             } catch (error) {
@@ -272,6 +267,7 @@ export default function CrmPage() {
                 customer={detailsModalCustomer}
                 isOpen={!!detailsModalCustomer}
                 onClose={() => setDetailsModalCustomer(null)}
+                stages={stages.map(s => ({ id: s.id, name: s.name }))}
             />
             <StageFormModal 
                 isOpen={isStageModalOpen}
