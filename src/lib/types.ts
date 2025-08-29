@@ -575,7 +575,7 @@ export type Employee = {
     };
     createdAt: string | Date | Timestamp | FieldValue;
     updatedAt: string | Date | Timestamp | FieldValue;
-}
+};
 
 // Logistics Types
 export type Route = {
@@ -590,4 +590,4 @@ export type Route = {
     createdAt: string | Date | Timestamp | FieldValue;
     startedAt?: string | Date | Timestamp | FieldValue;
     finishedAt?: string | Date | Timestamp | FieldValue;
-}
+};
