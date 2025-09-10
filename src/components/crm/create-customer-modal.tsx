@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -37,6 +38,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2 } from "lucide-react";
 import { getStagesByUser, Stage } from "@/services/stage-service";
+import { Textarea } from "../ui/textarea";
 
 type CreateCustomerModalProps = {
   isOpen: boolean;
@@ -49,6 +51,7 @@ const formSchema = z.object({
     phone: z.string().min(1, "Telefone é obrigatório."),
     email: z.string().email("Email inválido.").optional().or(z.literal('')),
     document: z.string().optional(),
+    tags: z.string().optional(),
     status: z.string().min(1, "O estágio é obrigatório"),
     address: z.object({
         street: z.string().optional(),
@@ -76,6 +79,7 @@ export function CreateCustomerModal({ isOpen, onClose, onCustomerCreated }: Crea
       email: "",
       phone: "",
       document: "",
+      tags: "",
       status: "",
       address: {
         street: "",
@@ -138,6 +142,7 @@ export function CreateCustomerModal({ isOpen, onClose, onCustomerCreated }: Crea
         document: values.document,
         status: values.status,
         address: values.address,
+        tags: values.tags?.split(',').map(tag => tag.trim()).filter(Boolean) || [],
       };
 
       const newCustomer = await addCustomer(newCustomerData);
@@ -183,6 +188,16 @@ export function CreateCustomerModal({ isOpen, onClose, onCustomerCreated }: Crea
                         </Select>
                         <FormMessage /></FormItem>
                     )}/>
+                    
+                    <FormField control={form.control} name="tags" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tags (separadas por vírgula)</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Ex: VIP, Importante, Acompanhar" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
 
                     <div className="space-y-4">
                         <FormField control={form.control} name="address.zipCode" render={({ field }) => (<FormItem><FormLabel>CEP (Opcional)</FormLabel><FormControl><Input placeholder="00000-000" {...field} /></FormControl></FormItem>)}/>
@@ -212,3 +227,4 @@ export function CreateCustomerModal({ isOpen, onClose, onCustomerCreated }: Crea
     </Sheet>
   );
 }
+

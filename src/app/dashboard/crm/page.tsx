@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -174,12 +175,16 @@ export default function CrmPage() {
 
         if(isActiveACustomer && isOverACustomer) {
             setCustomers((currentCustomers) => {
+                const activeCustomerData = currentCustomers.find(c => c.id === active.id);
+                const overCustomerData = currentCustomers.find(c => c.id === over.id);
+
+                if (activeCustomerData?.status !== overCustomerData?.status) return currentCustomers;
+
                 const oldIndex = currentCustomers.findIndex(c => c.id === active.id);
                 const newIndex = currentCustomers.findIndex(c => c.id === over.id);
 
                 if (oldIndex !== -1 && newIndex !== -1) {
                      const newOrder = arrayMove(currentCustomers, oldIndex, newIndex);
-                     // Here you would also update the `order` property of the customers and save to the DB.
                      return newOrder;
                 }
                 return currentCustomers;
@@ -317,3 +322,4 @@ export default function CrmPage() {
         </DndContext>
     );
 }
+

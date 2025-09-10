@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import type { Customer } from "@/services/customer-service";
@@ -8,6 +9,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { GripVertical } from "lucide-react";
+import { Badge } from "../ui/badge";
 
 type CustomerCardProps = {
     customer: Customer;
@@ -56,8 +58,8 @@ export function CustomerCard({ customer, stageName, isOverlay, onClick }: Custom
                 )}
                 onClick={onClick}
             >
-                <CardContent className="p-1 flex items-center gap-3">
-                     <div {...listeners} className="cursor-grab touch-none p-1 text-muted-foreground group-hover:text-foreground">
+                <CardContent className="p-1 flex items-start gap-3">
+                     <div {...listeners} className="cursor-grab touch-none p-2 text-muted-foreground group-hover:text-foreground">
                         <GripVertical className="h-5 w-5" />
                     </div>
                     <Avatar className="h-8 w-8">
@@ -69,9 +71,17 @@ export function CustomerCard({ customer, stageName, isOverlay, onClick }: Custom
                         <p className="text-xs text-muted-foreground truncate">
                             {stageName}
                         </p>
+                        {customer.tags && customer.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                                {customer.tags.map(tag => (
+                                    <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </CardContent>
             </Card>
         </div>
     );
 }
+
