@@ -32,13 +32,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useTranslation } from "@/context/i18n-context";
+import { CrmFilterBar } from "@/components/crm/crm-filter-bar";
 
 export default function CrmPage() {
     const { user } = useAuth();
     const { toast } = useToast();
     const { t } = useTranslation();
 
-    const [customers, setCustomers] = useState<Customer[]>([]);
+    const [allCustomers, setAllCustomers] = useState<Customer[]>([]);
     const [stages, setStages] = useState<Stage[]>([]);
     const [activeStageId, setActiveStageId] = useState<string | null>(null);
     
@@ -53,12 +54,16 @@ export default function CrmPage() {
     const [stageToDelete, setStageToDelete] = useState<Stage | null>(null);
     const [stageToEdit, setStageToEdit] = useState<Stage | null>(null);
     const [isStageModalOpen, setIsStageModalOpen] = useState(false);
+    
+    const [searchTerm, setSearchTerm] = useState("");
+    const [searchField, setSearchField] = useState("name");
+
 
     const fetchCustomers = async () => {
         if (!user) return;
         try {
             const userCustomers = await getCustomersByUser(user.uid);
-            setCustomers(userCustomers);
+            setAllCustomers(userCustomers);
         } catch (error) {
             console.error(error);
             toast({ variant: "destructive", title: "Erro ao buscar clientes." });
@@ -105,7 +110,7 @@ export default function CrmPage() {
         fetchAndInitializeData();
     }, [user]);
 
-    const activeCustomer = activeId ? customers.find(c => c.id === activeId) : null;
+    const activeCustomer = activeId ? allCustomers.find(c => c.id === activeId) : null;
     const activeItemType = activeId ? (stages.some(s => s.id === activeId) ? 'Stage' : 'Customer') : null;
 
     const handleOpenCreateModal = (customer: Customer | null) => {
@@ -115,9 +120,9 @@ export default function CrmPage() {
     
     const handleCustomerSave = (savedCustomer: Customer) => {
         if (editingCustomer) {
-            setCustomers(prev => prev.map(c => c.id === savedCustomer.id ? savedCustomer : c));
+            setAllCustomers(prev => prev.map(c => c.id === savedCustomer.id ? savedCustomer : c));
         } else {
-            setCustomers(prev => [...prev, savedCustomer]);
+            setAllCustomers(prev => [...prev, savedCustomer]);
         }
     };
     
@@ -125,7 +130,7 @@ export default function CrmPage() {
         if (!customerToDelete) return;
         try {
             await deleteCustomerService(customerToDelete.id);
-            setCustomers(prev => prev.filter(c => c.id !== customerToDelete.id));
+            setAllCustomers(prev => prev.filter(c => c.id !== customerToDelete.id));
             toast({ title: "Cliente excluído com sucesso!" });
         } catch (error) {
             toast({ variant: "destructive", title: "Erro ao excluir cliente" });
@@ -203,11 +208,11 @@ export default function CrmPage() {
             });
         }
 
-        const isActiveACustomer = customers.some(c => c.id === active.id);
-        const isOverACustomer = customers.some(c => c.id === over.id);
+        const isActiveACustomer = allCustomers.some(c => c.id === active.id);
+        const isOverACustomer = allCustomers.some(c => c.id === over.id);
 
         if(isActiveACustomer && isOverACustomer) {
-            setCustomers((currentCustomers) => {
+            setAllCustomers((currentCustomers) => {
                 const activeCustomerData = currentCustomers.find(c => c.id === active.id);
                 const overCustomerData = currentCustomers.find(c => c.id === over.id);
 
@@ -241,34 +246,51 @@ export default function CrmPage() {
         if (activeItemType === 'Customer' && over?.data.current?.type === 'Stage') {
             const newStageId = over.id.toString().replace('stage-drop-', '');
             const customerId = active.id as string;
-            const originalCustomer = customers.find(c => c.id === customerId);
+            const originalCustomer = allCustomers.find(c => c.id === customerId);
 
             if (!originalCustomer || originalCustomer.status === newStageId) {
                 setActiveId(null);
                 return;
             }
 
-            setCustomers(prev => prev.map(c => c.id === customerId ? { ...c, status: newStageId } : c));
+            setAllCustomers(prev => prev.map(c => c.id === customerId ? { ...c, status: newStageId } : c));
 
             try {
                 await updateCustomerStatus(customerId, newStageId);
             } catch (error) {
                 console.error("Error updating customer status:", error);
-                setCustomers(prev => prev.map(c => c.id === customerId ? originalCustomer : c));
+                setAllCustomers(prev => prev.map(c => c.id === customerId ? originalCustomer : c));
             }
         }
         
         setActiveId(null);
     };
 
+    const filteredCustomers = allCustomers.filter(customer => {
+        // Stage filter
+        const stageMatch = !activeStageId || customer.status === activeStageId;
+        if (!stageMatch) return false;
+
+        // Search filter
+        if (!searchTerm) return true;
+        const lowercasedTerm = searchTerm.toLowerCase();
+        
+        const targetField = customer[searchField as keyof Customer];
+
+        if (searchField === 'tags' && Array.isArray(targetField)) {
+            return targetField.some(tag => tag.toLowerCase().includes(lowercasedTerm));
+        }
+
+        if (typeof targetField === 'string') {
+            return targetField.toLowerCase().includes(lowercasedTerm);
+        }
+        
+        return false;
+    });
 
     if (loading) {
         return <LoadingSpinner />;
     }
-
-    const filteredCustomers = activeStageId === null 
-        ? customers 
-        : customers.filter(c => c.status === activeStageId);
 
     const getStageName = (stageId: string | null) => {
         if (!stageId) return '';
@@ -288,6 +310,13 @@ export default function CrmPage() {
                         </Button>
                     }
                 />
+                 <CrmFilterBar
+                    searchTerm={searchTerm}
+                    setSearchTerm={setSearchTerm}
+                    searchField={searchField}
+                    setSearchField={setSearchField}
+                />
+
                 <div className="flex-1 mt-4 grid grid-cols-1 md:grid-cols-4 gap-6 h-full overflow-hidden">
                     <div className="md:col-span-1 h-full overflow-y-auto no-scrollbar">
                        <SortableContext items={stages.map(s => s.id)} strategy={verticalListSortingStrategy}>
