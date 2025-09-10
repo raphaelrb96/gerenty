@@ -43,3 +43,5 @@ export function CustomerList({ customers, getStageName, onViewDetails, onEdit, o
         </div>
     );
 }
+
+    

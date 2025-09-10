@@ -104,3 +104,5 @@ export function CustomerCard({ customer, stageName, isOverlay, onViewDetails, on
         </div>
     );
 }
+
+    
