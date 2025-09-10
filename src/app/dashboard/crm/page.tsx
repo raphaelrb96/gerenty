@@ -191,36 +191,41 @@ export default function CrmPage() {
     const handleDragOver = (event: DragOverEvent) => {
         const { active, over } = event;
         if (!over || active.id === over.id) return;
-
+    
         const isActiveAStage = stages.some(s => s.id === active.id);
         const isOverAStage = stages.some(s => s.id === over.id || over.data.current?.type === 'Stage');
         
+        // --- Stage Reordering ---
         if (isActiveAStage && isOverAStage) {
             setStages((currentStages) => {
                 const oldIndex = currentStages.findIndex(s => s.id === active.id);
                 const overId = over.id.toString().replace('stage-drop-', '');
                 const newIndex = currentStages.findIndex(s => s.id === overId);
-
+    
                 if (oldIndex !== -1 && newIndex !== -1) {
                     return arrayMove(currentStages, oldIndex, newIndex);
                 }
                 return currentStages;
             });
         }
-
+    
         const isActiveACustomer = allCustomers.some(c => c.id === active.id);
         const isOverACustomer = allCustomers.some(c => c.id === over.id);
-
+        
+        // --- Customer Reordering ---
         if(isActiveACustomer && isOverACustomer) {
             setAllCustomers((currentCustomers) => {
                 const activeCustomerData = currentCustomers.find(c => c.id === active.id);
                 const overCustomerData = currentCustomers.find(c => c.id === over.id);
-
-                if (activeCustomerData?.status !== overCustomerData?.status) return currentCustomers;
-
+    
+                // If a stage is active, only allow reordering within that stage
+                if (activeStageId && activeCustomerData?.status !== overCustomerData?.status) {
+                    return currentCustomers;
+                }
+    
                 const oldIndex = currentCustomers.findIndex(c => c.id === active.id);
                 const newIndex = currentCustomers.findIndex(c => c.id === over.id);
-
+    
                 if (oldIndex !== -1 && newIndex !== -1) {
                      const newOrder = arrayMove(currentCustomers, oldIndex, newIndex);
                      return newOrder;
@@ -229,7 +234,7 @@ export default function CrmPage() {
             });
         }
     };
-
+    
     const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
     
@@ -248,7 +253,7 @@ export default function CrmPage() {
             const originalCustomer = allCustomers.find(c => c.id === customerId);
             if (!originalCustomer) return;
     
-            // Case 1: Customer is dropped onto a Stage
+            // Case 1: Customer is dropped onto a Stage (Changing status)
             if (over.data.current?.type === 'Stage') {
                 const newStageId = over.id.toString().replace('stage-drop-', '');
                 if (originalCustomer.status !== newStageId) {
@@ -261,33 +266,48 @@ export default function CrmPage() {
                     }
                 }
             }
-            // Case 2: Customer is dropped onto another Customer
+            // Case 2: Customer is dropped onto another Customer (Reordering)
             else if (over.data.current?.type === 'Customer') {
                 const overCustomer = over.data.current.customer as Customer;
-                // Only allow reordering within the same stage
-                if (originalCustomer.status === overCustomer.status) {
-                    const customersInStage = allCustomers.filter(c => c.status === originalCustomer.status);
-                    const oldIndex = customersInStage.findIndex(c => c.id === active.id);
-                    const newIndex = customersInStage.findIndex(c => c.id === over.id);
+    
+                // Determine which list of customers to reorder
+                const listToReorder = activeStageId 
+                    ? allCustomers.filter(c => c.status === activeStageId)
+                    : allCustomers;
+    
+                const oldIndex = listToReorder.findIndex(c => c.id === active.id);
+                const newIndex = listToReorder.findIndex(c => c.id === over.id);
+                
+                if (oldIndex !== -1 && newIndex !== -1) {
+                    const reorderedSubset = arrayMove(listToReorder, oldIndex, newIndex);
                     
-                    if (oldIndex !== -1 && newIndex !== -1) {
-                        const reorderedCustomers = arrayMove(customersInStage, oldIndex, newIndex);
-                        const updatedOrder = reorderedCustomers.map((c, index) => ({ ...c, order: index }));
-                        
-                        // Update local state
-                        setAllCustomers(prev => {
-                            const otherCustomers = prev.filter(c => c.status !== originalCustomer.status);
-                            return [...otherCustomers, ...updatedOrder].sort((a,b) => (a.order || 0) - (b.order || 0));
-                        });
+                    const fieldToUpdate = activeStageId ? 'stageOrder' : 'globalOrder';
 
-                        // Update database
-                        try {
-                            await batchUpdateCustomerOrder(updatedOrder.map(c => ({ id: c.id, order: c.order })));
-                        } catch (error) {
-                             console.error("Error persisting customer order:", error);
-                             // Revert local state on error
-                             setAllCustomers(prev => [...prev]);
-                        }
+                    const updatedOrders = reorderedSubset.map((c, index) => ({
+                        id: c.id,
+                        order: index,
+                    }));
+    
+                    // Update local state immediately for responsiveness
+                    setAllCustomers(prev => {
+                        const otherCustomers = prev.filter(c => 
+                            activeStageId ? c.status !== activeStageId : false
+                        );
+                        const updatedAndSortedSubset = reorderedSubset.map((c, index) => ({
+                            ...c,
+                            [fieldToUpdate]: index,
+                        }));
+                        const finalCustomers = [...otherCustomers, ...updatedAndSortedSubset];
+                        return finalCustomers.sort((a,b) => (a[fieldToUpdate] || 0) - (b[fieldToUpdate] || 0));
+                    });
+    
+                    // Update database in the background
+                    try {
+                        await batchUpdateCustomerOrder(updatedOrders, fieldToUpdate);
+                    } catch (error) {
+                         console.error("Error persisting customer order:", error);
+                         // Optionally revert local state on error
+                         setAllCustomers(prev => [...prev]);
                     }
                 }
             }
@@ -316,6 +336,14 @@ export default function CrmPage() {
         }
         
         return false;
+    });
+
+    // Sort the final list based on the active view
+    const sortedAndFilteredCustomers = [...filteredCustomers].sort((a, b) => {
+        if (activeStageId) {
+            return (a.stageOrder || 0) - (b.stageOrder || 0);
+        }
+        return (a.globalOrder || 0) - (b.globalOrder || 0);
     });
 
     if (loading) {
@@ -362,9 +390,9 @@ export default function CrmPage() {
                        </SortableContext>
                     </div>
                     <div className="md:col-span-3 h-full overflow-y-auto no-scrollbar">
-                        <SortableContext items={filteredCustomers.map(c => c.id)} strategy={verticalListSortingStrategy}>
+                        <SortableContext items={sortedAndFilteredCustomers.map(c => c.id)} strategy={verticalListSortingStrategy}>
                             <CustomerList
-                                customers={filteredCustomers}
+                                customers={sortedAndFilteredCustomers}
                                 getStageName={getStageName}
                                 onViewDetails={setDetailsModalCustomer}
                                 onEdit={handleOpenCreateModal}
@@ -435,4 +463,5 @@ export default function CrmPage() {
 }
 
     
+
 
