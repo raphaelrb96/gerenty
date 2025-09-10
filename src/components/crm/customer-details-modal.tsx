@@ -22,7 +22,11 @@ export function CustomerDetailsModal({ customer, isOpen, onClose, stages }: Cust
     if (!customer) return null;
 
     const getInitials = (name: string) => {
-        return name.split(' ').map(n => n[0]).join('').toUpperCase();
+        const names = name.split(' ');
+        if (names.length > 1) {
+            return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
+        }
+        return name.substring(0, 2).toUpperCase();
     }
     
     const stageName = stages.find(s => s.id === customer.status)?.name || customer.status;
