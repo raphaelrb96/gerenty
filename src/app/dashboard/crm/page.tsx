@@ -108,7 +108,7 @@ export default function CrmPage() {
         };
         
         fetchAndInitializeData();
-    }, [user]);
+    }, [user, t]);
 
     const activeCustomer = activeId ? allCustomers.find(c => c.id === activeId) : null;
     const activeItemType = activeId ? (stages.some(s => s.id === activeId) ? 'Stage' : 'Customer') : null;
@@ -206,6 +206,31 @@ export default function CrmPage() {
                     return arrayMove(currentStages, oldIndex, newIndex);
                 }
                 return currentStages;
+            });
+            return;
+        }
+
+        // --- Customer Reordering ---
+        const isActiveACustomer = allCustomers.some(c => c.id === active.id);
+        const isOverACustomer = allCustomers.some(c => c.id === over.id);
+
+        if (isActiveACustomer && isOverACustomer) {
+            setAllCustomers((currentCustomers) => {
+                const activeCustomer = currentCustomers.find(c => c.id === active.id);
+                const overCustomer = currentCustomers.find(c => c.id === over.id);
+
+                if (!activeCustomer || !overCustomer) return currentCustomers;
+
+                // Allow reordering only within the same stage, or if in "All" view
+                if (activeStageId === null || activeCustomer.status === overCustomer.status) {
+                    const oldIndex = currentCustomers.findIndex(c => c.id === active.id);
+                    const newIndex = currentCustomers.findIndex(c => c.id === over.id);
+
+                    if (oldIndex !== -1 && newIndex !== -1) {
+                        return arrayMove(currentCustomers, oldIndex, newIndex);
+                    }
+                }
+                return currentCustomers;
             });
         }
     };
@@ -449,6 +474,7 @@ export default function CrmPage() {
 }
 
     
+
 
 
 
