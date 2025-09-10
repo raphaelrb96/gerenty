@@ -55,7 +55,7 @@ export function StageMenu({ stages, activeStageId, onSelectStage, onAddStage, on
                     ))}
                     <Button variant="outline" size="sm" className="mt-2" onClick={onAddStage}>
                         <PlusCircle className="mr-2 h-4 w-4" />
-                        Adicionar Estágio
+                        Nova Etapa
                     </Button>
                 </div>
             </CardContent>

@@ -168,6 +168,23 @@ export default function CrmPage() {
                 return currentStages;
             });
         }
+
+        const isActiveACustomer = customers.some(c => c.id === active.id);
+        const isOverACustomer = customers.some(c => c.id === over.id);
+
+        if(isActiveACustomer && isOverACustomer) {
+            setCustomers((currentCustomers) => {
+                const oldIndex = currentCustomers.findIndex(c => c.id === active.id);
+                const newIndex = currentCustomers.findIndex(c => c.id === over.id);
+
+                if (oldIndex !== -1 && newIndex !== -1) {
+                     const newOrder = arrayMove(currentCustomers, oldIndex, newIndex);
+                     // Here you would also update the `order` property of the customers and save to the DB.
+                     return newOrder;
+                }
+                return currentCustomers;
+            });
+        }
     };
 
     const handleDragEnd = async (event: DragEndEvent) => {

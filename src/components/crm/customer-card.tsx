@@ -38,7 +38,11 @@ export function CustomerCard({ customer, stageName, isOverlay, onClick }: Custom
     };
     
     const getInitials = (name: string) => {
-        return name.split(' ').map(n => n[0]).join('').toUpperCase();
+        const names = name.split(' ');
+        if (names.length > 1) {
+            return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
+        }
+        return name.substring(0, 2).toUpperCase();
     }
 
     return (
