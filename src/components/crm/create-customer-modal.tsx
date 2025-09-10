@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
-import { addCustomer, getCustomersByUser, Customer } from "@/services/customer-service";
+import { addCustomer, updateCustomer, getCustomersByUser, Customer } from "@/services/customer-service";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -43,7 +43,8 @@ import { Textarea } from "../ui/textarea";
 type CreateCustomerModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onCustomerCreated: (customer: Customer) => void;
+  onCustomerSaved: (customer: Customer) => void;
+  customer: Customer | null;
 };
 
 const formSchema = z.object({
@@ -66,7 +67,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export function CreateCustomerModal({ isOpen, onClose, onCustomerCreated }: CreateCustomerModalProps) {
+export function CreateCustomerModal({ isOpen, onClose, onCustomerSaved, customer }: CreateCustomerModalProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = React.useState(false);
@@ -81,15 +82,7 @@ export function CreateCustomerModal({ isOpen, onClose, onCustomerCreated }: Crea
       document: "",
       tags: "",
       status: "",
-      address: {
-        street: "",
-        number: "",
-        complement: "",
-        neighborhood: "",
-        city: "",
-        state: "",
-        zipCode: "",
-      },
+      address: { street: "", number: "", complement: "", neighborhood: "", city: "", state: "", zipCode: "" },
     },
   });
   
@@ -98,12 +91,25 @@ export function CreateCustomerModal({ isOpen, onClose, onCustomerCreated }: Crea
         getStagesByUser(user.uid).then(userStages => {
             const sortedStages = userStages.sort((a, b) => a.order - b.order);
             setStages(sortedStages);
-            if (sortedStages.length > 0 && !form.getValues('status')) {
-                form.setValue('status', sortedStages[0].id);
+            
+            if (customer) {
+                form.reset({
+                    name: customer.name,
+                    email: customer.email || "",
+                    phone: customer.phone || "",
+                    document: customer.document || "",
+                    tags: customer.tags?.join(', ') || "",
+                    status: customer.status,
+                    address: customer.address || { street: "", number: "", complement: "", neighborhood: "", city: "", state: "", zipCode: "" }
+                });
+            } else if (sortedStages.length > 0) {
+                 form.setValue('status', sortedStages[0].id);
             }
         });
+    } else if (!isOpen) {
+        form.reset();
     }
-  }, [user, isOpen, form]);
+  }, [user, isOpen, customer, form]);
 
   const handleClose = () => {
     form.reset();
@@ -118,41 +124,46 @@ export function CreateCustomerModal({ isOpen, onClose, onCustomerCreated }: Crea
 
     setIsSaving(true);
     try {
-        const existingCustomers = await getCustomersByUser(user.uid);
-        const isDuplicate = existingCustomers.some(customer => 
-            (values.email && customer.email === values.email) ||
-            (values.phone && customer.phone === values.phone)
-        );
+        if (!customer) { // Only check for duplicates on creation
+            const existingCustomers = await getCustomersByUser(user.uid);
+            const isDuplicate = existingCustomers.some(c => 
+                (values.email && c.email === values.email) ||
+                (values.phone && c.phone === values.phone)
+            );
 
-        if (isDuplicate) {
-            toast({
-                variant: "destructive",
-                title: "Cliente duplicado",
-                description: "Já existe um cliente com este e-mail ou telefone."
-            });
-            setIsSaving(false);
-            return;
+            if (isDuplicate) {
+                toast({ variant: "destructive", title: "Cliente duplicado", description: "Já existe um cliente com este e-mail ou telefone." });
+                setIsSaving(false);
+                return;
+            }
         }
 
-      const newCustomerData: Omit<Customer, 'id' | 'createdAt' | 'updatedAt' | 'lastInteraction'> = {
-        ownerId: user.uid,
-        name: values.name,
-        email: values.email,
-        phone: values.phone,
-        document: values.document,
-        status: values.status,
-        address: values.address,
-        tags: values.tags?.split(',').map(tag => tag.trim()).filter(Boolean) || [],
-      };
+        const customerData = {
+          ownerId: user.uid,
+          name: values.name,
+          email: values.email,
+          phone: values.phone,
+          document: values.document,
+          status: values.status,
+          address: values.address,
+          tags: values.tags?.split(',').map(tag => tag.trim()).filter(Boolean) || [],
+        };
 
-      const newCustomer = await addCustomer(newCustomerData);
-      toast({ title: "Cliente criado com sucesso!" });
-      onCustomerCreated(newCustomer);
-      handleClose();
+        let savedCustomer;
+        if (customer) {
+            savedCustomer = await updateCustomer(customer.id, customerData);
+            toast({ title: "Cliente atualizado com sucesso!" });
+        } else {
+            savedCustomer = await addCustomer(customerData);
+            toast({ title: "Cliente criado com sucesso!" });
+        }
+        
+        onCustomerSaved(savedCustomer);
+        handleClose();
 
     } catch (error) {
       console.error(error);
-      toast({ variant: "destructive", title: "Erro ao criar cliente" });
+      toast({ variant: "destructive", title: "Erro ao salvar cliente" });
     } finally {
       setIsSaving(false);
     }
@@ -162,8 +173,8 @@ export function CreateCustomerModal({ isOpen, onClose, onCustomerCreated }: Crea
     <Sheet open={isOpen} onOpenChange={handleClose}>
       <SheetContent className="sm:max-w-lg flex flex-col">
         <SheetHeader className="px-6 pt-6">
-          <SheetTitle>Adicionar Novo Cliente</SheetTitle>
-          <SheetDescription>Preencha os dados abaixo para criar um novo cliente no seu funil.</SheetDescription>
+          <SheetTitle>{customer ? "Editar Cliente" : "Adicionar Novo Cliente"}</SheetTitle>
+          <SheetDescription>Preencha os dados abaixo para gerenciar seus clientes.</SheetDescription>
         </SheetHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 overflow-hidden flex flex-col">
@@ -177,8 +188,8 @@ export function CreateCustomerModal({ isOpen, onClose, onCustomerCreated }: Crea
                     
                     <h4 className="text-sm font-medium pt-4">Estágio e Endereço</h4>
                     <FormField control={form.control} name="status" render={({ field }) => (<FormItem>
-                        <FormLabel>Estágio Inicial</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                        <FormLabel>Estágio</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Selecione um estágio" /></SelectTrigger></FormControl>
                             <SelectContent>
                                 {stages.map(stage => (
@@ -218,7 +229,7 @@ export function CreateCustomerModal({ isOpen, onClose, onCustomerCreated }: Crea
                 <Button type="button" variant="ghost" onClick={handleClose}>Cancelar</Button>
                 <Button type="submit" disabled={isSaving}>
                     {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Salvar Cliente
+                    Salvar
                 </Button>
             </SheetFooter>
           </form>
@@ -227,4 +238,3 @@ export function CreateCustomerModal({ isOpen, onClose, onCustomerCreated }: Crea
     </Sheet>
   );
 }
-

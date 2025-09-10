@@ -2,7 +2,7 @@
 "use server";
 
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where, addDoc, serverTimestamp, doc, updateDoc, getDoc } from "firebase/firestore";
+import { collection, getDocs, query, where, addDoc, serverTimestamp, doc, updateDoc, getDoc, deleteDoc } from "firebase/firestore";
 import type { Customer, OrderCustomer } from "@/lib/types";
 
 const customersCollection = collection(db, "customers");
@@ -48,6 +48,33 @@ export async function addCustomer(customerData: Omit<Customer, 'id' | 'createdAt
         throw new Error("Failed to add customer.");
     }
 }
+
+export async function updateCustomer(customerId: string, customerData: Partial<Omit<Customer, 'id'>>): Promise<Customer> {
+    try {
+        const customerDoc = doc(db, "customers", customerId);
+        await updateDoc(customerDoc, {
+            ...customerData,
+            updatedAt: serverTimestamp(),
+        });
+        const updatedDocSnap = await getDoc(customerDoc);
+        return convertCustomerTimestamps({ id: customerId, ...updatedDocSnap.data() });
+
+    } catch (error) {
+        console.error("Error updating customer:", error);
+        throw new Error("Failed to update customer.");
+    }
+}
+
+export async function deleteCustomer(customerId: string): Promise<void> {
+    try {
+        const customerDoc = doc(db, "customers", customerId);
+        await deleteDoc(customerDoc);
+    } catch (error) {
+        console.error("Error deleting customer:", error);
+        throw new Error("Failed to delete customer.");
+    }
+}
+
 
 export async function updateCustomerStatus(customerId: string, status: Customer['status']): Promise<void> {
     try {

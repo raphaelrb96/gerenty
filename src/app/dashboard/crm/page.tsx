@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth-context";
-import { getCustomersByUser, Customer, updateCustomerStatus } from "@/services/customer-service";
+import { getCustomersByUser, Customer, updateCustomerStatus, deleteCustomer as deleteCustomerService, updateCustomer as updateCustomerService } from "@/services/customer-service";
 import { getStagesByUser, addStage, updateStage, deleteStage, Stage, batchUpdateStageOrder } from "@/services/stage-service";
 
 import { DndContext, DragEndEvent, DragOverlay, closestCorners, DragStartEvent, DragOverEvent } from "@dnd-kit/core";
@@ -45,6 +45,8 @@ export default function CrmPage() {
     const [loading, setLoading] = useState(true);
     
     const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+    const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+    const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
     const [detailsModalCustomer, setDetailsModalCustomer] = useState<Customer | null>(null);
 
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -52,6 +54,16 @@ export default function CrmPage() {
     const [stageToEdit, setStageToEdit] = useState<Stage | null>(null);
     const [isStageModalOpen, setIsStageModalOpen] = useState(false);
 
+    const fetchCustomers = async () => {
+        if (!user) return;
+        try {
+            const userCustomers = await getCustomersByUser(user.uid);
+            setCustomers(userCustomers);
+        } catch (error) {
+            console.error(error);
+            toast({ variant: "destructive", title: "Erro ao buscar clientes." });
+        }
+    };
 
     useEffect(() => {
         if (!user) return;
@@ -60,7 +72,7 @@ export default function CrmPage() {
             setLoading(true);
             try {
                 const userStages = await getStagesByUser(user.uid);
-                const userCustomers = await getCustomersByUser(user.uid);
+                await fetchCustomers();
 
                 if (userStages.length === 0) {
                     const defaultStageNames = ['Lead', 'Contact', 'Active', 'VIP'];
@@ -82,8 +94,6 @@ export default function CrmPage() {
                     }
                 }
                 
-                setCustomers(userCustomers);
-
             } catch (error) {
                 console.error(error);
                 toast({ variant: "destructive", title: "Erro ao carregar dados", description: "Não foi possível buscar os dados do CRM." });
@@ -98,9 +108,32 @@ export default function CrmPage() {
     const activeCustomer = activeId ? customers.find(c => c.id === activeId) : null;
     const activeItemType = activeId ? (stages.some(s => s.id === activeId) ? 'Stage' : 'Customer') : null;
 
-    const handleCustomerCreated = (newCustomer: Customer) => {
-        setCustomers(prev => [...prev, newCustomer]);
+    const handleOpenCreateModal = (customer: Customer | null) => {
+        setEditingCustomer(customer);
+        setCreateModalOpen(true);
     };
+    
+    const handleCustomerSave = (savedCustomer: Customer) => {
+        if (editingCustomer) {
+            setCustomers(prev => prev.map(c => c.id === savedCustomer.id ? savedCustomer : c));
+        } else {
+            setCustomers(prev => [...prev, savedCustomer]);
+        }
+    };
+    
+    const handleDeleteCustomer = async () => {
+        if (!customerToDelete) return;
+        try {
+            await deleteCustomerService(customerToDelete.id);
+            setCustomers(prev => prev.filter(c => c.id !== customerToDelete.id));
+            toast({ title: "Cliente excluído com sucesso!" });
+        } catch (error) {
+            toast({ variant: "destructive", title: "Erro ao excluir cliente" });
+        } finally {
+            setCustomerToDelete(null);
+        }
+    };
+
 
     const handleOpenStageModal = (stage: Stage | null = null) => {
         setStageToEdit(stage);
@@ -249,7 +282,7 @@ export default function CrmPage() {
                     title="CRM de Clientes"
                     description="Gerencie o funil de relacionamento com seus clientes."
                     action={
-                        <Button onClick={() => setCreateModalOpen(true)}>
+                        <Button onClick={() => handleOpenCreateModal(null)}>
                             <PlusCircle className="mr-2 h-4 w-4" />
                             Adicionar Cliente
                         </Button>
@@ -274,7 +307,9 @@ export default function CrmPage() {
                             <CustomerList
                                 customers={filteredCustomers}
                                 getStageName={getStageName}
-                                onCardClick={setDetailsModalCustomer}
+                                onViewDetails={setDetailsModalCustomer}
+                                onEdit={handleOpenCreateModal}
+                                onDelete={setCustomerToDelete}
                             />
                         </SortableContext>
                     </div>
@@ -283,7 +318,8 @@ export default function CrmPage() {
              <CreateCustomerModal
                 isOpen={isCreateModalOpen}
                 onClose={() => setCreateModalOpen(false)}
-                onCustomerCreated={handleCustomerCreated}
+                onCustomerSaved={handleCustomerSave}
+                customer={editingCustomer}
             />
             <CustomerDetailsModal
                 customer={detailsModalCustomer}
@@ -313,6 +349,22 @@ export default function CrmPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+            <AlertDialog open={!!customerToDelete} onOpenChange={(isOpen) => !isOpen && setCustomerToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Esta ação não pode ser desfeita. Isso excluirá permanentemente o cliente.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteCustomer} className="bg-destructive hover:bg-destructive/90">
+                            Confirmar Exclusão
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
              <DragOverlay>
                 {activeId && activeItemType === 'Customer' && activeCustomer ? <CustomerCard customer={activeCustomer} stageName={getStageName(activeCustomer.status)} isOverlay /> : null}
                 {activeId && activeItemType === 'Stage' && stages.find(s => s.id === activeId) ? (
@@ -322,4 +374,3 @@ export default function CrmPage() {
         </DndContext>
     );
 }
-

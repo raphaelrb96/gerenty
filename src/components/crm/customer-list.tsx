@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import type { Customer } from "@/services/customer-service";
@@ -9,10 +10,12 @@ import { HeartHandshake } from "lucide-react";
 type CustomerListProps = {
     customers: Customer[];
     getStageName: (stageId: string) => string;
-    onCardClick: (customer: Customer) => void;
+    onViewDetails: (customer: Customer) => void;
+    onEdit: (customer: Customer) => void;
+    onDelete: (customer: Customer) => void;
 };
 
-export function CustomerList({ customers, getStageName, onCardClick }: CustomerListProps) {
+export function CustomerList({ customers, getStageName, onViewDetails, onEdit, onDelete }: CustomerListProps) {
     if (customers.length === 0) {
         return (
             <div className="h-full flex items-center justify-center p-4">
@@ -32,7 +35,9 @@ export function CustomerList({ customers, getStageName, onCardClick }: CustomerL
                     key={customer.id} 
                     customer={customer}
                     stageName={getStageName(customer.status)}
-                    onClick={() => onCardClick(customer)} 
+                    onViewDetails={() => onViewDetails(customer)} 
+                    onEdit={() => onEdit(customer)}
+                    onDelete={() => onDelete(customer)}
                 />
             ))}
         </div>
