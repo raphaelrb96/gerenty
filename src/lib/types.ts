@@ -545,6 +545,7 @@ export type Customer = {
     profileImageUrl?: string;
     status: string;
     tags?: string[];
+    order: number;
     address?: {
         street?: string;
         number?: string;
@@ -605,4 +606,5 @@ export type Route = {
     startedAt?: string | Date | Timestamp | FieldValue;
     finishedAt?: string | Date | Timestamp | FieldValue;
 };
+
 

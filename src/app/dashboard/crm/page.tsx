@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth-context";
-import { getCustomersByUser, Customer, updateCustomerStatus, deleteCustomer as deleteCustomerService, updateCustomer as updateCustomerService } from "@/services/customer-service";
+import { getCustomersByUser, Customer, updateCustomerStatus, deleteCustomer as deleteCustomerService, updateCustomer as updateCustomerService, batchUpdateCustomerOrder } from "@/services/customer-service";
 import { getStagesByUser, addStage, updateStage, deleteStage, Stage, batchUpdateStageOrder } from "@/services/stage-service";
 
 import { DndContext, DragEndEvent, DragOverlay, closestCorners, DragStartEvent, DragOverEvent } from "@dnd-kit/core";
@@ -232,7 +232,7 @@ export default function CrmPage() {
 
     const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
-
+    
         if (activeItemType === 'Stage' && over && active.id !== over.id) {
             const finalStages = stages.map((stage, index) => ({ ...stage, order: index }));
             setStages(finalStages);
@@ -242,24 +242,54 @@ export default function CrmPage() {
                  console.error("Error persisting stage order:", error);
             }
         }
-
-        if (activeItemType === 'Customer' && over?.data.current?.type === 'Stage') {
-            const newStageId = over.id.toString().replace('stage-drop-', '');
+    
+        if (activeItemType === 'Customer' && over) {
             const customerId = active.id as string;
             const originalCustomer = allCustomers.find(c => c.id === customerId);
-
-            if (!originalCustomer || originalCustomer.status === newStageId) {
-                setActiveId(null);
-                return;
+            if (!originalCustomer) return;
+    
+            // Case 1: Customer is dropped onto a Stage
+            if (over.data.current?.type === 'Stage') {
+                const newStageId = over.id.toString().replace('stage-drop-', '');
+                if (originalCustomer.status !== newStageId) {
+                    setAllCustomers(prev => prev.map(c => c.id === customerId ? { ...c, status: newStageId } : c));
+                    try {
+                        await updateCustomerStatus(customerId, newStageId);
+                    } catch (error) {
+                        console.error("Error updating customer status:", error);
+                        setAllCustomers(prev => prev.map(c => c.id === customerId ? originalCustomer : c));
+                    }
+                }
             }
+            // Case 2: Customer is dropped onto another Customer
+            else if (over.data.current?.type === 'Customer') {
+                const overCustomer = over.data.current.customer as Customer;
+                // Only allow reordering within the same stage
+                if (originalCustomer.status === overCustomer.status) {
+                    const customersInStage = allCustomers.filter(c => c.status === originalCustomer.status);
+                    const oldIndex = customersInStage.findIndex(c => c.id === active.id);
+                    const newIndex = customersInStage.findIndex(c => c.id === over.id);
+                    
+                    if (oldIndex !== -1 && newIndex !== -1) {
+                        const reorderedCustomers = arrayMove(customersInStage, oldIndex, newIndex);
+                        const updatedOrder = reorderedCustomers.map((c, index) => ({ ...c, order: index }));
+                        
+                        // Update local state
+                        setAllCustomers(prev => {
+                            const otherCustomers = prev.filter(c => c.status !== originalCustomer.status);
+                            return [...otherCustomers, ...updatedOrder].sort((a,b) => (a.order || 0) - (b.order || 0));
+                        });
 
-            setAllCustomers(prev => prev.map(c => c.id === customerId ? { ...c, status: newStageId } : c));
-
-            try {
-                await updateCustomerStatus(customerId, newStageId);
-            } catch (error) {
-                console.error("Error updating customer status:", error);
-                setAllCustomers(prev => prev.map(c => c.id === customerId ? originalCustomer : c));
+                        // Update database
+                        try {
+                            await batchUpdateCustomerOrder(updatedOrder.map(c => ({ id: c.id, order: c.order })));
+                        } catch (error) {
+                             console.error("Error persisting customer order:", error);
+                             // Revert local state on error
+                             setAllCustomers(prev => [...prev]);
+                        }
+                    }
+                }
             }
         }
         
@@ -405,3 +435,4 @@ export default function CrmPage() {
 }
 
     
+
