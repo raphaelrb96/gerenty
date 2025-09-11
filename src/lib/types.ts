@@ -589,24 +589,3 @@ export type Employee = {
     createdAt: string | Date | Timestamp | FieldValue;
     updatedAt: string | Date | Timestamp | FieldValue;
 };
-
-// Logistics Types
-export type Route = {
-    id: string;
-    ownerId: string;
-    driverId: string; // Employee ID of the driver
-    driverName: string;
-    title?: string;
-    notes?: string;
-    orders: Order[]; // The orders included in this route
-    status: 'A Processar' | 'Em Trânsito' | 'Entregue' | 'Outro';
-    totalValue: number;
-    totalFee: number;
-    createdAt: string | Date | Timestamp | FieldValue;
-    startedAt?: string | Date | Timestamp | FieldValue;
-    finishedAt?: string | Date | Timestamp | FieldValue;
-};
-
-
-
-
