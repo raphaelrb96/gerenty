@@ -545,7 +545,8 @@ export type Customer = {
   profileImageUrl?: string;
   status: string; // Stage ID
   tags?: string[];
-  order: number;
+  globalOrder: number;
+  stageOrder: number;
   address?: {
       street?: string;
       number?: string;
@@ -589,3 +590,20 @@ export type Employee = {
     createdAt: string | Date | Timestamp | FieldValue;
     updatedAt: string | Date | Timestamp | FieldValue;
 };
+
+
+export interface Route {
+  id: string;
+  ownerId: string;
+  driverId: string;
+  driverName: string;
+  title: string;
+  notes?: string;
+  orders: Order[];
+  status: 'A Processar' | 'Em Trânsito' | 'Entregue' | 'Outro';
+  totalValue: number;
+  totalFee: number;
+  createdAt: string | Date | Timestamp | FieldValue;
+  startedAt?: string | Date | Timestamp | FieldValue;
+  finishedAt?: string | Date | Timestamp | FieldValue;
+}
