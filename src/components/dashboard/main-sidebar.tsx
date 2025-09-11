@@ -57,6 +57,7 @@ export function MainSidebar() {
     { href: "/dashboard/billing", label: t("Billing"), icon: CreditCard },
     { href: "/dashboard/companies", label: t("companiesPage.sidebarTitle"), icon: Building },
     { href: "/dashboard/profile", label: t("Profile"), icon: User },
+    { href: "/dashboard/settings", label: "Configurações", icon: Settings },
   ];
 
   return (
