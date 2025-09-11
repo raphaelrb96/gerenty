@@ -57,6 +57,7 @@ export function MainSidebar() {
     { href: "/dashboard/crm", label: "CRM", icon: HeartHandshake },
     { href: "/dashboard/financial", label: "Financeiro", icon: DollarSign },
     { href: "/dashboard/logistics", label: "Logística", icon: Truck },
+    { href: "/dashboard/shipping", label: "Fretes", icon: Package },
     { href: "/dashboard/reports", label: "Relatórios", icon: BarChart },
     { href: "/dashboard/team", label: "Equipe", icon: Users },
     { href: "/dashboard/billing", label: t("Billing"), icon: CreditCard },
