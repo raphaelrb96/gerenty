@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { useCurrency } from "@/context/currency-context";
-import { DollarSign, ShoppingCart, TrendingUp, BarChart } from "lucide-react";
+import { DollarSign, ShoppingCart, TrendingUp, BarChart, TrendingDown, PlusCircle } from "lucide-react";
 import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
@@ -89,12 +89,19 @@ export default function FinancialsPage() {
     }
     
     const revenueChartData = financialData?.revenueByPeriod.map(d => ({ name: d.period, Receita: d.total })) || [];
+    const netProfit = (financialData?.grossProfit || 0) - (financialData?.totalExpenses || 0);
 
     return (
         <div className="space-y-8">
             <PageHeader
                 title="Painel Financeiro"
                 description="Uma visão completa da saúde financeira do seu negócio."
+                action={
+                    <Button onClick={() => {}} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Adicionar Despesa
+                    </Button>
+                }
             />
 
             <Card>
@@ -109,10 +116,10 @@ export default function FinancialsPage() {
             </Card>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <StatCard title="Receita Líquida" value={formatCurrency(financialData?.netRevenue || 0)} icon={<DollarSign className="h-4 w-4 text-muted-foreground" />} />
+                <StatCard title="Receita Bruta" value={formatCurrency(financialData?.netRevenue || 0)} icon={<DollarSign className="h-4 w-4 text-muted-foreground" />} />
                 <StatCard title="Lucro Bruto" value={formatCurrency(financialData?.grossProfit || 0)} icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />} />
-                <StatCard title="Custos Totais" value={formatCurrency(financialData?.totalCosts || 0)} icon={<ShoppingCart className="h-4 w-4 text-muted-foreground" />} />
-                <StatCard title="Ticket Médio" value={formatCurrency(financialData?.averageTicket || 0)} icon={<BarChart className="h-4 w-4 text-muted-foreground" />} />
+                <StatCard title="Despesas Totais" value={formatCurrency(financialData?.totalExpenses || 0)} icon={<TrendingDown className="h-4 w-4 text-muted-foreground" />} />
+                <StatCard title="Lucro Líquido" value={formatCurrency(netProfit)} icon={<BarChart className="h-4 w-4 text-muted-foreground" />} />
             </div>
 
             <Card>

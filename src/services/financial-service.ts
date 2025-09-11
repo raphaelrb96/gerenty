@@ -6,9 +6,11 @@ import type { Order } from '@/lib/types';
 import { eachDayOfInterval, format, startOfDay, endOfDay, differenceInDays } from 'date-fns';
 
 export interface FinancialData {
-    netRevenue: number;
-    totalCosts: number;
-    grossProfit: number;
+    netRevenue: number; // Gross Revenue from sales
+    totalCosts: number; // Cost of Goods Sold (COGS)
+    grossProfit: number; // netRevenue - totalCosts
+    totalExpenses: number; // Manually added expenses (marketing, salaries, etc.)
+    netProfit: number; // grossProfit - totalExpenses
     averageTicket: number;
     totalOrders: number;
     revenueByPeriod: { period: string, total: number }[];
@@ -29,6 +31,10 @@ export async function getFinancialData(companyIds: string[], from: Date, to: Dat
     const grossProfit = netRevenue - totalCosts;
     const totalOrders = completedOrders.length;
     const averageTicket = totalOrders > 0 ? netRevenue / totalOrders : 0;
+    
+    // Placeholder for manually added expenses. In the future, this would be fetched from a 'expenses' collection.
+    const totalExpenses = 0; 
+    const netProfit = grossProfit - totalExpenses;
 
     // Prepare data for charting
     const revenueByPeriod: { [key: string]: number } = {};
@@ -56,6 +62,8 @@ export async function getFinancialData(companyIds: string[], from: Date, to: Dat
         netRevenue,
         totalCosts,
         grossProfit,
+        totalExpenses,
+        netProfit,
         averageTicket,
         totalOrders,
         revenueByPeriod: revenueChartData,
