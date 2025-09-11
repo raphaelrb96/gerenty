@@ -64,3 +64,5 @@ export async function getFinancialData(companyIds: string[], from: Date, to: Dat
         revenueByPeriod: revenueChartData,
     };
 }
+
+    
