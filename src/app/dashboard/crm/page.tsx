@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/context/auth-context";
 import { getCustomersByUser, Customer, updateCustomerStatus, deleteCustomer as deleteCustomerService, updateCustomer as updateCustomerService, batchUpdateCustomerOrder } from "@/services/customer-service";
 import { getStagesByUser, addStage, updateStage, deleteStage, Stage, batchUpdateStageOrder } from "@/services/stage-service";
@@ -13,7 +13,7 @@ import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-ki
 import { PageHeader } from "@/components/common/page-header";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Loader2 } from "lucide-react";
 import { CreateCustomerModal } from "@/components/crm/create-customer-modal";
 import { CustomerDetailsModal } from "@/components/crm/customer-details-modal";
 import { StageMenu } from "@/components/crm/stage-menu";
@@ -33,6 +33,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useTranslation } from "@/context/i18n-context";
 import { CrmFilterBar } from "@/components/crm/crm-filter-bar";
+
+const CUSTOMERS_PER_PAGE = 50;
 
 export default function CrmPage() {
     const { user } = useAuth();
@@ -57,6 +59,14 @@ export default function CrmPage() {
     
     const [searchTerm, setSearchTerm] = useState("");
     const [searchField, setSearchField] = useState("name");
+
+    const [visibleCount, setVisibleCount] = useState(CUSTOMERS_PER_PAGE);
+
+    const allAvailableTags = useMemo(() => {
+        const tagSet = new Set<string>();
+        allCustomers.forEach(c => c.tags?.forEach(tag => tagSet.add(tag)));
+        return Array.from(tagSet);
+    }, [allCustomers]);
 
 
     const fetchCustomers = async () => {
@@ -221,8 +231,9 @@ export default function CrmPage() {
 
                 if (!activeCustomer || !overCustomer) return currentCustomers;
 
-                // Allow reordering only within the same stage, or if in "All" view
-                if (activeStageId === null || activeCustomer.status === overCustomer.status) {
+                const isSameStageContext = activeStageId ? activeCustomer.status === overCustomer.status : true;
+
+                if (isSameStageContext) {
                     const oldIndex = currentCustomers.findIndex(c => c.id === active.id);
                     const newIndex = currentCustomers.findIndex(c => c.id === over.id);
 
@@ -310,7 +321,7 @@ export default function CrmPage() {
                             [fieldToUpdate]: index,
                         }));
 
-                        const finalCustomers = [...otherCustomers, ...updatedAndSortedSubset];
+                        const finalCustomers = activeStageId ? [...otherCustomers, ...updatedAndSortedSubset] : updatedAndSortedSubset;
                         return finalCustomers;
                     });
     
@@ -351,11 +362,11 @@ export default function CrmPage() {
 
     // Sort the final list based on the active view
     const sortedAndFilteredCustomers = [...filteredCustomers].sort((a, b) => {
-        if (activeStageId) {
-            return (a.stageOrder || 0) - (b.stageOrder || 0);
-        }
-        return (a.globalOrder || 0) - (b.globalOrder || 0);
+        const fieldToSort = activeStageId ? 'stageOrder' : 'globalOrder';
+        return (a[fieldToSort] || 0) - (b[fieldToSort] || 0);
     });
+
+    const paginatedCustomers = sortedAndFilteredCustomers.slice(0, visibleCount);
 
     if (loading) {
         return <LoadingSpinner />;
@@ -401,15 +412,23 @@ export default function CrmPage() {
                        </SortableContext>
                     </div>
                     <div className="md:col-span-3 h-full overflow-y-auto no-scrollbar">
-                        <SortableContext items={sortedAndFilteredCustomers.map(c => c.id)} strategy={verticalListSortingStrategy}>
+                        <SortableContext items={paginatedCustomers.map(c => c.id)} strategy={verticalListSortingStrategy}>
                             <CustomerList
-                                customers={sortedAndFilteredCustomers}
+                                customers={paginatedCustomers}
                                 getStageName={getStageName}
                                 onViewDetails={setDetailsModalCustomer}
                                 onEdit={handleOpenCreateModal}
                                 onDelete={setCustomerToDelete}
                             />
                         </SortableContext>
+                         {sortedAndFilteredCustomers.length > visibleCount && (
+                            <div className="text-center mt-4">
+                                <Button onClick={() => setVisibleCount(prev => prev + CUSTOMERS_PER_PAGE)} variant="outline">
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Carregar Mais
+                                </Button>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -418,6 +437,7 @@ export default function CrmPage() {
                 onClose={() => setCreateModalOpen(false)}
                 onCustomerSaved={handleCustomerSave}
                 customer={editingCustomer}
+                allTags={allAvailableTags}
             />
             <CustomerDetailsModal
                 customer={detailsModalCustomer}
@@ -474,6 +494,7 @@ export default function CrmPage() {
 }
 
     
+
 
 
 

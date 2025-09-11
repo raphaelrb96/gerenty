@@ -38,13 +38,14 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2 } from "lucide-react";
 import { getStagesByUser, Stage } from "@/services/stage-service";
-import { Textarea } from "../ui/textarea";
+import { MultiSelectCreatable } from "../ui/multi-select-creatable";
 
 type CreateCustomerModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onCustomerSaved: (customer: Customer) => void;
   customer: Customer | null;
+  allTags: string[];
 };
 
 const formSchema = z.object({
@@ -52,7 +53,7 @@ const formSchema = z.object({
     phone: z.string().min(1, "Telefone é obrigatório."),
     email: z.string().email("Email inválido.").optional().or(z.literal('')),
     document: z.string().optional(),
-    tags: z.string().optional(),
+    tags: z.array(z.string()).optional(),
     status: z.string().min(1, "O estágio é obrigatório"),
     address: z.object({
         street: z.string().optional(),
@@ -67,7 +68,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export function CreateCustomerModal({ isOpen, onClose, onCustomerSaved, customer }: CreateCustomerModalProps) {
+export function CreateCustomerModal({ isOpen, onClose, onCustomerSaved, customer, allTags }: CreateCustomerModalProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = React.useState(false);
@@ -80,7 +81,7 @@ export function CreateCustomerModal({ isOpen, onClose, onCustomerSaved, customer
       email: "",
       phone: "",
       document: "",
-      tags: "",
+      tags: [],
       status: "",
       address: { street: "", number: "", complement: "", neighborhood: "", city: "", state: "", zipCode: "" },
     },
@@ -98,7 +99,7 @@ export function CreateCustomerModal({ isOpen, onClose, onCustomerSaved, customer
                     email: customer.email || "",
                     phone: customer.phone || "",
                     document: customer.document || "",
-                    tags: customer.tags?.join(', ') || "",
+                    tags: customer.tags || [],
                     status: customer.status,
                     address: customer.address || { street: "", number: "", complement: "", neighborhood: "", city: "", state: "", zipCode: "" }
                 });
@@ -146,7 +147,7 @@ export function CreateCustomerModal({ isOpen, onClose, onCustomerSaved, customer
           document: values.document,
           status: values.status,
           address: values.address,
-          tags: values.tags?.split(',').map(tag => tag.trim()).filter(Boolean) || [],
+          tags: values.tags || [],
         };
 
         let savedCustomer;
@@ -171,7 +172,7 @@ export function CreateCustomerModal({ isOpen, onClose, onCustomerSaved, customer
 
   return (
     <Sheet open={isOpen} onOpenChange={handleClose}>
-      <SheetContent className="sm:max-w-lg flex flex-col">
+      <SheetContent className="sm:max-w-lg flex flex-col p-0">
         <SheetHeader className="px-6 pt-6">
           <SheetTitle>{customer ? "Editar Cliente" : "Adicionar Novo Cliente"}</SheetTitle>
           <SheetDescription>Preencha os dados abaixo para gerenciar seus clientes.</SheetDescription>
@@ -179,48 +180,61 @@ export function CreateCustomerModal({ isOpen, onClose, onCustomerSaved, customer
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 overflow-hidden flex flex-col">
              <ScrollArea className="flex-1 px-6 py-4">
-                <div className="space-y-4">
-                    <h4 className="text-sm font-medium">Informações de Contato</h4>
-                    <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Nome</FormLabel><FormControl><Input placeholder="Nome completo do cliente" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                    <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Telefone</FormLabel><FormControl><Input placeholder="(00) 00000-0000" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                    <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email (Opcional)</FormLabel><FormControl><Input type="email" placeholder="cliente@email.com" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                    <FormField control={form.control} name="document" render={({ field }) => (<FormItem><FormLabel>CPF/CNPJ (Opcional)</FormLabel><FormControl><Input placeholder="Documento do cliente" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                    
-                    <h4 className="text-sm font-medium pt-4">Estágio e Endereço</h4>
-                    <FormField control={form.control} name="status" render={({ field }) => (<FormItem>
-                        <FormLabel>Estágio</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl><SelectTrigger><SelectValue placeholder="Selecione um estágio" /></SelectTrigger></FormControl>
-                            <SelectContent>
-                                {stages.map(stage => (
-                                    <SelectItem key={stage.id} value={stage.id}>{stage.name}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage /></FormItem>
-                    )}/>
-                    
-                    <FormField control={form.control} name="tags" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tags (separadas por vírgula)</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder="Ex: VIP, Importante, Acompanhar" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-
-                    <div className="space-y-4">
-                        <FormField control={form.control} name="address.zipCode" render={({ field }) => (<FormItem><FormLabel>CEP (Opcional)</FormLabel><FormControl><Input placeholder="00000-000" {...field} /></FormControl></FormItem>)}/>
-                        <FormField control={form.control} name="address.street" render={({ field }) => (<FormItem><FormLabel>Rua (Opcional)</FormLabel><FormControl><Input placeholder="Avenida Principal" {...field} /></FormControl></FormItem>)}/>
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormField control={form.control} name="address.number" render={({ field }) => (<FormItem><FormLabel>Nº (Opcional)</FormLabel><FormControl><Input placeholder="123" {...field} /></FormControl></FormItem>)}/>
-                            <FormField control={form.control} name="address.complement" render={({ field }) => (<FormItem><FormLabel>Compl. (Opcional)</FormLabel><FormControl><Input placeholder="Sala 101" {...field} /></FormControl></FormItem>)}/>
+                <div className="space-y-6">
+                    <div>
+                        <h4 className="text-sm font-medium mb-4">Informações de Contato</h4>
+                        <div className="space-y-4">
+                            <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Nome</FormLabel><FormControl><Input placeholder="Nome completo do cliente" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                            <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Telefone</FormLabel><FormControl><Input placeholder="(00) 00000-0000" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                            <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email (Opcional)</FormLabel><FormControl><Input type="email" placeholder="cliente@email.com" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                            <FormField control={form.control} name="document" render={({ field }) => (<FormItem><FormLabel>CPF/CNPJ (Opcional)</FormLabel><FormControl><Input placeholder="Documento do cliente" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                         </div>
-                        <FormField control={form.control} name="address.neighborhood" render={({ field }) => (<FormItem><FormLabel>Bairro (Opcional)</FormLabel><FormControl><Input placeholder="Centro" {...field} /></FormControl></FormItem>)}/>
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormField control={form.control} name="address.city" render={({ field }) => (<FormItem><FormLabel>Cidade (Opcional)</FormLabel><FormControl><Input placeholder="São Paulo" {...field} /></FormControl></FormItem>)}/>
-                            <FormField control={form.control} name="address.state" render={({ field }) => (<FormItem><FormLabel>Estado (Opcional)</FormLabel><FormControl><Input placeholder="SP" {...field} /></FormControl></FormItem>)}/>
+                    </div>
+                    
+                    <div>
+                        <h4 className="text-sm font-medium mb-4">Organização</h4>
+                        <div className="space-y-4">
+                             <FormField control={form.control} name="status" render={({ field }) => (<FormItem>
+                                <FormLabel>Estágio</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormControl><SelectTrigger><SelectValue placeholder="Selecione um estágio" /></SelectTrigger></FormControl>
+                                    <SelectContent>
+                                        {stages.map(stage => (
+                                            <SelectItem key={stage.id} value={stage.id}>{stage.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage /></FormItem>
+                            )}/>
+                             <FormField control={form.control} name="tags" render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Tags</FormLabel>
+                                <MultiSelectCreatable
+                                    options={allTags.map(tag => ({ value: tag, label: tag }))}
+                                    selected={field.value || []}
+                                    onChange={field.onChange}
+                                    placeholder="Selecione ou crie tags..."
+                                />
+                                <FormMessage />
+                              </FormItem>
+                            )} />
+                        </div>
+                    </div>
+
+                    <div>
+                         <h4 className="text-sm font-medium mb-4">Endereço (Opcional)</h4>
+                         <div className="space-y-4">
+                            <FormField control={form.control} name="address.zipCode" render={({ field }) => (<FormItem><FormLabel>CEP</FormLabel><FormControl><Input placeholder="00000-000" {...field} value={field.value ?? ''} /></FormControl></FormItem>)}/>
+                            <FormField control={form.control} name="address.street" render={({ field }) => (<FormItem><FormLabel>Rua</FormLabel><FormControl><Input placeholder="Avenida Principal" {...field} value={field.value ?? ''} /></FormControl></FormItem>)}/>
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField control={form.control} name="address.number" render={({ field }) => (<FormItem><FormLabel>Nº</FormLabel><FormControl><Input placeholder="123" {...field} value={field.value ?? ''} /></FormControl></FormItem>)}/>
+                                <FormField control={form.control} name="address.complement" render={({ field }) => (<FormItem><FormLabel>Compl.</FormLabel><FormControl><Input placeholder="Sala 101" {...field} value={field.value ?? ''} /></FormControl></FormItem>)}/>
+                            </div>
+                            <FormField control={form.control} name="address.neighborhood" render={({ field }) => (<FormItem><FormLabel>Bairro</FormLabel><FormControl><Input placeholder="Centro" {...field} value={field.value ?? ''} /></FormControl></FormItem>)}/>
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField control={form.control} name="address.city" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><FormControl><Input placeholder="São Paulo" {...field} value={field.value ?? ''} /></FormControl></FormItem>)}/>
+                                <FormField control={form.control} name="address.state" render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><FormControl><Input placeholder="SP" {...field} value={field.value ?? ''} /></FormControl></FormItem>)}/>
+                            </div>
                         </div>
                     </div>
                 </div>
