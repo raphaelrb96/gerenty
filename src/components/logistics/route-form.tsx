@@ -69,7 +69,7 @@ export function RouteForm({ onFinished }: RouteFormProps) {
                     getUnassignedOrders(companies.map(c => c.id))
                 ]);
                 
-                const availableDrivers = allEmployees.filter(e => e.role === "Entregador" && e.isActive);
+                const availableDrivers = allEmployees.filter(e => e.role === "motoboy");
                 setDrivers(availableDrivers);
                 setOrders(unassignedOrders);
             } catch (error) {

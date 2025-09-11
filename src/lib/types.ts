@@ -543,11 +543,9 @@ export type Customer = {
   phone?: string;
   document?: string;
   profileImageUrl?: string;
-  status: string;
+  status: string; // Stage ID
   tags?: string[];
   order: number;
-  stageOrder?: number;
-  globalOrder?: number;
   address?: {
       street?: string;
       number?: string;
@@ -608,6 +606,7 @@ export type Route = {
     startedAt?: string | Date | Timestamp | FieldValue;
     finishedAt?: string | Date | Timestamp | FieldValue;
 };
+
 
 
 
