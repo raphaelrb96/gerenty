@@ -14,7 +14,7 @@ export default function SettingsPage() {
         title="Configurações Avançadas"
         description="Gerencie chaves de API, webhooks e outras configurações técnicas."
       />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -28,9 +28,25 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
               <div className="flex flex-col">
-                <span className="font-semibold">Chave Padrão</span>
+                <span className="font-semibold">Chave de Produção</span>
                 <span className="text-sm text-muted-foreground font-mono">
                   pk_live_******************xyz
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" title="Copiar" disabled>
+                  <Copy className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" title="Revogar" className="text-destructive hover:text-destructive" disabled>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+             <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
+              <div className="flex flex-col">
+                <span className="font-semibold">Chave de Teste</span>
+                <span className="text-sm text-muted-foreground font-mono">
+                  sk_test_*****************abc
                 </span>
               </div>
               <div className="flex items-center gap-2">
