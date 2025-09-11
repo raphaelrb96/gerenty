@@ -4,10 +4,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useCompany } from "@/context/company-context";
-import { getOrdersForCompanies } from "@/services/order-service";
-import type { Order } from "@/lib/types";
+import { getFinancialData, FinancialData } from "@/services/financial-service";
 import { DateRange } from "react-day-picker";
-import { subDays, startOfDay, endOfDay, eachDayOfInterval, format } from "date-fns";
+import { subDays, startOfDay, endOfDay } from "date-fns";
 
 import { PageHeader } from "@/components/common/page-header";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
@@ -31,11 +30,11 @@ const StatCard = ({ title, value, icon }: { title: string, value: string, icon: 
     </Card>
 );
 
-export default function FinancialPage() {
+export default function FinancialsPage() {
     const { user } = useAuth();
     const { activeCompany, companies } = useCompany();
     const { formatCurrency } = useCurrency();
-    const [orders, setOrders] = useState<Order[]>([]);
+    const [financialData, setFinancialData] = useState<FinancialData | null>(null);
     const [loading, setLoading] = useState(true);
 
     const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -44,76 +43,30 @@ export default function FinancialPage() {
     });
     const [activeFilter, setActiveFilter] = useState<string>('30d');
 
-
     useEffect(() => {
-        const fetchOrders = async () => {
-            if (!user) return;
+        const fetchFinancials = async () => {
+            if (!user || !dateRange?.from || !dateRange?.to) return;
             setLoading(true);
             try {
                 const companyIds = activeCompany ? [activeCompany.id] : companies.map(c => c.id);
                 if (companyIds.length > 0) {
-                    const fetchedOrders = await getOrdersForCompanies(companyIds);
-                    setOrders(fetchedOrders);
+                    const data = await getFinancialData(companyIds, dateRange.from, dateRange.to);
+                    setFinancialData(data);
                 } else {
-                    setOrders([]);
+                    setFinancialData(null);
                 }
             } catch (error) {
-                console.error("Failed to fetch orders for financial page:", error);
+                console.error("Failed to fetch financial data:", error);
+                setFinancialData(null);
             } finally {
                 setLoading(false);
             }
         };
 
         if (user && companies) {
-           fetchOrders();
+           fetchFinancials();
         }
-    }, [user, activeCompany, companies]);
-
-    const filteredData = useMemo(() => {
-        const ordersInDateRange = orders.filter(order => {
-            const orderDate = new Date(order.createdAt as string);
-            if (dateRange?.from && dateRange?.to) {
-                return orderDate >= startOfDay(dateRange.from) && orderDate <= endOfDay(dateRange.to);
-            }
-            return true;
-        });
-
-        const completedOrders = ordersInDateRange.filter(o => o.status === 'completed');
-        const netRevenue = completedOrders.reduce((sum, order) => sum + order.total, 0);
-        const totalCost = completedOrders.reduce((sum, order) => sum + order.items.reduce((itemSum, item) => itemSum + (item.costPrice || 0) * item.quantity, 0), 0);
-        const grossProfit = netRevenue - totalCost;
-        const averageTicket = completedOrders.length > 0 ? netRevenue / completedOrders.length : 0;
-        
-        const revenueChartData: { name: string, Receita: number }[] = [];
-        if (dateRange?.from && dateRange?.to) {
-            const revenueByDay: { [key: string]: number } = {};
-            
-            eachDayOfInterval({ start: dateRange.from, end: dateRange.to }).forEach(day => {
-                revenueByDay[format(day, 'yyyy-MM-dd')] = 0;
-            });
-    
-            completedOrders.forEach(order => {
-                const dateStr = format(new Date(order.createdAt as string), 'yyyy-MM-dd');
-                if (revenueByDay.hasOwnProperty(dateStr)) {
-                    revenueByDay[dateStr] += order.total;
-                }
-            });
-
-            revenueChartData.push(...Object.entries(revenueByDay).map(([date, total]) => ({
-                name: format(new Date(date), 'dd/MM'),
-                Receita: total,
-            })));
-        }
-
-        return {
-            netRevenue,
-            totalCost,
-            grossProfit,
-            averageTicket,
-            revenueChartData,
-        };
-
-    }, [orders, dateRange]);
+    }, [user, activeCompany, companies, dateRange]);
     
     const handleDateFilterClick = (filter: string) => {
         setActiveFilter(filter);
@@ -131,16 +84,17 @@ export default function FinancialPage() {
         }
     };
 
-
     if (loading) {
         return <LoadingSpinner />;
     }
+    
+    const revenueChartData = financialData?.revenueByPeriod.map(d => ({ name: d.period, Receita: d.total })) || [];
 
     return (
         <div className="space-y-8">
             <PageHeader
                 title="Painel Financeiro"
-                description="Uma visão geral da saúde financeira do seu negócio."
+                description="Uma visão completa da saúde financeira do seu negócio."
             />
 
             <Card>
@@ -155,10 +109,10 @@ export default function FinancialPage() {
             </Card>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <StatCard title="Receita Líquida" value={formatCurrency(filteredData.netRevenue)} icon={<DollarSign className="h-4 w-4 text-muted-foreground" />} />
-                <StatCard title="Lucro Bruto" value={formatCurrency(filteredData.grossProfit)} icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />} />
-                <StatCard title="Custo dos Produtos" value={formatCurrency(filteredData.totalCost)} icon={<ShoppingCart className="h-4 w-4 text-muted-foreground" />} />
-                <StatCard title="Ticket Médio" value={formatCurrency(filteredData.averageTicket)} icon={<BarChart className="h-4 w-4 text-muted-foreground" />} />
+                <StatCard title="Receita Líquida" value={formatCurrency(financialData?.netRevenue || 0)} icon={<DollarSign className="h-4 w-4 text-muted-foreground" />} />
+                <StatCard title="Lucro Bruto" value={formatCurrency(financialData?.grossProfit || 0)} icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />} />
+                <StatCard title="Custos Totais" value={formatCurrency(financialData?.totalCosts || 0)} icon={<ShoppingCart className="h-4 w-4 text-muted-foreground" />} />
+                <StatCard title="Ticket Médio" value={formatCurrency(financialData?.averageTicket || 0)} icon={<BarChart className="h-4 w-4 text-muted-foreground" />} />
             </div>
 
             <Card>
@@ -167,7 +121,7 @@ export default function FinancialPage() {
                 </CardHeader>
                 <CardContent className="pl-2">
                      <ChartContainer config={{}} className="h-[350px] w-full">
-                        <RechartsBarChart data={filteredData.revenueChartData}>
+                        <RechartsBarChart data={revenueChartData}>
                             <CartesianGrid vertical={false} />
                             <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} />
                             <YAxis tickLine={false} axisLine={false} tickMargin={10} tickFormatter={(value) => formatCurrency(Number(value))} />
