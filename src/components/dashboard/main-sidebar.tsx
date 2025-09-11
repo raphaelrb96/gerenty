@@ -27,6 +27,7 @@ import {
   BarChart,
   DollarSign,
   Puzzle,
+  TrendingUp,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -55,7 +56,7 @@ export function MainSidebar() {
     { href: "/dashboard/products", label: t("Products"), icon: Package },
     { href: "/dashboard/orders", label: t("Orders"), icon: ShoppingCart },
     { href: "/dashboard/crm", label: "CRM", icon: HeartHandshake },
-    { href: "/dashboard/financials", label: "Financeiro", icon: DollarSign },
+    { href: "/dashboard/financials", label: "Financeiro", icon: TrendingUp },
     { href: "/dashboard/logistics", label: "Logística", icon: Truck },
     { href: "/dashboard/shipping", label: "Fretes", icon: Package },
     { href: "/dashboard/reports", label: "Relatórios", icon: BarChart },
@@ -104,3 +105,5 @@ export function MainSidebar() {
     </Sidebar>
   );
 }
+
+    
