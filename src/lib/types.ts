@@ -536,28 +536,30 @@ export type Company = {
 
 // CRM Types
 export type Customer = {
-    id: string;
-    ownerId: string;
-    name: string;
-    email?: string;
-    phone?: string;
-    document?: string;
-    profileImageUrl?: string;
-    status: string;
-    tags?: string[];
-    order: number;
-    address?: {
-        street?: string;
-        number?: string;
-        complement?: string;
-        neighborhood?: string;
-        city?: string;
-        state?: string;
-        zipCode?: string;
-    };
-    lastInteraction?: string | Date | Timestamp | FieldValue;
-    createdAt: string | Date | Timestamp | FieldValue;
-    updatedAt: string | Date | Timestamp | FieldValue;
+  id: string;
+  ownerId: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  document?: string;
+  profileImageUrl?: string;
+  status: string;
+  tags?: string[];
+  order: number;
+  stageOrder?: number;
+  globalOrder?: number;
+  address?: {
+      street?: string;
+      number?: string;
+      complement?: string;
+      neighborhood?: string;
+      city?: string;
+      state?: string;
+      zipCode?: string;
+  };
+  lastInteraction?: string | Date | Timestamp | FieldValue;
+  createdAt: string | Date | Timestamp | FieldValue;
+  updatedAt: string | Date | Timestamp | FieldValue;
 };
 
 // Team Management Types
@@ -570,7 +572,7 @@ export type Employee = {
     phone?: string;
     document?: string;
     type: 'Fixo' | 'Freelancer';
-    role: 'Vendedor' | 'Entregador' | 'Afiliado' | 'Outro';
+    role: 'admin' | 'empresa' | 'salesperson' | 'motoboy' | 'manager' | 'stockist' | 'accountant' | 'affiliate';
     isActive: boolean;
     address?: {
         street?: string;
@@ -606,5 +608,6 @@ export type Route = {
     startedAt?: string | Date | Timestamp | FieldValue;
     finishedAt?: string | Date | Timestamp | FieldValue;
 };
+
 
 

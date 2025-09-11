@@ -48,7 +48,7 @@ const formSchema = z.object({
   phone: z.string().optional(),
   document: z.string().optional(),
   type: z.enum(['Fixo', 'Freelancer']),
-  role: z.enum(['Vendedor', 'Entregador', 'Afiliado', 'Outro']),
+  role: z.enum(['admin', 'empresa', 'salesperson', 'motoboy', 'manager', 'stockist', 'accountant', 'affiliate']),
   isActive: z.boolean(),
   address: z.object({
     street: z.string().optional(),
@@ -85,7 +85,7 @@ export function MemberForm({ isOpen, onClose, onFinished, member, addEmployee, u
       phone: "",
       document: "",
       type: "Fixo",
-      role: "Vendedor",
+      role: "salesperson",
       isActive: true,
       address: {
         street: "",
@@ -118,7 +118,7 @@ export function MemberForm({ isOpen, onClose, onFinished, member, addEmployee, u
         phone: "",
         document: "",
         type: "Fixo",
-        role: "Vendedor",
+        role: "salesperson",
         isActive: true,
         address: { street: "", number: "", complement: "", neighborhood: "", city: "", state: "", zipCode: "" },
       });
@@ -180,7 +180,16 @@ export function MemberForm({ isOpen, onClose, onFinished, member, addEmployee, u
                 <AccordionItem value="item-2">
                   <AccordionTrigger>Detalhes do Cargo</AccordionTrigger>
                   <AccordionContent className="pt-4 space-y-4">
-                    <FormField control={form.control} name="role" render={({ field }) => (<FormItem><FormLabel>Função</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="Vendedor">Vendedor</SelectItem><SelectItem value="Entregador">Entregador</SelectItem><SelectItem value="Afiliado">Afiliado</SelectItem><SelectItem value="Outro">Outro</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="role" render={({ field }) => (<FormItem><FormLabel>Função</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>
+                        <SelectItem value="salesperson">Vendedor</SelectItem>
+                        <SelectItem value="motoboy">Entregador</SelectItem>
+                        <SelectItem value="manager">Gerente</SelectItem>
+                        <SelectItem value="stockist">Estoquista</SelectItem>
+                        <SelectItem value="accountant">Contador</SelectItem>
+                        <SelectItem value="affiliate">Afiliado</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="empresa">Dono</SelectItem>
+                    </SelectContent></Select><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="type" render={({ field }) => (<FormItem><FormLabel>Tipo de Vínculo</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="Fixo">Fixo (CLT)</SelectItem><SelectItem value="Freelancer">Freelancer</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="isActive" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Status Ativo</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                   </AccordionContent>
