@@ -2,7 +2,7 @@
 "use client";
 
 import { PageHeader } from "@/components/common/page-header";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { KeyRound, Webhook, Puzzle, Copy, PlusCircle, Trash2 } from "lucide-react";
