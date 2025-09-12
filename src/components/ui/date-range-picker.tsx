@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -22,31 +21,42 @@ interface DateRangePickerProps extends React.ComponentProps<"div"> {
 
 export function DateRangePicker({
   className,
-  date,
+  date: parentDate,
   onDateChange
 }: DateRangePickerProps) {
+  const [open, setOpen] = React.useState(false);
+  const [date, setDate] = React.useState<DateRange | undefined>(parentDate);
+
+  React.useEffect(() => {
+    setDate(parentDate);
+  }, [parentDate]);
+
+  const handleApply = () => {
+    onDateChange(date);
+    setOpen(false);
+  }
 
   return (
     <div className={cn("grid gap-2", className)}>
-      <Popover>
+      <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             id="date"
             variant={"outline"}
             className={cn(
               "w-full justify-start text-left font-normal",
-              !date && "text-muted-foreground"
+              !parentDate && "text-muted-foreground"
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {date?.from ? (
-              date.to ? (
+            {parentDate?.from ? (
+              parentDate.to ? (
                 <>
-                  {format(date.from, "LLL dd, y")} -{" "}
-                  {format(date.to, "LLL dd, y")}
+                  {format(parentDate.from, "LLL dd, y")} -{" "}
+                  {format(parentDate.to, "LLL dd, y")}
                 </>
               ) : (
-                format(date.from, "LLL dd, y")
+                format(parentDate.from, "LLL dd, y")
               )
             ) : (
               <span>Escolha uma data</span>
@@ -59,9 +69,12 @@ export function DateRangePicker({
             mode="range"
             defaultMonth={date?.from}
             selected={date}
-            onSelect={onDateChange}
+            onSelect={setDate}
             numberOfMonths={2}
           />
+           <div className="p-4 border-t flex justify-end">
+              <Button onClick={handleApply}>Aplicar</Button>
+           </div>
         </PopoverContent>
       </Popover>
     </div>
