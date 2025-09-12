@@ -1,6 +1,7 @@
 
 "use client";
 
+import * as React from "react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
 import { getProductsByUser } from "@/services/product-service";
