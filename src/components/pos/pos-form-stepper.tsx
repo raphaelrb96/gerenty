@@ -214,7 +214,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
   
   const total = subtotal - (Number(watchedDiscount) || 0) + (Number(watchedShippingCost) || 0) + (calculatedFees || 0);
 
-  const deliveryMethodMap = {
+  const deliveryMethodMap: Record<string, string> = {
     retirada_loja: 'pickup',
     entrega_padrao: 'standard',
     correios: 'correios',
@@ -290,7 +290,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
         companyId: activeCompany.id,
         customer: { id: customerId, name: values.customerName, email: values.customerEmail || '', phone: values.customerPhone, document: values.customerDocument },
         items: cart.map(({imageUrl, ...item}) => item),
-        status: 'completed' as OrderStatus,
+        status: 'pending' as OrderStatus,
         payment: { 
             method: values.paymentMethod as PaymentMethod, 
             status: values.paymentStatus, 
@@ -340,10 +340,10 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
 
   return (
     <div className="relative bg-muted/40 flex flex-col">
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 mb-28">
-             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" style={{ display: currentStep === 1 ? 'grid' : 'none' }}>
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 mb-28 md:mb-24">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" style={{ display: currentStep === 1 ? 'grid' : 'none' }}>
                 <div className="lg:col-span-2">
-                    <ProductGrid products={products} onAddToCart={onAddToCart} />
+                     <ProductGrid products={products} onAddToCart={onAddToCart} />
                 </div>
                 <div className="lg:col-span-1 flex flex-col bg-background rounded-lg border">
                     <h3 className="p-4 text-lg font-semibold border-b flex-shrink-0 flex items-center gap-2"><ShoppingCart className="h-5 w-5" /> Carrinho</h3>
@@ -368,7 +368,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
             </div>
 
             <Form {...form}>
-                <form onSubmit={(e) => e.preventDefault()}>
+                <form onSubmit={(e) => { e.preventDefault(); if (currentStep === 4) form.handleSubmit(onSubmit)(); }}>
                     {/* The rest of the form steps go inside this form tag */}
                     <div style={{ display: currentStep === 2 ? 'block' : 'none' }}>
                         <div className="max-w-2xl mx-auto p-1">
