@@ -25,7 +25,7 @@ import { useCompany } from "@/context/company-context";
 import { ProductGrid } from "./product-list";
 import { CartItem } from "./cart-item";
 import { cn } from "@/lib/utils";
-import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "../ui/command";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 
 const formSchema = z.object({
@@ -360,7 +360,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
             </div>
 
             <Form {...form}>
-                <form>
+                <form onSubmit={(e) => e.preventDefault()}>
                     {/* The rest of the form steps go inside this form tag */}
                     <div style={{ display: currentStep === 2 ? 'block' : 'none' }}>
                         <div className="max-w-2xl mx-auto p-1">
@@ -578,5 +578,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
     </div>
   );
 }
+
+    
 
     
