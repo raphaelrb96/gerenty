@@ -54,7 +54,7 @@ export function Header() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="icon" className="relative h-10 w-10">
-               <UserCircle className="h-6 w-6 text-muted-foreground" />
+               <UserCircle className="h-6 w-6" />
                <span className="sr-only">{t('dashboard.openUserMenu')}</span>
             </Button>
           </DropdownMenuTrigger>
