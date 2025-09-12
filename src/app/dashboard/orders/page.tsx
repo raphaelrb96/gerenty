@@ -56,7 +56,7 @@ function CompanySelector() {
                     <ChevronsUpDown className="h-4 w-4 opacity-50" />
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-[var(--radix-dropdown-menu-trigger-width)]">
+            <DropdownMenuContent align="start" className="w-[--radix-dropdown-menu-trigger-width)]">
                 <DropdownMenuItem onSelect={() => setActiveCompany(null)}>
                     Visão Geral de Todas as Empresas
                 </DropdownMenuItem>
@@ -106,7 +106,7 @@ export default function OrdersPage() {
                 // Date filter
                 const orderDate = new Date(order.createdAt as string);
                 const isDateInRange = dateRange?.from && dateRange?.to
-                    ? orderDate >= startOfDay(dateRange.from) && orderDate <= endOfDay(dateRange.to)
+                    ? orderDate >= startOfDay(dateRange.from) && orderDate <= endOfDay(date.to)
                     : true;
                 
                 // Status filter
@@ -193,22 +193,24 @@ export default function OrdersPage() {
       />
 
        <Card>
-            <CardContent className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                <CompanySelector />
-                <DateRangePicker date={dateRange} onDateChange={setDateRange} className="w-full" />
-                <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as any)}>
-                    <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Filtrar por status..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Todos os Status</SelectItem>
-                        {allStatuses.map(status => (
-                            <SelectItem key={status} value={status}>
-                                {t(`orderStatus.${status}`)}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+            <CardContent className="p-4 flex flex-col md:flex-row flex-wrap gap-4 items-center">
+                <div className="flex-1 min-w-[240px]"><CompanySelector /></div>
+                <div className="flex-1 min-w-[240px]"><DateRangePicker date={dateRange} onDateChange={setDateRange} className="w-full" /></div>
+                <div className="flex-1 min-w-[240px]">
+                    <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as any)}>
+                        <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Filtrar por status..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Todos os Status</SelectItem>
+                            {allStatuses.map(status => (
+                                <SelectItem key={status} value={status}>
+                                    {t(`orderStatus.${status}`)}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
             </CardContent>
        </Card>
 
