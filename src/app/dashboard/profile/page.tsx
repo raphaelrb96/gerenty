@@ -124,13 +124,11 @@ export default function ProfilePage() {
                 {userData?.statusPlan === 'ativo' && userData.validityDate ? t('profilePage.subscription.renewalDate', {date: new Date(userData?.validityDate as any).toLocaleDateString()}) : t('profilePage.subscription.inactiveText')}
             </p>
           </CardContent>
-          {(userData?.statusPlan === 'inativo' || userData?.statusPlan === 'pendente' || (daysUntilExpiry !== null && daysUntilExpiry < 15)) && (
-             <CardFooter className="border-t pt-4">
-                <Button onClick={() => router.push('/dashboard/billing')} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="w-full">
-                    {userData?.statusPlan === 'ativo' ? t('profilePage.subscription.renew') : t('profilePage.manageButton')}
-                </Button>
-            </CardFooter>
-          )}
+           <CardFooter className="border-t pt-4">
+              <Button onClick={() => router.push('/dashboard/billing')} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="w-full">
+                  {t('profilePage.manageButton')}
+              </Button>
+          </CardFooter>
         </Card>
       </div>
     </div>

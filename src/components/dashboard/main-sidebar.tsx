@@ -61,7 +61,6 @@ export function MainSidebar() {
     { href: "/dashboard/shipping", label: "Fretes", icon: Package },
     { href: "/dashboard/reports", label: "Relatórios", icon: BarChart },
     { href: "/dashboard/team", label: "Equipe", icon: Users },
-    { href: "/dashboard/billing", label: t("Billing"), icon: CreditCard },
     { href: "/dashboard/companies", label: t("companiesPage.sidebarTitle"), icon: Building },
     { href: "/dashboard/integrations", label: "Integrações", icon: Puzzle },
     { href: "/dashboard/profile", label: t("Profile"), icon: User },
