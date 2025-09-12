@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { OrderDetails } from "@/components/orders/order-details";
-import { File, MoreVertical, ShoppingCart, ChevronsUpDown, Building } from "lucide-react";
+import { File, MoreVertical, ShoppingCart, ChevronsUpDown, Building, Filter } from "lucide-react";
 import { PageHeader } from "@/components/common/page-header";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { EmptyState } from "@/components/common/empty-state";
@@ -25,9 +25,13 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
 function CompanySelector() {
@@ -64,6 +68,8 @@ function CompanySelector() {
     );
 }
 
+const allStatuses: OrderStatus[] = ["pending", "confirmed", "processing", "shipped", "delivered", "completed", "cancelled", "refunded"];
+
 export default function OrdersPage() {
     const { t } = useTranslation();
     const { user } = useAuth();
@@ -74,6 +80,8 @@ export default function OrdersPage() {
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [dateRange, setDateRange] = useState<DateRange | undefined>({ from: subDays(new Date(), 29), to: new Date() });
+    const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all");
+
 
     const fetchOrders = async () => {
         if (!user) {
@@ -92,11 +100,17 @@ export default function OrdersPage() {
 
             const filteredOrders = userOrders.filter(order => {
                 if (!order.createdAt) return false;
+
+                // Date filter
                 const orderDate = new Date(order.createdAt as string);
-                 if (dateRange?.from && dateRange?.to) {
-                    return orderDate >= startOfDay(dateRange.from) && orderDate <= endOfDay(dateRange.to);
-                }
-                return true;
+                const isDateInRange = dateRange?.from && dateRange?.to
+                    ? orderDate >= startOfDay(dateRange.from) && orderDate <= endOfDay(dateRange.to)
+                    : true;
+                
+                // Status filter
+                const isStatusMatch = statusFilter === 'all' || order.status === statusFilter;
+
+                return isDateInRange && isStatusMatch;
             });
 
             setOrders(filteredOrders);
@@ -114,7 +128,7 @@ export default function OrdersPage() {
         } else if (!user) {
             setLoading(false);
         }
-    }, [user, activeCompany, companies, dateRange]);
+    }, [user, activeCompany, companies, dateRange, statusFilter]);
 
 
     const handleViewDetails = (order: Order) => {
@@ -180,6 +194,19 @@ export default function OrdersPage() {
             <CardContent className="p-4 flex flex-col md:flex-row items-center gap-4">
                 <CompanySelector />
                 <DateRangePicker date={dateRange} onDateChange={setDateRange} />
+                <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as any)}>
+                    <SelectTrigger className="w-full md:w-[180px]">
+                        <SelectValue placeholder="Filtrar por status..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Todos os Status</SelectItem>
+                        {allStatuses.map(status => (
+                            <SelectItem key={status} value={status}>
+                                {t(`orderStatus.${status}`)}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             </CardContent>
        </Card>
 
@@ -197,7 +224,7 @@ export default function OrdersPage() {
         <EmptyState
             icon={<ShoppingCart className="h-16 w-16" />}
             title={t('ordersPage.empty.title')}
-            description={!activeCompany ? "Selecione uma empresa para ver os pedidos ou veja todos." : t('ordersPage.empty.description')}
+            description={!activeCompany ? "Selecione uma empresa para ver os pedidos ou veja todos." : "Nenhum pedido encontrado com os filtros selecionados."}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
