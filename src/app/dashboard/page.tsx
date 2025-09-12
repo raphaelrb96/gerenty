@@ -146,7 +146,7 @@ const AccountStatCard = ({ icon, title, value, detail, warning }: { icon: React.
 export default function DashboardPage() {
   const { t } = useTranslation();
   const { user, userData } = useAuth();
-  const { activeCompany, companies } = useCompany();
+  const { activeCompany, companies, loading: companyLoading } = useCompany();
   const { formatCurrency } = useCurrency();
   
   const [allOrders, setAllOrders] = useState<Order[]>([]);
@@ -160,10 +160,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function fetchData() {
-        if (!user) {
-            setLoading(false);
-            setAllOrders([]);
-            setAllProducts([]);
+        if (!user || companyLoading) {
             return;
         }
 
@@ -192,7 +189,7 @@ export default function DashboardPage() {
     if (user && companies !== undefined) {
        fetchData();
     }
-  }, [user, activeCompany, companies]);
+  }, [user, activeCompany, companies, companyLoading]);
 
   const filteredData = useMemo(() => {
     const ordersInDateRange = allOrders.filter(order => {

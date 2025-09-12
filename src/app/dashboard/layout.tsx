@@ -11,8 +11,8 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ProtectedRoute>
-      <CompanyProvider>
+    <CompanyProvider>
+      <ProtectedRoute>
         <SidebarProvider>
           <div className="flex w-full min-h-screen bg-muted/40">
             <MainSidebar />
@@ -26,7 +26,7 @@ export default function DashboardLayout({
             </SidebarInset>
           </div>
         </SidebarProvider>
-      </CompanyProvider>
-    </ProtectedRoute>
+      </ProtectedRoute>
+    </CompanyProvider>
   );
 }

@@ -89,8 +89,8 @@ export const CompanyProvider: React.FC<{ children: ReactNode }> = ({ children })
       }
   }, [user]);
   
-  if (authLoading) {
-    return <div className="flex h-screen w-full items-center justify-center"><LoadingSpinner /></div>
+  if (authLoading || loading) {
+    return null;
   }
 
   return (
