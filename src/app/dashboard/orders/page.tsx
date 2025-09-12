@@ -106,7 +106,7 @@ export default function OrdersPage() {
                 // Date filter
                 const orderDate = new Date(order.createdAt as string);
                 const isDateInRange = dateRange?.from && dateRange?.to
-                    ? orderDate >= startOfDay(dateRange.from) && orderDate <= endOfDay(date.to)
+                    ? orderDate >= startOfDay(dateRange.from) && orderDate <= endOfDay(dateRange.to)
                     : true;
                 
                 // Status filter
@@ -282,3 +282,5 @@ export default function OrdersPage() {
     </div>
   );
 }
+
+    
