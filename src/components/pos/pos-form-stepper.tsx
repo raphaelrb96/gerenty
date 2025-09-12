@@ -25,7 +25,7 @@ import { useCompany } from "@/context/company-context";
 import { ProductGrid } from "./product-list";
 import { CartItem } from "./cart-item";
 import { cn } from "@/lib/utils";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "../ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 
 const formSchema = z.object({
@@ -104,7 +104,7 @@ function CustomerSearch({ onCustomerSelect }: { onCustomerSelect: (customer: Cus
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [open, setOpen] = useState(false);
     
-    React.useEffect(() => {
+    useEffect(() => {
         const fetchCustomers = async () => {
             if (user) {
                 const userCustomers = await getCustomersByUser(user.uid);
@@ -333,31 +333,28 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
   return (
     <div className="relative bg-muted/40 flex flex-col">
         <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-28">
-            {/* Step 1: Cart & Products */}
-            <div style={{ display: currentStep === 1 ? 'block' : 'none' }}>
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-2">
-                        <ProductGrid products={products} onAddToCart={onAddToCart} />
-                    </div>
-                    <div className="lg:col-span-1 flex flex-col bg-background rounded-lg border">
-                        <h3 className="p-4 text-lg font-semibold border-b flex-shrink-0 flex items-center gap-2"><ShoppingCart className="h-5 w-5" /> Carrinho</h3>
-                        <div className="flex-1 overflow-y-auto p-4">
-                            {cart.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-sm">
-                                    <Package className="h-12 w-12 mb-4" />
-                                    <p>Selecione produtos para começar.</p>
-                                </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    {cart.map((item, index) => (
-                                        <React.Fragment key={item.productId}>
-                                            <CartItem item={item} onUpdateQuantity={onUpdateCartQuantity} onUpdatePrice={onUpdateCartPrice} onRemove={onRemoveFromCart} />
-                                            {index < cart.length - 1 && <Separator />}
-                                        </React.Fragment>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" style={{ display: currentStep === 1 ? 'grid' : 'none' }}>
+                <div className="lg:col-span-2">
+                    <ProductGrid products={products} onAddToCart={onAddToCart} />
+                </div>
+                <div className="lg:col-span-1 flex flex-col bg-background rounded-lg border">
+                    <h3 className="p-4 text-lg font-semibold border-b flex-shrink-0 flex items-center gap-2"><ShoppingCart className="h-5 w-5" /> Carrinho</h3>
+                    <div className="flex-1 overflow-y-auto p-4">
+                        {cart.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-sm">
+                                <Package className="h-12 w-12 mb-4" />
+                                <p>Selecione produtos para começar.</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {cart.map((item, index) => (
+                                    <React.Fragment key={item.productId}>
+                                        <CartItem item={item} onUpdateQuantity={onUpdateCartQuantity} onUpdatePrice={onUpdateCartPrice} onRemove={onRemoveFromCart} />
+                                        {index < cart.length - 1 && <Separator />}
+                                    </React.Fragment>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -523,7 +520,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
             </Form>
         </main>
         
-        <footer className="fixed bottom-0 left-0 right-0 z-10 border-t bg-background/80 backdrop-blur-sm p-4">
+        <footer className="fixed bottom-0 right-0 z-10 border-t bg-background/80 backdrop-blur-sm p-4 md:left-[var(--sidebar-width)] peer-data-[state=collapsed]:md:left-[var(--sidebar-width-icon)] transition-[left] ease-linear">
              <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4">
                 <div className="flex items-center gap-1 sm:gap-2">
                     <div className="flex items-center gap-1 sm:gap-2">
@@ -581,3 +578,5 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
     </div>
   );
 }
+
+    
