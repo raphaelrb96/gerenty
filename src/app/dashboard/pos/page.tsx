@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
-import { getProducts } from "@/services/product-service";
+import { getProductsByUser } from "@/services/product-service";
 import type { Product, OrderItem } from "@/lib/types";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { useCompany } from "@/context/company-context";
@@ -87,7 +87,7 @@ export default function PosPage() {
     if (!user || !activeCompany) return;
     setLoading(true);
     try {
-      const userProducts = await getProducts(activeCompany.id);
+      const userProducts = await getProductsByUser(user.uid);
       setProducts(userProducts);
     } catch (error) {
       console.error(error);
