@@ -214,6 +214,14 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
   
   const total = subtotal - (Number(watchedDiscount) || 0) + (Number(watchedShippingCost) || 0) + (calculatedFees || 0);
 
+  const deliveryMethodMap = {
+    retirada_loja: 'pickup',
+    entrega_padrao: 'standard',
+    correios: 'correios',
+    logistica_propria: 'own',
+    digital: 'digital'
+  };
+
 
   const handleNextStep = async () => {
     let fieldsToValidate: (keyof PosFormValues)[] | (string)[] = [];
@@ -487,7 +495,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                                     </div>
                                      <div className="rounded-lg border p-4 space-y-2">
                                         <h3 className="font-semibold text-lg">Entrega</h3>
-                                        <p className="text-sm"><strong>Método:</strong> {t(`deliveryMethods.${form.getValues('deliveryMethod') as keyof typeof t.deliveryMethods}`)}</p>
+                                        <p className="text-sm"><strong>Método:</strong> {t(`deliveryMethods.${deliveryMethodMap[form.getValues('deliveryMethod')]}`)}</p>
                                         {needsShippingAddress && (
                                              <address className="text-sm not-italic">
                                                 {form.getValues('address.street')}, {form.getValues('address.number')} <br />
@@ -578,6 +586,8 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
     </div>
   );
 }
+
+    
 
     
 
