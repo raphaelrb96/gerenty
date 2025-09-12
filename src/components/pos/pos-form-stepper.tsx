@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -247,7 +247,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
 
   const handlePrevStep = () => {
     if (currentStep > 1) {
-        setCurrentStep(currentStep - 1);
+        setCurrentStep(currentStep + 1);
     }
   };
   
