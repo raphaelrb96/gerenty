@@ -33,7 +33,7 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
       />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {filteredProducts.length > 0 ? filteredProducts.map((product) => (
-          <Card key={product.id} className="overflow-hidden group cursor-pointer" onClick={() => onAddToCart(product)}>
+          <Card key={product.id} className="overflow-hidden group">
             <CardContent className="p-2 flex items-center gap-3">
                 <div className="relative w-16 h-16 flex-shrink-0">
                     <Image
@@ -48,7 +48,7 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
                   <p className="font-semibold text-sm leading-tight line-clamp-2" title={product.name}>{product.name}</p>
                    <div className="flex items-center justify-between">
                      <p className="text-sm font-bold text-primary">{formatCurrency(product.pricing[0]?.price)}</p>
-                     <Button className="h-7 w-7" variant="ghost" size="icon">
+                     <Button type="button" onClick={() => onAddToCart(product)} className="h-7 w-7" variant="ghost" size="icon">
                        <PlusCircle className="h-5 w-5" />
                      </Button>
                    </div>
