@@ -204,7 +204,8 @@ export function CreateCompanyForm() {
                 description: `A empresa ${newCompany.name} foi criada com sucesso.`,
             });
             setActiveCompany(newCompany);
-            router.push("/dashboard");
+            // Force a full page reload to ensure the CompanyProvider is updated
+            window.location.href = "/dashboard";
 
         } catch(error) {
             setIsLoading(false);
