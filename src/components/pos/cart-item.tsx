@@ -29,6 +29,7 @@ export function CartItem({ item, onUpdateQuantity, onUpdatePrice, onRemove }: Ca
             />
             <div className="flex-grow flex flex-col">
                 <p className="font-semibold text-sm leading-tight line-clamp-2">{item.productName}</p>
+                
                 <div className="mt-2 flex items-center gap-2">
                     <Button
                         type="button"
@@ -55,7 +56,7 @@ export function CartItem({ item, onUpdateQuantity, onUpdatePrice, onRemove }: Ca
                         <Plus className="h-3 w-3" />
                     </Button>
                 </div>
-                 <div className="mt-2 flex items-center justify-between">
+                 <div className="mt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div className="relative">
                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">R$</span>
                        <Input
@@ -66,12 +67,12 @@ export function CartItem({ item, onUpdateQuantity, onUpdatePrice, onRemove }: Ca
                             onChange={(e) => onUpdatePrice(item.productId, parseFloat(e.target.value) || 0)}
                         />
                     </div>
-                    <p className="font-bold text-sm">{formatCurrency(item.totalPrice)}</p>
+                    <p className="font-bold text-sm text-right sm:text-left">{formatCurrency(item.totalPrice)}</p>
                     <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive self-end sm:self-center"
                         onClick={() => onRemove(item.productId)}
                     >
                         <Trash2 className="h-4 w-4" />
