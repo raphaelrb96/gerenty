@@ -48,13 +48,15 @@ function CompanySelector() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-full md:w-auto">
-                    <Building className="mr-2 h-4 w-4" />
-                    <span className="truncate max-w-[200px]">{getDisplayName()}</span>
-                    <ChevronsUpDown className="ml-auto h-4 w-4 opacity-50" />
+                <Button variant="outline" className="w-full justify-between">
+                    <div className="flex items-center gap-2">
+                        <Building className="h-4 w-4" />
+                        <span className="truncate max-w-[250px]">{getDisplayName()}</span>
+                    </div>
+                    <ChevronsUpDown className="h-4 w-4 opacity-50" />
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-full md:w-[300px]">
+            <DropdownMenuContent align="start" className="w-[var(--radix-dropdown-menu-trigger-width)]">
                 <DropdownMenuItem onSelect={() => setActiveCompany(null)}>
                     Visão Geral de Todas as Empresas
                 </DropdownMenuItem>
@@ -191,11 +193,11 @@ export default function OrdersPage() {
       />
 
        <Card>
-            <CardContent className="p-4 flex flex-col md:flex-row items-center gap-4">
+            <CardContent className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
                 <CompanySelector />
-                <DateRangePicker date={dateRange} onDateChange={setDateRange} />
+                <DateRangePicker date={dateRange} onDateChange={setDateRange} className="w-full" />
                 <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as any)}>
-                    <SelectTrigger className="w-full md:w-[180px]">
+                    <SelectTrigger className="w-full">
                         <SelectValue placeholder="Filtrar por status..." />
                     </SelectTrigger>
                     <SelectContent>
