@@ -155,7 +155,7 @@ export function RouteForm({ onFinished }: RouteFormProps) {
             <div className="flex-1 p-6">
                 <EmptyState
                     icon={<UserPlus className="h-12 w-12" />}
-                    title="Nenhum Motorista Encontrado"
+                    title="Nenhum Entregador Encontrado"
                     description="Você precisa cadastrar ao menos um funcionário com a função 'Entregador' para criar uma rota."
                     action={<Button onClick={() => router.push('/dashboard/team')}>Cadastrar Funcionário</Button>}
                 />
