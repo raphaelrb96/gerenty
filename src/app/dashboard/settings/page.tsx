@@ -41,7 +41,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { KeyRound, Webhook, Copy, PlusCircle, Trash2, CheckCircle, MoreVertical, Loader2, Calendar as CalendarIcon, FileText, Bot } from "lucide-react";
+import { KeyRound, Webhook, Copy, PlusCircle, Trash2, CheckCircle, MoreVertical, Loader2, Calendar as CalendarIcon, FileText, Bot, BookOpen } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ApiKey, Webhook as WebhookType } from "@/lib/types";
 import { createApiKey, getApiKeys, revokeApiKey } from "@/services/api-key-service";
@@ -359,6 +359,56 @@ function WebhookFormSheetContent({ onSave, onCancel }: { onSave: (v: any) => voi
     );
 }
 
+function DocumentationCard() {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <BookOpen className="h-5 w-5" /> Guia do Desenvolvedor
+                </CardTitle>
+                <CardDescription>
+                    Instruções sobre como usar Chaves de API e Webhooks para integrar com o Gerenty.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6 text-sm">
+                <div>
+                    <h3 className="font-semibold mb-2 text-base">Usando Chaves de API</h3>
+                    <p className="text-muted-foreground mb-2">
+                        As chaves de API permitem que seus sistemas externos acessem seus dados do Gerenty de forma segura.
+                    </p>
+                    <p className="mb-2">
+                        1. Gere uma chave na aba "Chaves de API". Guarde-a em um local seguro, pois ela não será exibida novamente.
+                    </p>
+                    <p className="mb-2">
+                        2. Para autenticar suas requisições, inclua a chave no cabeçalho `Authorization` como um Bearer Token.
+                    </p>
+                    <pre className="p-2 rounded-md bg-muted font-mono text-xs"><code>{`fetch('https://api.gerenty.com/v1/orders', {
+  headers: {
+    'Authorization': 'Bearer SUA_CHAVE_DE_API_AQUI'
+  }
+})`}</code></pre>
+                </div>
+                 <div className="border-t pt-6">
+                    <h3 className="font-semibold mb-2 text-base">Recebendo Webhooks</h3>
+                    <p className="text-muted-foreground mb-2">
+                        Webhooks notificam seus sistemas em tempo real quando eventos específicos acontecem no Gerenty.
+                    </p>
+                    <p className="mb-2">
+                        1. Crie um endpoint público em seu servidor (ex: `https://seu-site.com/api/webhook`) que aceite requisições POST.
+                    </p>
+                    <p className="mb-2">
+                        2. Configure um novo webhook na aba "Webhooks", informando a URL e os eventos que deseja ouvir.
+                    </p>
+                     <p className="mb-2">
+                        3. Se você configurar um 'Secret', cada requisição virá com um cabeçalho `X-Gerenty-Signature` para que você possa verificar a autenticidade da chamada.
+                    </p>
+                    <p className="mb-2">O payload será enviado como um JSON no corpo da requisição POST.</p>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
 export default function SettingsPage() {
   return (
     <div className="space-y-8">
@@ -366,6 +416,8 @@ export default function SettingsPage() {
         title="Configurações Avançadas"
         description="Gerencie chaves de API, webhooks e outras configurações técnicas."
       />
+
+       <DocumentationCard />
 
        <Tabs defaultValue="api-keys" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
@@ -382,3 +434,4 @@ export default function SettingsPage() {
     </div>
   );
 }
+
