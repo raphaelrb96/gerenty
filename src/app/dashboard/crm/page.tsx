@@ -222,7 +222,16 @@ function CrmPageComponent() {
         
         // --- Stage Reordering ---
         if (isActiveAStage && isOverAStage) {
-             // Visual reordering handled in handleDragEnd for better reliability
+            setStages((currentStages) => {
+                const oldIndex = currentStages.findIndex(s => s.id === active.id);
+                const overId = over.id.toString().replace('stage-drop-', '');
+                const newIndex = currentStages.findIndex(s => s.id === overId);
+    
+                if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+                    return arrayMove(currentStages, oldIndex, newIndex);
+                }
+                return currentStages;
+            });
             return;
         }
 
@@ -258,27 +267,15 @@ function CrmPageComponent() {
     
         if (!over || active.id === over.id) return;
     
-        // --- Stage Reordering ---
+        // --- Stage Reordering Persistence ---
         if (activeItemType === 'Stage') {
-             const oldIndex = stages.findIndex(s => s.id === active.id);
-             const overId = over.id.toString().replace('stage-drop-', '');
-             const newIndex = stages.findIndex(s => s.id === overId);
-
-             if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
-                 const reorderedStages = arrayMove(stages, oldIndex, newIndex);
-                 const finalStagesToSave = reorderedStages.map((stage, index) => ({ ...stage, order: index }));
-
-                 // Update local state immediately for responsiveness
-                 setStages(finalStagesToSave);
-
-                 // Persist the changes
-                 try {
-                     await batchUpdateStageOrder(finalStagesToSave.map(s => ({ id: s.id, order: s.order })));
-                 } catch (error) {
-                     console.error("Error persisting stage order:", error);
-                     setStages(stages); // Revert on error
-                     toast({ variant: "destructive", title: "Erro ao reordenar estágios." });
-                 }
+             const finalStagesToSave = stages.map((stage, index) => ({ ...stage, order: index }));
+             try {
+                 await batchUpdateStageOrder(finalStagesToSave.map(s => ({ id: s.id, order: s.order })));
+             } catch (error) {
+                 console.error("Error persisting stage order:", error);
+                 // Optionally revert state on error
+                 toast({ variant: "destructive", title: "Erro ao reordenar estágios." });
              }
              return; // End execution here for stage reordering
         }
