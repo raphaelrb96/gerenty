@@ -18,7 +18,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { DollarSign, Package, ShoppingCart, ArrowRight, TrendingUp, BarChart, FileText, ChevronsUpDown, Building, Calendar, Users, History, AlertCircle, XCircle, RotateCcw } from "lucide-react";
+import { DollarSign, Package, ShoppingCart, ArrowRight, TrendingUp, BarChart, FileText, ChevronsUpDown, Building, Calendar, Users, History, AlertCircle, XCircle, RotateCcw, Hourglass } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
 import { useEffect, useState, useMemo } from "react";
@@ -203,6 +203,7 @@ export default function DashboardPage() {
     const completedOrders = ordersInDateRange.filter(o => o.status === 'completed');
     const cancelledOrders = ordersInDateRange.filter(o => o.status === 'cancelled');
     const refundedOrders = ordersInDateRange.filter(o => o.status === 'refunded');
+    const pendingOrders = ordersInDateRange.filter(o => !['completed', 'cancelled', 'refunded'].includes(o.status));
 
     const totalRevenue = completedOrders.reduce((acc, order) => acc + order.total, 0);
     const totalCost = completedOrders.reduce((acc, order) => acc + (order.items.reduce((itemAcc, item) => itemAcc + (item.costPrice || 0) * item.quantity, 0)), 0);
@@ -215,6 +216,11 @@ export default function DashboardPage() {
     const cancelledOrdersCount = cancelledOrders.length;
     
     const refundedRevenue = refundedOrders.reduce((acc, order) => acc + order.total, 0);
+
+    const pendingRevenue = pendingOrders.reduce((acc, order) => acc + order.total, 0);
+    const pendingCost = pendingOrders.reduce((acc, order) => acc + (order.items.reduce((itemAcc, item) => itemAcc + (item.costPrice || 0) * item.quantity, 0)), 0);
+    const pendingProfit = pendingRevenue - pendingCost;
+    const pendingOrdersCount = pendingOrders.length;
 
     const topProducts = completedOrders
         .flatMap(o => o.items)
@@ -295,6 +301,9 @@ export default function DashboardPage() {
         cancelledOrdersCount,
         refundedRevenue,
         totalSales: ordersInDateRange.length,
+        pendingRevenue,
+        pendingProfit,
+        pendingOrdersCount,
         topProducts,
         totalRegisteredProducts: allProducts.length,
         revenueChartData,
@@ -329,6 +338,9 @@ export default function DashboardPage() {
     { title: t('dashboard.stats.totalRevenue'), value: formatCurrency(filteredData.totalRevenue), icon: <DollarSign /> },
     { title: t('dashboard.stats.totalProfit'), value: formatCurrency(filteredData.totalProfit), icon: <TrendingUp /> },
     { title: t('dashboard.stats.paidOrders'), value: `+${filteredData.paidOrdersCount}`, icon: <ShoppingCart /> },
+    { title: "Receita Pendente", value: formatCurrency(filteredData.pendingRevenue), icon: <Hourglass /> },
+    { title: "Lucro Pendente", value: formatCurrency(filteredData.pendingProfit), icon: <Hourglass /> },
+    { title: "Pedidos Pendentes", value: `${filteredData.pendingOrdersCount}`, icon: <Hourglass /> },
     { title: t('dashboard.stats.averageTicket'), value: formatCurrency(filteredData.averageTicket), icon: <FileText /> },
     { title: t('dashboard.stats.totalCost'), value: formatCurrency(filteredData.totalCost), icon: <DollarSign /> },
     { title: t('dashboard.stats.itemsSold'), value: `${filteredData.itemsSoldCount}`, icon: <Package /> },
@@ -393,7 +405,7 @@ export default function DashboardPage() {
 
       {(activeCompany || companies.length > 0) && (
         <>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {stats.map(stat => (
               <Card key={stat.title}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -461,3 +473,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
