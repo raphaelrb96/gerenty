@@ -62,7 +62,6 @@ export function MainSidebar() {
     { href: "/dashboard/team", label: "Equipe", icon: Users },
     { href: "/dashboard/companies", label: t("companiesPage.sidebarTitle"), icon: Building },
     { href: "/dashboard/integrations", label: "Integrações", icon: Puzzle },
-    { href: "/dashboard/profile", label: t("Profile"), icon: User },
     { href: "/dashboard/settings", label: "Configurações", icon: Settings },
   ];
 
