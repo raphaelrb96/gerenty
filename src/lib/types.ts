@@ -621,12 +621,25 @@ export type ApiKey = {
   lastUsedAt?: string | Date | Timestamp | FieldValue;
 }
 
+export type WebhookEvent = 
+  | 'order.created' 
+  | 'order.updated' 
+  | 'order.paid'
+  | 'order.shipped'
+  | 'order.cancelled'
+  | 'customer.created'
+  | 'customer.updated'
+  | 'product.created'
+  | 'product.updated'
+  | 'stock.low'
+  | 'stock.out_of_stock';
+
 export type Webhook = {
   id: string;
   ownerId: string;
   companyId: string;
   url: string;
-  event: 'order.created' | 'order.updated' | 'stock.low';
+  event: WebhookEvent;
   authentication?: 'none' | 'header';
   secret?: string; // Only stored if auth type is header
   createdAt: string | Date | Timestamp | FieldValue;

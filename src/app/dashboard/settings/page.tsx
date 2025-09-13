@@ -336,17 +336,26 @@ function WebhooksTab() {
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 text-sm">
-                <div>
-                     <p className="mb-2">
-                        1. Crie um endpoint público em seu servidor (ex: `https://seu-site.com/api/webhook`) que aceite requisições POST.
+                 <div>
+                    <h4 className="font-semibold mb-2">O que é um Webhook?</h4>
+                    <p className="text-muted-foreground mb-4">
+                        Imagine que um webhook é como uma notificação automática para seus outros sistemas. Em vez de você precisar verificar no Gerenty se algo novo aconteceu (como um novo pedido), o Gerenty avisa seu sistema na mesma hora.
                     </p>
-                    <p className="mb-2">
-                        2. Configure um novo webhook no painel acima, informando a URL e os eventos que deseja ouvir.
-                    </p>
-                     <p className="mb-2">
-                        3. Se você configurar um 'Secret', cada requisição virá com um cabeçalho `X-Gerenty-Signature` para que você possa verificar a autenticidade da chamada.
-                    </p>
-                    <p className="mb-2">O payload do evento será enviado como um JSON no corpo da requisição POST.</p>
+                    <h4 className="font-semibold mb-2">Passo a Passo:</h4>
+                    <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
+                        <li>
+                            <strong>Crie um "Ouvinte" no seu sistema:</strong> Você precisa ter uma URL pública (um link) no seu site ou sistema que seja capaz de receber informações. Ex: `https://seu-site.com/api/gerenty-notifications`.
+                        </li>
+                        <li>
+                            <strong>Configure o Webhook aqui:</strong> Clique em "Adicionar Webhook", insira a URL que você criou e escolha qual evento você quer que dispare a notificação (Ex: "Pedido Criado").
+                        </li>
+                        <li>
+                            <strong>(Opcional) Adicione Segurança:</strong> Se você preencher o campo "Secret", nós enviaremos um código secreto em cada notificação. Isso permite que seu sistema verifique se a notificação veio mesmo do Gerenty.
+                        </li>
+                        <li>
+                            <strong>Pronto!</strong> Agora, sempre que o evento escolhido acontecer, o Gerenty enviará os detalhes para a sua URL, permitindo que você automatize tarefas como enviar emails, atualizar planilhas, etc.
+                        </li>
+                    </ol>
                 </div>
             </CardContent>
         </Card>
@@ -384,9 +393,17 @@ function WebhookFormSheetContent({ onSave, onCancel }: { onSave: (v: any) => voi
             <Select value={event} onValueChange={(v: WebhookType['event']) => setEvent(v)}>
               <SelectTrigger id="webhook-event"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="order.created">Pedido Criado</SelectItem>
-                <SelectItem value="order.updated">Pedido Atualizado</SelectItem>
-                <SelectItem value="stock.low">Estoque Baixo</SelectItem>
+                <SelectItem value="order.created">Pedido: Criado</SelectItem>
+                <SelectItem value="order.updated">Pedido: Atualizado</SelectItem>
+                <SelectItem value="order.paid">Pedido: Pago</SelectItem>
+                <SelectItem value="order.shipped">Pedido: Enviado</SelectItem>
+                <SelectItem value="order.cancelled">Pedido: Cancelado</SelectItem>
+                <SelectItem value="customer.created">Cliente: Criado</SelectItem>
+                <SelectItem value="customer.updated">Cliente: Atualizado</SelectItem>
+                <SelectItem value="product.created">Produto: Criado</SelectItem>
+                <SelectItem value="product.updated">Produto: Atualizado</SelectItem>
+                <SelectItem value="stock.low">Estoque: Baixo</SelectItem>
+                <SelectItem value="stock.out_of_stock">Estoque: Esgotado</SelectItem>
               </SelectContent>
             </Select>
           </div>
