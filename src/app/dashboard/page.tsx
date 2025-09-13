@@ -222,7 +222,7 @@ export default function DashboardPage() {
     const pendingProfit = pendingRevenue - pendingCost;
     const pendingOrdersCount = pendingOrders.length;
 
-    const topProducts = completedOrders
+    const topProducts = pendingOrders
         .flatMap(o => o.items)
         .reduce((acc, item) => {
             const existing = acc.find(p => p.productId === item.productId);
