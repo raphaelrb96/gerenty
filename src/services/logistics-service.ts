@@ -34,49 +34,4 @@ export async function getRoutes(ownerId: string): Promise<Route[]> {
     }
 }
 
-export async function createRoute(
-    ownerId: string, 
-    driverId: string, 
-    driverName: string, 
-    orders: Order[],
-    title?: string,
-    notes?: string
-): Promise<void> {
-    const batch = writeBatch(db);
-
-    try {
-        // 1. Create the new route document
-        const newRouteRef = doc(routesCollection);
-        const totalValue = orders.reduce((sum, order) => sum + order.total, 0);
-        const totalFee = orders.reduce((sum, order) => sum + (order.shippingCost || 0), 0);
-
-        const newRouteData: Omit<Route, 'id'> = {
-            ownerId,
-            driverId,
-            driverName,
-            title: title || `Rota de ${driverName} - ${new Date().toLocaleDateString()}`,
-            notes,
-            orders,
-            status: "A Processar",
-            totalValue,
-            totalFee,
-            createdAt: serverTimestamp(),
-        };
-        batch.set(newRouteRef, newRouteData);
-
-        // 2. Update each order to include the new routeId
-        orders.forEach(order => {
-            const orderRef = doc(db, "orders", order.id);
-            batch.update(orderRef, { "shipping.routeId": newRouteRef.id });
-        });
-
-        // 3. Commit all changes at once
-        await batch.commit();
-
-    } catch (error) {
-        console.error("Error creating route and updating orders: ", error);
-        throw new Error("Failed to create route.");
-    }
-}
-
 export type { Route };
