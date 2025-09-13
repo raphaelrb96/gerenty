@@ -424,7 +424,7 @@ export default function DashboardPage() {
             <Card className="col-span-1">
                 <CardHeader>
                     <CardTitle>{t('dashboard.charts.revenueOverview')}</CardTitle>
-                </CardContent>
+                </CardHeader>
                 <CardContent className="pl-2">
                     <ChartContainer config={{}} className="h-[250px] w-full">
                         <RechartsBarChart accessibilityLayer data={filteredData.revenueChartData}>
@@ -474,9 +474,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
-
-    
-
-    
