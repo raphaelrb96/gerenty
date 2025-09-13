@@ -51,13 +51,6 @@ import { DatePicker } from "@/components/ui/date-picker";
 import Image from "next/image";
 import { Checkbox } from "@/components/ui/checkbox";
 
-const integrationsData = [
-  { name: "Shopify", description: "Sincronize seus produtos e pedidos com sua loja Shopify.", logo: "/logos/shopify.svg", isConnected: true },
-  { name: "Mercado Pago", description: "Receba pagamentos com a solução do Mercado Livre.", logo: "/logos/mercado-pago.svg", isConnected: true },
-  { name: "Mercado Livre", description: "Venda seus produtos no maior marketplace da América Latina.", logo: "/logos/mercado-livre.svg", isConnected: false },
-  { name: "Amazon", description: "Alcance milhões de clientes na Amazon.", logo: "/logos/amazon.svg", isConnected: false },
-];
-
 function ApiKeysTab() {
     const { user } = useAuth();
     const { activeCompany } = useCompany();
@@ -366,42 +359,6 @@ function WebhookFormSheetContent({ onSave, onCancel }: { onSave: (v: any) => voi
     );
 }
 
-function IntegrationsTab() {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Gerenciamento de Integrações</CardTitle>
-        <CardDescription>Visualize e gerencie as integrações ativas da sua empresa.</CardDescription>
-      </CardHeader>
-      <CardContent>
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {integrationsData.map(int => (
-              <Card key={int.name} className="flex flex-col">
-                <CardHeader className="flex flex-row items-center gap-4">
-                  <Image src={int.logo} alt={int.name} width={40} height={40} />
-                  <div>
-                    <CardTitle className="text-base">{int.name}</CardTitle>
-                     <div className="flex items-center gap-2 text-sm mt-1">
-                        <div className={`w-2 h-2 rounded-full ${int.isConnected ? 'bg-green-500' : 'bg-gray-400'}`} />
-                        <span className={int.isConnected ? 'text-green-600' : 'text-muted-foreground'}>{int.isConnected ? 'Conectado' : 'Desconectado'}</span>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <p className="text-sm text-muted-foreground">{int.description}</p>
-                </CardContent>
-                <CardFooter>
-                  <Button variant="outline" className="w-full" disabled>{int.isConnected ? 'Gerenciar' : 'Conectar'}</Button>
-                </CardFooter>
-              </Card>
-            ))}
-         </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-
 export default function SettingsPage() {
   return (
     <div className="space-y-8">
@@ -411,16 +368,12 @@ export default function SettingsPage() {
       />
 
        <Tabs defaultValue="api-keys" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="api-keys">Chaves de API</TabsTrigger>
-          <TabsTrigger value="integrations">Integrações</TabsTrigger>
           <TabsTrigger value="webhooks">Webhooks</TabsTrigger>
         </TabsList>
         <TabsContent value="api-keys" className="mt-6">
           <ApiKeysTab />
-        </TabsContent>
-        <TabsContent value="integrations" className="mt-6">
-          <IntegrationsTab />
         </TabsContent>
         <TabsContent value="webhooks" className="mt-6">
           <WebhooksTab />
