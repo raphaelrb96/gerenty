@@ -8,7 +8,7 @@ import { useAuth } from "@/context/auth-context";
 import { getCustomersByUser, Customer, updateCustomerStatus, deleteCustomer as deleteCustomerService, updateCustomer as updateCustomerService, batchUpdateCustomerOrder } from "@/services/customer-service";
 import { getStagesByUser, addStage, updateStage, deleteStage, Stage, batchUpdateStageOrder } from "@/services/stage-service";
 
-import { DndContext, DragEndEvent, DragOverlay, closestCorners, DragStartEvent, DragOverEvent } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, DragOverlay, closestCorners, DragStartEvent, DragOverEvent, useSensors, useSensor, PointerSensor } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 
 import { PageHeader } from "@/components/common/page-header";
@@ -222,12 +222,12 @@ function CrmPageComponent() {
         
         // --- Stage Reordering ---
         if (isActiveAStage && isOverAStage) {
-            setStages((currentStages) => {
-                const oldIndex = currentStages.findIndex(s => s.id === active.id);
+             setStages((currentStages) => {
+                const oldIndex = currentStages.findIndex((s) => s.id === active.id);
                 const overId = over.id.toString().replace('stage-drop-', '');
-                const newIndex = currentStages.findIndex(s => s.id === overId);
-    
-                if (oldIndex !== -1 && newIndex !== -1) {
+                const newIndex = currentStages.findIndex((s) => s.id === overId);
+                
+                if (oldIndex !== newIndex && newIndex !== -1) {
                     return arrayMove(currentStages, oldIndex, newIndex);
                 }
                 return currentStages;
@@ -264,26 +264,26 @@ function CrmPageComponent() {
     const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
         setActiveId(null);
-
-        if (!over) return;
+    
+        if (!over || active.id === over.id) return;
     
         // --- Stage Reordering ---
-        if (activeItemType === 'Stage' && over && active.id !== over.id) {
+        if (activeItemType === 'Stage') {
             const oldIndex = stages.findIndex(s => s.id === active.id);
             const overId = over.id.toString().replace('stage-drop-', '');
             const newIndex = stages.findIndex(s => s.id === overId);
-
+    
             if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
                 const reorderedStages = arrayMove(stages, oldIndex, newIndex);
                 const finalStages = reorderedStages.map((stage, index) => ({ ...stage, order: index }));
-                
-                setStages(finalStages); // Update local state immediately
-                
+    
+                setStages(finalStages); // Update local state immediately for responsiveness
+    
                 try {
                     await batchUpdateStageOrder(finalStages.map(s => ({ id: s.id, order: s.order })));
                 } catch (error) {
                     console.error("Error persisting stage order:", error);
-                    setStages(stages); // Revert to original order on error
+                    setStages(stages); // Revert on error
                     toast({ variant: "destructive", title: "Erro ao reordenar estágios." });
                 }
             }
@@ -519,3 +519,5 @@ export default function CrmPage() {
         </Suspense>
     );
 }
+
+    
