@@ -117,9 +117,10 @@ function CrmPageComponent() {
                     setStages(createdStages);
                     setActiveStageId(createdStages[0]?.id || null);
                 } else {
-                    setStages(userStages.sort((a, b) => a.order - b.order));
-                    if (!activeStageId || !userStages.some(s => s.id === activeStageId)) {
-                        setActiveStageId(userStages.sort((a,b) => a.order - b.order)[0]?.id || null);
+                    const sortedStages = userStages.sort((a, b) => a.order - b.order);
+                    setStages(sortedStages);
+                    if (!activeStageId || !sortedStages.some(s => s.id === activeStageId)) {
+                        setActiveStageId(sortedStages[0]?.id || null);
                     }
                 }
                 
@@ -132,7 +133,7 @@ function CrmPageComponent() {
         };
         
         fetchAndInitializeData();
-    }, [user, t]);
+    }, [user]);
 
     const activeCustomer = activeId ? allCustomers.find(c => c.id === activeId) : null;
     const activeItemType = activeId ? (stages.some(s => s.id === activeId) ? 'Stage' : 'Customer') : null;
@@ -276,14 +277,13 @@ function CrmPageComponent() {
                 const reorderedStages = arrayMove(stages, oldIndex, newIndex);
                 const finalStages = reorderedStages.map((stage, index) => ({ ...stage, order: index }));
                 
-                setStages(finalStages);
+                setStages(finalStages); // Update local state immediately
                 
                 try {
                     await batchUpdateStageOrder(finalStages.map(s => ({ id: s.id, order: s.order })));
                 } catch (error) {
                     console.error("Error persisting stage order:", error);
-                    // Revert to original order on error
-                    setStages(stages); 
+                    setStages(stages); // Revert to original order on error
                     toast({ variant: "destructive", title: "Erro ao reordenar estágios." });
                 }
             }
