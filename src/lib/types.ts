@@ -607,3 +607,27 @@ export interface Route {
   startedAt?: string | Date | Timestamp | FieldValue;
   finishedAt?: string | Date | Timestamp | FieldValue;
 }
+
+export type ApiKey = {
+  id: string;
+  ownerId: string;
+  companyId: string;
+  name: string;
+  keyPrefix: string;
+  keyHash: string;
+  status: 'active' | 'revoked';
+  expiresAt: string | Date | Timestamp | FieldValue | null;
+  createdAt: string | Date | Timestamp | FieldValue;
+  lastUsedAt?: string | Date | Timestamp | FieldValue;
+}
+
+export type Webhook = {
+  id: string;
+  ownerId: string;
+  companyId: string;
+  url: string;
+  event: 'order.created' | 'order.updated' | 'stock.low';
+  authentication?: 'none' | 'header';
+  secret?: string; // Only stored if auth type is header
+  createdAt: string | Date | Timestamp | FieldValue;
+}
