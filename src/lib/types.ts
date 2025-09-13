@@ -571,7 +571,7 @@ export type Employee = {
     phone?: string;
     document?: string;
     type: 'Fixo' | 'Freelancer';
-    role: 'admin' | 'empresa' | 'salesperson' | 'motoboy' | 'manager' | 'stockist' | 'accountant' | 'affiliate';
+    role: 'admin' | 'empresa' | 'salesperson' | 'entregador' | 'manager' | 'stockist' | 'accountant' | 'affiliate';
     isActive: boolean;
     address?: {
         street?: string;

@@ -47,7 +47,7 @@ const formSchema = z.object({
   phone: z.string().optional(),
   document: z.string().optional(),
   type: z.enum(['Fixo', 'Freelancer']),
-  role: z.enum(['admin', 'empresa', 'salesperson', 'motoboy', 'manager', 'stockist', 'accountant', 'affiliate']),
+  role: z.enum(['admin', 'empresa', 'salesperson', 'entregador', 'manager', 'stockist', 'accountant', 'affiliate']),
   isActive: z.boolean(),
   address: z.object({
     street: z.string().optional(),
@@ -181,7 +181,7 @@ export function MemberForm({ isOpen, onClose, onFinished, member, addEmployee, u
                   <AccordionContent className="pt-4 space-y-4">
                     <FormField control={form.control} name="role" render={({ field }) => (<FormItem><FormLabel>Função</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>
                         <SelectItem value="salesperson">Vendedor</SelectItem>
-                        <SelectItem value="motoboy">Entregador</SelectItem>
+                        <SelectItem value="entregador">Entregador</SelectItem>
                         <SelectItem value="manager">Gerente</SelectItem>
                         <SelectItem value="stockist">Estoquista</SelectItem>
                         <SelectItem value="accountant">Contador</SelectItem>
