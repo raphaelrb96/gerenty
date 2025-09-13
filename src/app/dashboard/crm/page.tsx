@@ -132,7 +132,7 @@ function CrmPageComponent() {
         };
         
         fetchAndInitializeData();
-    }, [user]);
+    }, [user, t]);
 
     const activeCustomer = activeId ? allCustomers.find(c => c.id === activeId) : null;
     const activeItemType = activeId ? (stages.some(s => s.id === activeId) ? 'Stage' : 'Customer') : null;
@@ -267,19 +267,24 @@ function CrmPageComponent() {
         if (!over) return;
     
         // --- Stage Reordering ---
-        if (activeItemType === 'Stage' && over && active.id !== over.id.toString().replace('stage-drop-', '')) {
+        if (activeItemType === 'Stage' && over && active.id !== over.id) {
             const oldIndex = stages.findIndex(s => s.id === active.id);
             const overId = over.id.toString().replace('stage-drop-', '');
             const newIndex = stages.findIndex(s => s.id === overId);
 
-            if (oldIndex !== -1 && newIndex !== -1) {
+            if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
                 const reorderedStages = arrayMove(stages, oldIndex, newIndex);
                 const finalStages = reorderedStages.map((stage, index) => ({ ...stage, order: index }));
+                
                 setStages(finalStages);
+                
                 try {
                     await batchUpdateStageOrder(finalStages.map(s => ({ id: s.id, order: s.order })));
                 } catch (error) {
-                     console.error("Error persisting stage order:", error);
+                    console.error("Error persisting stage order:", error);
+                    // Revert to original order on error
+                    setStages(stages); 
+                    toast({ variant: "destructive", title: "Erro ao reordenar estágios." });
                 }
             }
         }
