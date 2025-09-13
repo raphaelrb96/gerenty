@@ -5,11 +5,14 @@ import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/common/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Truck, User, Box } from "lucide-react";
+import { Truck, User, Box, PlusCircle } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { getRoutes, Route } from "@/services/logistics-service";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { useCurrency } from "@/context/currency-context";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { RouteForm } from "@/components/logistics/route-form";
 
 
 export default function LogisticsPage() {
@@ -17,6 +20,7 @@ export default function LogisticsPage() {
     const { formatCurrency } = useCurrency();
     const [routes, setRoutes] = useState<Route[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isSheetOpen, setIsSheetOpen] = useState(false);
 
     const fetchRoutes = async () => {
         if (!user) return;
@@ -92,6 +96,12 @@ export default function LogisticsPage() {
             <PageHeader 
                 title="Logística e Entregas"
                 description="Acompanhe o status das suas rotas de entrega."
+                 action={
+                    <Button onClick={() => setIsSheetOpen(true)}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Nova Rota
+                    </Button>
+                }
             />
 
             <Tabs defaultValue="A Processar">
@@ -115,6 +125,23 @@ export default function LogisticsPage() {
                     {renderRouteList("Outro")}
                 </TabsContent>
             </Tabs>
+
+            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+                <SheetContent className="sm:max-w-xl flex flex-col">
+                    <SheetHeader className="px-6 pt-6">
+                        <SheetTitle>Criar Nova Rota</SheetTitle>
+                        <SheetDescription>
+                            Selecione um entregador e os pedidos para montar uma nova rota de entrega.
+                        </SheetDescription>
+                    </SheetHeader>
+                    <RouteForm 
+                        onFinished={() => {
+                            setIsSheetOpen(false);
+                            fetchRoutes();
+                        }} 
+                    />
+                </SheetContent>
+            </Sheet>
         </div>
     );
 }
