@@ -429,7 +429,7 @@ function WebhookFormSheetContent({ onSave, onCancel }: { onSave: (v: any) => voi
 
             <div>
                 <Label>Eventos de Disparo</Label>
-                <Card className="mt-2 max-h-[40vh] overflow-y-auto">
+                <Card className="mt-2">
                     <CardContent className="p-4 space-y-4">
                         {webhookEventsConfig.map(category => (
                             <div key={category.category}>
