@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -10,12 +11,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,16 +29,10 @@ import {
   SheetDescription,
   SheetFooter
 } from "@/components/ui/sheet";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { KeyRound, Webhook, Copy, PlusCircle, Trash2, MoreVertical, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { ApiKey, Webhook as WebhookType } from "@/lib/types";
+import { ApiKey, Webhook as WebhookType, WebhookEvent } from "@/lib/types";
 import { createApiKey, getApiKeys, revokeApiKey } from "@/services/api-key-service";
 import { createWebhook, getWebhooks, deleteWebhook } from "@/services/webhook-service";
 import { format } from 'date-fns';
@@ -241,6 +230,40 @@ function ApiKeysTab() {
     );
 }
 
+const webhookEventsConfig: { category: string, events: { name: WebhookEvent, description: string }[] }[] = [
+    {
+        category: 'Pedidos',
+        events: [
+            { name: 'order.created', description: 'Disparado quando um novo pedido é criado.' },
+            { name: 'order.updated', description: 'Disparado quando um pedido existente é atualizado.' },
+            { name: 'order.paid', description: 'Disparado quando o pagamento de um pedido é confirmado.' },
+            { name: 'order.shipped', description: 'Disparado quando um pedido é marcado como enviado.' },
+            { name: 'order.cancelled', description: 'Disparado quando um pedido é cancelado.' },
+        ],
+    },
+    {
+        category: 'Clientes',
+        events: [
+            { name: 'customer.created', description: 'Disparado quando um novo cliente é cadastrado.' },
+            { name: 'customer.updated', description: 'Disparado quando os dados de um cliente são atualizados.' },
+        ],
+    },
+    {
+        category: 'Produtos',
+        events: [
+            { name: 'product.created', description: 'Disparado quando um novo produto é criado.' },
+            { name: 'product.updated', description: 'Disparado quando um produto é atualizado.' },
+        ],
+    },
+    {
+        category: 'Estoque',
+        events: [
+            { name: 'stock.low', description: 'Disparado quando o estoque de um produto atinge o nível baixo.' },
+            { name: 'stock.out_of_stock', description: 'Disparado quando o estoque de um produto se esgota.' },
+        ],
+    },
+];
+
 function WebhooksTab() {
   const { user } = useAuth();
   const { activeCompany } = useCompany();
@@ -267,7 +290,7 @@ function WebhooksTab() {
     if (activeCompany) fetchWebhooks();
   }, [activeCompany]);
 
-  const handleSaveWebhook = async (values: { url: string, event: WebhookType['event'], useAuth: boolean, secret: string }) => {
+  const handleSaveWebhook = async (values: { url: string, events: WebhookEvent[], useAuth: boolean, secret: string }) => {
     if (!user || !activeCompany) return;
     
     try {
@@ -278,7 +301,7 @@ function WebhooksTab() {
           ownerId: user.uid,
           companyId: activeCompany.id,
           url: values.url,
-          event: values.event,
+          events: values.events,
           authentication: values.useAuth ? 'header' : 'none',
           secret: values.useAuth ? values.secret : undefined,
         });
@@ -316,8 +339,10 @@ function WebhooksTab() {
                 {!loading && webhooks.map(hook => (
                 <div key={hook.id} className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
                     <div>
-                    <p className="font-semibold text-sm">{hook.event}</p>
-                    <p className="text-xs text-muted-foreground font-mono">{hook.url}</p>
+                    <p className="font-mono text-xs">{hook.url}</p>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                        {hook.events.map(event => <Badge key={event} variant="secondary">{event}</Badge>)}
+                    </div>
                     </div>
                     <Button variant="ghost" size="icon" onClick={() => handleDeleteWebhook(hook.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                 </div>
@@ -369,56 +394,78 @@ function WebhooksTab() {
 
 function WebhookFormSheetContent({ onSave, onCancel }: { onSave: (v: any) => void, onCancel: () => void }) {
     const [url, setUrl] = useState('');
-    const [event, setEvent] = useState<WebhookType['event']>('order.created');
+    const [selectedEvents, setSelectedEvents] = useState<WebhookEvent[]>([]);
     const [useAuth, setUseAuth] = useState(false);
     const [secret, setSecret] = useState('');
     
     const handleSubmit = () => {
-        onSave({ url, event, useAuth, secret });
+        onSave({ url, events: selectedEvents, useAuth, secret });
     };
 
+    const handleEventToggle = (event: WebhookEvent) => {
+        setSelectedEvents(prev => 
+            prev.includes(event) ? prev.filter(e => e !== event) : [...prev, event]
+        );
+    }
+
     return (
-      <SheetContent>
-        <SheetHeader>
+      <SheetContent className="sm:max-w-lg flex flex-col">
+        <SheetHeader className="px-6 pt-6 flex-shrink-0">
           <SheetTitle>Adicionar Webhook</SheetTitle>
-          <SheetDescription>Crie uma notificação para um evento específico.</SheetDescription>
+          <SheetDescription>Crie uma notificação para um ou mais eventos específicos.</SheetDescription>
         </SheetHeader>
-        <div className="py-4 space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="webhook-url">URL do Endpoint</Label>
-            <Input id="webhook-url" value={url} onChange={e => setUrl(e.target.value)} placeholder="https://seu-servico.com/webhook" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="webhook-event">Evento de Disparo</Label>
-            <Select value={event} onValueChange={(v: WebhookType['event']) => setEvent(v)}>
-              <SelectTrigger id="webhook-event"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="order.created">Pedido: Criado</SelectItem>
-                <SelectItem value="order.updated">Pedido: Atualizado</SelectItem>
-                <SelectItem value="order.paid">Pedido: Pago</SelectItem>
-                <SelectItem value="order.shipped">Pedido: Enviado</SelectItem>
-                <SelectItem value="order.cancelled">Pedido: Cancelado</SelectItem>
-                <SelectItem value="customer.created">Cliente: Criado</SelectItem>
-                <SelectItem value="customer.updated">Cliente: Atualizado</SelectItem>
-                <SelectItem value="product.created">Produto: Criado</SelectItem>
-                <SelectItem value="product.updated">Produto: Atualizado</SelectItem>
-                <SelectItem value="stock.low">Estoque: Baixo</SelectItem>
-                <SelectItem value="stock.out_of_stock">Estoque: Esgotado</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox id="webhook-auth" checked={useAuth} onCheckedChange={(checked) => setUseAuth(checked as boolean)} />
-            <Label htmlFor="webhook-auth">Usar autenticação de cabeçalho (Secret)</Label>
-          </div>
-          {useAuth && (
+        
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="webhook-secret">Secret</Label>
-              <Input id="webhook-secret" value={secret} onChange={e => setSecret(e.target.value)} placeholder="Seu_segredo_super_secreto" />
+                <Label htmlFor="webhook-url">URL do Endpoint</Label>
+                <Input id="webhook-url" value={url} onChange={e => setUrl(e.target.value)} placeholder="https://seu-servico.com/webhook" />
             </div>
-          )}
+
+            <div>
+                <Label>Eventos de Disparo</Label>
+                <Card className="mt-2 max-h-[40vh] overflow-y-auto">
+                    <CardContent className="p-4 space-y-4">
+                        {webhookEventsConfig.map(category => (
+                            <div key={category.category}>
+                                <h4 className="font-semibold mb-2">{category.category}</h4>
+                                <div className="space-y-2">
+                                    {category.events.map(event => (
+                                        <div key={event.name} className="flex items-start space-x-2">
+                                            <Checkbox
+                                                id={event.name}
+                                                checked={selectedEvents.includes(event.name)}
+                                                onCheckedChange={() => handleEventToggle(event.name)}
+                                            />
+                                            <div className="grid gap-1.5 leading-none">
+                                                <label htmlFor={event.name} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                                    {event.name}
+                                                </label>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {event.description}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+            </div>
+
+            <div className="flex items-center space-x-2">
+                <Checkbox id="webhook-auth" checked={useAuth} onCheckedChange={(checked) => setUseAuth(checked as boolean)} />
+                <Label htmlFor="webhook-auth">Usar autenticação de cabeçalho (Secret)</Label>
+            </div>
+            {useAuth && (
+                <div className="space-y-2">
+                <Label htmlFor="webhook-secret">Secret</Label>
+                <Input id="webhook-secret" value={secret} onChange={e => setSecret(e.target.value)} placeholder="Seu_segredo_super_secreto" />
+                </div>
+            )}
         </div>
-        <SheetFooter>
+        
+        <SheetFooter className="px-6 py-4 border-t flex-shrink-0">
           <Button variant="outline" onClick={onCancel}>Cancelar</Button>
           <Button onClick={handleSubmit}>Salvar</Button>
         </SheetFooter>

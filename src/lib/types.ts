@@ -639,7 +639,7 @@ export type Webhook = {
   ownerId: string;
   companyId: string;
   url: string;
-  event: WebhookEvent;
+  events: WebhookEvent[];
   authentication?: 'none' | 'header';
   secret?: string; // Only stored if auth type is header
   createdAt: string | Date | Timestamp | FieldValue;
