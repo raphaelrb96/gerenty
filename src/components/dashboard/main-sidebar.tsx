@@ -58,7 +58,6 @@ export function MainSidebar() {
     { href: "/dashboard/crm", label: "CRM", icon: HeartHandshake },
     { href: "/dashboard/financials", label: "Financeiro", icon: TrendingUp },
     { href: "/dashboard/logistics", label: "Logística", icon: Truck },
-    { href: "/dashboard/shipping", label: "Fretes", icon: Package },
     { href: "/dashboard/reports", label: "Relatórios", icon: BarChart },
     { href: "/dashboard/team", label: "Equipe", icon: Users },
     { href: "/dashboard/companies", label: t("companiesPage.sidebarTitle"), icon: Building },
