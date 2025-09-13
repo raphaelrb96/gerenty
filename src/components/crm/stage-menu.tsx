@@ -97,11 +97,11 @@ function StageMenuItem({ stage, isActive, onClick, onEdit, onDelete, activeItemT
 
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
-            <button
+            <div
                 ref={setDroppableNodeRef}
                 onClick={onClick}
                 className={cn(
-                    "w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors flex justify-between items-center group",
+                    "w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors flex justify-between items-center group cursor-pointer",
                     isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted/50",
                     showDropIndicator && "ring-2 ring-primary ring-offset-2"
                 )}
@@ -125,7 +125,7 @@ function StageMenuItem({ stage, isActive, onClick, onEdit, onDelete, activeItemT
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
-            </button>
+            </div>
         </div>
     )
 }
