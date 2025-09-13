@@ -423,7 +423,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 gap-4">
             <Card className="col-span-1">
                 <CardHeader>
-                    <CardTitle>{t('dashboard.charts.revenueOverview')}</CardHeader>
+                    <CardTitle>{t('dashboard.charts.revenueOverview')}</CardTitle>
                 </CardContent>
                 <CardContent className="pl-2">
                     <ChartContainer config={{}} className="h-[250px] w-full">
