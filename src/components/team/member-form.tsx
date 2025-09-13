@@ -180,8 +180,8 @@ export function MemberForm({ isOpen, onClose, onFinished, member, addEmployee, u
                   <AccordionTrigger>Detalhes do Cargo</AccordionTrigger>
                   <AccordionContent className="pt-4 space-y-4">
                     <FormField control={form.control} name="role" render={({ field }) => (<FormItem><FormLabel>Função</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>
-                        <SelectItem value="salesperson">Vendedor</SelectItem>
                         <SelectItem value="entregador">Entregador</SelectItem>
+                        <SelectItem value="salesperson">Vendedor</SelectItem>
                         <SelectItem value="manager">Gerente</SelectItem>
                         <SelectItem value="stockist">Estoquista</SelectItem>
                         <SelectItem value="accountant">Contador</SelectItem>
