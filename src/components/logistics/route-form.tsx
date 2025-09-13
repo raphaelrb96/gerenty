@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useCompany } from "@/context/company-context";
 import { useToast } from "@/hooks/use-toast";
@@ -15,7 +15,7 @@ import { startOfDay, endOfDay, subDays } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -40,15 +40,15 @@ export function RouteForm({ onFinished }: RouteFormProps) {
     const { toast } = useToast();
     const { formatCurrency } = useCurrency();
 
+    // State for data
     const [drivers, setDrivers] = useState<Employee[]>([]);
-    const [orders, setOrders] = useState<Order[]>([]);
-    const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
+    const [availableOrders, setAvailableOrders] = useState<Order[]>([]);
     
     // Form state
-    const [selectedDriver, setSelectedDriver] = useState<string>("");
-    const [title, setTitle] = useState("");
-    const [notes, setNotes] = useState("");
-    const [selectedOrders, setSelectedOrders] = useState<Record<string, boolean>>({});
+    const [selectedDriverId, setSelectedDriverId] = useState<string>("");
+    const [routeTitle, setRouteTitle] = useState("");
+    const [routeNotes, setRouteNotes] = useState("");
+    const [selectedOrderIds, setSelectedOrderIds] = useState<Record<string, boolean>>({});
     
     // Filter state
     const [searchTerm, setSearchTerm] = useState("");
@@ -56,13 +56,16 @@ export function RouteForm({ onFinished }: RouteFormProps) {
     const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all");
 
     // Loading states
-    const [loading, setLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
-            if (!user) return;
-            setLoading(true);
+            if (!user || companies.length === 0) {
+                 setIsLoading(false);
+                 return;
+            };
+            setIsLoading(true);
             try {
                 const [allEmployees, unassignedOrders] = await Promise.all([
                     getEmployeesByUser(user.uid),
@@ -71,23 +74,21 @@ export function RouteForm({ onFinished }: RouteFormProps) {
                 
                 const availableDrivers = allEmployees.filter(e => e.role === "entregador");
                 setDrivers(availableDrivers);
-                setOrders(unassignedOrders);
+                setAvailableOrders(unassignedOrders);
             } catch (error) {
                 console.error("Failed to load data for route form", error);
                 toast({ variant: "destructive", title: "Erro ao carregar dados", description: "Não foi possível buscar motoristas e pedidos." });
             } finally {
-                setLoading(false);
+                setIsLoading(false);
             }
         };
         fetchData();
     }, [user, companies, toast]);
 
-    useEffect(() => {
-        const lowercasedFilter = searchTerm.toLowerCase();
-        
-        const filtered = orders.filter(order => {
-            const searchMatch = order.customer.name.toLowerCase().includes(lowercasedFilter) ||
-                                order.id.toLowerCase().includes(lowercasedFilter);
+    const filteredOrders = useMemo(() => {
+        return availableOrders.filter(order => {
+            const searchMatch = order.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                order.id.toLowerCase().includes(searchTerm.toLowerCase());
 
             const statusMatch = statusFilter === 'all' || order.status === statusFilter;
 
@@ -98,14 +99,12 @@ export function RouteForm({ onFinished }: RouteFormProps) {
             
             return searchMatch && statusMatch && dateMatch;
         });
+    }, [searchTerm, availableOrders, dateRange, statusFilter]);
 
-        setFilteredOrders(filtered);
-    }, [searchTerm, orders, dateRange, statusFilter]);
-
-    const handleSelectOrder = (orderId: string, checked: boolean) => {
-        setSelectedOrders(prev => {
+    const handleSelectOrder = (orderId: string, isSelected: boolean) => {
+        setSelectedOrderIds(prev => {
             const newSelected = { ...prev };
-            if (checked) {
+            if (isSelected) {
                 newSelected[orderId] = true;
             } else {
                 delete newSelected[orderId];
@@ -115,9 +114,9 @@ export function RouteForm({ onFinished }: RouteFormProps) {
     };
 
     const handleSubmit = async () => {
-        const finalSelectedOrderIds = Object.keys(selectedOrders);
+        const finalSelectedOrderIds = Object.keys(selectedOrderIds);
         
-        if (!selectedDriver) {
+        if (!selectedDriverId) {
             toast({ variant: "destructive", title: "Selecione um motorista" });
             return;
         }
@@ -128,12 +127,12 @@ export function RouteForm({ onFinished }: RouteFormProps) {
 
         setIsSaving(true);
         try {
-            const driver = drivers.find(d => d.id === selectedDriver);
+            const driver = drivers.find(d => d.id === selectedDriverId);
             if (!driver) throw new Error("Motorista não encontrado");
             
-            const ordersToAssign = orders.filter(o => finalSelectedOrderIds.includes(o.id));
+            const ordersToAssign = availableOrders.filter(o => finalSelectedOrderIds.includes(o.id));
             
-            await createRoute(user!.uid, driver.id, driver.name, ordersToAssign, title, notes);
+            await createRoute(user!.uid, driver.id, driver.name, ordersToAssign, routeTitle, routeNotes);
 
             toast({ title: "Rota criada com sucesso!" });
             onFinished();
@@ -146,7 +145,7 @@ export function RouteForm({ onFinished }: RouteFormProps) {
         }
     };
     
-    if (loading) {
+    if (isLoading) {
         return <div className="flex-1 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
     }
 
@@ -163,21 +162,23 @@ export function RouteForm({ onFinished }: RouteFormProps) {
         )
     }
 
+    const currentSelectedOrderCount = Object.keys(selectedOrderIds).length;
+
     return (
         <>
-            <div className="flex-1 flex flex-col overflow-hidden p-6">
-                <div className="space-y-4 mb-4">
+            <div className="flex-1 flex flex-col overflow-hidden p-6 gap-4">
+                <div className="space-y-4">
                      <div>
                         <label className="text-sm font-medium">Título da Rota (opcional)</label>
                         <Input 
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            placeholder={`Rota de ${drivers.find(d => d.id === selectedDriver)?.name || 'Entregas'}`}
+                            value={routeTitle}
+                            onChange={(e) => setRouteTitle(e.target.value)}
+                            placeholder={`Rota de ${drivers.find(d => d.id === selectedDriverId)?.name || 'Entregas'}`}
                         />
                     </div>
                     <div>
                         <label className="text-sm font-medium">Motorista Responsável</label>
-                        <Select value={selectedDriver} onValueChange={setSelectedDriver}>
+                        <Select value={selectedDriverId} onValueChange={setSelectedDriverId}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Selecione o motorista" />
                             </SelectTrigger>
@@ -191,8 +192,8 @@ export function RouteForm({ onFinished }: RouteFormProps) {
                      <div>
                         <label className="text-sm font-medium">Observações (opcional)</label>
                         <Textarea 
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
+                            value={routeNotes}
+                            onChange={(e) => setRouteNotes(e.target.value)}
                             placeholder="Adicione observações sobre a rota, como horários ou instruções especiais."
                         />
                     </div>
@@ -230,15 +231,15 @@ export function RouteForm({ onFinished }: RouteFormProps) {
                     <CardContent className="flex-1 overflow-hidden p-2">
                         <ScrollArea className="h-full">
                            {filteredOrders.length > 0 ? (
-                                <div className="grid grid-cols-1 gap-2">
+                                <div className="space-y-2">
                                     {filteredOrders.map(order => (
-                                        <Card 
+                                        <div 
                                             key={order.id} 
-                                            className={`flex items-start gap-3 p-3 transition-colors ${selectedOrders[order.id] ? 'bg-muted border-primary' : 'hover:bg-muted/50'}`}
+                                            className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${selectedOrderIds[order.id] ? 'bg-muted border-primary' : 'hover:bg-muted/50'}`}
                                         >
                                             <Checkbox
                                                 id={`order-${order.id}`}
-                                                checked={selectedOrders[order.id] || false}
+                                                checked={selectedOrderIds[order.id] || false}
                                                 onCheckedChange={(checked) => handleSelectOrder(order.id, checked === true)}
                                                 className="mt-1"
                                             />
@@ -253,11 +254,11 @@ export function RouteForm({ onFinished }: RouteFormProps) {
                                                     <div className="flex items-center gap-1.5"><Calendar className="h-3 w-3" /> <span>{new Date(order.createdAt as string).toLocaleDateString()}</span></div>
                                                 </div>
                                             </label>
-                                        </Card>
+                                        </div>
                                     ))}
                                 </div>
                            ) : (
-                               <div className="flex items-center justify-center h-full text-center text-muted-foreground">
+                               <div className="flex items-center justify-center h-full text-center text-muted-foreground p-8">
                                    <p>Nenhum pedido aguardando rota ou correspondente aos filtros.</p>
                                </div>
                            )}
@@ -267,15 +268,13 @@ export function RouteForm({ onFinished }: RouteFormProps) {
             </div>
             <SheetFooter className="p-6 border-t">
                 <Button variant="ghost" onClick={onFinished}>Cancelar</Button>
-                <Button onClick={handleSubmit} disabled={isSaving}>
+                <Button onClick={handleSubmit} disabled={isSaving || currentSelectedOrderCount === 0}>
                     {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Criar Rota ({Object.keys(selectedOrders).length})
+                    Criar Rota ({currentSelectedOrderCount})
                 </Button>
             </SheetFooter>
         </>
     );
 }
-
-    
 
     
