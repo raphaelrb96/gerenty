@@ -132,7 +132,7 @@ function CrmPageComponent() {
         };
         
         fetchAndInitializeData();
-    }, [user, t]);
+    }, [user]);
 
     const activeCustomer = activeId ? allCustomers.find(c => c.id === activeId) : null;
     const activeItemType = activeId ? (stages.some(s => s.id === activeId) ? 'Stage' : 'Customer') : null;
@@ -514,5 +514,3 @@ export default function CrmPage() {
         </Suspense>
     );
 }
-
-    
