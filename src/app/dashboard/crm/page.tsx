@@ -133,7 +133,7 @@ function CrmPageComponent() {
         };
         
         fetchAndInitializeData();
-    }, [user, toast]);
+    }, [user, toast, t]);
 
     const activeCustomer = activeId ? allCustomers.find(c => c.id === activeId) : null;
     const activeItemType = activeId ? (stages.some(s => s.id === activeId) ? 'Stage' : 'Customer') : null;
@@ -268,16 +268,26 @@ function CrmPageComponent() {
         if (!over || active.id === over.id) return;
     
         // --- Stage Reordering Persistence ---
-        if (activeItemType === 'Stage') {
-             const finalStagesToSave = stages.map((stage, index) => ({ ...stage, order: index }));
-             try {
-                 await batchUpdateStageOrder(finalStagesToSave.map(s => ({ id: s.id, order: s.order })));
-             } catch (error) {
-                 console.error("Error persisting stage order:", error);
-                 // Optionally revert state on error
-                 toast({ variant: "destructive", title: "Erro ao reordenar estágios." });
-             }
-             return; // End execution here for stage reordering
+        if (activeItemType === 'Stage' && stages.some(s => s.id === over.id)) {
+            const oldIndex = stages.findIndex(s => s.id === active.id);
+            const newIndex = stages.findIndex(s => s.id === over.id);
+
+            if (oldIndex !== newIndex) {
+                const newOrder = arrayMove(stages, oldIndex, newIndex);
+                setStages(newOrder); // Update UI instantly
+
+                const finalStagesToSave = newOrder.map((stage, index) => ({ id: stage.id, order: index }));
+
+                try {
+                    await batchUpdateStageOrder(finalStagesToSave);
+                } catch (error) {
+                    console.error("Error persisting stage order:", error);
+                    // Revert to original order on error
+                    setStages(stages); 
+                    toast({ variant: "destructive", title: "Erro ao reordenar estágios." });
+                }
+            }
+            return; 
         }
     
         // --- Customer Operations ---
@@ -287,7 +297,8 @@ function CrmPageComponent() {
             if (!originalCustomer) return;
     
             // Case 1: Customer is dropped onto a Stage (Changing status)
-            if (over.data.current?.type === 'Stage') {
+            const overIsStage = over.data.current?.type === 'Stage';
+            if (overIsStage) {
                 const newStageId = over.id.toString().replace('stage-drop-', '');
                 if (originalCustomer.status !== newStageId) {
                     setAllCustomers(prev => prev.map(c => c.id === customerId ? { ...c, status: newStageId } : c));
@@ -298,7 +309,7 @@ function CrmPageComponent() {
                         setAllCustomers(prev => prev.map(c => c.id === customerId ? originalCustomer : c));
                     }
                 }
-                return; // Stop further processing for this case
+                return;
             }
             
             // Case 2: Customer is dropped onto another Customer (Reordering)
@@ -510,5 +521,7 @@ export default function CrmPage() {
         </Suspense>
     );
 }
+
+    
 
     
