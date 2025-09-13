@@ -41,14 +41,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { KeyRound, Webhook, Copy, PlusCircle, Trash2, CheckCircle, MoreVertical, Loader2, Calendar as CalendarIcon, FileText, Bot, BookOpen } from "lucide-react";
+import { KeyRound, Webhook, Copy, PlusCircle, Trash2, MoreVertical, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ApiKey, Webhook as WebhookType } from "@/lib/types";
 import { createApiKey, getApiKeys, revokeApiKey } from "@/services/api-key-service";
 import { createWebhook, getWebhooks, deleteWebhook } from "@/services/webhook-service";
 import { format } from 'date-fns';
 import { DatePicker } from "@/components/ui/date-picker";
-import Image from "next/image";
 import { Checkbox } from "@/components/ui/checkbox";
 
 function ApiKeysTab() {
@@ -118,45 +117,73 @@ function ApiKeysTab() {
     };
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <KeyRound className="h-5 w-5" /> Chaves de API
-                </CardTitle>
-                <CardDescription>Gere e gerencie chaves de API para integrar com serviços externos.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                {loading && <Loader2 className="animate-spin" />}
-                {!loading && keys.length === 0 && (
-                    <p className="text-sm text-muted-foreground">Nenhuma chave de API encontrada.</p>
-                )}
-                {!loading && keys.map(key => (
-                    <div key={key.id} className="flex items-center justify-between p-3 border rounded-lg bg-muted/50 font-mono">
-                        <div className="flex flex-col">
-                            <span className="font-semibold text-sm text-foreground">{key.name}</span>
-                            <span className="text-xs text-muted-foreground">
-                                {key.keyPrefix}...{key.status === 'revoked' && <span className="text-destructive font-sans ml-2">(Revogada)</span>}
-                            </span>
-                             <span className="text-xs text-muted-foreground font-sans">Expira em: {key.expiresAt ? format(new Date(key.expiresAt as string), 'dd/MM/yyyy') : 'Nunca'}</span>
+        <div className="space-y-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <KeyRound className="h-5 w-5" /> Chaves de API
+                    </CardTitle>
+                    <CardDescription>Gere e gerencie chaves de API para integrar com serviços externos.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {loading && <Loader2 className="animate-spin" />}
+                    {!loading && keys.length === 0 && (
+                        <p className="text-sm text-muted-foreground">Nenhuma chave de API encontrada.</p>
+                    )}
+                    {!loading && keys.map(key => (
+                        <div key={key.id} className="flex items-center justify-between p-3 border rounded-lg bg-muted/50 font-mono">
+                            <div className="flex flex-col">
+                                <span className="font-semibold text-sm text-foreground">{key.name}</span>
+                                <span className="text-xs text-muted-foreground">
+                                    {key.keyPrefix}...{key.status === 'revoked' && <span className="text-destructive font-sans ml-2">(Revogada)</span>}
+                                </span>
+                                <span className="text-xs text-muted-foreground font-sans">Expira em: {key.expiresAt ? format(new Date(key.expiresAt as string), 'dd/MM/yyyy') : 'Nunca'}</span>
+                            </div>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" disabled={key.status === 'revoked'}><MoreVertical className="h-4 w-4" /></Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                    <DropdownMenuItem onSelect={() => setKeyToRevoke(key)} className="text-destructive">Revogar</DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" disabled={key.status === 'revoked'}><MoreVertical className="h-4 w-4" /></Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                                <DropdownMenuItem onSelect={() => setKeyToRevoke(key)} className="text-destructive">Revogar</DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                ))}
-            </CardContent>
-            <CardFooter className="border-t pt-6">
-                <Button onClick={() => setIsSheetOpen(true)}>
-                    <PlusCircle className="mr-2 h-4 w-4" /> Gerar Nova Chave
-                </Button>
-            </CardFooter>
+                    ))}
+                </CardContent>
+                <CardFooter className="border-t pt-6">
+                    <Button onClick={() => setIsSheetOpen(true)}>
+                        <PlusCircle className="mr-2 h-4 w-4" /> Gerar Nova Chave
+                    </Button>
+                </CardFooter>
+            </Card>
 
-            {/* Sheet for creating new key */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Como Usar as Chaves de API</CardTitle>
+                    <CardDescription>
+                        Instruções sobre como usar Chaves de API para integrar com o Gerenty.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 text-sm">
+                    <div>
+                        <p className="text-muted-foreground mb-2">
+                            As chaves de API permitem que seus sistemas externos acessem seus dados do Gerenty de forma segura.
+                        </p>
+                        <p className="mb-2">
+                            1. Gere uma chave. Guarde-a em um local seguro, pois ela não será exibida novamente.
+                        </p>
+                        <p className="mb-2">
+                            2. Para autenticar suas requisições, inclua a chave no cabeçalho `Authorization` como um Bearer Token.
+                        </p>
+                        <pre className="p-2 rounded-md bg-muted font-mono text-xs overflow-x-auto"><code>{`fetch('https://api.gerenty.com/v1/orders', {
+  headers: {
+    'Authorization': 'Bearer SUA_CHAVE_DE_API_AQUI'
+  }
+})`}</code></pre>
+                    </div>
+                </CardContent>
+            </Card>
+
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                 <SheetContent>
                     <SheetHeader>
@@ -180,7 +207,6 @@ function ApiKeysTab() {
                 </SheetContent>
             </Sheet>
 
-            {/* Alert for showing generated key */}
             <AlertDialog open={!!generatedKey} onOpenChange={() => setGeneratedKey(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
@@ -197,7 +223,6 @@ function ApiKeysTab() {
                 </AlertDialogContent>
             </AlertDialog>
             
-            {/* Alert for revoking key */}
              <AlertDialog open={!!keyToRevoke} onOpenChange={() => setKeyToRevoke(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
@@ -212,7 +237,7 @@ function ApiKeysTab() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </Card>
+        </div>
     );
 }
 
@@ -279,32 +304,57 @@ function WebhooksTab() {
 
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Webhook /> Webhooks</CardTitle>
-        <CardDescription>Configure URLs para receber notificações de eventos em tempo real.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {loading && <Loader2 className="animate-spin" />}
-        {!loading && webhooks.length === 0 && <p className="text-sm text-muted-foreground">Nenhum webhook configurado.</p>}
-        {!loading && webhooks.map(hook => (
-          <div key={hook.id} className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
-            <div>
-              <p className="font-semibold text-sm">{hook.event}</p>
-              <p className="text-xs text-muted-foreground font-mono">{hook.url}</p>
-            </div>
-            <Button variant="ghost" size="icon" onClick={() => handleDeleteWebhook(hook.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-          </div>
-        ))}
-      </CardContent>
-      <CardFooter className="border-t pt-6">
-        <Button onClick={() => { setWebhookToEdit(null); setIsSheetOpen(true); }}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Webhook</Button>
-      </CardFooter>
+    <div className="space-y-6">
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Webhook /> Webhooks</CardTitle>
+                <CardDescription>Configure URLs para receber notificações de eventos em tempo real.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                {loading && <Loader2 className="animate-spin" />}
+                {!loading && webhooks.length === 0 && <p className="text-sm text-muted-foreground">Nenhum webhook configurado.</p>}
+                {!loading && webhooks.map(hook => (
+                <div key={hook.id} className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
+                    <div>
+                    <p className="font-semibold text-sm">{hook.event}</p>
+                    <p className="text-xs text-muted-foreground font-mono">{hook.url}</p>
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={() => handleDeleteWebhook(hook.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                </div>
+                ))}
+            </CardContent>
+            <CardFooter className="border-t pt-6">
+                <Button onClick={() => { setWebhookToEdit(null); setIsSheetOpen(true); }}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Webhook</Button>
+            </CardFooter>
+        </Card>
 
-      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <WebhookFormSheetContent onSave={handleSaveWebhook} onCancel={() => setIsSheetOpen(false)} />
-      </Sheet>
-    </Card>
+        <Card>
+            <CardHeader>
+                <CardTitle>Como Configurar Webhooks</CardTitle>
+                <CardDescription>
+                    Webhooks notificam seus sistemas em tempo real quando eventos específicos acontecem no Gerenty.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4 text-sm">
+                <div>
+                     <p className="mb-2">
+                        1. Crie um endpoint público em seu servidor (ex: `https://seu-site.com/api/webhook`) que aceite requisições POST.
+                    </p>
+                    <p className="mb-2">
+                        2. Configure um novo webhook no painel acima, informando a URL e os eventos que deseja ouvir.
+                    </p>
+                     <p className="mb-2">
+                        3. Se você configurar um 'Secret', cada requisição virá com um cabeçalho `X-Gerenty-Signature` para que você possa verificar a autenticidade da chamada.
+                    </p>
+                    <p className="mb-2">O payload do evento será enviado como um JSON no corpo da requisição POST.</p>
+                </div>
+            </CardContent>
+        </Card>
+
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+            <WebhookFormSheetContent onSave={handleSaveWebhook} onCancel={() => setIsSheetOpen(false)} />
+        </Sheet>
+    </div>
   );
 }
 
@@ -359,56 +409,6 @@ function WebhookFormSheetContent({ onSave, onCancel }: { onSave: (v: any) => voi
     );
 }
 
-function DocumentationCard() {
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <BookOpen className="h-5 w-5" /> Guia do Desenvolvedor
-                </CardTitle>
-                <CardDescription>
-                    Instruções sobre como usar Chaves de API e Webhooks para integrar com o Gerenty.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6 text-sm">
-                <div>
-                    <h3 className="font-semibold mb-2 text-base">Usando Chaves de API</h3>
-                    <p className="text-muted-foreground mb-2">
-                        As chaves de API permitem que seus sistemas externos acessem seus dados do Gerenty de forma segura.
-                    </p>
-                    <p className="mb-2">
-                        1. Gere uma chave na aba "Chaves de API". Guarde-a em um local seguro, pois ela não será exibida novamente.
-                    </p>
-                    <p className="mb-2">
-                        2. Para autenticar suas requisições, inclua a chave no cabeçalho `Authorization` como um Bearer Token.
-                    </p>
-                    <pre className="p-2 rounded-md bg-muted font-mono text-xs"><code>{`fetch('https://api.gerenty.com/v1/orders', {
-  headers: {
-    'Authorization': 'Bearer SUA_CHAVE_DE_API_AQUI'
-  }
-})`}</code></pre>
-                </div>
-                 <div className="border-t pt-6">
-                    <h3 className="font-semibold mb-2 text-base">Recebendo Webhooks</h3>
-                    <p className="text-muted-foreground mb-2">
-                        Webhooks notificam seus sistemas em tempo real quando eventos específicos acontecem no Gerenty.
-                    </p>
-                    <p className="mb-2">
-                        1. Crie um endpoint público em seu servidor (ex: `https://seu-site.com/api/webhook`) que aceite requisições POST.
-                    </p>
-                    <p className="mb-2">
-                        2. Configure um novo webhook na aba "Webhooks", informando a URL e os eventos que deseja ouvir.
-                    </p>
-                     <p className="mb-2">
-                        3. Se você configurar um 'Secret', cada requisição virá com um cabeçalho `X-Gerenty-Signature` para que você possa verificar a autenticidade da chamada.
-                    </p>
-                    <p className="mb-2">O payload será enviado como um JSON no corpo da requisição POST.</p>
-                </div>
-            </CardContent>
-        </Card>
-    );
-}
-
 export default function SettingsPage() {
   return (
     <div className="space-y-8">
@@ -416,8 +416,6 @@ export default function SettingsPage() {
         title="Configurações Avançadas"
         description="Gerencie chaves de API, webhooks e outras configurações técnicas."
       />
-
-       <DocumentationCard />
 
        <Tabs defaultValue="api-keys" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
@@ -434,4 +432,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
