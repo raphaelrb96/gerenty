@@ -2,7 +2,8 @@
 
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 import { getCustomersByUser, Customer, updateCustomerStatus, deleteCustomer as deleteCustomerService, updateCustomer as updateCustomerService, batchUpdateCustomerOrder } from "@/services/customer-service";
 import { getStagesByUser, addStage, updateStage, deleteStage, Stage, batchUpdateStageOrder } from "@/services/stage-service";
@@ -36,10 +37,12 @@ import { CrmFilterBar } from "@/components/crm/crm-filter-bar";
 
 const CUSTOMERS_PER_PAGE = 50;
 
-export default function CrmPage() {
+
+function CrmPageComponent() {
     const { user } = useAuth();
     const { toast } = useToast();
     const { t } = useTranslation();
+    const searchParams = useSearchParams();
 
     const [allCustomers, setAllCustomers] = useState<Customer[]>([]);
     const [stages, setStages] = useState<Stage[]>([]);
@@ -67,6 +70,17 @@ export default function CrmPage() {
         allCustomers.forEach(c => c.tags?.forEach(tag => tagSet.add(tag)));
         return Array.from(tagSet);
     }, [allCustomers]);
+
+    // Effect to handle opening customer details from URL
+    useEffect(() => {
+        const customerIdFromUrl = searchParams.get('customerId');
+        if (customerIdFromUrl && allCustomers.length > 0) {
+            const customerToShow = allCustomers.find(c => c.id === customerIdFromUrl);
+            if (customerToShow) {
+                setDetailsModalCustomer(customerToShow);
+            }
+        }
+    }, [allCustomers, searchParams]);
 
 
     const fetchCustomers = async () => {
@@ -493,9 +507,12 @@ export default function CrmPage() {
     );
 }
 
+export default function CrmPage() {
+    return (
+        <Suspense fallback={<LoadingSpinner />}>
+            <CrmPageComponent />
+        </Suspense>
+    );
+}
+
     
-
-
-
-
-

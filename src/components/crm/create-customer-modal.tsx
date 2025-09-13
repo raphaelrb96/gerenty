@@ -191,7 +191,7 @@ export function CreateCustomerModal({ isOpen, onClose, onCustomerSaved, customer
                         </div>
                     </div>
                     
-                    <div>
+                    <div className="pt-4">
                         <h4 className="text-sm font-medium mb-4">Organização</h4>
                         <div className="space-y-4">
                              <FormField control={form.control} name="status" render={({ field }) => (<FormItem>
@@ -221,7 +221,7 @@ export function CreateCustomerModal({ isOpen, onClose, onCustomerSaved, customer
                         </div>
                     </div>
 
-                    <div>
+                    <div className="pt-4">
                          <h4 className="text-sm font-medium mb-4">Endereço (Opcional)</h4>
                          <div className="space-y-4">
                             <FormField control={form.control} name="address.zipCode" render={({ field }) => (<FormItem><FormLabel>CEP</FormLabel><FormControl><Input placeholder="00000-000" {...field} value={field.value ?? ''} /></FormControl></FormItem>)}/>
@@ -252,3 +252,5 @@ export function CreateCustomerModal({ isOpen, onClose, onCustomerSaved, customer
     </Sheet>
   );
 }
+
+    
