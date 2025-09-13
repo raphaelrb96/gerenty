@@ -222,7 +222,8 @@ export default function DashboardPage() {
     const pendingProfit = pendingRevenue - pendingCost;
     const pendingOrdersCount = pendingOrders.length;
 
-    const topProducts = pendingOrders
+    const topProducts = ordersInDateRange
+        .filter(o => !['cancelled', 'refunded'].includes(o.status))
         .flatMap(o => o.items)
         .reduce((acc, item) => {
             const existing = acc.find(p => p.productId === item.productId);
@@ -422,8 +423,8 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 gap-4">
             <Card className="col-span-1">
                 <CardHeader>
-                    <CardTitle>{t('dashboard.charts.revenueOverview')}</CardTitle>
-                </CardHeader>
+                    <CardTitle>{t('dashboard.charts.revenueOverview')}</CardHeader>
+                </CardContent>
                 <CardContent className="pl-2">
                     <ChartContainer config={{}} className="h-[250px] w-full">
                         <RechartsBarChart accessibilityLayer data={filteredData.revenueChartData}>
@@ -473,6 +474,8 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
 
     
 
