@@ -79,6 +79,8 @@ export function AccessControlModal({ isOpen, onClose, member }: AccessControlMod
     },
   });
 
+  const { watch, setValue } = form;
+
   useEffect(() => {
     if (member && permissions) {
         const memberPermissions = permissions[member.id] || {};
@@ -92,6 +94,24 @@ export function AccessControlModal({ isOpen, onClose, member }: AccessControlMod
   const handleClose = () => {
     form.reset();
     onClose();
+  };
+  
+  const watchedCompanyAccess = watch('companyAccess');
+  const allCompaniesSelected = companies.every(c => watchedCompanyAccess?.[c.id]);
+  
+  const handleSelectAllCompanies = (checked: boolean) => {
+      companies.forEach(company => {
+          setValue(`companyAccess.${company.id}`, checked, { shouldDirty: true });
+      });
+  };
+
+  const watchedPermissions = watch('permissions');
+  const allModulesSelected = modulePermissions.every(p => watchedPermissions?.[p.id]);
+
+  const handleSelectAllModules = (checked: boolean) => {
+      modulePermissions.forEach(permission => {
+          setValue(`permissions.${permission.id}`, checked, { shouldDirty: true });
+      });
   };
 
   const onSubmit = async (values: FormValues) => {
@@ -129,7 +149,17 @@ export function AccessControlModal({ isOpen, onClose, member }: AccessControlMod
                 <ScrollArea className="flex-1 px-6 py-4">
                     <div className="space-y-8">
                         <div>
-                            <h3 className="text-lg font-medium mb-4">Acesso às Empresas</h3>
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-medium">Acesso às Empresas</h3>
+                                 <div className="flex items-center space-x-2">
+                                    <Checkbox 
+                                        id="select-all-companies" 
+                                        checked={allCompaniesSelected}
+                                        onCheckedChange={(checked) => handleSelectAllCompanies(checked as boolean)}
+                                    />
+                                    <label htmlFor="select-all-companies" className="text-sm font-medium">Selecionar Todas</label>
+                                </div>
+                            </div>
                             <div className="space-y-2">
                                 {companies.map((company) => (
                                     <FormField
@@ -148,7 +178,17 @@ export function AccessControlModal({ isOpen, onClose, member }: AccessControlMod
                         </div>
 
                         <div>
-                            <h3 className="text-lg font-medium mb-4">Permissões de Módulos</h3>
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-medium">Permissões de Módulos</h3>
+                                <div className="flex items-center space-x-2">
+                                     <Checkbox 
+                                        id="select-all-modules" 
+                                        checked={allModulesSelected}
+                                        onCheckedChange={(checked) => handleSelectAllModules(checked as boolean)}
+                                    />
+                                    <label htmlFor="select-all-modules" className="text-sm font-medium">Selecionar Todas</label>
+                                </div>
+                            </div>
                             <div className="space-y-2">
                                 {modulePermissions.map((permission) => (
                                      <FormField
