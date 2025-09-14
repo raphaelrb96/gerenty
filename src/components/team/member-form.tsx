@@ -45,10 +45,10 @@ import { getFirebaseAuthErrorMessage } from "@/lib/firebase-errors";
 import { useTranslation } from "@/context/i18n-context";
 
 
-const createFormSchema = z.object({
+const baseFormSchemaObject = z.object({
   name: z.string().min(2, "O nome é obrigatório."),
   email: z.string().email("Email inválido.").optional().or(z.literal('')),
-  password: z.string().min(8, "A senha deve ter pelo menos 8 caracteres.").optional().or(z.literal('')),
+  password: z.string().optional(),
   phone: z.string().min(1, "O telefone de contato é obrigatório."),
   document: z.string().optional(),
   type: z.enum(['Fixo', 'Freelancer']),
@@ -63,13 +63,25 @@ const createFormSchema = z.object({
     state: z.string().optional(),
     zipCode: z.string().optional(),
   }).optional(),
-}).refine(data => (data.password && data.password.length > 0) ? (data.email && data.email.length > 0) : true, {
-    message: "O e-mail é obrigatório se uma senha for definida.",
-    path: ["email"],
+});
+
+const createFormSchema = baseFormSchemaObject.refine(data => {
+    if (data.password && data.password.length > 0) {
+        if (!data.email || data.email.length === 0) {
+            return false;
+        }
+        if (data.password.length < 8) {
+            return false;
+        }
+    }
+    return true;
+}, {
+    message: "A senha deve ter no mínimo 8 caracteres e o e-mail é obrigatório se a senha for definida.",
+    path: ["password"],
 });
 
 
-const editFormSchema = createFormSchema.omit({ password: true }).extend({
+const editFormSchema = baseFormSchemaObject.omit({ password: true }).extend({
     password: z.string().optional(),
 });
 
@@ -178,7 +190,7 @@ export function MemberForm({ isOpen, onClose, onFinished, member }: MemberFormPr
         await updateEmployee(member.id, updateData);
         toast({ title: "Membro da equipe atualizado!" });
       } else {
-        await addEmployee({ ...values, ownerId: user.uid, password: values.password });
+        await addEmployee({ ...values, ownerId: user.uid });
         toast({ title: "Novo membro adicionado à equipe!" });
       }
       onFinished();
@@ -266,5 +278,6 @@ export function MemberForm({ isOpen, onClose, onFinished, member }: MemberFormPr
     </Sheet>
   );
 }
+
 
 
