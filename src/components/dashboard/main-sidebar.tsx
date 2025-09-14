@@ -33,12 +33,16 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslation } from "@/context/i18n-context";
 import { signOut } from "@/services/auth-service";
+import { useAuth } from "@/context/auth-context";
+import { usePermissions } from "@/context/permissions-context";
 
 export function MainSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { t } = useTranslation();
   const { setOpenMobile, isMobile } = useSidebar();
+  const { user, userData } = useAuth();
+  const { hasAccess } = usePermissions();
 
   const handleLogout = async () => {
     await signOut();
@@ -51,19 +55,23 @@ export function MainSidebar() {
     }
   }
 
-  const menuItems = [
-    { href: "/dashboard", label: t("Dashboard"), icon: LayoutDashboard },
-    { href: "/dashboard/products", label: t("Products"), icon: Package },
-    { href: "/dashboard/orders", label: t("Orders"), icon: ShoppingCart },
-    { href: "/dashboard/crm", label: "CRM", icon: HeartHandshake },
-    { href: "/dashboard/financials", label: "Financeiro", icon: TrendingUp },
-    { href: "/dashboard/logistics", label: "Logística", icon: Truck },
-    { href: "/dashboard/reports", label: "Relatórios", icon: BarChart },
-    { href: "/dashboard/team", label: "Equipe", icon: Users },
-    { href: "/dashboard/companies", label: t("companiesPage.sidebarTitle"), icon: Building },
-    { href: "/dashboard/integrations", label: "Integrações", icon: Puzzle },
-    { href: "/dashboard/settings", label: "Configurações", icon: Settings },
+  const allMenuItems = [
+    { href: "/dashboard", label: t("Dashboard"), icon: LayoutDashboard, module: 'dashboard' as const },
+    { href: "/dashboard/products", label: t("Products"), icon: Package, module: 'products' as const },
+    { href: "/dashboard/orders", label: t("Orders"), icon: ShoppingCart, module: 'orders' as const },
+    { href: "/dashboard/crm", label: "CRM", icon: HeartHandshake, module: 'crm' as const },
+    { href: "/dashboard/financials", label: "Financeiro", icon: TrendingUp, module: 'financials' as const },
+    { href: "/dashboard/logistics", label: "Logística", icon: Truck, module: 'logistics' as const },
+    { href: "/dashboard/reports", label: "Relatórios", icon: BarChart, module: 'reports' as const },
+    { href: "/dashboard/team", label: "Equipe", icon: Users, module: 'team' as const },
+    { href: "/dashboard/companies", label: t("companiesPage.sidebarTitle"), icon: Building, module: 'dashboard' as const }, // Companies uses dashboard permission for now
+    { href: "/dashboard/integrations", label: "Integrações", icon: Puzzle, module: 'settings' as const }, // Integrations uses settings permission
+    { href: "/dashboard/settings", label: "Configurações", icon: Settings, module: 'settings' as const },
   ];
+
+  const filteredMenuItems = userData?.role === 'empresa'
+    ? allMenuItems
+    : allMenuItems.filter(item => item.module === 'dashboard' || hasAccess(user!.uid, item.module));
 
   return (
     <Sidebar>
@@ -72,7 +80,7 @@ export function MainSidebar() {
       </SidebarHeader>
       <SidebarContent className="p-2">
         <SidebarMenu>
-          {menuItems.map((item) => (
+          {filteredMenuItems.map((item) => (
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild
@@ -102,7 +110,3 @@ export function MainSidebar() {
     </Sidebar>
   );
 }
-
-    
-
-    

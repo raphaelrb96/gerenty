@@ -389,86 +389,90 @@ export default function DashboardPage() {
                 detail={t('dashboard.accountCards.ordersDetail')}
             />
         </div>
-
-      <Card>
-          <CardHeader>
-              <CardTitle>{t('dashboard.filters.title')}</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-wrap items-center gap-4">
-              <DateRangePicker date={dateRange} onDateChange={(range) => { setDateRange(range); setActiveFilter(''); }} />
-              <Button variant={activeFilter === 'today' ? 'default' : 'outline'} onClick={() => handleDateFilterClick('today')}>{t('dashboard.filters.today')}</Button>
-              <Button variant={activeFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleDateFilterClick('yesterday')}>{t('dashboard.filters.yesterday')}</Button>
-              <Button variant={activeFilter === '7d' ? 'default' : 'outline'} onClick={() => handleDateFilterClick('7d')}>{t('dashboard.filters.sevenDays')}</Button>
-              <Button variant={activeFilter === '30d' ? 'default' : 'outline'} onClick={() => handleDateFilterClick('30d')}>{t('dashboard.filters.thirtyDays')}</Button>
-          </CardContent>
-      </Card>
-
-
-      {(activeCompany || companies.length > 0) && (
+      
+      {userData?.role === 'empresa' && (
         <>
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-            {stats.map(stat => (
-              <Card key={stat.title}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                  {React.cloneElement(stat.icon as React.ReactElement, { className: "h-4 w-4 text-muted-foreground"})}
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stat.value}</div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-        <div className="grid grid-cols-1 gap-4">
-            <Card className="col-span-1">
+            <Card>
                 <CardHeader>
-                    <CardTitle>{t('dashboard.charts.revenueOverview')}</CardTitle>
+                    <CardTitle>{t('dashboard.filters.title')}</CardTitle>
                 </CardHeader>
-                <CardContent className="pl-2">
-                    <ChartContainer config={{}} className="h-[250px] w-full">
-                        <RechartsBarChart accessibilityLayer data={filteredData.revenueChartData}>
-                            <CartesianGrid vertical={false} />
-                            <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} />
-                            <YAxis tickLine={false} axisLine={false} tickMargin={10} tickFormatter={(value) => formatCurrency(Number(value))} />
-                            <ChartTooltip 
-                                cursor={false} 
-                                content={<ChartTooltipContent 
-                                    formatter={(value) => formatCurrency(Number(value))}
-                                    labelClassName="text-sm font-bold text-popover-foreground dark:text-popover-foreground"
-                                />}
-                            />
-                            <Bar dataKey="Total" fill="hsl(var(--primary))" radius={4} />
-                        </RechartsBarChart>
-                    </ChartContainer>
+                <CardContent className="flex flex-wrap items-center gap-4">
+                    <DateRangePicker date={dateRange} onDateChange={(range) => { setDateRange(range); setActiveFilter(''); }} />
+                    <Button variant={activeFilter === 'today' ? 'default' : 'outline'} onClick={() => handleDateFilterClick('today')}>{t('dashboard.filters.today')}</Button>
+                    <Button variant={activeFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleDateFilterClick('yesterday')}>{t('dashboard.filters.yesterday')}</Button>
+                    <Button variant={activeFilter === '7d' ? 'default' : 'outline'} onClick={() => handleDateFilterClick('7d')}>{t('dashboard.filters.sevenDays')}</Button>
+                    <Button variant={activeFilter === '30d' ? 'default' : 'outline'} onClick={() => handleDateFilterClick('30d')}>{t('dashboard.filters.thirtyDays')}</Button>
                 </CardContent>
             </Card>
-            <Card className="col-span-1">
-                 <CardHeader>
-                    <CardTitle>{t('dashboard.charts.topSellingProducts')}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>{t('dashboard.charts.product')}</TableHead>
-                                <TableHead className="text-center">{t('dashboard.charts.sales')}</TableHead>
-                                <TableHead className="text-right">{t('dashboard.charts.total')}</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {filteredData.topProducts.map(product => (
-                                <TableRow key={product.productId}>
-                                    <TableCell className="font-medium">{product.productName}</TableCell>
-                                    <TableCell className="text-center">{product.quantity}</TableCell>
-                                    <TableCell className="text-right">{formatCurrency(product.totalPrice)}</TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
-        </div>
+
+
+            {(activeCompany || companies.length > 0) && (
+              <>
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                  {stats.map(stat => (
+                    <Card key={stat.title}>
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                        {React.cloneElement(stat.icon as React.ReactElement, { className: "h-4 w-4 text-muted-foreground"})}
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">{stat.value}</div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+              <div className="grid grid-cols-1 gap-4">
+                  <Card className="col-span-1">
+                      <CardHeader>
+                          <CardTitle>{t('dashboard.charts.revenueOverview')}</CardTitle>
+                      </CardHeader>
+                      <CardContent className="pl-2">
+                          <ChartContainer config={{}} className="h-[250px] w-full">
+                              <RechartsBarChart accessibilityLayer data={filteredData.revenueChartData}>
+                                  <CartesianGrid vertical={false} />
+                                  <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} />
+                                  <YAxis tickLine={false} axisLine={false} tickMargin={10} tickFormatter={(value) => formatCurrency(Number(value))} />
+                                  <ChartTooltip 
+                                      cursor={false} 
+                                      content={<ChartTooltipContent 
+                                          formatter={(value) => formatCurrency(Number(value))}
+                                          labelClassName="text-sm font-bold text-popover-foreground dark:text-popover-foreground"
+                                      />}
+                                  />
+                                  <Bar dataKey="Total" fill="hsl(var(--primary))" radius={4} />
+                              </RechartsBarChart>
+                          </ChartContainer>
+                      </CardContent>
+                  </Card>
+                  <Card className="col-span-1">
+                      <CardHeader>
+                          <CardTitle>{t('dashboard.charts.topSellingProducts')}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                          <Table>
+                              <TableHeader>
+                                  <TableRow>
+                                      <TableHead>{t('dashboard.charts.product')}</TableHead>
+                                      <TableHead className="text-center">{t('dashboard.charts.sales')}</TableHead>
+                                      <TableHead className="text-right">{t('dashboard.charts.total')}</TableHead>
+                                  </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                  {filteredData.topProducts.map(product => (
+                                      <TableRow key={product.productId}>
+                                          <TableCell className="font-medium">{product.productName}</TableCell>
+                                          <TableCell className="text-center">{product.quantity}</TableCell>
+                                          <TableCell className="text-right">{formatCurrency(product.totalPrice)}</TableCell>
+                                      </TableRow>
+                                  ))}
+                              </TableBody>
+                          </Table>
+                      </CardContent>
+                  </Card>
+              </div>
+              </>
+            )}
         </>
       )}
     </div>
