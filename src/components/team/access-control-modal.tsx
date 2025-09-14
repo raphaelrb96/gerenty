@@ -32,7 +32,7 @@ import { usePermissions } from "@/context/permissions-context";
 
 const formSchema = z.object({
     permissions: z.object({
-        dashboard: z.boolean().default(false),
+        dashboard: z.boolean().default(true),
         products: z.boolean().default(false),
         orders: z.boolean().default(false),
         crm: z.boolean().default(false),
@@ -75,7 +75,9 @@ export function AccessControlModal({ isOpen, onClose, member }: AccessControlMod
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-        permissions: {},
+        permissions: {
+            dashboard: true,
+        },
         companyAccess: {},
     },
   });
@@ -86,7 +88,10 @@ export function AccessControlModal({ isOpen, onClose, member }: AccessControlMod
     if (member && permissions) {
         const memberPermissions = permissions[member.id] || {};
         form.reset({
-            permissions: memberPermissions.modules || {},
+            permissions: {
+                ...memberPermissions.modules,
+                dashboard: true, // Always true
+            },
             companyAccess: memberPermissions.companies || {},
         });
     }
@@ -111,7 +116,9 @@ export function AccessControlModal({ isOpen, onClose, member }: AccessControlMod
 
   const handleSelectAllModules = (checked: boolean) => {
       modulePermissions.forEach(permission => {
-          setValue(`permissions.${permission.id}`, checked, { shouldDirty: true });
+          if (permission.id !== 'dashboard') {
+            setValue(`permissions.${permission.id}`, checked, { shouldDirty: true });
+          }
       });
   };
 
@@ -198,7 +205,7 @@ export function AccessControlModal({ isOpen, onClose, member }: AccessControlMod
                                         render={({ field }) => (
                                             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                                                 <FormLabel className="font-normal">{permission.label}</FormLabel>
-                                                <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                                                <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} disabled={permission.id === 'dashboard'} /></FormControl>
                                             </FormItem>
                                         )}
                                     />
