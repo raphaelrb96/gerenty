@@ -2,11 +2,11 @@
 "use client";
 
 import * as React from "react";
-import { MoreHorizontal, Mail, Phone, User, Briefcase, KeyRound, ShieldAlert } from "lucide-react";
+import { MoreHorizontal, Mail, Phone, KeyRound, ShieldAlert } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 import {
   DropdownMenu,
@@ -51,7 +51,11 @@ export function UsersGrid({ data, onEdit, onDelete, onManageAccess }: UsersGridP
   }
 
   const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+    const names = name.split(' ');
+    if (names.length > 1) {
+        return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
   }
 
   return (
