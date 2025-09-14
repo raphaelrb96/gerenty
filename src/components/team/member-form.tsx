@@ -47,8 +47,8 @@ import { useTranslation } from "@/context/i18n-context";
 
 const createFormSchema = z.object({
   name: z.string().min(2, "O nome é obrigatório."),
-  email: z.string().email("Email inválido."),
-  password: z.string().min(8, "A senha deve ter pelo menos 8 caracteres."),
+  email: z.string().email("Email inválido.").optional().or(z.literal('')),
+  password: z.string().min(8, "A senha deve ter pelo menos 8 caracteres.").optional().or(z.literal('')),
   phone: z.string().min(1, "O telefone de contato é obrigatório."),
   document: z.string().optional(),
   type: z.enum(['Fixo', 'Freelancer']),
@@ -63,7 +63,11 @@ const createFormSchema = z.object({
     state: z.string().optional(),
     zipCode: z.string().optional(),
   }).optional(),
+}).refine(data => (data.password && data.password.length > 0) ? (data.email && data.email.length > 0) : true, {
+    message: "O e-mail é obrigatório se uma senha for definida.",
+    path: ["email"],
 });
+
 
 const editFormSchema = createFormSchema.omit({ password: true }).extend({
     password: z.string().optional(),
@@ -120,7 +124,7 @@ export function MemberForm({ isOpen, onClose, onFinished, member }: MemberFormPr
     },
   });
   
-  useEffect(() => {
+  React.useEffect(() => {
     if (isOpen) {
         if (member) {
             form.reset({
@@ -174,11 +178,6 @@ export function MemberForm({ isOpen, onClose, onFinished, member }: MemberFormPr
         await updateEmployee(member.id, updateData);
         toast({ title: "Membro da equipe atualizado!" });
       } else {
-        if (!values.password) {
-            toast({ variant: "destructive", title: "Senha obrigatória", description: "É necessário definir uma senha para o novo membro." });
-            setIsSaving(false);
-            return;
-        }
         await addEmployee({ ...values, ownerId: user.uid, password: values.password });
         toast({ title: "Novo membro adicionado à equipe!" });
       }
@@ -186,7 +185,7 @@ export function MemberForm({ isOpen, onClose, onFinished, member }: MemberFormPr
       handleClose();
     } catch (error: any) {
       console.error("Error saving member:", error);
-      const errorMessage = getFirebaseAuthErrorMessage(error.code, language);
+      const errorMessage = getFirebaseAuthErrorMessage(error.code || 'default', language);
       toast({ 
         variant: "destructive", 
         title: "Erro ao salvar", 
@@ -216,9 +215,9 @@ export function MemberForm({ isOpen, onClose, onFinished, member }: MemberFormPr
                     <AccordionContent className="pt-4 space-y-4">
                       <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Nome Completo</FormLabel><FormControl><Input placeholder="Nome do membro" {...field} /></FormControl><FormMessage /></FormItem>)} />
                       <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Telefone / Contato</FormLabel><FormControl><Input placeholder="(00) 00000-0000" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                      <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="email@exemplo.com" {...field} disabled={!!member} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email (para login)</FormLabel><FormControl><Input type="email" placeholder="email@exemplo.com" {...field} disabled={!!member} /></FormControl><FormMessage /></FormItem>)} />
                        {!member && (
-                        <FormField control={form.control} name="password" render={({ field }) => (<FormItem><FormLabel>Senha</FormLabel><FormControl><Input type="password" placeholder="********" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="password" render={({ field }) => (<FormItem><FormLabel>Senha (para login)</FormLabel><FormControl><Input type="password" placeholder="********" {...field} /></FormControl><FormMessage /></FormItem>)} />
                        )}
                       <FormField control={form.control} name="document" render={({ field }) => (<FormItem><FormLabel>CPF (Opcional)</FormLabel><FormControl><Input placeholder="000.000.000-00" {...field} /></FormControl><FormMessage /></FormItem>)} />
                     </AccordionContent>
@@ -267,4 +266,5 @@ export function MemberForm({ isOpen, onClose, onFinished, member }: MemberFormPr
     </Sheet>
   );
 }
+
 

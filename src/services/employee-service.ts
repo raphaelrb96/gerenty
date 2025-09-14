@@ -37,25 +37,25 @@ export async function getEmployeesByUser(ownerId: string): Promise<Employee[]> {
 export async function addEmployee(employeeData: Omit<Employee, 'id' | 'createdAt' | 'updatedAt'> & { password?: string }): Promise<Employee> {
     let userId: string | undefined = undefined;
 
-    try {
-        if (employeeData.email && employeeData.password) {
+    // Only create a Firebase Auth user if email and password are provided
+    if (employeeData.email && employeeData.password) {
+        try {
             const userCredential = await createUserWithEmailAndPassword(auth, employeeData.email, employeeData.password);
             userId = userCredential.user.uid;
-        } else {
-             throw new Error("Email and password are required to create an employee account.");
+        } catch (error) {
+            console.error("Firebase Auth user creation failed:", error);
+            // Re-throw the original Firebase error so the UI can catch it for specific feedback
+            throw error;
         }
-    } catch (error) {
-        console.error("Firebase Auth user creation failed:", error);
-        // Re-throw the original Firebase error so the UI can catch it
-        throw error;
     }
     
+    // Remove password from the data to be stored in Firestore
     const { password, ...firestoreData } = employeeData;
 
     try {
         const docRef = await addDoc(employeesCollection, {
             ...firestoreData,
-            userId: userId,
+            userId: userId, // Will be undefined if no auth user was created
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
         });
@@ -64,9 +64,12 @@ export async function addEmployee(employeeData: Omit<Employee, 'id' | 'createdAt
         return convertEmployeeTimestamps({ id: docRef.id, ...newDocSnap.data() });
     } catch(firestoreError) {
         console.error("Firestore document creation failed:", firestoreError);
-        // Here you might want to delete the created Firebase Auth user to prevent orphans
-        // This requires Admin SDK, but for now we just throw an error.
-        throw new Error("Failed to save employee data to database after user creation.");
+        // If Firestore fails after user creation, this is a problem (orphaned user).
+        // For now, we throw a generic error, but in a production scenario, you'd want to handle this more gracefully.
+        if (userId) {
+             console.error(`Orphaned Firebase Auth user created with ID: ${userId}. Please clean up manually.`);
+        }
+        throw new Error("Failed to save employee data to database.");
     }
 }
 
