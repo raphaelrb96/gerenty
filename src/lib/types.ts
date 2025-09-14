@@ -562,6 +562,8 @@ export type Customer = {
 };
 
 // Team Management Types
+export type Role = 'admin' | 'empresa' | 'salesperson' | 'entregador' | 'manager' | 'stockist' | 'accountant' | 'affiliate';
+
 export type Employee = {
     id: string;
     ownerId: string;
@@ -571,7 +573,7 @@ export type Employee = {
     phone?: string;
     document?: string;
     type: 'Fixo' | 'Freelancer';
-    role: 'admin' | 'empresa' | 'salesperson' | 'entregador' | 'manager' | 'stockist' | 'accountant' | 'affiliate';
+    role: Role;
     isActive: boolean;
     address?: {
         street?: string;
