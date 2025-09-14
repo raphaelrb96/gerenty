@@ -34,12 +34,28 @@ export async function getEmployeesByUser(ownerId: string): Promise<Employee[]> {
     }
 }
 
+export async function getEmployeeByAuthId(authId: string): Promise<Employee | null> {
+    try {
+        const q = query(employeesCollection, where("userId", "==", authId));
+        const querySnapshot = await getDocs(q);
+        if (querySnapshot.empty) {
+            return null;
+        }
+        const employeeDoc = querySnapshot.docs[0];
+        return convertEmployeeTimestamps({ id: employeeDoc.id, ...employeeDoc.data() });
+    } catch (error) {
+        console.error("Error getting employee by auth ID:", error);
+        throw new Error("Failed to fetch employee data.");
+    }
+}
+
+
 export async function addEmployee(employeeData: Omit<Employee, 'id' | 'createdAt' | 'updatedAt'> & { password?: string }): Promise<Employee> {
     const { password, ...firestoreData } = employeeData;
-    let authUserId: string | undefined = undefined;
+    let authUserId: string | undefined;
 
-    // Create auth user if email and password are provided
-    if (firestoreData.email && password && password.length >= 8) {
+    // Create auth user only if email and password are provided
+    if (firestoreData.email && password) {
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, firestoreData.email, password);
             authUserId = userCredential.user.uid;
@@ -50,14 +66,12 @@ export async function addEmployee(employeeData: Omit<Employee, 'id' | 'createdAt
         }
     }
 
-    // Prepare to save to Firestore
     const newEmployeeDocRef = doc(employeesCollection);
-    const finalUserId = authUserId || newEmployeeDocRef.id;
-
+    
     try {
         await setDoc(newEmployeeDocRef, {
             ...firestoreData,
-            userId: finalUserId,
+            userId: authUserId || newEmployeeDocRef.id,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
         });
@@ -66,7 +80,7 @@ export async function addEmployee(employeeData: Omit<Employee, 'id' | 'createdAt
         return convertEmployeeTimestamps({ id: newEmployeeDocRef.id, ...newDocSnap.data() });
     } catch (firestoreError: any) {
         console.error("Firestore document creation failed:", firestoreError);
-        // If Firestore fails, we might have an orphaned auth user.
+        // If Firestore fails, we might have an orphaned auth user. This requires manual cleanup.
         if (authUserId) {
             console.error(`Orphaned Firebase Auth user created with ID: ${authUserId}. Please clean up manually.`);
         }
