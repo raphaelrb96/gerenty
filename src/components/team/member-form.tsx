@@ -9,7 +9,7 @@ import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 import { addEmployee, updateEmployee } from "@/services/employee-service";
-import type { Employee } from "@/lib/types";
+import type { Employee, Role } from "@/lib/types";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -69,6 +69,17 @@ type MemberFormProps = {
   onFinished: () => void;
   member: Employee | null;
 };
+
+const roles: { value: Role; label: string }[] = [
+    { value: "entregador", label: "Driver" },
+    { value: "salesperson", label: "Salesperson" },
+    { value: "manager", label: "Manager" },
+    { value: "stockist", label: "Stockist" },
+    { value: "accountant", label: "Accountant" },
+    { value: "affiliate", label: "Affiliate" },
+    { value: "admin", label: "Admin" },
+    { value: "empresa", label: "Owner" },
+];
 
 export function MemberForm({ isOpen, onClose, onFinished, member }: MemberFormProps) {
   const { user } = useAuth();
@@ -180,14 +191,9 @@ export function MemberForm({ isOpen, onClose, onFinished, member }: MemberFormPr
                     <AccordionTrigger>Detalhes do Cargo</AccordionTrigger>
                     <AccordionContent className="pt-4 space-y-4">
                       <FormField control={form.control} name="role" render={({ field }) => (<FormItem><FormLabel>Função</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>
-                          <SelectItem value="entregador">Entregador</SelectItem>
-                          <SelectItem value="salesperson">Vendedor</SelectItem>
-                          <SelectItem value="manager">Gerente</SelectItem>
-                          <SelectItem value="stockist">Estoquista</SelectItem>
-                          <SelectItem value="accountant">Contador</SelectItem>
-                          <SelectItem value="affiliate">Afiliado</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
-                          <SelectItem value="empresa">Dono</SelectItem>
+                          {roles.map(role => (
+                              <SelectItem key={role.value} value={role.value}>{role.label}</SelectItem>
+                          ))}
                       </SelectContent></Select><FormMessage /></FormItem>)} />
                       <FormField control={form.control} name="type" render={({ field }) => (<FormItem><FormLabel>Tipo de Vínculo</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="Fixo">Fixo (CLT)</SelectItem><SelectItem value="Freelancer">Freelancer</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
                       <FormField control={form.control} name="isActive" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Status Ativo</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />

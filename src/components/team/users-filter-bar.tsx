@@ -16,7 +16,16 @@ type UsersFilterBarProps = {
     setStatusFilter: (value: "all" | "active" | "inactive") => void;
 };
 
-const roles: Role[] = ['admin', 'empresa', 'salesperson', 'entregador', 'manager', 'stockist', 'accountant', 'affiliate'];
+const roles: { value: Role; label: string }[] = [
+    { value: "admin", label: "Admin" },
+    { value: "empresa", label: "Owner" },
+    { value: "salesperson", label: "Salesperson" },
+    { value: "entregador", label: "Driver" },
+    { value: "manager", label: "Manager" },
+    { value: "stockist", label: "Stockist" },
+    { value: "accountant", label: "Accountant" },
+    { value: "affiliate", label: "Affiliate" },
+];
 
 export function UsersFilterBar({ 
     searchTerm, setSearchTerm, 
@@ -44,7 +53,7 @@ export function UsersFilterBar({
                             <SelectContent>
                                 <SelectItem value="all">Todas as Funções</SelectItem>
                                 {roles.map(role => (
-                                    <SelectItem key={role} value={role} className="capitalize">{role}</SelectItem>
+                                    <SelectItem key={role.value} value={role.value}>{role.label}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
