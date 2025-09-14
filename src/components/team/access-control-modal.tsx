@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -9,11 +10,13 @@ import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 import type { Employee, Company } from "@/lib/types";
+import { sendSignInLinkToEmail } from "@/services/auth-service";
+
 
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, KeyRound } from "lucide-react";
+import { Loader2, KeyRound, UserPlus } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -29,7 +32,6 @@ import { usePermissions } from "@/context/permissions-context";
 
 
 const formSchema = z.object({
-    // You can add fields for user account creation if needed, e.g., password
     permissions: z.object({
         dashboard: z.boolean().default(false),
         products: z.boolean().default(false),
@@ -70,6 +72,7 @@ export function AccessControlModal({ isOpen, onClose, member }: AccessControlMod
   const { companies } = useCompanyContext();
   const { permissions, setPermission } = usePermissions();
   const [isSaving, setIsSaving] = React.useState(false);
+  const [isInviting, setIsInviting] = React.useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -97,7 +100,7 @@ export function AccessControlModal({ isOpen, onClose, member }: AccessControlMod
   };
   
   const watchedCompanyAccess = watch('companyAccess');
-  const allCompaniesSelected = companies.every(c => watchedCompanyAccess?.[c.id]);
+  const allCompaniesSelected = companies.length > 0 && companies.every(c => watchedCompanyAccess?.[c.id]);
   
   const handleSelectAllCompanies = (checked: boolean) => {
       companies.forEach(company => {
@@ -118,8 +121,6 @@ export function AccessControlModal({ isOpen, onClose, member }: AccessControlMod
     if (!member) return;
     setIsSaving(true);
     try {
-        // Here you would call a service to update the user's permissions
-        // For this example, we'll update the context
         setPermission(member.id, {
             modules: values.permissions,
             companies: values.companyAccess,
@@ -132,6 +133,23 @@ export function AccessControlModal({ isOpen, onClose, member }: AccessControlMod
       toast({ variant: "destructive", title: "Erro ao salvar", description: "Não foi possível salvar as permissões." });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleInviteUser = async () => {
+    if (!member || !member.email) {
+        toast({ variant: "destructive", title: "Erro de Convite", description: "O membro precisa ter um e-mail cadastrado para ser convidado." });
+        return;
+    }
+    setIsInviting(true);
+    try {
+        await sendSignInLinkToEmail(member.email);
+        toast({ title: "Convite Enviado!", description: `Um link de criação de conta foi enviado para ${member.email}.` });
+    } catch (error) {
+        console.error(error);
+        toast({ variant: "destructive", title: "Erro ao Enviar Convite", description: "Não foi possível enviar o convite. Tente novamente." });
+    } finally {
+        setIsInviting(false);
     }
   };
 
@@ -148,6 +166,16 @@ export function AccessControlModal({ isOpen, onClose, member }: AccessControlMod
             <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 overflow-hidden flex flex-col">
                 <ScrollArea className="flex-1 px-6 py-4">
                     <div className="space-y-8">
+                        {!member?.userId && (
+                            <div className="rounded-lg border bg-card text-card-foreground p-4 space-y-3">
+                                <h4 className="font-semibold text-center">Este membro ainda não tem uma conta</h4>
+                                <p className="text-sm text-muted-foreground text-center">Envie um convite por e-mail para que ele possa criar uma senha e acessar a plataforma com as permissões definidas abaixo.</p>
+                                <Button type="button" className="w-full" onClick={handleInviteUser} disabled={isInviting || !member?.email}>
+                                    {isInviting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                                    Convidar e Criar Conta
+                                </Button>
+                            </div>
+                        )}
                         <div>
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-lg font-medium">Acesso às Empresas</h3>

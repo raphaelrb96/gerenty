@@ -1,4 +1,5 @@
 
+
 import { 
   auth,
   db
@@ -8,6 +9,7 @@ import {
   signInWithEmailAndPassword, 
   signOut as firebaseSignOut, 
   sendPasswordResetEmail,
+  sendSignInLinkToEmail as firebaseSendSignInLinkToEmail,
   updateProfile,
   onAuthStateChanged,
   type User as FirebaseUser
@@ -110,6 +112,23 @@ export async function resetPassword(email: string): Promise<void> {
     throw error;
   }
 }
+
+// --- Send Sign-In Link (for inviting users) ---
+export async function sendSignInLinkToEmail(email: string): Promise<void> {
+  const actionCodeSettings = {
+    url: `${window.location.origin}/auth/login`,
+    handleCodeInApp: true,
+  };
+  try {
+    await firebaseSendSignInLinkToEmail(auth, email, actionCodeSettings);
+    // Save the email locally to use it when the user returns
+    window.localStorage.setItem('emailForSignIn', email);
+  } catch (error) {
+    console.error("Error sending sign-in link: ", error);
+    throw error;
+  }
+}
+
 
 // --- Auth State Observer ---
 export function onAuthStateChange(callback: (user: FirebaseUser | null) => void) {
