@@ -131,7 +131,7 @@ export default function TeamPage() {
                     onEdit={handleOpenEditMember}
                     onDelete={handleDeleteMember}
                     onManageAccess={handleOpenAccessControl}
-                    onInvite={() => {}} // This is no longer used
+                    onInvite={() => {}} // onInvite is no longer used
                 />
             )}
 

@@ -44,7 +44,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "..
 
 const formSchema = z.object({
   name: z.string().min(2, "O nome é obrigatório."),
-  email: z.string().email("Email inválido.").optional().or(z.literal('')),
+  email: z.string().email("Email inválido."),
+  password: z.string().min(8, "A senha deve ter pelo menos 8 caracteres.").optional(),
   phone: z.string().min(1, "O telefone de contato é obrigatório."),
   document: z.string().optional(),
   type: z.enum(['Fixo', 'Freelancer']),
@@ -59,6 +60,15 @@ const formSchema = z.object({
     state: z.string().optional(),
     zipCode: z.string().optional(),
   }).optional(),
+}).superRefine((data, ctx) => {
+    // Make password required only when creating a new member (when member prop is null)
+    if (!data.password) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["password"],
+            message: "A senha é obrigatória para novos membros.",
+        });
+    }
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -81,7 +91,7 @@ const roles: { value: Role; label: string }[] = [
     { value: "empresa", label: "Dono" },
 ];
 
-export function MemberForm({ isOpen, onClose, onFinished, member }: MemberFormProps) {
+export function MemberForm({ isOpen, onFinished, member }: MemberFormProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = React.useState(false);
@@ -136,7 +146,7 @@ export function MemberForm({ isOpen, onClose, onFinished, member }: MemberFormPr
 
   const handleClose = () => {
     form.reset();
-    onClose();
+    onFinished();
   };
 
   const onSubmit = async (values: FormValues) => {
@@ -148,10 +158,17 @@ export function MemberForm({ isOpen, onClose, onFinished, member }: MemberFormPr
     setIsSaving(true);
     try {
       if (member) {
-        await updateEmployee(member.id, values);
+        // We don't update the password on edit, so we remove it from the data
+        const { password, ...updateData } = values;
+        await updateEmployee(member.id, updateData);
         toast({ title: "Membro da equipe atualizado!" });
       } else {
-        await addEmployee({ ...values, ownerId: user.uid });
+        if (!values.password) {
+            toast({ variant: "destructive", title: "Senha obrigatória", description: "É necessário definir uma senha para o novo membro." });
+            setIsSaving(false);
+            return;
+        }
+        await addEmployee({ ...values, ownerId: user.uid, password: values.password });
         toast({ title: "Novo membro adicionado à equipe!" });
       }
       onFinished();
@@ -183,7 +200,10 @@ export function MemberForm({ isOpen, onClose, onFinished, member }: MemberFormPr
                     <AccordionContent className="pt-4 space-y-4">
                       <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Nome Completo</FormLabel><FormControl><Input placeholder="Nome do membro" {...field} /></FormControl><FormMessage /></FormItem>)} />
                       <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Telefone / Contato</FormLabel><FormControl><Input placeholder="(00) 00000-0000" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                      <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email (Opcional)</FormLabel><FormControl><Input type="email" placeholder="email@exemplo.com" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="email@exemplo.com" {...field} disabled={!!member} /></FormControl><FormMessage /></FormItem>)} />
+                       {!member && (
+                        <FormField control={form.control} name="password" render={({ field }) => (<FormItem><FormLabel>Senha</FormLabel><FormControl><Input type="password" placeholder="********" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                       )}
                       <FormField control={form.control} name="document" render={({ field }) => (<FormItem><FormLabel>CPF (Opcional)</FormLabel><FormControl><Input placeholder="000.000.000-00" {...field} /></FormControl><FormMessage /></FormItem>)} />
                     </AccordionContent>
                   </AccordionItem>

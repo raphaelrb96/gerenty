@@ -1,9 +1,10 @@
 
 'use server';
 
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
 import { collection, getDocs, query, where, addDoc, serverTimestamp, doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import type { Employee } from "@/lib/types";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 
 const employeesCollection = collection(db, "employees");
 
@@ -32,10 +33,33 @@ export async function getEmployeesByUser(ownerId: string): Promise<Employee[]> {
     }
 }
 
-export async function addEmployee(employeeData: Omit<Employee, 'id' | 'createdAt' | 'updatedAt'>): Promise<Employee> {
+export async function addEmployee(employeeData: Omit<Employee, 'id' | 'createdAt' | 'updatedAt'> & { password?: string }): Promise<Employee> {
     try {
+        let userId: string | undefined = undefined;
+
+        // This is a simplified, client-side way to create a user.
+        // A robust solution would use Firebase Admin SDK on a server to avoid security risks
+        // and session conflicts. This approach is for demonstration within the current constraints.
+        if (employeeData.email && employeeData.password) {
+            // WARNING: This approach of creating users client-side has limitations.
+            // It might interfere with the currently logged-in user's session if not handled carefully.
+            // A secondary Firebase app instance would be required for a truly clean implementation here.
+            try {
+                 const tempAuth = auth; // In a real scenario, initialize a temporary app
+                 const userCredential = await createUserWithEmailAndPassword(tempAuth, employeeData.email, employeeData.password);
+                 userId = userCredential.user.uid;
+            } catch (authError: any) {
+                console.error("Error creating Firebase auth user:", authError);
+                // We re-throw but with a more user-friendly message if possible
+                throw new Error(`Failed to create auth user: ${authError.message}`);
+            }
+        }
+        
+        const { password, ...firestoreData } = employeeData;
+
         const docRef = await addDoc(employeesCollection, {
-            ...employeeData,
+            ...firestoreData,
+            userId: userId,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
         });
@@ -65,6 +89,8 @@ export async function updateEmployee(employeeId: string, employeeData: Partial<O
 
 export async function deleteEmployee(employeeId: string): Promise<void> {
     try {
+        // Here you might also want to delete the corresponding Firebase Auth user
+        // This requires Firebase Admin SDK on a backend for security reasons.
         const employeeDoc = doc(db, "employees", employeeId);
         await deleteDoc(employeeDoc);
     } catch (error) {

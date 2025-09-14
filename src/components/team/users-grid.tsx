@@ -123,12 +123,6 @@ export function UsersGrid({ data, onEdit, onDelete, onManageAccess, onInvite }: 
                     <Badge variant={"secondary"} className={cn("w-full justify-center text-xs", getStatusVariant(member.isActive))}>
                         {member.isActive ? "Ativo" : "Inativo"}
                     </Badge>
-                     {!member.userId && canInvite(member.id) && (
-                        <Button variant="secondary" size="sm" onClick={() => onInvite(member)}>
-                            <UserPlus className="mr-2 h-4 w-4" />
-                            Convidar
-                        </Button>
-                    )}
                 </CardFooter>
               </Card>
             ))}
