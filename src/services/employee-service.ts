@@ -3,7 +3,7 @@
 'use server';
 
 import { db, auth } from "@/lib/firebase";
-import { collection, getDocs, query, where, addDoc, serverTimestamp, doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { collection, getDocs, query, where, addDoc, serverTimestamp, doc, getDoc, updateDoc, deleteDoc, setDoc } from "firebase/firestore";
 import type { Employee } from "@/lib/types";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 
@@ -35,38 +35,42 @@ export async function getEmployeesByUser(ownerId: string): Promise<Employee[]> {
 }
 
 export async function addEmployee(employeeData: Omit<Employee, 'id' | 'createdAt' | 'updatedAt'> & { password?: string }): Promise<Employee> {
-    let userId: string | undefined = '';
     const { password, ...firestoreData } = employeeData;
+    let authUserId: string | undefined = undefined;
 
-    // Only create an auth user if email and password are provided and valid
+    // Create auth user if email and password are provided
     if (firestoreData.email && password && password.length >= 8) {
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, firestoreData.email, password);
-            userId = userCredential.user.uid;
+            authUserId = userCredential.user.uid;
         } catch (error) {
             // Re-throw the original Firebase Auth error to be handled by the form
+            console.error("Error creating Firebase Auth user:", error);
             throw error;
         }
     }
-    
-    // Now, save the employee data to Firestore
+
+    // Prepare to save to Firestore
+    const newEmployeeDocRef = doc(employeesCollection);
+    const finalUserId = authUserId || newEmployeeDocRef.id;
+
     try {
-        const docRef = await addDoc(employeesCollection, {
+        await setDoc(newEmployeeDocRef, {
             ...firestoreData,
-            userId: userId, // Will be an empty string if no auth user was created
+            userId: finalUserId,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
         });
 
-        const newDocSnap = await getDoc(docRef);
-        return convertEmployeeTimestamps({ id: docRef.id, ...newDocSnap.data() });
-    } catch(firestoreError: any) {
+        const newDocSnap = await getDoc(newEmployeeDocRef);
+        return convertEmployeeTimestamps({ id: newEmployeeDocRef.id, ...newDocSnap.data() });
+    } catch (firestoreError: any) {
         console.error("Firestore document creation failed:", firestoreError);
         // If Firestore fails, we might have an orphaned auth user.
-        if (userId) {
-             console.error(`Orphaned Firebase Auth user created with ID: ${userId}. Please clean up manually.`);
+        if (authUserId) {
+            console.error(`Orphaned Firebase Auth user created with ID: ${authUserId}. Please clean up manually.`);
         }
-        // Re-throw the Firestore error to be handled by the form
+        // Re-throw the Firestore error
         throw firestoreError;
     }
 }
@@ -98,6 +102,3 @@ export async function deleteEmployee(employeeId: string): Promise<void> {
         throw new Error("Failed to delete employee.");
     }
 }
-
-
-
