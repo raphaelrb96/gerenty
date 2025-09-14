@@ -198,7 +198,7 @@ export function MemberForm({ isOpen, onClose, onFinished, member }: MemberFormPr
   };
 
   return (
-    <Sheet open={isOpen} onOpenChange={onClose}>
+    <Sheet open={isOpen} onOpenChange={handleClose}>
       <SheetContent className="sm:max-w-md flex flex-col">
         <SheetHeader className="px-6 pt-6">
           <SheetTitle>{member ? "Editar Membro" : "Adicionar Novo Membro"}</SheetTitle>
@@ -267,3 +267,4 @@ export function MemberForm({ isOpen, onClose, onFinished, member }: MemberFormPr
     </Sheet>
   );
 }
+
