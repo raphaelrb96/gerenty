@@ -37,29 +37,39 @@ export async function getEmployeesByUser(ownerId: string): Promise<Employee[]> {
 export async function addEmployee(employeeData: Omit<Employee, 'id' | 'createdAt' | 'updatedAt'> & { password?: string }): Promise<Employee> {
     let userId: string | undefined = undefined;
 
-    // A robust solution would use Firebase Admin SDK on a server to avoid security risks
-    // and session conflicts. This approach is for demonstration within the current constraints.
-    if (employeeData.email && employeeData.password) {
-        // WARNING: This approach of creating users client-side has limitations.
-        // It might interfere with the currently logged-in user's session if not handled carefully.
-        // A secondary Firebase app instance would be required for a truly clean implementation here.
-        const tempAuth = auth; // In a real scenario, initialize a temporary app
-        const userCredential = await createUserWithEmailAndPassword(tempAuth, employeeData.email, employeeData.password);
-        userId = userCredential.user.uid;
+    try {
+        if (employeeData.email && employeeData.password) {
+            const userCredential = await createUserWithEmailAndPassword(auth, employeeData.email, employeeData.password);
+            userId = userCredential.user.uid;
+        } else {
+             throw new Error("Email and password are required to create an employee account.");
+        }
+    } catch (error) {
+        console.error("Firebase Auth user creation failed:", error);
+        // Re-throw the original Firebase error so the UI can catch it
+        throw error;
     }
     
     const { password, ...firestoreData } = employeeData;
 
-    const docRef = await addDoc(employeesCollection, {
-        ...firestoreData,
-        userId: userId,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-    });
+    try {
+        const docRef = await addDoc(employeesCollection, {
+            ...firestoreData,
+            userId: userId,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+        });
 
-    const newDocSnap = await getDoc(docRef);
-    return convertEmployeeTimestamps({ id: docRef.id, ...newDocSnap.data() });
+        const newDocSnap = await getDoc(docRef);
+        return convertEmployeeTimestamps({ id: docRef.id, ...newDocSnap.data() });
+    } catch(firestoreError) {
+        console.error("Firestore document creation failed:", firestoreError);
+        // Here you might want to delete the created Firebase Auth user to prevent orphans
+        // This requires Admin SDK, but for now we just throw an error.
+        throw new Error("Failed to save employee data to database after user creation.");
+    }
 }
+
 
 export async function updateEmployee(employeeId: string, employeeData: Partial<Omit<Employee, 'id'>>): Promise<Employee> {
     try {
@@ -87,6 +97,3 @@ export async function deleteEmployee(employeeId: string): Promise<void> {
         throw new Error("Failed to delete employee.");
     }
 }
-
-
-
