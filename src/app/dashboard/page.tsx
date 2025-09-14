@@ -46,6 +46,8 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 function CompanySelector() {
     const { t } = useTranslation();
     const { companies, activeCompany, setActiveCompany } = useCompany();
+    const { userData } = useAuth();
+    const isCompanyOwner = userData?.role === 'empresa';
 
     const getDisplayName = () => {
         if (!activeCompany) {
@@ -54,7 +56,7 @@ function CompanySelector() {
         return activeCompany.name;
     };
 
-    if (companies.length === 0) {
+    if (companies.length === 0 && isCompanyOwner) {
         return (
             <Card>
                 <CardContent className="p-6">

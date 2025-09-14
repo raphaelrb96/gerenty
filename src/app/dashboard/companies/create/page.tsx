@@ -19,6 +19,17 @@ export default function CreateCompanyPage() {
   useEffect(() => {
     // Wait for both user and company data to be loaded
     if (!authLoading && !companyLoading) {
+      // Rule: Only company owners can create new companies.
+      if (userData?.role !== 'empresa') {
+        toast({
+          variant: "destructive",
+          title: "Acesso Negado",
+          description: "Você não tem permissão para criar novas empresas.",
+        });
+        router.push('/dashboard');
+        return;
+      }
+
       const companyLimit = userData?.plan?.limits?.companies ?? 1;
       
       if (companies.length >= companyLimit) {
@@ -36,9 +47,9 @@ export default function CreateCompanyPage() {
   if (authLoading || companyLoading) {
     return <LoadingSpinner />;
   }
-
-  const companyLimit = userData?.plan?.limits?.companies ?? 1;
-  if (companies.length >= companyLimit) {
+  
+  // Block access if the user is not a company owner or if limit is reached
+  if (userData?.role !== 'empresa' || companies.length >= (userData?.plan?.limits?.companies ?? 1)) {
     // This is a fallback while redirecting, to avoid showing the form briefly
     return null; 
   }

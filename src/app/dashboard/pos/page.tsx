@@ -25,6 +25,8 @@ import { useTranslation } from "@/context/i18n-context";
 function CompanySelector() {
     const { t } = useTranslation();
     const { companies, activeCompany, setActiveCompany } = useCompany();
+    const { userData } = useAuth();
+    const isCompanyOwner = userData?.role === 'empresa';
 
     const getDisplayName = () => {
         if (!activeCompany) {
@@ -67,11 +69,13 @@ function CompanySelector() {
 
 
 export default function PosPage() {
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
   const { activeCompany } = useCompany();
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const isCompanyOwner = userData?.role === 'empresa';
+
 
   useEffect(() => {
     if (user && activeCompany) {
@@ -169,10 +173,10 @@ export default function PosPage() {
                 icon={<Package className="h-16 w-16" />}
                 title="Nenhuma Empresa Selecionada"
                 description="Por favor, selecione uma empresa ativa para começar a vender."
-                action={
-                    <Button asChild>
+                action={ isCompanyOwner ?
+                    (<Button asChild>
                         <Link href="/dashboard/companies/create">Criar uma Empresa</Link>
-                    </Button>
+                    </Button>) : undefined
                 }
                 />
             </div>

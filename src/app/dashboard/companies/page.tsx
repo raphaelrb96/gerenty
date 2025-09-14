@@ -21,7 +21,18 @@ export default function CompaniesPage() {
     const router = useRouter();
     const { toast } = useToast();
 
+    const isCompanyOwner = userData?.role === 'empresa';
+
     const handleCreateCompany = () => {
+        if (!isCompanyOwner) {
+             toast({
+                variant: "destructive",
+                title: "Acesso Negado",
+                description: "Apenas o dono da conta pode criar novas empresas.",
+            });
+            return;
+        }
+
         const companyLimit = userData?.plan?.limits?.companies ?? 1;
         
         if (companies.length >= companyLimit) {
@@ -44,7 +55,7 @@ export default function CompaniesPage() {
                 title={t('companiesPage.title')}
                 description={t('companiesPage.description')}
                 action={
-                    <Button onClick={handleCreateCompany} disabled={isLimitReached}>
+                    <Button onClick={handleCreateCompany} disabled={isLimitReached || !isCompanyOwner}>
                         <PlusCircle className="mr-2 h-4 w-4" /> {t('companiesPage.createButton')}
                     </Button>
                 }
@@ -56,7 +67,7 @@ export default function CompaniesPage() {
                     title={t('companiesPage.empty.title')}
                     description={t('companiesPage.empty.description')}
                     action={
-                         <Button onClick={handleCreateCompany} disabled={isLimitReached}>
+                         <Button onClick={handleCreateCompany} disabled={isLimitReached || !isCompanyOwner}>
                             <PlusCircle className="mr-2 h-4 w-4" /> {t('companiesPage.empty.action')}
                         </Button>
                     }
