@@ -18,13 +18,13 @@ type UsersFilterBarProps = {
 
 const roles: { value: Role; label: string }[] = [
     { value: "admin", label: "Admin" },
-    { value: "empresa", label: "Owner" },
-    { value: "salesperson", label: "Salesperson" },
-    { value: "entregador", label: "Driver" },
-    { value: "manager", label: "Manager" },
-    { value: "stockist", label: "Stockist" },
-    { value: "accountant", label: "Accountant" },
-    { value: "affiliate", label: "Affiliate" },
+    { value: "empresa", label: "Dono" },
+    { value: "salesperson", label: "Vendedor" },
+    { value: "entregador", label: "Entregador" },
+    { value: "manager", label: "Gerente" },
+    { value: "stockist", label: "Estoquista" },
+    { value: "accountant", label: "Financeiro" },
+    { value: "affiliate", label: "Afiliado" },
 ];
 
 export function UsersFilterBar({ 

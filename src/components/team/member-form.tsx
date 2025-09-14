@@ -71,14 +71,14 @@ type MemberFormProps = {
 };
 
 const roles: { value: Role; label: string }[] = [
-    { value: "entregador", label: "Driver" },
-    { value: "salesperson", label: "Salesperson" },
-    { value: "manager", label: "Manager" },
-    { value: "stockist", label: "Stockist" },
-    { value: "accountant", label: "Accountant" },
-    { value: "affiliate", label: "Affiliate" },
+    { value: "entregador", label: "Entregador" },
+    { value: "salesperson", label: "Vendedor" },
+    { value: "manager", label: "Gerente" },
+    { value: "stockist", label: "Estoquista" },
+    { value: "accountant", label: "Financeiro" },
+    { value: "affiliate", label: "Afiliado" },
     { value: "admin", label: "Admin" },
-    { value: "empresa", label: "Owner" },
+    { value: "empresa", label: "Dono" },
 ];
 
 export function MemberForm({ isOpen, onClose, onFinished, member }: MemberFormProps) {
