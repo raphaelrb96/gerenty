@@ -128,7 +128,15 @@ export function MemberForm({ isOpen, onFinished, member }: MemberFormProps) {
         type: member.type || "Fixo",
         role: member.role,
         isActive: member.isActive,
-        address: member.address || { street: "", number: "", complement: "", neighborhood: "", city: "", state: "", zipCode: "" },
+        address: {
+            street: member.address?.street || "",
+            number: member.address?.number || "",
+            complement: member.address?.complement || "",
+            neighborhood: member.address?.neighborhood || "",
+            city: member.address?.city || "",
+            state: member.address?.state || "",
+            zipCode: member.address?.zipCode || "",
+        },
       });
     } else {
       form.reset({
