@@ -16,6 +16,7 @@ import { MemberForm } from "@/components/team/member-form";
 import { UsersGrid } from "@/components/team/users-grid";
 import { UsersFilterBar } from "@/components/team/users-filter-bar";
 import { AccessControlModal } from "@/components/team/access-control-modal";
+import { InviteModal } from "@/components/team/invite-modal";
 
 export default function TeamPage() {
     const { user } = useAuth();
@@ -26,10 +27,12 @@ export default function TeamPage() {
     // State for modals
     const [isMemberFormOpen, setIsMemberFormOpen] = useState(false);
     const [isAccessModalOpen, setIsAccessModalOpen] = useState(false);
+    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     
     // State for selected member for modals
     const [editingMember, setEditingMember] = useState<Employee | null>(null);
     const [memberForAccess, setMemberForAccess] = useState<Employee | null>(null);
+    const [memberToInvite, setMemberToInvite] = useState<Employee | null>(null);
 
     // Filter states
     const [searchTerm, setSearchTerm] = useState("");
@@ -68,6 +71,11 @@ export default function TeamPage() {
     const handleOpenAccessControl = (member: Employee) => {
         setMemberForAccess(member);
         setIsAccessModalOpen(true);
+    }
+
+    const handleOpenInvite = (member: Employee) => {
+        setMemberToInvite(member);
+        setIsInviteModalOpen(true);
     }
 
     const handleDeleteMember = async (memberId: string) => {
@@ -131,6 +139,7 @@ export default function TeamPage() {
                     onEdit={handleOpenEditMember}
                     onDelete={handleDeleteMember}
                     onManageAccess={handleOpenAccessControl}
+                    onInvite={handleOpenInvite}
                 />
             )}
 
@@ -145,6 +154,12 @@ export default function TeamPage() {
                 isOpen={isAccessModalOpen}
                 onClose={() => setIsAccessModalOpen(false)}
                 member={memberForAccess}
+            />
+
+            <InviteModal 
+                isOpen={isInviteModalOpen}
+                onClose={() => setIsInviteModalOpen(false)}
+                member={memberToInvite}
             />
         </div>
     );

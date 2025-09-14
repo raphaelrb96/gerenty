@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { MoreHorizontal, Mail, Phone, KeyRound, ShieldAlert } from "lucide-react";
+import { MoreHorizontal, Mail, Phone, KeyRound, ShieldAlert, UserPlus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,16 +28,20 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { cn } from "@/lib/utils";
+import { usePermissions } from "@/context/permissions-context";
 
 type UsersGridProps = {
   data: Employee[];
   onEdit: (member: Employee) => void;
   onDelete: (memberId: string) => Promise<void>;
   onManageAccess: (member: Employee) => void;
+  onInvite: (member: Employee) => void;
 };
 
-export function UsersGrid({ data, onEdit, onDelete, onManageAccess }: UsersGridProps) {
+export function UsersGrid({ data, onEdit, onDelete, onManageAccess, onInvite }: UsersGridProps) {
   const [memberToDelete, setMemberToDelete] = React.useState<Employee | null>(null);
+  const { getPermissions } = usePermissions();
+
 
   const handleDelete = async () => {
     if (memberToDelete) {
@@ -56,6 +60,16 @@ export function UsersGrid({ data, onEdit, onDelete, onManageAccess }: UsersGridP
         return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
+  }
+  
+  const canInvite = (memberId: string): boolean => {
+      const perms = getPermissions(memberId);
+      if (!perms) return false;
+      
+      const hasModulePermission = Object.values(perms.modules).some(v => v === true);
+      const hasCompanyPermission = Object.values(perms.companies).some(v => v === true);
+
+      return hasModulePermission && hasCompanyPermission;
   }
 
   return (
@@ -105,10 +119,16 @@ export function UsersGrid({ data, onEdit, onDelete, onManageAccess }: UsersGridP
                         <span>{member.phone || 'Não informado'}</span>
                     </div>
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="flex-col items-stretch gap-2">
                     <Badge variant={"secondary"} className={cn("w-full justify-center text-xs", getStatusVariant(member.isActive))}>
                         {member.isActive ? "Ativo" : "Inativo"}
                     </Badge>
+                     {!member.userId && canInvite(member.id) && (
+                        <Button variant="secondary" size="sm" onClick={() => onInvite(member)}>
+                            <UserPlus className="mr-2 h-4 w-4" />
+                            Convidar
+                        </Button>
+                    )}
                 </CardFooter>
               </Card>
             ))}
