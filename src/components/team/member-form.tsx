@@ -91,7 +91,7 @@ const roles: { value: Role; label: string }[] = [
     { value: "empresa", label: "Dono" },
 ];
 
-export function MemberForm({ isOpen, onFinished, member }: MemberFormProps) {
+export function MemberForm({ isOpen, onClose, onFinished, member }: MemberFormProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = React.useState(false);
@@ -117,44 +117,46 @@ export function MemberForm({ isOpen, onFinished, member }: MemberFormProps) {
       },
     },
   });
-
+  
   useEffect(() => {
-    if (member) {
-      form.reset({
-        name: member.name,
-        email: member.email,
-        phone: member.phone || "",
-        document: member.document || "",
-        type: member.type || "Fixo",
-        role: member.role,
-        isActive: member.isActive,
-        address: {
-            street: member.address?.street || "",
-            number: member.address?.number || "",
-            complement: member.address?.complement || "",
-            neighborhood: member.address?.neighborhood || "",
-            city: member.address?.city || "",
-            state: member.address?.state || "",
-            zipCode: member.address?.zipCode || "",
-        },
-      });
-    } else {
-      form.reset({
-        name: "",
-        email: "",
-        phone: "",
-        document: "",
-        type: "Fixo",
-        role: "salesperson",
-        isActive: true,
-        address: { street: "", number: "", complement: "", neighborhood: "", city: "", state: "", zipCode: "" },
-      });
+    if (isOpen) {
+        if (member) {
+        form.reset({
+            name: member.name,
+            email: member.email,
+            phone: member.phone || "",
+            document: member.document || "",
+            type: member.type || "Fixo",
+            role: member.role,
+            isActive: member.isActive,
+            address: {
+                street: member.address?.street || "",
+                number: member.address?.number || "",
+                complement: member.address?.complement || "",
+                neighborhood: member.address?.neighborhood || "",
+                city: member.address?.city || "",
+                state: member.address?.state || "",
+                zipCode: member.address?.zipCode || "",
+            },
+        });
+        } else {
+        form.reset({
+            name: "",
+            email: "",
+            password: "",
+            phone: "",
+            document: "",
+            type: "Fixo",
+            role: "salesperson",
+            isActive: true,
+            address: { street: "", number: "", complement: "", neighborhood: "", city: "", state: "", zipCode: "" },
+        });
+        }
     }
-  }, [member, form, isOpen]);
+  }, [member, isOpen, form]);
 
   const handleClose = () => {
-    form.reset();
-    onFinished();
+    onClose();
   };
 
   const onSubmit = async (values: FormValues) => {
@@ -190,7 +192,7 @@ export function MemberForm({ isOpen, onFinished, member }: MemberFormProps) {
   };
 
   return (
-    <Sheet open={isOpen} onOpenChange={handleClose}>
+    <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent className="sm:max-w-md flex flex-col">
         <SheetHeader className="px-6 pt-6">
           <SheetTitle>{member ? "Editar Membro" : "Adicionar Novo Membro"}</SheetTitle>
@@ -247,7 +249,7 @@ export function MemberForm({ isOpen, onFinished, member }: MemberFormProps) {
               </div>
             </ScrollArea>
             <SheetFooter className="px-6 py-4 border-t mt-auto">
-              <Button type="button" variant="ghost" onClick={handleClose}>Cancelar</Button>
+              <Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button>
               <Button type="submit" disabled={isSaving}>
                 {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Salvar
