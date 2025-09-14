@@ -36,19 +36,18 @@ export async function getEmployeesByUser(ownerId: string): Promise<Employee[]> {
 
 export async function addEmployee(employeeData: Omit<Employee, 'id' | 'createdAt' | 'updatedAt'> & { password?: string }): Promise<Employee> {
     let userId: string | undefined = undefined;
+    const { password, ...firestoreData } = employeeData;
 
-    if (employeeData.email && employeeData.password) {
+    if (firestoreData.email && password) {
         try {
-            const userCredential = await createUserWithEmailAndPassword(auth, employeeData.email, employeeData.password);
+            const userCredential = await createUserWithEmailAndPassword(auth, firestoreData.email, password);
             userId = userCredential.user.uid;
-        } catch (error) {
+        } catch (error: any) {
             console.error("Firebase Auth user creation failed:", error);
             throw error;
         }
     }
     
-    const { password, ...firestoreData } = employeeData;
-
     try {
         const docRef = await addDoc(employeesCollection, {
             ...firestoreData,
@@ -59,12 +58,11 @@ export async function addEmployee(employeeData: Omit<Employee, 'id' | 'createdAt
 
         const newDocSnap = await getDoc(docRef);
         return convertEmployeeTimestamps({ id: docRef.id, ...newDocSnap.data() });
-    } catch(firestoreError) {
+    } catch(firestoreError: any) {
         console.error("Firestore document creation failed:", firestoreError);
         if (userId) {
              console.error(`Orphaned Firebase Auth user created with ID: ${userId}. Please clean up manually.`);
         }
-        // Re-throw the original firestore error for better debugging.
         throw firestoreError;
     }
 }
@@ -96,3 +94,4 @@ export async function deleteEmployee(employeeId: string): Promise<void> {
         throw new Error("Failed to delete employee.");
     }
 }
+
