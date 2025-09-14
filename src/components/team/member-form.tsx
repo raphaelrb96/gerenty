@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -40,12 +41,14 @@ import {
 } from "@/components/ui/sheet";
 import { ScrollArea } from "../ui/scroll-area";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
+import { getFirebaseAuthErrorMessage } from "@/lib/firebase-errors";
+import { useTranslation } from "@/context/i18n-context";
 
 
-const formSchema = z.object({
+const createFormSchema = z.object({
   name: z.string().min(2, "O nome é obrigatório."),
   email: z.string().email("Email inválido."),
-  password: z.string().min(8, "A senha deve ter pelo menos 8 caracteres.").optional(),
+  password: z.string().min(8, "A senha deve ter pelo menos 8 caracteres."),
   phone: z.string().min(1, "O telefone de contato é obrigatório."),
   document: z.string().optional(),
   type: z.enum(['Fixo', 'Freelancer']),
@@ -60,18 +63,14 @@ const formSchema = z.object({
     state: z.string().optional(),
     zipCode: z.string().optional(),
   }).optional(),
-}).superRefine((data, ctx) => {
-    // Make password required only when creating a new member (when member prop is null)
-    if (!data.password) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["password"],
-            message: "A senha é obrigatória para novos membros.",
-        });
-    }
 });
 
-type FormValues = z.infer<typeof formSchema>;
+const editFormSchema = createFormSchema.omit({ password: true }).extend({
+    password: z.string().optional(),
+});
+
+
+type FormValues = z.infer<typeof createFormSchema>;
 
 type MemberFormProps = {
   isOpen: boolean;
@@ -81,8 +80,8 @@ type MemberFormProps = {
 };
 
 const roles: { value: Role; label: string }[] = [
-    { value: "entregador", label: "Entregador" },
     { value: "salesperson", label: "Vendedor" },
+    { value: "entregador", label: "Entregador" },
     { value: "manager", label: "Gerente" },
     { value: "stockist", label: "Estoquista" },
     { value: "accountant", label: "Financeiro" },
@@ -94,7 +93,10 @@ const roles: { value: Role; label: string }[] = [
 export function MemberForm({ isOpen, onClose, onFinished, member }: MemberFormProps) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { language } = useTranslation();
   const [isSaving, setIsSaving] = React.useState(false);
+
+  const formSchema = member ? editFormSchema : createFormSchema;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -121,36 +123,36 @@ export function MemberForm({ isOpen, onClose, onFinished, member }: MemberFormPr
   useEffect(() => {
     if (isOpen) {
         if (member) {
-        form.reset({
-            name: member.name,
-            email: member.email,
-            phone: member.phone || "",
-            document: member.document || "",
-            type: member.type || "Fixo",
-            role: member.role,
-            isActive: member.isActive,
-            address: {
-                street: member.address?.street || "",
-                number: member.address?.number || "",
-                complement: member.address?.complement || "",
-                neighborhood: member.address?.neighborhood || "",
-                city: member.address?.city || "",
-                state: member.address?.state || "",
-                zipCode: member.address?.zipCode || "",
-            },
-        });
+            form.reset({
+                name: member.name,
+                email: member.email,
+                phone: member.phone || "",
+                document: member.document || "",
+                type: member.type || "Fixo",
+                role: member.role,
+                isActive: member.isActive,
+                address: {
+                    street: member.address?.street || "",
+                    number: member.address?.number || "",
+                    complement: member.address?.complement || "",
+                    neighborhood: member.address?.neighborhood || "",
+                    city: member.address?.city || "",
+                    state: member.address?.state || "",
+                    zipCode: member.address?.zipCode || "",
+                },
+            });
         } else {
-        form.reset({
-            name: "",
-            email: "",
-            password: "",
-            phone: "",
-            document: "",
-            type: "Fixo",
-            role: "salesperson",
-            isActive: true,
-            address: { street: "", number: "", complement: "", neighborhood: "", city: "", state: "", zipCode: "" },
-        });
+            form.reset({
+                name: "",
+                email: "",
+                password: "",
+                phone: "",
+                document: "",
+                type: "Fixo",
+                role: "salesperson",
+                isActive: true,
+                address: { street: "", number: "", complement: "", neighborhood: "", city: "", state: "", zipCode: "" },
+            });
         }
     }
   }, [member, isOpen, form]);
@@ -168,7 +170,6 @@ export function MemberForm({ isOpen, onClose, onFinished, member }: MemberFormPr
     setIsSaving(true);
     try {
       if (member) {
-        // We don't update the password on edit, so we remove it from the data
         const { password, ...updateData } = values;
         await updateEmployee(member.id, updateData);
         toast({ title: "Membro da equipe atualizado!" });
@@ -183,9 +184,14 @@ export function MemberForm({ isOpen, onClose, onFinished, member }: MemberFormPr
       }
       onFinished();
       handleClose();
-    } catch (error) {
-      console.error(error);
-      toast({ variant: "destructive", title: "Erro ao salvar", description: "Não foi possível salvar os dados do membro da equipe." });
+    } catch (error: any) {
+      console.error("Error saving member:", error);
+      const errorMessage = getFirebaseAuthErrorMessage(error.code, language);
+      toast({ 
+        variant: "destructive", 
+        title: "Erro ao salvar", 
+        description: errorMessage 
+      });
     } finally {
       setIsSaving(false);
     }
@@ -249,7 +255,7 @@ export function MemberForm({ isOpen, onClose, onFinished, member }: MemberFormPr
               </div>
             </ScrollArea>
             <SheetFooter className="px-6 py-4 border-t mt-auto">
-              <Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button>
+              <Button type="button" variant="ghost" onClick={handleClose}>Cancelar</Button>
               <Button type="submit" disabled={isSaving}>
                 {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Salvar

@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { db, auth } from "@/lib/firebase";
@@ -50,8 +51,8 @@ export async function addEmployee(employeeData: Omit<Employee, 'id' | 'createdAt
                  userId = userCredential.user.uid;
             } catch (authError: any) {
                 console.error("Error creating Firebase auth user:", authError);
-                // We re-throw but with a more user-friendly message if possible
-                throw new Error(`Failed to create auth user: ${authError.message}`);
+                // Re-throw the original authError to be caught by the form
+                throw authError;
             }
         }
         
@@ -68,7 +69,8 @@ export async function addEmployee(employeeData: Omit<Employee, 'id' | 'createdAt
         return convertEmployeeTimestamps({ id: docRef.id, ...newDocSnap.data() });
     } catch (error) {
         console.error("Error adding employee:", error);
-        throw new Error("Failed to add employee.");
+        // Re-throw to be handled by the calling component
+        throw error;
     }
 }
 
