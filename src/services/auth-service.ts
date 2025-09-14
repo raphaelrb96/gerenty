@@ -113,18 +113,16 @@ export async function resetPassword(email: string): Promise<void> {
   }
 }
 
-// --- Send Sign-In Link (for inviting users) ---
-export async function sendSignInLinkToEmail(email: string): Promise<void> {
+// --- Send Invitation Email ---
+export async function sendInvitationEmail(email: string, redirectUrl: string): Promise<void> {
   const actionCodeSettings = {
-    url: `${window.location.origin}/auth/login`,
+    url: redirectUrl,
     handleCodeInApp: true,
   };
   try {
     await firebaseSendSignInLinkToEmail(auth, email, actionCodeSettings);
-    // Save the email locally to use it when the user returns
-    window.localStorage.setItem('emailForSignIn', email);
   } catch (error) {
-    console.error("Error sending sign-in link: ", error);
+    console.error("Error sending invitation email: ", error);
     throw error;
   }
 }

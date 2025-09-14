@@ -4,7 +4,7 @@
 import * as React from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { Employee } from "@/lib/types";
-import { sendSignInLinkToEmail } from "@/services/auth-service";
+import { sendInvitationEmail } from "@/services/auth-service";
 
 import { Button } from "@/components/ui/button";
 import { Loader2, UserPlus } from "lucide-react";
@@ -40,7 +40,8 @@ export function InviteModal({ isOpen, onClose, member }: InviteModalProps) {
     }
     setIsInviting(true);
     try {
-      await sendSignInLinkToEmail(member.email);
+      const redirectUrl = `${window.location.origin}/auth/login`;
+      await sendInvitationEmail(member.email, redirectUrl);
       toast({
         title: "Convite Enviado!",
         description: `Um link de criação de conta foi enviado para ${member.email}.`,
@@ -84,4 +85,3 @@ export function InviteModal({ isOpen, onClose, member }: InviteModalProps) {
     </AlertDialog>
   );
 }
-
