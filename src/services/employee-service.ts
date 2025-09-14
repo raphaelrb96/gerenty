@@ -38,31 +38,37 @@ export async function addEmployee(employeeData: Omit<Employee, 'id' | 'createdAt
     let userId: string | undefined = undefined;
     const { password, ...firestoreData } = employeeData;
 
+    // Only create an auth user if email and password are provided
     if (firestoreData.email && password) {
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, firestoreData.email, password);
             userId = userCredential.user.uid;
-        } catch (error: any) {
+        } catch (error) {
             console.error("Firebase Auth user creation failed:", error);
+            // Re-throw the original Firebase error to be caught by the form
             throw error;
         }
     }
     
+    // Now, save the employee data to Firestore
     try {
         const docRef = await addDoc(employeesCollection, {
             ...firestoreData,
-            userId: userId,
+            userId: userId, // Will be undefined if no auth user was created
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
         });
 
         const newDocSnap = await getDoc(docRef);
         return convertEmployeeTimestamps({ id: docRef.id, ...newDocSnap.data() });
-    } catch(firestoreError: any) {
+    } catch(firestoreError) {
         console.error("Firestore document creation failed:", firestoreError);
+        // If Firestore fails, we might have an orphaned auth user.
+        // This is a complex recovery scenario, but for now, we'll log it.
         if (userId) {
              console.error(`Orphaned Firebase Auth user created with ID: ${userId}. Please clean up manually.`);
         }
+        // Re-throw the Firestore error
         throw firestoreError;
     }
 }
@@ -94,4 +100,5 @@ export async function deleteEmployee(employeeId: string): Promise<void> {
         throw new Error("Failed to delete employee.");
     }
 }
+
 
