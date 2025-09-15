@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils";
 
 export default function ProfilePage() {
   const { t } = useTranslation();
-  const { userData } = useAuth();
+  const { user, userData } = useAuth();
   const router = useRouter();
 
   const handleLogout = async () => {
