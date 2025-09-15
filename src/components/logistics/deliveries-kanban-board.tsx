@@ -49,7 +49,7 @@ export function DeliveriesKanbanBoard({ allOrders, routes }: DeliveriesKanbanBoa
     }, [allOrders, routes]);
     
     return (
-        <Accordion type="multiple" className="w-full space-y-4" defaultValue={deliveryStatuses}>
+        <Accordion type="multiple" className="w-full space-y-4">
             {deliveryStatuses.map(status => {
                 const orders = ordersByStatus[status] || [];
                 return (
