@@ -207,7 +207,7 @@ export default function LogisticsPage() {
                         {/* Operational Metrics */}
                         <div>
                             <h3 className="text-lg font-medium mb-2">Operacional</h3>
-                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                                 <StatCard title="Entregadores em Rota" value={metrics.driversInRoute} icon={<Truck className="text-muted-foreground" />} />
                                 <StatCard title="Entregas a Processar" value={metrics.deliveriesToProcess} icon={<Hourglass className="text-blue-500" />} />
                                 <StatCard title="Entregas em Andamento" value={metrics.deliveriesInProgress} icon={<Hourglass className="text-yellow-500" />} />
@@ -219,16 +219,18 @@ export default function LogisticsPage() {
                             <h3 className="text-lg font-medium mb-2">Financeiro (Em Rota)</h3>
                              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                                 <StatCard title="Total a Receber" value={formatCurrency(metrics.totalToReceive)} icon={<Wallet className="text-yellow-500" />} />
+                                <StatCard title="Dinheiro a Receber" value={formatCurrency(metrics.cashInProgress)} icon={<DollarSign className="text-yellow-500" />} />
+                                <StatCard title="Online a Receber" value={formatCurrency(metrics.otherPaymentsInProgress)} icon={<ArrowLeftRight className="text-yellow-500" />} />
                                 <StatCard title="Total Recebido" value={formatCurrency(metrics.totalReceived)} icon={<Wallet className="text-green-500" />} />
-                                <StatCard title="Dinheiro a Receber" value={formatCurrency(metrics.cashInProgress)} icon={<DollarSign className="text-muted-foreground" />} />
-                                <StatCard title="Outros Pag. a Receber" value={formatCurrency(metrics.otherPaymentsInProgress)} icon={<ArrowLeftRight className="text-muted-foreground" />} />
+                                <StatCard title="Dinheiro Recebido" value={formatCurrency(metrics.cashReceivedInRoute)} icon={<DollarSign className="text-green-500" />} />
+                                <StatCard title="Online Recebido" value={formatCurrency(metrics.otherPaymentsReceivedInRoute)} icon={<ArrowLeftRight className="text-green-500" />} />
                             </div>
                         </div>
 
                          {/* Results and Alerts */}
                         <div>
                             <h3 className="text-lg font-medium mb-2">Resultados e Alertas</h3>
-                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                                 <StatCard title="Rotas Finalizadas (Hoje)" value={metrics.finishedRoutesToday} icon={<PackageCheck className="text-muted-foreground" />} description={`${metrics.finishedRoutesThisWeek} na semana`}/>
                                 <StatCard title="Entregas Canceladas (em rota)" value={metrics.deliveriesCancelledInRoute} icon={<Ban className="text-red-500" />} description={formatCurrency(metrics.totalCancelledValueInRoute)}/>
                                 <StatCard title="Itens para Devolução" value={metrics.itemsToReturn} icon={<Package className="text-orange-500" />} description={`${metrics.deliveriesReturnedInRoute} entregas devolvidas`}/>
@@ -332,3 +334,5 @@ export default function LogisticsPage() {
         </div>
     );
 }
+
+    
