@@ -34,7 +34,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { Route, Order, PaymentMethod, DeliveryStatus, PaymentDetails } from "@/lib/types";
 import { useCurrency } from "@/context/currency-context";
-import { User, Calendar, Truck, DollarSign, Clock, Box, Info, Pencil, AlertTriangle, PackageCheck, PackageX, Loader2, MapPin } from "lucide-react";
+import { User, Calendar, Truck, DollarSign, Clock, Box, Info, Pencil, AlertTriangle, PackageCheck, PackageX, Loader2, MapPin, Hourglass } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,6 +42,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { finalizeRoute, batchUpdateDeliveryDetails } from "@/services/logistics-service";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { cn } from "@/lib/utils";
 
 
 type RouteDetailsModalProps = {
@@ -64,6 +65,23 @@ const StatCard = ({ title, value, icon }: { title: string, value: string, icon: 
         </CardContent>
     </Card>
 );
+
+const getDeliveryStatusConfig = (status?: DeliveryStatus) => {
+    switch (status) {
+        case 'entregue':
+            return { variant: 'bg-green-600/20 text-green-700', icon: <PackageCheck className="mr-1 h-3 w-3" /> };
+        case 'em_transito':
+            return { variant: 'bg-blue-600/20 text-blue-700', icon: <Truck className="mr-1 h-3 w-3" /> };
+        case 'a_processar':
+            return { variant: 'bg-yellow-600/20 text-yellow-700', icon: <Hourglass className="mr-1 h-3 w-3" /> };
+        case 'cancelada':
+        case 'devolvida':
+             return { variant: 'bg-red-600/20 text-red-700', icon: <PackageX className="mr-1 h-3 w-3" /> };
+        default:
+            return { variant: 'bg-gray-600/20 text-gray-700', icon: <Package className="mr-1 h-3 w-3" /> };
+    }
+}
+
 
 export function RouteDetailsModal({
   isOpen,
@@ -90,14 +108,6 @@ export function RouteDetailsModal({
 
     if (!route) return null;
     
-    const getPaymentStatusVariant = (status: Order['payment']['status']) => {
-        switch (status) {
-            case 'aprovado': return 'bg-green-600/20 text-green-700';
-            case 'aguardando': return 'bg-yellow-600/20 text-yellow-700';
-            case 'recusado': default: return 'bg-red-600/20 text-red-700';
-        }
-    }
-
     const handleToggleOrder = (orderId: string) => {
         setSelectedOrders(prev => 
             prev.includes(orderId) ? prev.filter(id => id !== orderId) : [...prev, orderId]
@@ -130,6 +140,10 @@ export function RouteDetailsModal({
     const returnedItems = returnedOrders.flatMap(o => o.items.map(item => `${item.quantity}x ${item.productName}`));
 
     const handleBatchUpdate = async (updates: { payment?: Partial<PaymentDetails>, delivery?: Partial<Route['orders'][0]['delivery']> }) => {
+        if (selectedOrders.length === 0) {
+            toast({ variant: "destructive", title: "Nenhuma entrega selecionada", description: "Selecione ao menos uma entrega para atualizar."});
+            return;
+        }
         try {
             await batchUpdateDeliveryDetails(selectedOrders, updates);
             toast({ title: "Entregas atualizadas com sucesso!" });
@@ -191,55 +205,61 @@ export function RouteDetailsModal({
                     <h3 className="text-lg font-semibold flex items-center gap-2 mb-4"><Box className="h-5 w-5" /> Entregas ({route.orders.length})</h3>
                     <p className="text-sm text-muted-foreground mb-4">Marque as entregas que foram concluídas com sucesso. Itens não marcados serão considerados devolvidos.</p>
                     <div className="space-y-3">
-                    {route.orders.map(order => (
-                        <Card key={order.id} className="p-0">
-                            <div className="p-3 flex items-start gap-3">
-                                <Checkbox 
-                                id={`order-${order.id}`}
-                                className="mt-1" 
-                                checked={selectedOrders.includes(order.id)}
-                                onCheckedChange={() => handleToggleOrder(order.id)}
-                                />
-                                <div className="flex-1 space-y-2">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <p className="font-semibold text-sm leading-tight">Pedido #{order.id.substring(0,7)}</p>
-                                            <p className="text-xs text-muted-foreground">{order.customer.name}</p>
+                    {route.orders.map(order => {
+                         const statusConfig = getDeliveryStatusConfig(order.delivery?.status);
+                         return (
+                            <Card key={order.id} className="p-0">
+                                <div className="p-3 flex items-start gap-3">
+                                    <Checkbox 
+                                    id={`order-${order.id}`}
+                                    className="mt-1" 
+                                    checked={selectedOrders.includes(order.id)}
+                                    onCheckedChange={() => handleToggleOrder(order.id)}
+                                    />
+                                    <div className="flex-1 space-y-2">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="font-semibold text-sm leading-tight">Pedido #{order.id.substring(0,7)}</p>
+                                                <p className="text-xs text-muted-foreground">{order.customer.name}</p>
+                                            </div>
+                                            <p className="font-bold text-base">{formatCurrency(order.total)}</p>
                                         </div>
-                                        <p className="font-bold text-base">{formatCurrency(order.total)}</p>
-                                    </div>
-                                    <div className="text-xs text-muted-foreground flex items-start gap-2">
-                                        <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                                        <address className="not-italic">
-                                            {order.shipping?.address?.street}, {order.shipping?.address?.number}, {order.shipping?.address?.complement ? `(${order.shipping.address.complement})` : ''} <br/>
-                                            {order.shipping?.address?.neighborhood} - {order.shipping?.address?.city}, {order.shipping?.address?.state}
-                                        </address>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Badge variant="outline" className={getPaymentStatusVariant(order.payment.status)}>{order.payment.status}</Badge>
-                                        <Badge variant="secondary" className="capitalize">{order.payment.method}</Badge>
+                                        <div className="text-xs text-muted-foreground flex items-start gap-2">
+                                            <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                                            <address className="not-italic">
+                                                {order.shipping?.address?.street}, {order.shipping?.address?.number}, {order.shipping?.address?.complement ? `(${order.shipping.address.complement})` : ''} <br/>
+                                                {order.shipping?.address?.neighborhood} - {order.shipping?.address?.city}, {order.shipping?.address?.state}
+                                            </address>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Badge variant="secondary" className="capitalize">{order.payment.method}</Badge>
+                                            <Badge variant="outline" className={cn(statusConfig.variant)}>
+                                                {statusConfig.icon}
+                                                {order.delivery?.status || 'desconhecido'}
+                                            </Badge>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <Accordion type="single" collapsible className="w-full">
-                                <AccordionItem value="items" className="border-t">
-                                    <AccordionTrigger className="text-xs px-3 py-2">
-                                        Ver Itens ({order.items.length})
-                                    </AccordionTrigger>
-                                    <AccordionContent className="px-3 pb-3">
-                                        <ul className="space-y-1 text-xs text-muted-foreground">
-                                            {order.items.map(item => (
-                                                <li key={item.productId} className="flex justify-between">
-                                                    <span>{item.quantity}x {item.productName}</span>
-                                                    <span>{formatCurrency(item.totalPrice)}</span>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </AccordionContent>
-                                </AccordionItem>
-                            </Accordion>
-                        </Card>
-                    ))}
+                                <Accordion type="single" collapsible className="w-full">
+                                    <AccordionItem value="items" className="border-t">
+                                        <AccordionTrigger className="text-xs px-3 py-2">
+                                            Ver Itens ({order.items.length})
+                                        </AccordionTrigger>
+                                        <AccordionContent className="px-3 pb-3">
+                                            <ul className="space-y-1 text-xs text-muted-foreground">
+                                                {order.items.map(item => (
+                                                    <li key={item.productId} className="flex justify-between">
+                                                        <span>{item.quantity}x {item.productName}</span>
+                                                        <span>{formatCurrency(item.totalPrice)}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                </Accordion>
+                            </Card>
+                         )
+                    })}
                     </div>
                 </ScrollArea>
           </div>
@@ -401,3 +421,4 @@ function UpdateStatusModal({ isOpen, onClose, onSave, selectedCount }: { isOpen:
     );
 }
 
+    
