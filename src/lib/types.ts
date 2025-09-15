@@ -564,6 +564,21 @@ export type Customer = {
 // Team Management Types
 export type Role = 'admin' | 'empresa' | 'salesperson' | 'entregador' | 'manager' | 'stockist' | 'accountant' | 'affiliate';
 
+export type EmployeePermissions = {
+    modules: {
+        dashboard?: boolean;
+        products?: boolean;
+        orders?: boolean;
+        crm?: boolean;
+        financials?: boolean;
+        logistics?: boolean;
+        reports?: boolean;
+        team?: boolean;
+        settings?: boolean;
+    };
+    companies: Record<string, boolean>; // key is companyId
+}
+
 export type Employee = {
     id: string;
     ownerId: string;
@@ -575,6 +590,7 @@ export type Employee = {
     type: 'Fixo' | 'Freelancer';
     role: Role;
     isActive: boolean;
+    permissions?: EmployeePermissions;
     address?: {
         street?: string;
         number?: string;

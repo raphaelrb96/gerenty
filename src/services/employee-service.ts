@@ -4,7 +4,7 @@
 
 import { db, auth } from "@/lib/firebase";
 import { collection, getDocs, query, where, addDoc, serverTimestamp, doc, getDoc, updateDoc, deleteDoc, setDoc } from "firebase/firestore";
-import type { Employee } from "@/lib/types";
+import type { Employee, EmployeePermissions } from "@/lib/types";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 
 const employeesCollection = collection(db, "employees");
@@ -50,7 +50,7 @@ export async function getEmployeeByAuthId(authId: string): Promise<Employee | nu
 }
 
 
-export async function addEmployee(employeeData: Omit<Employee, 'id' | 'createdAt' | 'updatedAt'> & { password?: string }): Promise<Employee> {
+export async function addEmployee(employeeData: Omit<Employee, 'id' | 'createdAt' | 'updatedAt' | 'permissions'> & { password?: string }): Promise<Employee> {
     const { password, ...firestoreData } = employeeData;
     let authUserId: string | undefined;
 
@@ -72,6 +72,10 @@ export async function addEmployee(employeeData: Omit<Employee, 'id' | 'createdAt
         await setDoc(newEmployeeDocRef, {
             ...firestoreData,
             userId: authUserId || newEmployeeDocRef.id,
+            permissions: { // Default permissions
+                modules: { dashboard: true },
+                companies: {},
+            },
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
         });
@@ -104,6 +108,20 @@ export async function updateEmployee(employeeId: string, employeeData: Partial<O
         throw new Error("Failed to update employee.");
     }
 }
+
+export async function updateEmployeePermissions(employeeId: string, permissions: EmployeePermissions): Promise<void> {
+    try {
+        const employeeDoc = doc(db, "employees", employeeId);
+        await updateDoc(employeeDoc, {
+            permissions,
+            updatedAt: serverTimestamp(),
+        });
+    } catch (error) {
+        console.error("Error updating employee permissions:", error);
+        throw new Error("Failed to update employee permissions.");
+    }
+}
+
 
 export async function deleteEmployee(employeeId: string): Promise<void> {
     try {

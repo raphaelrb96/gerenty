@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -146,6 +147,7 @@ export default function TeamPage() {
                 isOpen={isAccessModalOpen}
                 onClose={() => setIsAccessModalOpen(false)}
                 member={memberForAccess}
+                onFinished={fetchTeam}
             />
         </div>
     );

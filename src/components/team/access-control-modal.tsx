@@ -9,13 +9,13 @@ import * as z from "zod";
 import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
-import type { Employee, Company } from "@/lib/types";
+import type { Employee } from "@/lib/types";
 
 
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, KeyRound, UserPlus } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -27,7 +27,7 @@ import {
 import { ScrollArea } from "../ui/scroll-area";
 import { Checkbox } from "../ui/checkbox";
 import { useCompany as useCompanyContext } from "@/context/company-context";
-import { usePermissions } from "@/context/permissions-context";
+import { updateEmployeePermissions } from "@/services/employee-service";
 
 
 const formSchema = z.object({
@@ -51,6 +51,7 @@ type AccessControlModalProps = {
   isOpen: boolean;
   onClose: () => void;
   member: Employee | null;
+  onFinished: () => void;
 };
 
 const modulePermissions: { id: keyof FormValues['permissions'], label: string }[] = [
@@ -66,10 +67,9 @@ const modulePermissions: { id: keyof FormValues['permissions'], label: string }[
 ];
 
 
-export function AccessControlModal({ isOpen, onClose, member }: AccessControlModalProps) {
+export function AccessControlModal({ isOpen, onClose, member, onFinished }: AccessControlModalProps) {
   const { toast } = useToast();
   const { companies } = useCompanyContext();
-  const { permissions, setPermission } = usePermissions();
   const [isSaving, setIsSaving] = React.useState(false);
 
   const form = useForm<FormValues>({
@@ -77,6 +77,14 @@ export function AccessControlModal({ isOpen, onClose, member }: AccessControlMod
     defaultValues: {
         permissions: {
             dashboard: true,
+            products: false,
+            orders: false,
+            crm: false,
+            financials: false,
+            logistics: false,
+            reports: false,
+            team: false,
+            settings: false,
         },
         companyAccess: {},
     },
@@ -85,17 +93,18 @@ export function AccessControlModal({ isOpen, onClose, member }: AccessControlMod
   const { watch, setValue } = form;
 
   useEffect(() => {
-    if (member && permissions) {
-        const memberPermissions = permissions[member.id] || {};
+    if (member && isOpen) {
+        const memberPermissions = member.permissions || { modules: { dashboard: true }, companies: {} };
         form.reset({
             permissions: {
+                ...form.getValues('permissions'), // keep defaults
                 ...memberPermissions.modules,
                 dashboard: true, // Always true
             },
             companyAccess: memberPermissions.companies || {},
         });
     }
-  }, [member, permissions, form, isOpen]);
+  }, [member, isOpen, form]);
 
   const handleClose = () => {
     form.reset();
@@ -126,12 +135,13 @@ export function AccessControlModal({ isOpen, onClose, member }: AccessControlMod
     if (!member) return;
     setIsSaving(true);
     try {
-        setPermission(member.id, {
+        await updateEmployeePermissions(member.id, {
             modules: values.permissions,
             companies: values.companyAccess,
         });
 
         toast({ title: "Permissões atualizadas!", description: `O acesso de ${member.name} foi modificado.` });
+        onFinished();
         handleClose();
     } catch (error) {
       console.error(error);
