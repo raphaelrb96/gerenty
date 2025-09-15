@@ -12,9 +12,10 @@ const statuses: Route['status'][] = ['a_processar', 'a_caminho', 'entregue', 'ca
 type KanbanBoardProps = {
     routes: Route[];
     setRoutes: React.Dispatch<React.SetStateAction<Route[]>>;
+    onRouteUpdate: () => void;
 }
 
-export function KanbanBoard({ routes, setRoutes }: KanbanBoardProps) {
+export function KanbanBoard({ routes, setRoutes, onRouteUpdate }: KanbanBoardProps) {
     const { toast } = useToast();
     
     const handleDragEnd = async (event: DragEndEvent) => {
@@ -25,6 +26,17 @@ export function KanbanBoard({ routes, setRoutes }: KanbanBoardProps) {
             const overColumnStatus = over.id.toString();
 
             if (activeRoute && statuses.includes(overColumnStatus as any) && activeRoute.status !== overColumnStatus) {
+                
+                // Disallow dragging directly to 'entregue' or 'devolvido' - this must be done via the modal
+                if (overColumnStatus === 'entregue' || overColumnStatus === 'devolvido') {
+                    toast({
+                        variant: "destructive",
+                        title: "Ação Inválida",
+                        description: "Finalize a rota através do modal de detalhes para alterar para este status.",
+                    });
+                    return;
+                }
+
                 const originalStatus = activeRoute.status;
                 // Optimistic UI update
                 setRoutes(prev => prev.map(r => r.id === active.id ? { ...r, status: overColumnStatus as Route['status'] } : r));
@@ -50,6 +62,7 @@ export function KanbanBoard({ routes, setRoutes }: KanbanBoardProps) {
                         key={status}
                         status={status}
                         routes={routes.filter(r => r.status === status)}
+                        onRouteUpdate={onRouteUpdate}
                     />
                 ))}
             </div>

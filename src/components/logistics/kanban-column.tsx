@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 type KanbanColumnProps = {
     status: Route['status'];
     routes: Route[];
+    onRouteUpdate: () => void;
 };
 
 const statusConfig = {
@@ -20,7 +21,7 @@ const statusConfig = {
     'devolvido': { label: 'Devolvido', color: 'border-orange-500' },
 }
 
-export function KanbanColumn({ status, routes }: KanbanColumnProps) {
+export function KanbanColumn({ status, routes, onRouteUpdate }: KanbanColumnProps) {
     const { setNodeRef, isOver } = useDroppable({ id: status });
     const config = statusConfig[status];
 
@@ -38,7 +39,7 @@ export function KanbanColumn({ status, routes }: KanbanColumnProps) {
             <SortableContext items={routes.map(r => r.id)} strategy={verticalListSortingStrategy}>
                 <div className="space-y-3">
                     {routes.map(route => (
-                        <RouteCard key={route.id} route={route} />
+                        <RouteCard key={route.id} route={route} onRouteFinalized={onRouteUpdate} />
                     ))}
                 </div>
             </SortableContext>

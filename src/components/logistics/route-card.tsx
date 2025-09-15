@@ -19,7 +19,7 @@ import { useState } from "react";
 import { RouteDetailsModal } from "./route-details-modal";
 
 
-export function RouteCard({ route }: { route: Route }) {
+export function RouteCard({ route, onRouteFinalized }: { route: Route, onRouteFinalized: () => void }) {
     const {
         attributes,
         listeners,
@@ -80,7 +80,7 @@ export function RouteCard({ route }: { route: Route }) {
                     </CardContent>
                 </Card>
             </div>
-            <RouteDetailsModal isOpen={isDetailsOpen} onClose={() => setIsDetailsOpen(false)} route={route} />
+            <RouteDetailsModal isOpen={isDetailsOpen} onClose={() => setIsDetailsOpen(false)} route={route} onRouteFinalized={onRouteFinalized} />
         </>
     );
 }

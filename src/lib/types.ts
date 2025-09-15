@@ -294,7 +294,8 @@ export type OrderStatus =
   | 'delivered'      // Entregue com sucesso
   | 'completed'      // Pedido finalizado
   | 'cancelled'      // Pedido cancelado
-  | 'refunded';      // Reembolso realizado
+  | 'refunded'       // Reembolso realizado
+  | 'devolvido';     // Pedido devolvido
 
 
 // Meios de pagamento disponíveis
