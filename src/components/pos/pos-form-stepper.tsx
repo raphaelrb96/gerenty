@@ -287,7 +287,12 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
         }
     }
 
-    const orderStatus: OrderStatus = values.deliveryMethod === 'retirada_loja' ? 'pending' : 'processing';
+    let orderStatus: OrderStatus;
+    if (values.deliveryMethod === 'retirada_loja') {
+        orderStatus = 'completed';
+    } else {
+        orderStatus = 'pending';
+    }
 
 
     const orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'> = {
