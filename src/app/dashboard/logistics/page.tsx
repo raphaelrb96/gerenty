@@ -20,6 +20,7 @@ import { DeliveriesKanbanBoard } from "@/components/logistics/deliveries-kanban-
 import { getUnassignedOrders } from "@/services/order-service";
 import { RouteManagement } from "@/components/logistics/route-management";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useTranslation } from "@/context/i18n-context";
 
 const StatCard = ({ title, value, icon, description }: { title: string, value: string | number, icon: React.ReactNode, description?: string }) => (
     <Card>
@@ -52,6 +53,7 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
 export default function LogisticsPage() {
     const { effectiveOwnerId } = useAuth();
     const router = useRouter();
+    const { t } = useTranslation();
     const { formatCurrency } = useCurrency();
     const [routes, setRoutes] = useState<Route[]>([]);
     const [unassignedOrders, setUnassignedOrders] = useState<Order[]>([]);
@@ -106,7 +108,9 @@ export default function LogisticsPage() {
             .filter(o => o.status === 'cancelled')
             .reduce((sum, o) => sum + o.total, 0);
 
-        const deliveriesReturnedInRoute = allActiveOrders.filter(o => o.status === 'returned').length;
+        const allOrdersFromAllRoutes = routes.flatMap(r => r.orders);
+        const returnedOrders = allOrdersFromAllRoutes.filter(o => o.status === 'returned');
+        const deliveriesReturnedInRoute = returnedOrders.length;
         
         const cashReceivedInRoute = allActiveOrders
             .filter(o => o.delivery?.paymentStatus === 'pago' && o.delivery.paymentMethodReceived === 'dinheiro')
@@ -170,7 +174,7 @@ export default function LogisticsPage() {
     }, [routes]);
     
     const paymentDistributionData = useMemo(() => {
-        const distribution = {
+        const distribution: Record<string, number> = {
             Dinheiro: 0,
             Cartão: 0,
             Pix: 0,
@@ -178,16 +182,19 @@ export default function LogisticsPage() {
         };
         activeRoutes.flatMap(r => r.orders).forEach(order => {
             if (order.status === 'out_for_delivery') {
-                switch (order.payment.method) {
-                    case 'dinheiro': distribution.Dinheiro++; break;
-                    case 'credito': case 'debito': distribution.Cartão++; break;
-                    case 'pix': distribution.Pix++; break;
-                    default: distribution.Online++; break;
+                const methodName = t(`paymentMethods.${order.payment.method.toLowerCase()}`);
+                if (distribution[methodName] !== undefined) {
+                    distribution[methodName]++;
+                } else {
+                     switch (order.payment.method) {
+                        case 'credito': case 'debito': distribution['Cartão']++; break;
+                        default: distribution['Online']++; break;
+                    }
                 }
             }
         });
         return Object.entries(distribution).map(([name, value]) => ({ name, value })).filter(d => d.value > 0);
-    }, [activeRoutes]);
+    }, [activeRoutes, t]);
 
     if (loading) {
         return <LoadingSpinner />;
@@ -196,52 +203,52 @@ export default function LogisticsPage() {
     return (
         <div className="space-y-6">
             <PageHeader 
-                title="Logística e Entregas"
-                description="Acompanhe e gerencie o fluxo de suas entregas."
+                title={t('logistics.title')}
+                description={t('logistics.description')}
                 action={
                     <Button onClick={() => router.push('/dashboard/logistics/create')}>
                         <PlusCircle className="mr-2 h-4 w-4" />
-                        Nova Rota
+                        {t('logistics.newRoute')}
                     </Button>
                 }
             />
 
             <Tabs defaultValue="dashboard">
                 <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-                    <TabsTrigger value="deliveries">Entregas</TabsTrigger>
-                    <TabsTrigger value="routes">Rotas</TabsTrigger>
+                    <TabsTrigger value="dashboard">{t('logistics.tabs.dashboard')}</TabsTrigger>
+                    <TabsTrigger value="deliveries">{t('logistics.tabs.deliveries')}</TabsTrigger>
+                    <TabsTrigger value="routes">{t('logistics.tabs.routes')}</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="dashboard" className="mt-6 space-y-8">
                      <div className="space-y-6">
                         <div>
-                            <h3 className="text-lg font-medium mb-2">Operacional</h3>
+                            <h3 className="text-lg font-medium mb-2">{t('logistics.operational.title')}</h3>
                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                                <StatCard title="Entregadores em Rota" value={metrics.driversInRoute} icon={<Truck className="text-muted-foreground" />} />
-                                <StatCard title="Entregas a Processar" value={metrics.deliveriesToProcess} icon={<Hourglass className="text-blue-500" />} />
-                                <StatCard title="Entregas em Andamento" value={metrics.deliveriesInProgress} icon={<Hourglass className="text-yellow-500" />} />
+                                <StatCard title={t('logistics.operational.driversInRoute')} value={metrics.driversInRoute} icon={<Truck className="text-muted-foreground" />} />
+                                <StatCard title={t('logistics.operational.deliveriesToProcess')} value={metrics.deliveriesToProcess} icon={<Hourglass className="text-blue-500" />} />
+                                <StatCard title={t('logistics.operational.deliveriesInProgress')} value={metrics.deliveriesInProgress} icon={<Hourglass className="text-yellow-500" />} />
                             </div>
                         </div>
 
                          <div>
-                            <h3 className="text-lg font-medium mb-2">Financeiro (Em Rota)</h3>
+                            <h3 className="text-lg font-medium mb-2">{t('logistics.financial.title')}</h3>
                              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                                <StatCard title="Total a Receber" value={formatCurrency(metrics.totalToReceive)} icon={<Wallet className="text-yellow-500" />} />
-                                <StatCard title="Dinheiro a Receber" value={formatCurrency(metrics.cashInProgress)} icon={<DollarSign className="text-yellow-500" />} />
-                                <StatCard title="Online a Receber" value={formatCurrency(metrics.otherPaymentsInProgress)} icon={<ArrowLeftRight className="text-yellow-500" />} />
-                                <StatCard title="Total Recebido" value={formatCurrency(metrics.totalReceived)} icon={<Wallet className="text-green-500" />} />
-                                <StatCard title="Dinheiro Recebido" value={formatCurrency(metrics.cashReceivedInRoute)} icon={<DollarSign className="text-green-500" />} />
-                                <StatCard title="Online Recebido" value={formatCurrency(metrics.otherPaymentsReceivedInRoute)} icon={<ArrowLeftRight className="text-green-500" />} />
+                                <StatCard title={t('logistics.financial.totalToReceive')} value={formatCurrency(metrics.totalToReceive)} icon={<Wallet className="text-yellow-500" />} />
+                                <StatCard title={t('logistics.financial.cashToReceive')} value={formatCurrency(metrics.cashInProgress)} icon={<DollarSign className="text-yellow-500" />} />
+                                <StatCard title={t('logistics.financial.onlineToReceive')} value={formatCurrency(metrics.otherPaymentsInProgress)} icon={<ArrowLeftRight className="text-yellow-500" />} />
+                                <StatCard title={t('logistics.financial.totalReceived')} value={formatCurrency(metrics.totalReceived)} icon={<Wallet className="text-green-500" />} />
+                                <StatCard title={t('logistics.financial.cashReceived')} value={formatCurrency(metrics.cashReceivedInRoute)} icon={<DollarSign className="text-green-500" />} />
+                                <StatCard title={t('logistics.financial.onlineReceived')} value={formatCurrency(metrics.otherPaymentsReceivedInRoute)} icon={<ArrowLeftRight className="text-green-500" />} />
                             </div>
                         </div>
 
                         <div>
-                            <h3 className="text-lg font-medium mb-2">Resultados e Alertas</h3>
+                            <h3 className="text-lg font-medium mb-2">{t('logistics.results.title')}</h3>
                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                                <StatCard title="Rotas Finalizadas (Hoje)" value={metrics.finishedRoutesToday} icon={<PackageCheck className="text-muted-foreground" />} description={`${metrics.finishedRoutesThisWeek} na semana`}/>
-                                <StatCard title="Entregas Canceladas (em rota)" value={metrics.deliveriesCancelledInRoute} icon={<Ban className="text-red-500" />} description={formatCurrency(metrics.totalCancelledValueInRoute)}/>
-                                <StatCard title="Itens para Devolução" value={metrics.itemsToReturn} icon={<Package className="text-orange-500" />} description={`${metrics.deliveriesReturnedInRoute} entregas devolvidas`}/>
+                                <StatCard title={t('logistics.results.routesFinishedToday')} value={metrics.finishedRoutesToday} icon={<PackageCheck className="text-muted-foreground" />} description={`${metrics.finishedRoutesThisWeek} ${t('logistics.results.inTheWeek')}`}/>
+                                <StatCard title={t('logistics.results.cancelledDeliveries')} value={metrics.deliveriesCancelledInRoute} icon={<Ban className="text-red-500" />} description={formatCurrency(metrics.totalCancelledValueInRoute)}/>
+                                <StatCard title={t('logistics.results.itemsToReturn')} value={metrics.itemsToReturn} icon={<Package className="text-orange-500" />} description={`${metrics.deliveriesReturnedInRoute} ${t('logistics.results.returnedDeliveries')}`}/>
                             </div>
                         </div>
                     </div>
@@ -250,8 +257,8 @@ export default function LogisticsPage() {
                      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
                         <Card className="lg:col-span-3">
                             <CardHeader>
-                                <CardTitle>Desempenho de Entregas</CardTitle>
-                                <CardDescription>Entregas concluídas nos últimos 7 dias.</CardDescription>
+                                <CardTitle>{t('logistics.charts.performance.title')}</CardTitle>
+                                <CardDescription>{t('logistics.charts.performance.description')}</CardDescription>
                             </CardHeader>
                             <CardContent className="pl-2">
                                 <ChartContainer config={{ Entregas: { label: "Entregas", color: "hsl(var(--chart-1))" } }} className="h-[300px] w-full">
@@ -267,25 +274,25 @@ export default function LogisticsPage() {
                         </Card>
                         <Card className="lg:col-span-2">
                              <CardHeader>
-                                <CardTitle>Distribuição de Pagamentos</CardTitle>
-                                <CardDescription>Métodos de pagamento nas rotas ativas.</CardDescription>
+                                <CardTitle>{t('logistics.charts.payment.title')}</CardTitle>
+                                <CardDescription>{t('logistics.charts.payment.description')}</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 {paymentDistributionData.length > 0 ? (
                                     <ChartContainer config={{}} className="h-[300px] w-full">
                                         <RechartsPieChart>
-                                            <RechartsPieChart data={paymentDistributionData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} labelLine={false} label={renderCustomizedLabel}>
+                                            <Pie data={paymentDistributionData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} labelLine={false} label={renderCustomizedLabel}>
                                                 {paymentDistributionData.map((entry, index) => (
                                                     <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
                                                 ))}
-                                            </RechartsPieChart>
+                                            </Pie>
                                             <Tooltip content={<ChartTooltipContent />} />
                                             <Legend />
                                         </RechartsPieChart>
                                     </ChartContainer>
                                 ) : (
                                     <div className="h-[300px] flex items-center justify-center">
-                                        <EmptyState icon={<DollarSign className="h-12 w-12" />} title="Sem dados de pagamento" description="Não há rotas ativas com pagamentos para exibir." />
+                                        <EmptyState icon={<DollarSign className="h-12 w-12" />} title={t('logistics.charts.payment.empty.title')} description={t('logistics.charts.payment.empty.description')} />
                                     </div>
                                 )}
                             </CardContent>
@@ -294,11 +301,11 @@ export default function LogisticsPage() {
 
                      <Card>
                         <CardHeader>
-                            <CardTitle>Painel de Rotas em Andamento</CardTitle>
+                            <CardTitle>{t('logistics.routesInProgress')}</CardTitle>
                         </CardHeader>
                         <CardContent className="p-0">
                            {activeRoutes.length === 0 ? (
-                                <div className="p-6 text-center text-muted-foreground">Nenhuma rota em andamento.</div>
+                                <div className="p-6 text-center text-muted-foreground">{t('logistics.noRoutesInProgress')}</div>
                            ) : (
                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4">
                                    {activeRoutes.map(route => {
@@ -315,9 +322,9 @@ export default function LogisticsPage() {
                                                     </div>
                                                 </CardHeader>
                                                 <CardContent className="space-y-2 text-sm">
-                                                     <div className="flex justify-between"><span>Entregas:</span> <strong>{route.orders.length}</strong></div>
-                                                     <div className="flex justify-between"><span>Dinheiro:</span> <strong>{formatCurrency(route.cashTotal || 0)}</strong></div>
-                                                     <div className="flex justify-between"><span>Online:</span> <strong>{formatCurrency(onlineTotal)}</strong></div>
+                                                     <div className="flex justify-between"><span>{t('logistics.deliveries')}:</span> <strong>{route.orders.length}</strong></div>
+                                                     <div className="flex justify-between"><span>{t('logistics.cash')}:</span> <strong>{formatCurrency(route.cashTotal || 0)}</strong></div>
+                                                     <div className="flex justify-between"><span>{t('logistics.online')}:</span> <strong>{formatCurrency(onlineTotal)}</strong></div>
                                                 </CardContent>
                                             </Card>
                                         )
