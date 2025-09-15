@@ -200,7 +200,7 @@ export default function LogisticsPage() {
                 <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
                     <TabsTrigger value="deliveries">Gestão de Entregas</TabsTrigger>
-                    <TabsTrigger value="routes">Gerenciamento de Rotas</TabsTrigger>
+                    <TabsTrigger value="routes">Rotas</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="dashboard" className="mt-6 space-y-8">
