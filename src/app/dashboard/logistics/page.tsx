@@ -107,7 +107,7 @@ export default function LogisticsPage() {
         const totalCancelledValueInRoute = allActiveOrders
             .filter(o => o.status === 'cancelled')
             .reduce((sum, o) => sum + o.total, 0);
-
+        
         const allOrdersFromAllRoutes = routes.flatMap(r => r.orders);
         const returnedOrders = allOrdersFromAllRoutes.filter(o => o.status === 'returned');
         const deliveriesReturnedInRoute = returnedOrders.length;
@@ -115,13 +115,15 @@ export default function LogisticsPage() {
         const cashReceivedInRoute = allActiveOrders
             .filter(o => o.delivery?.paymentStatus === 'pago' && o.delivery.paymentMethodReceived === 'dinheiro')
             .reduce((sum, o) => sum + o.total, 0);
-        const cashInProgress = allActiveOrders
-            .filter(o => o.status === 'out_for_delivery' && o.payment.method === 'dinheiro' && o.delivery?.paymentStatus !== 'pago')
-            .reduce((sum, o) => sum + o.total, 0);
-        
+
         const otherPaymentsReceivedInRoute = allActiveOrders
             .filter(o => o.delivery?.paymentStatus === 'pago' && o.delivery.paymentMethodReceived && o.delivery.paymentMethodReceived !== 'dinheiro')
             .reduce((sum, o) => sum + o.total, 0);
+
+        const cashInProgress = allActiveOrders
+            .filter(o => o.status === 'out_for_delivery' && o.payment.method === 'dinheiro' && o.delivery?.paymentStatus !== 'pago')
+            .reduce((sum, o) => sum + o.total, 0);
+
         const otherPaymentsInProgress = allActiveOrders
             .filter(o => o.status === 'out_for_delivery' && o.payment.method !== 'dinheiro' && o.delivery?.paymentStatus !== 'pago')
             .reduce((sum, o) => sum + o.total, 0);
@@ -354,6 +356,8 @@ export default function LogisticsPage() {
         </div>
     );
 }
+
+    
 
     
 
