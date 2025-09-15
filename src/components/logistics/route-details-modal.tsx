@@ -12,6 +12,12 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -168,7 +174,7 @@ export function RouteDetailsModal({
                     <div className="space-y-3">
                     {route.orders.map(order => (
                         <Card key={order.id} className="p-0">
-                             <div className="p-3 flex items-start gap-3">
+                            <div className="p-3 flex items-start gap-3">
                                 <Checkbox 
                                 id={`order-${order.id}`}
                                 className="mt-1" 
@@ -196,6 +202,23 @@ export function RouteDetailsModal({
                                     </div>
                                 </div>
                             </div>
+                            <Accordion type="single" collapsible className="w-full">
+                                <AccordionItem value="items" className="border-t">
+                                    <AccordionTrigger className="text-xs px-3 py-2">
+                                        Ver Itens ({order.items.length})
+                                    </AccordionTrigger>
+                                    <AccordionContent className="px-3 pb-3">
+                                        <ul className="space-y-1 text-xs text-muted-foreground">
+                                            {order.items.map(item => (
+                                                <li key={item.productId} className="flex justify-between">
+                                                    <span>{item.quantity}x {item.productName}</span>
+                                                    <span>{formatCurrency(item.totalPrice)}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            </Accordion>
                         </Card>
                     ))}
                     </div>
