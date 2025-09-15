@@ -340,7 +340,7 @@
     "orderStatus": {
         "pending": "Pendente",
         "confirmed": "Confirmado",
-        "processing": "Processando",
+        "processing": "Aguardando",
         "shipped": "Enviado",
         "delivered": "Entregue",
         "completed": "Concluído",
