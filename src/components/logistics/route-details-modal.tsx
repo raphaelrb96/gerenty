@@ -197,7 +197,7 @@ export function RouteDetailsModal({
                             <Label htmlFor="driver-earning">Pagamento do Entregador (Opcional)</Label>
                             <Input id="driver-earning" type="number" placeholder="R$ 0,00" />
                         </div>
-                        <div className="space-y-2 ml-1">
+                        <div className="space-y-2 ml-1 mb-2.5">
                             <Label htmlFor="route-notes">Anotações da Rota</Label>
                             <Textarea id="route-notes" placeholder="Insira anotações importantes aqui..." defaultValue={route.notes}/>
                         </div>
@@ -236,7 +236,7 @@ export function RouteDetailsModal({
                                         <div className="flex items-center gap-2">
                                             <Badge variant="secondary" className="capitalize">{order.payment.method}</Badge>
                                              <Badge variant="outline" className={cn(getDeliveryStatusConfig(order.status).variant)}>
-                                                {getDeliveryStatusConfig(order.status).icon}
+                                                {statusConfig.icon}
                                                 {order.status}
                                             </Badge>
                                         </div>
@@ -425,3 +425,5 @@ function UpdateStatusModal({ isOpen, onClose, onSave, selectedCount }: { isOpen:
         </Dialog>
     );
 }
+
+    

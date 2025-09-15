@@ -33,7 +33,7 @@ export function RouteInfoCard({ route, onRouteFinalized }: RouteInfoCardProps) {
         return status === 'finalizada' ? 'bg-green-600/20 text-green-700' : 'bg-yellow-600/20 text-yellow-700';
     }
 
-    const deliveriesDone = route.orders.filter(o => o.delivery.status === 'entregue').length;
+    const deliveriesDone = route.orders.filter(o => o.status === 'delivered').length;
 
     return (
         <>
@@ -106,3 +106,5 @@ export function RouteInfoCard({ route, onRouteFinalized }: RouteInfoCardProps) {
     );
 }
 
+
+    

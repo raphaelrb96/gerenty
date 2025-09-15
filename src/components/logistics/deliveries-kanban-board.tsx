@@ -27,23 +27,20 @@ export function DeliveriesKanbanBoard({ routes, unassignedOrders, onDataRefresh 
     const { t } = useTranslation();
 
     const ordersByStatus = useMemo(() => {
-        // Initialize an object to hold arrays of orders for each status.
         const result: Record<string, (Order & { driverName?: string })[]> = {};
         deliveryStatuses.forEach(status => result[status] = []);
 
-        // 1. Start with all unassigned orders, which are in the 'processing' state.
+        // 1. Group unassigned orders (they are 'processing' by default)
         result['processing'] = [...unassignedOrders];
 
-        // 2. Process all orders that are part of a route.
-        const allOrdersInRoutes = routes.flatMap(route => 
-            route.orders.map(order => ({ ...order, driverName: route.driverName }))
-        );
-
-        // 3. Group these orders by their current status.
-        allOrdersInRoutes.forEach(order => {
-             if (order.status && result[order.status]) {
-                result[order.status].push(order);
-            }
+        // 2. Process all orders that are part of any route
+        routes.forEach(route => {
+            route.orders.forEach(order => {
+                const status = order.status;
+                if (result[status]) {
+                    result[status].push({ ...order, driverName: route.driverName });
+                }
+            });
         });
         
         return result;
@@ -71,3 +68,5 @@ export function DeliveriesKanbanBoard({ routes, unassignedOrders, onDataRefresh 
         </Accordion>
     );
 }
+
+    
