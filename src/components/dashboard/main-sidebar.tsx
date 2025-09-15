@@ -73,21 +73,22 @@ export function MainSidebar() {
     if (!user || !userData) {
       return [];
     }
-    // If the user is the company owner, show all items.
+
+    // Company owner sees all items.
     if (userData.role === 'empresa') {
       return allMenuItems;
     }
 
-    // For sub-accounts, filter based on permissions.
+    // Sub-accounts see only what they have access to.
     return allMenuItems.filter(item => {
-      // The main dashboard page is always visible to logged-in users.
+      // The main dashboard page is always visible.
       if (item.href === '/dashboard') {
         return true;
       }
-      // For all other modules, check for access permission.
+      // For other modules, check for explicit permission.
       return hasAccess(user.uid, item.module);
     });
-  }
+  };
 
   const filteredMenuItems = getFilteredMenuItems();
 
