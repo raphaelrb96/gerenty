@@ -19,7 +19,7 @@ const convertRouteTimestamps = (data: any): Route => {
     // Ensure orders within the route also have converted timestamps if necessary
     if (route.orders) {
         route.orders = route.orders.map((order: any) => {
-            const newOrder = {...order};
+            const newOrder = { ...order };
             for (const key of ['createdAt', 'updatedAt', 'completedAt', 'cancelledAt']) {
                 if (newOrder[key]?.toDate) {
                     newOrder[key] = newOrder[key].toDate().toISOString();
@@ -49,9 +49,10 @@ export async function getRoutes(ownerId: string): Promise<Route[]> {
         const q = query(routesCollection, where("ownerId", "==", ownerId));
         const querySnapshot = await getDocs(q);
         const routes: Route[] = [];
-        for (const doc of querySnapshot.docs) {
-            const routeData = convertRouteTimestamps({ id: doc.id, ...doc.data() });
-            
+
+        for (const routeDoc of querySnapshot.docs) {
+            const routeData = convertRouteTimestamps({ id: routeDoc.id, ...routeDoc.data() });
+
             // Fetch the full order objects for the route
             if (routeData.orderIds && routeData.orderIds.length > 0) {
                  const ordersQuery = query(ordersCollection, where('__name__', 'in', routeData.orderIds));
@@ -62,7 +63,7 @@ export async function getRoutes(ownerId: string): Promise<Route[]> {
             }
             routes.push(routeData);
         }
-        routes.sort((a,b) => new Date(b.createdAt as string).getTime() - new Date(a.createdAt as string).getTime());
+        routes.sort((a, b) => new Date(b.createdAt as string).getTime() - new Date(a.createdAt as string).getTime());
         return routes;
     } catch (error) {
         console.error("Error getting routes:", error);
@@ -80,7 +81,7 @@ export async function createRoute(routeData: Omit<Route, 'id' | 'createdAt' | 't
         const orderDocs = await Promise.all(orderIds.map(id => getDoc(doc(ordersCollection, id))));
         const orders: Order[] = orderDocs.map(d => {
             if (!d.exists()) throw new Error(`Order with ID ${d.id} not found.`);
-            return convertOrderTimestamps({id: d.id, ...d.data()}) as Order;
+            return convertOrderTimestamps({ id: d.id, ...d.data() }) as Order;
         });
 
         // 2. Calculate totals
@@ -111,9 +112,9 @@ export async function createRoute(routeData: Omit<Route, 'id' | 'createdAt' | 't
         // 4. Update all selected orders with the new routeId and status
         orders.forEach(order => {
             const orderRef = doc(ordersCollection, order.id);
-            batch.update(orderRef, { 
-                'shipping.routeId': newRouteRef.id, 
-                status: 'out_for_delivery', 
+            batch.update(orderRef, {
+                'shipping.routeId': newRouteRef.id,
+                status: 'out_for_delivery',
             });
         });
 
@@ -156,20 +157,20 @@ export async function finalizeRoute(routeId: string, deliveredOrderIds: string[]
         if (!routeDoc.exists()) {
             throw new Error("Route not found");
         }
-        
+
         batch.update(routeRef, { status: 'finalizada', finishedAt: serverTimestamp() });
-        
+
         const routeData = routeDoc.data() as Route & { orderIds: string[] };
         const allOrderIdsInRoute = routeData.orderIds || [];
 
         for (const orderId of allOrderIdsInRoute) {
             const orderRef = doc(db, "orders", orderId);
-            
+
             if (deliveredOrderIds.includes(orderId)) {
                 batch.update(orderRef, { status: 'delivered', completedAt: serverTimestamp() });
             } else {
                 batch.update(orderRef, { status: 'returned' });
-                
+
                 const orderSnap = await getDoc(orderRef);
                 if (orderSnap.exists()) {
                     const orderData = orderSnap.data() as Order;
@@ -177,16 +178,16 @@ export async function finalizeRoute(routeId: string, deliveredOrderIds: string[]
                         const productRef = doc(db, 'products', item.productId);
                         // Increment stock only if manageStock is a number
                         const productSnap = await getDoc(productRef);
-                        if(productSnap.exists() && typeof productSnap.data().availableStock === 'number') {
-                           batch.update(productRef, { availableStock: increment(item.quantity) });
+                        if (productSnap.exists() && typeof productSnap.data().availableStock === 'number') {
+                            batch.update(productRef, { availableStock: increment(item.quantity) });
                         }
                     }
                 }
             }
         }
-        
+
         await batch.commit();
-        
+
     } catch (error) {
         console.error("Error finalizing route:", error);
         throw new Error("Failed to finalize route.");
@@ -205,7 +206,7 @@ export async function batchUpdateDeliveryDetails(orderIds: string[], updates: { 
                 updateData[`payment.${key}`] = value;
             }
         }
-        
+
         if (updates.status) {
             updateData['status'] = updates.status;
         }
@@ -240,5 +241,3 @@ export async function updateDeliveryStatus(orderId: string, newStatus: OrderStat
         throw new Error("Failed to update delivery status.");
     }
 }
-
-    

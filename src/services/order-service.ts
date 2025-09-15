@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { db } from "@/lib/firebase";
@@ -40,13 +39,10 @@ export async function getOrders(companyId: string): Promise<Order[]> {
 export async function getUnassignedOrders(companyIds: string[]): Promise<Order[]> {
     if (companyIds.length === 0) return [];
     try {
-        const q = query(ordersCollection, where("companyId", "in", companyIds));
-        const querySnapshot = await getDocs(q);
-        const allOrders: Order[] = [];
-        querySnapshot.forEach((doc) => {
-             allOrders.push(convertOrderTimestamps({ id: doc.id, ...doc.data() }));
-        });
+        // Fetch all orders for the given companies
+        const allOrders = await getOrdersForCompanies(companyIds);
         
+        // Filter locally
         return allOrders.filter(order => 
             order.status === 'processing' && 
             order.shipping?.method !== 'retirada_loja'
@@ -62,19 +58,15 @@ export async function getUnassignedOrders(companyIds: string[]): Promise<Order[]
 export async function getDeliverableOrders(companyIds: string[]): Promise<Order[]> {
     if (companyIds.length === 0) return [];
     try {
-        const q = query(ordersCollection, where("companyId", "in", companyIds));
-        const querySnapshot = await getDocs(q);
-        
-        const allOrders: Order[] = [];
-        querySnapshot.forEach((doc) => {
-            allOrders.push(convertOrderTimestamps({ id: doc.id, ...doc.data() }));
+        // Fetch all orders for the given companies.
+        const allOrders = await getOrdersForCompanies(companyIds);
+
+        // Filter in-memory to get only deliverable, non-completed orders.
+        return allOrders.filter(order => {
+            const isDeliverable = order.shipping?.method !== 'retirada_loja';
+            const isNotCompleted = order.status !== 'completed';
+            return isDeliverable && isNotCompleted;
         });
-        
-        // Final filter in-memory to get only deliverable, non-completed orders.
-        return allOrders.filter(order => 
-            order.status !== 'completed' && 
-            order.shipping?.method !== 'retirada_loja'
-        );
 
     } catch (error) {
         console.error("Error getting deliverable orders: ", error);
@@ -88,6 +80,8 @@ export async function getOrdersForCompanies(companyIds: string[]): Promise<Order
         return [];
     }
     try {
+        // Firestore 'in' query is limited to 30 items in the array.
+        // If companyIds can exceed 30, this needs to be chunked.
         const q = query(ordersCollection, where("companyId", "in", companyIds));
         const querySnapshot = await getDocs(q);
         const orders: Order[] = [];
@@ -142,5 +136,3 @@ export async function updateOrder(orderId: string, dataToUpdate: Partial<Order>)
         throw new Error("Failed to update order.");
     }
 }
-
-    

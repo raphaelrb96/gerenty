@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Truck, CheckCircle, Hourglass, DollarSign, PlusCircle, Users, XCircle, Ban, Package, PackageCheck, Wallet, ArrowLeftRight, ListFilter, User } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
-import { getRoutes, Route, Order } from "@/services/logistics-service";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -17,10 +16,12 @@ import { useCurrency } from "@/context/currency-context";
 import { subDays, format, eachDayOfInterval, startOfToday } from "date-fns";
 import { EmptyState } from "@/components/common/empty-state";
 import { DeliveriesKanbanBoard } from "@/components/logistics/deliveries-kanban-board";
-import { getDeliverableOrders } from "@/services/order-service";
 import { RouteManagement } from "@/components/logistics/route-management";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useTranslation } from "@/context/i18n-context";
+import { Order, Route } from "@/lib/types";
+import { getRoutes } from "@/services/logistics-service";
+import { getDeliverableOrders } from "@/services/order-service";
 
 const StatCard = ({ title, value, icon, description }: { title: string, value: string | number, icon: React.ReactNode, description?: string }) => (
     <Card>
@@ -62,11 +63,17 @@ export default function LogisticsPage() {
     const fetchLogisticsData = async () => {
         if (!effectiveOwnerId) return;
         setLoading(true);
+        console.log('fetchLogistic')
         try {
-            const [userRoutes, allDeliverableOrders] = await Promise.all([
-                getRoutes(effectiveOwnerId),
-                getDeliverableOrders([effectiveOwnerId])
-            ]);
+            // const [userRoutes, allDeliverableOrders] = await Promise.all([
+            //     getRoutes(effectiveOwnerId),
+            //     getDeliverableOrders([effectiveOwnerId])
+            // ]);
+            const userRoutes = await getRoutes(effectiveOwnerId);
+            console.log('userRoutes ' + userRoutes);
+            const allDeliverableOrders = await getDeliverableOrders([effectiveOwnerId]);
+            console.log('allDeliverableOrders ' + allDeliverableOrders);
+            console.log("Logistics ", JSON.stringify(userRoutes));
             setRoutes(userRoutes);
             setDeliverableOrders(allDeliverableOrders);
         } catch (error) {
