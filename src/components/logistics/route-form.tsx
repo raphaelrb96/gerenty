@@ -29,7 +29,6 @@ import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { EmptyState } from "@/components/common/empty-state";
 import { Loader2, Users, Package, UserPlus } from "lucide-react";
 import { useCurrency } from "@/context/currency-context";
-import { usePermissions } from "@/context/permissions-context";
 
 const formSchema = z.object({
   title: z.string().min(3, "O título da rota é obrigatório."),
@@ -50,7 +49,6 @@ export function RouteForm({ onFinished }: RouteFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const { formatCurrency } = useCurrency();
-  const { hasAccess } = usePermissions();
 
   const [drivers, setDrivers] = useState<Employee[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
