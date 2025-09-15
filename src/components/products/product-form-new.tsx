@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -172,7 +173,7 @@ function PricingCalculatorCard({ control }: { control: Control<ProductFormValues
 export function ProductFormNew({ product }: ProductFormProps) {
     const router = useRouter();
     const { t, language } = useTranslation();
-    const { user, userData } = useAuth();
+    const { user, userData, effectiveOwnerId } = useAuth();
     const { companies, loading: loadingCompanies } = useCompany();
     const { toast } = useToast();
 
@@ -291,7 +292,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
     };
 
     async function onSubmit(values: ProductFormValues) {
-        if (!user) {
+        if (!effectiveOwnerId) {
             toast({ variant: "destructive", title: t('productForm.error.noUser'), description: "Você precisa estar logado para criar um produto." });
             return;
         }
@@ -306,7 +307,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
         try {
             if (!product) {
                 const productLimit = userData?.plan?.limits?.products ?? 0;
-                const userProducts = await getProductsByUser(user.uid);
+                const userProducts = await getProductsByUser(effectiveOwnerId);
                 if (userProducts.length >= productLimit) {
                     toast({ variant: "destructive", title: "Limite de Produtos Atingido", description: "Você atingiu o limite de produtos para o seu plano atual." });
                     router.push('/dashboard/products');
@@ -316,7 +317,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
             
             const uploadPromises = images.map(imageState => {
                 if (imageState.file) {
-                    const path = `products/${user.uid}/${values.name.replace(/\s+/g, '-')}-${Date.now()}`;
+                    const path = `products/${effectiveOwnerId}/${values.name.replace(/\s+/g, '-')}-${Date.now()}`;
                     return uploadFile(imageState.file, path);
                 }
                 return Promise.resolve(imageState.url);
@@ -326,7 +327,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
             
             const productData: Partial<Product> = {
                 ...values,
-                ownerId: user.uid,
+                ownerId: effectiveOwnerId,
                 availableStock: values.manageStock ? values.availableStock : true,
                 slug: values.slug || values.name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''),
                 isActive: true,
@@ -488,3 +489,5 @@ export function ProductFormNew({ product }: ProductFormProps) {
         </FormProvider>
     );
 }
+
+    

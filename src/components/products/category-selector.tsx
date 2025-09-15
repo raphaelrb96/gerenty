@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -17,17 +18,17 @@ type CategorySelectorProps = {
 };
 
 export function CategorySelector({ selectedCategories, onChange }: CategorySelectorProps) {
-    const { user } = useAuth();
+    const { user, effectiveOwnerId } = useAuth();
     const [categories, setCategories] = useState<ProductCategory[]>([]);
     const [loading, setLoading] = useState(false);
     const [openModal, setOpenModal] = useState(false);
     const [editingCategory, setEditingCategory] = useState<ProductCategory | null>(null);
 
     const fetchAndSetCategories = useCallback(async () => {
-        if (user) {
+        if (effectiveOwnerId) {
             setLoading(true);
             try {
-                const userCategories = await getCategoriesByUser(user.uid);
+                const userCategories = await getCategoriesByUser(effectiveOwnerId);
                 setCategories(userCategories);
             } catch (error) {
                 console.error("Failed to fetch categories", error);
@@ -35,7 +36,7 @@ export function CategorySelector({ selectedCategories, onChange }: CategorySelec
                 setLoading(false);
             }
         }
-    }, [user]);
+    }, [effectiveOwnerId]);
 
     useEffect(() => {
         fetchAndSetCategories();
@@ -101,3 +102,5 @@ export function CategorySelector({ selectedCategories, onChange }: CategorySelec
         </Dialog>
     );
 }
+
+    

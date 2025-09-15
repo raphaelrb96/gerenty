@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -16,17 +17,17 @@ import { RouteForm } from "@/components/logistics/route-form";
 
 
 export default function LogisticsPage() {
-    const { user } = useAuth();
+    const { user, effectiveOwnerId } = useAuth();
     const { formatCurrency } = useCurrency();
     const [routes, setRoutes] = useState<Route[]>([]);
     const [loading, setLoading] = useState(true);
     const [isSheetOpen, setIsSheetOpen] = useState(false);
 
     const fetchRoutes = async () => {
-        if (!user) return;
+        if (!effectiveOwnerId) return;
         setLoading(true);
         try {
-            const userRoutes = await getRoutes(user.uid);
+            const userRoutes = await getRoutes(effectiveOwnerId);
             setRoutes(userRoutes);
         } catch (error) {
             console.error("Failed to fetch routes", error);
@@ -36,12 +37,12 @@ export default function LogisticsPage() {
     };
 
     useEffect(() => {
-        if (user) {
+        if (effectiveOwnerId) {
             fetchRoutes();
         } else {
             setLoading(false);
         }
-    }, [user]);
+    }, [effectiveOwnerId]);
 
     const routesByStatus = (status: Route['status']) => routes.filter(r => r.status === status);
 
@@ -145,3 +146,5 @@ export default function LogisticsPage() {
         </div>
     );
 }
+
+    

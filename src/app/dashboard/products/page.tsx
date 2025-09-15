@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -20,7 +21,7 @@ import { getCategoriesByUser } from "@/services/category-service";
 
 export default function ProductsPage() {
     const { t } = useTranslation();
-    const { user, userData } = useAuth();
+    const { user, userData, effectiveOwnerId } = useAuth();
     const { toast } = useToast();
     const router = useRouter();
     const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -36,12 +37,12 @@ export default function ProductsPage() {
 
 
     const fetchProductsAndCategories = async () => {
-        if (!user) return;
+        if (!effectiveOwnerId) return;
         setLoading(true);
         try {
             const [userProducts, userCategories] = await Promise.all([
-                getProductsByUser(user.uid),
-                getCategoriesByUser(user.uid)
+                getProductsByUser(effectiveOwnerId),
+                getCategoriesByUser(effectiveOwnerId)
             ]);
             setAllProducts(userProducts);
             setCategories(userCategories);
@@ -56,12 +57,12 @@ export default function ProductsPage() {
     };
 
     useEffect(() => {
-        if (user) {
+        if (effectiveOwnerId) {
             fetchProductsAndCategories();
         } else {
             setLoading(false);
         }
-    }, [user]);
+    }, [effectiveOwnerId]);
 
 
     const handleAddProduct = () => {
@@ -172,3 +173,5 @@ export default function ProductsPage() {
         </div>
     );
 }
+
+    

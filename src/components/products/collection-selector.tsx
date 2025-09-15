@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -17,17 +18,17 @@ type CollectionSelectorProps = {
 };
 
 export function CollectionSelector({ selectedCollections, onChange }: CollectionSelectorProps) {
-    const { user } = useAuth();
+    const { user, effectiveOwnerId } = useAuth();
     const [collections, setCollections] = useState<ProductCollection[]>([]);
     const [loading, setLoading] = useState(false);
     const [openModal, setOpenModal] = useState(false);
     const [editingCollection, setEditingCollection] = useState<ProductCollection | null>(null);
 
     const fetchAndSetCollections = useCallback(async () => {
-        if (user) {
+        if (effectiveOwnerId) {
             setLoading(true);
             try {
-                const userCollections = await getCollectionsByUser(user.uid);
+                const userCollections = await getCollectionsByUser(effectiveOwnerId);
                 setCollections(userCollections);
             } catch (error) {
                 console.error("Failed to fetch collections", error);
@@ -35,7 +36,7 @@ export function CollectionSelector({ selectedCollections, onChange }: Collection
                 setLoading(false);
             }
         }
-    }, [user]);
+    }, [effectiveOwnerId]);
 
     useEffect(() => {
         fetchAndSetCollections();
@@ -101,3 +102,5 @@ export function CollectionSelector({ selectedCollections, onChange }: Collection
         </Dialog>
     );
 }
+
+    

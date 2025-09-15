@@ -107,7 +107,7 @@ const roles: { value: Role; label: string }[] = [
 ];
 
 export function MemberForm({ isOpen, onClose, onFinished, member }: MemberFormProps) {
-  const { user } = useAuth();
+  const { user, effectiveOwnerId } = useAuth();
   const { toast } = useToast();
   const { language } = useTranslation();
   const [isSaving, setIsSaving] = React.useState(false);
@@ -178,7 +178,7 @@ export function MemberForm({ isOpen, onClose, onFinished, member }: MemberFormPr
   };
 
   const onSubmit = async (values: FormValues) => {
-    if (!user) {
+    if (!effectiveOwnerId) {
       toast({ variant: "destructive", title: "Erro de autenticação" });
       return;
     }
@@ -190,7 +190,7 @@ export function MemberForm({ isOpen, onClose, onFinished, member }: MemberFormPr
         await updateEmployee(member.id, updateData);
         toast({ title: "Membro da equipe atualizado!" });
       } else {
-        await addEmployee({ ...values, ownerId: user.uid });
+        await addEmployee({ ...values, ownerId: effectiveOwnerId });
         toast({ title: "Novo membro adicionado à equipe!" });
       }
       onFinished();
@@ -281,3 +281,5 @@ export function MemberForm({ isOpen, onClose, onFinished, member }: MemberFormPr
 
 
 
+
+    

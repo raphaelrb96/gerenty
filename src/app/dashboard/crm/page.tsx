@@ -39,7 +39,7 @@ const CUSTOMERS_PER_PAGE = 50;
 
 
 function CrmPageComponent() {
-    const { user } = useAuth();
+    const { user, effectiveOwnerId } = useAuth();
     const { toast } = useToast();
     const { t } = useTranslation();
     const searchParams = useSearchParams();
@@ -84,9 +84,9 @@ function CrmPageComponent() {
 
 
     const fetchCustomers = async () => {
-        if (!user) return;
+        if (!effectiveOwnerId) return;
         try {
-            const userCustomers = await getCustomersByUser(user.uid);
+            const userCustomers = await getCustomersByUser(effectiveOwnerId);
             setAllCustomers(userCustomers);
         } catch (error) {
             console.error(error);
@@ -95,21 +95,21 @@ function CrmPageComponent() {
     };
 
     useEffect(() => {
-        if (!user) return;
+        if (!effectiveOwnerId) return;
 
         const fetchAndInitializeData = async () => {
             setLoading(true);
             try {
-                const userStages = await getStagesByUser(user.uid);
+                const userStages = await getStagesByUser(effectiveOwnerId);
                 await fetchCustomers();
 
-                if (userStages.length === 0) {
+                if (userStages.length === 0 && user?.uid === effectiveOwnerId) {
                     const defaultStageNames = ['Lead', 'Contact', 'Active', 'VIP'];
                     const createdStages: Stage[] = [];
                     for (let i = 0; i < defaultStageNames.length; i++) {
                         const newStage = await addStage({ 
                             name: t(`crmStages.${defaultStageNames[i].toLowerCase()}`), 
-                            ownerId: user.uid, 
+                            ownerId: effectiveOwnerId, 
                             order: i 
                         });
                         createdStages.push(newStage);
@@ -133,7 +133,7 @@ function CrmPageComponent() {
         };
         
         fetchAndInitializeData();
-    }, [user, toast, t]);
+    }, [effectiveOwnerId, toast, t]);
 
     const activeCustomer = activeId ? allCustomers.find(c => c.id === activeId) : null;
     const activeItemType = activeId ? (stages.some(s => s.id === activeId) ? 'Stage' : 'Customer') : null;
@@ -171,7 +171,7 @@ function CrmPageComponent() {
     }
 
     const handleStageSave = async (data: { name: string }) => {
-        if (!user) return;
+        if (!effectiveOwnerId) return;
 
         try {
             if (stageToEdit) {
@@ -179,7 +179,7 @@ function CrmPageComponent() {
                 setStages(prev => prev.map(s => s.id === stageToEdit.id ? updatedStage : s));
                 toast({ title: "Estágio atualizado com sucesso!" });
             } else {
-                const newStage = await addStage({ name: data.name, ownerId: user.uid, order: stages.length });
+                const newStage = await addStage({ name: data.name, ownerId: effectiveOwnerId, order: stages.length });
                 setStages(prev => [...prev, newStage]);
                 toast({ title: "Estágio criado com sucesso!" });
             }
@@ -521,6 +521,8 @@ export default function CrmPage() {
         </Suspense>
     );
 }
+
+    
 
     
 

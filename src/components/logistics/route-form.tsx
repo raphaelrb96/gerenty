@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -43,7 +44,7 @@ type RouteFormProps = {
 };
 
 export function RouteForm({ onFinished }: RouteFormProps) {
-  const { user } = useAuth();
+  const { user, effectiveOwnerId } = useAuth();
   const { companies } = useCompany();
   const { toast } = useToast();
   const router = useRouter();
@@ -56,11 +57,11 @@ export function RouteForm({ onFinished }: RouteFormProps) {
 
   useEffect(() => {
     async function fetchData() {
-      if (!user) return;
+      if (!effectiveOwnerId) return;
       setLoading(true);
       try {
         const [allEmployees, unassignedOrders] = await Promise.all([
-          getEmployeesByUser(user.uid),
+          getEmployeesByUser(effectiveOwnerId),
           getUnassignedOrders(companies.map(c => c.id))
         ]);
 
@@ -76,7 +77,7 @@ export function RouteForm({ onFinished }: RouteFormProps) {
       }
     }
     fetchData();
-  }, [user, companies, toast]);
+  }, [effectiveOwnerId, companies, toast]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -88,7 +89,7 @@ export function RouteForm({ onFinished }: RouteFormProps) {
   const totalValue = selectedOrders.reduce((sum, order) => sum + order.total, 0);
 
   const onSubmit = async (values: FormValues) => {
-    if (!user) return;
+    if (!effectiveOwnerId) return;
     setIsSaving(true);
     try {
       const driver = drivers.find(d => d.id === values.driverId);
@@ -99,7 +100,7 @@ export function RouteForm({ onFinished }: RouteFormProps) {
       }
 
       await createRoute({
-        ownerId: user.uid,
+        ownerId: effectiveOwnerId,
         title: values.title,
         driverId: driver.id,
         driverName: driver.name,
@@ -155,7 +156,7 @@ export function RouteForm({ onFinished }: RouteFormProps) {
                   <SelectContent>
                     {drivers.map(driver => <SelectItem key={driver.id} value={driver.id}>{driver.name}</SelectItem>)}
                   </SelectContent>
-                </Select><FormMessage />
+                </Select><FormMessage /></FormItem>
               </FormItem>
             )} />
 
@@ -216,3 +217,5 @@ export function RouteForm({ onFinished }: RouteFormProps) {
     </Form>
   );
 }
+
+    

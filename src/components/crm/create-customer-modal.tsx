@@ -69,7 +69,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export function CreateCustomerModal({ isOpen, onClose, onCustomerSaved, customer, allTags }: CreateCustomerModalProps) {
-  const { user } = useAuth();
+  const { user, effectiveOwnerId } = useAuth();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = React.useState(false);
   const [stages, setStages] = React.useState<Stage[]>([]);
@@ -88,8 +88,8 @@ export function CreateCustomerModal({ isOpen, onClose, onCustomerSaved, customer
   });
   
   React.useEffect(() => {
-    if (user && isOpen) {
-        getStagesByUser(user.uid).then(userStages => {
+    if (effectiveOwnerId && isOpen) {
+        getStagesByUser(effectiveOwnerId).then(userStages => {
             const sortedStages = userStages.sort((a, b) => a.order - b.order);
             setStages(sortedStages);
             
@@ -110,7 +110,7 @@ export function CreateCustomerModal({ isOpen, onClose, onCustomerSaved, customer
     } else if (!isOpen) {
         form.reset();
     }
-  }, [user, isOpen, customer, form]);
+  }, [effectiveOwnerId, isOpen, customer, form]);
 
   const handleClose = () => {
     form.reset();
@@ -118,7 +118,7 @@ export function CreateCustomerModal({ isOpen, onClose, onCustomerSaved, customer
   };
 
   const onSubmit = async (values: FormValues) => {
-    if (!user) {
+    if (!effectiveOwnerId) {
       toast({ variant: "destructive", title: "Erro de autenticação" });
       return;
     }
@@ -126,7 +126,7 @@ export function CreateCustomerModal({ isOpen, onClose, onCustomerSaved, customer
     setIsSaving(true);
     try {
         if (!customer) { // Only check for duplicates on creation
-            const existingCustomers = await getCustomersByUser(user.uid);
+            const existingCustomers = await getCustomersByUser(effectiveOwnerId);
             const isDuplicate = existingCustomers.some(c => 
                 (values.email && c.email === values.email) ||
                 (values.phone && c.phone === values.phone)
@@ -140,7 +140,7 @@ export function CreateCustomerModal({ isOpen, onClose, onCustomerSaved, customer
         }
 
         const customerData = {
-          ownerId: user.uid,
+          ownerId: effectiveOwnerId,
           name: values.name,
           email: values.email,
           phone: values.phone,
@@ -253,4 +253,5 @@ export function CreateCustomerModal({ isOpen, onClose, onCustomerSaved, customer
   );
 }
 
+    
     

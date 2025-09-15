@@ -19,7 +19,7 @@ import { UsersFilterBar } from "@/components/team/users-filter-bar";
 import { AccessControlModal } from "@/components/team/access-control-modal";
 
 export default function TeamPage() {
-    const { user } = useAuth();
+    const { user, effectiveOwnerId } = useAuth();
     const { toast } = useToast();
     const [team, setTeam] = useState<Employee[]>([]);
     const [loading, setLoading] = useState(true);
@@ -38,10 +38,10 @@ export default function TeamPage() {
     const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
 
     const fetchTeam = async () => {
-        if (!user) return;
+        if (!effectiveOwnerId) return;
         setLoading(true);
         try {
-            const userTeam = await getEmployeesByUser(user.uid);
+            const userTeam = await getEmployeesByUser(effectiveOwnerId);
             setTeam(userTeam);
         } catch (error) {
             toast({ variant: "destructive", title: "Erro ao buscar equipe", description: "Não foi possível carregar os dados da equipe." });
@@ -51,10 +51,10 @@ export default function TeamPage() {
     };
 
     useEffect(() => {
-        if (user) {
+        if (effectiveOwnerId) {
             fetchTeam();
         }
-    }, [user]);
+    }, [effectiveOwnerId]);
 
     const handleOpenEditMember = (member: Employee) => {
         setEditingMember(member);
@@ -152,3 +152,5 @@ export default function TeamPage() {
         </div>
     );
 }
+
+    

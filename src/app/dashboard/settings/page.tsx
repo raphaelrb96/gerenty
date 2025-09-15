@@ -46,7 +46,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Checkbox } from "@/components/ui/checkbox";
 
 function ApiKeysTab() {
-    const { user } = useAuth();
+    const { user, effectiveOwnerId } = useAuth();
     const { activeCompany } = useCompany();
     const { toast } = useToast();
 
@@ -59,7 +59,7 @@ function ApiKeysTab() {
     const [keyToRevoke, setKeyToRevoke] = useState<ApiKey | null>(null);
 
     const fetchKeys = async () => {
-        if (!user || !activeCompany) return;
+        if (!effectiveOwnerId || !activeCompany) return;
         setLoading(true);
         try {
             const userKeys = await getApiKeys(activeCompany.id);
@@ -72,8 +72,8 @@ function ApiKeysTab() {
     };
 
     useEffect(() => {
-        if (activeCompany) fetchKeys();
-    }, [activeCompany]);
+        if (activeCompany && effectiveOwnerId) fetchKeys();
+    }, [activeCompany, effectiveOwnerId]);
 
     const handleGenerateKey = async () => {
         if (!user || !activeCompany || !newKeyName) {
@@ -271,7 +271,7 @@ const webhookEventsConfig: { category: string, events: { name: WebhookEvent, des
 ];
 
 function WebhooksTab() {
-  const { user } = useAuth();
+  const { user, effectiveOwnerId } = useAuth();
   const { activeCompany } = useCompany();
   const { toast } = useToast();
   const [webhooks, setWebhooks] = useState<WebhookType[]>([]);
@@ -297,14 +297,14 @@ function WebhooksTab() {
   }, [activeCompany]);
 
   const handleSaveWebhook = async (values: { url: string, events: WebhookEvent[], useAuth: boolean, secret: string }) => {
-    if (!user || !activeCompany) return;
+    if (!effectiveOwnerId || !activeCompany) return;
     
     try {
       if (webhookToEdit) {
         // Update logic not implemented in service, skipping for now.
       } else {
         await createWebhook({
-          ownerId: user.uid,
+          ownerId: effectiveOwnerId,
           companyId: activeCompany.id,
           url: values.url,
           events: values.events,
@@ -502,3 +502,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+    

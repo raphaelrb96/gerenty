@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import * as React from "react"
@@ -51,7 +52,7 @@ export function ProductsGrid({ data, onProductDeleted }: ProductsGridProps) {
     const router = useRouter();
     const { toast } = useToast();
     const { t } = useTranslation();
-    const { user } = useAuth();
+    const { user, effectiveOwnerId } = useAuth();
     const { companies } = useCompany();
 
     const [productToDelete, setProductToDelete] = React.useState<Product | null>(null);
@@ -62,11 +63,11 @@ export function ProductsGrid({ data, onProductDeleted }: ProductsGridProps) {
     const [collections, setCollections] = React.useState<ProductCollection[]>([]);
 
     React.useEffect(() => {
-        if (user) {
-            getCategoriesByUser(user.uid).then(setCategories);
-            getCollectionsByUser(user.uid).then(setCollections);
+        if (effectiveOwnerId) {
+            getCategoriesByUser(effectiveOwnerId).then(setCategories);
+            getCollectionsByUser(effectiveOwnerId).then(setCollections);
         }
-    }, [user]);
+    }, [effectiveOwnerId]);
 
     const handleDeleteProduct = async (productId: string) => {
         try {
@@ -201,3 +202,5 @@ export function ProductsGrid({ data, onProductDeleted }: ProductsGridProps) {
     </>
   )
 }
+
+    
