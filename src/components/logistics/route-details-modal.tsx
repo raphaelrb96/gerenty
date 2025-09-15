@@ -32,15 +32,17 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import type { Route, Order } from "@/lib/types";
+import type { Route, Order, PaymentMethod, DeliveryStatus, PaymentDetails } from "@/lib/types";
 import { useCurrency } from "@/context/currency-context";
 import { User, Calendar, Truck, DollarSign, Clock, Box, Info, Pencil, AlertTriangle, PackageCheck, PackageX, Loader2, MapPin } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { finalizeRoute } from "@/services/logistics-service";
+import { finalizeRoute, batchUpdateDeliveryDetails } from "@/services/logistics-service";
 import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+
 
 type RouteDetailsModalProps = {
   isOpen: boolean;
@@ -74,6 +76,9 @@ export function RouteDetailsModal({
     const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
     const [isFinalizing, setIsFinalizing] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
+    
+    const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
+    const [isStatusModalOpen, setStatusModalOpen] = useState(false);
 
     React.useEffect(() => {
         if (route) {
@@ -114,13 +119,6 @@ export function RouteDetailsModal({
             setShowConfirmation(false);
         }
     }
-    
-    const handleComingSoon = () => {
-        toast({
-            title: "Funcionalidade em Breve",
-            description: "Esta funcionalidade ainda está em desenvolvimento.",
-        });
-    };
 
     const totalPix = route.orders.reduce((sum, o) => o.payment.method === 'pix' ? sum + o.total : sum, 0);
     const totalCard = route.orders.reduce((sum, o) => (o.payment.method === 'credito' || o.payment.method === 'debito') ? sum + o.total : sum, 0);
@@ -131,12 +129,25 @@ export function RouteDetailsModal({
     const returnedOrders = route.orders.filter(o => !selectedOrders.includes(o.id));
     const returnedItems = returnedOrders.flatMap(o => o.items.map(item => `${item.quantity}x ${item.productName}`));
 
+    const handleBatchUpdate = async (updates: { payment?: Partial<PaymentDetails>, delivery?: Partial<Route['orders'][0]['delivery']> }) => {
+        try {
+            await batchUpdateDeliveryDetails(selectedOrders, updates);
+            toast({ title: "Entregas atualizadas com sucesso!" });
+            onRouteFinalized(); // Refresh data
+            setPaymentModalOpen(false);
+            setStatusModalOpen(false);
+        } catch (error) {
+            console.error("Failed to batch update:", error);
+            toast({ variant: "destructive", title: "Erro ao atualizar entregas" });
+        }
+    };
+
 
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-4xl flex flex-col h-[90vh]">
-          <DialogHeader>
+          <DialogHeader className="px-6 pt-6 flex-shrink-0">
             <DialogTitle>Detalhes da Rota #{route.id.substring(0, 7)}</DialogTitle>
             <DialogDescription>
               Informações completas sobre a rota, entregador e pedidos.
@@ -232,11 +243,11 @@ export function RouteDetailsModal({
                     </div>
                 </ScrollArea>
           </div>
-          <DialogFooter className="pt-4 border-t">
+          <DialogFooter className="pt-4 border-t flex-shrink-0 px-6 pb-6">
               <div className="flex justify-between w-full">
                   <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={handleComingSoon} disabled={selectedOrders.length === 0}>Atualizar Pagamento</Button>
-                        <Button variant="outline" size="sm" onClick={handleComingSoon} disabled={selectedOrders.length === 0}>Atualizar Status</Button>
+                        <Button variant="outline" size="sm" onClick={() => setPaymentModalOpen(true)} disabled={selectedOrders.length === 0}>Atualizar Pagamento</Button>
+                        <Button variant="outline" size="sm" onClick={() => setStatusModalOpen(true)} disabled={selectedOrders.length === 0}>Atualizar Status</Button>
                   </div>
                   <div className="flex gap-2">
                       <Button variant="outline" onClick={onClose}>Fechar</Button>
@@ -284,6 +295,109 @@ export function RouteDetailsModal({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+        <UpdatePaymentModal
+            isOpen={isPaymentModalOpen}
+            onClose={() => setPaymentModalOpen(false)}
+            onSave={(payment) => handleBatchUpdate({ payment })}
+            selectedCount={selectedOrders.length}
+        />
+        <UpdateStatusModal
+            isOpen={isStatusModalOpen}
+            onClose={() => setStatusModalOpen(false)}
+            onSave={(delivery) => handleBatchUpdate({ delivery })}
+            selectedCount={selectedOrders.length}
+        />
     </>
   );
 }
+
+
+function UpdatePaymentModal({ isOpen, onClose, onSave, selectedCount }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<PaymentDetails>) => void, selectedCount: number }) {
+    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | undefined>();
+    const [paymentStatus, setPaymentStatus] = useState<PaymentDetails['status'] | undefined>();
+
+    const handleSave = () => {
+        const updates: Partial<PaymentDetails> = {};
+        if (paymentMethod) updates.method = paymentMethod;
+        if (paymentStatus) updates.status = paymentStatus;
+        onSave(updates);
+    };
+    
+    return (
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Atualizar Pagamento ({selectedCount} entregas)</DialogTitle>
+                    <DialogDescription>
+                        Selecione a nova forma ou status de pagamento. Apenas os campos preenchidos serão atualizados.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                     <div className="space-y-2">
+                        <Label>Forma de Pagamento Recebida</Label>
+                        <Select onValueChange={(v) => setPaymentMethod(v as PaymentMethod)}>
+                            <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                                <SelectItem value="credito">Cartão de Crédito</SelectItem>
+                                <SelectItem value="debito">Cartão de Débito</SelectItem>
+                                <SelectItem value="pix">PIX</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                     <div className="space-y-2">
+                        <Label>Status do Pagamento</Label>
+                        <Select onValueChange={(v) => setPaymentStatus(v as PaymentDetails['status'])}>
+                             <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                             <SelectContent>
+                                <SelectItem value="aprovado">Pago</SelectItem>
+                                <SelectItem value="recusado">Não Pago</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={onClose}>Cancelar</Button>
+                    <Button onClick={handleSave}>Salvar Alterações</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+function UpdateStatusModal({ isOpen, onClose, onSave, selectedCount }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Route['orders'][0]['delivery']>) => void, selectedCount: number }) {
+    const [deliveryStatus, setDeliveryStatus] = useState<DeliveryStatus | undefined>();
+
+    const handleSave = () => {
+        const updates: Partial<Route['orders'][0]['delivery']> = {};
+        if (deliveryStatus) updates.status = deliveryStatus;
+        onSave(updates);
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Atualizar Status da Entrega ({selectedCount} entregas)</DialogTitle>
+                    <DialogDescription>Selecione o novo status para as entregas selecionadas.</DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                    <Label>Novo Status</Label>
+                    <Select onValueChange={(v) => setDeliveryStatus(v as DeliveryStatus)}>
+                        <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="entregue">Entregue</SelectItem>
+                            <SelectItem value="devolvida">Devolvida</SelectItem>
+                            <SelectItem value="cancelada">Cancelada</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={onClose}>Cancelar</Button>
+                    <Button onClick={handleSave}>Salvar Alterações</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+

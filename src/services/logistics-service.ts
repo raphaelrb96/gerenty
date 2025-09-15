@@ -3,7 +3,7 @@
 
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where, addDoc, serverTimestamp, doc, updateDoc, writeBatch, increment, getDoc } from "firebase/firestore";
-import type { Route, Order } from "@/lib/types";
+import type { Route, Order, PaymentDetails } from "@/lib/types";
 
 const routesCollection = collection(db, "routes");
 const ordersCollection = collection(db, "orders");
@@ -160,8 +160,6 @@ export async function finalizeRoute(routeId: string, deliveredOrderIds: string[]
         
         batch.update(routeRef, { status: 'finalizada', finishedAt: serverTimestamp() });
         
-        // This is a simplified fetch. In a real scenario, you might need to fetch them again
-        // or ensure they are passed correctly.
         const ordersInRoute = await getDocs(query(ordersCollection, where('delivery.routeId', '==', routeId)));
 
         ordersInRoute.docs.forEach(orderDoc => {
@@ -185,6 +183,39 @@ export async function finalizeRoute(routeId: string, deliveredOrderIds: string[]
     } catch (error) {
         console.error("Error finalizing route:", error);
         throw new Error("Failed to finalize route.");
+    }
+}
+
+export async function batchUpdateDeliveryDetails(orderIds: string[], updates: { payment?: Partial<PaymentDetails>, delivery?: Partial<Order['delivery']> }): Promise<void> {
+    const batch = writeBatch(db);
+
+    orderIds.forEach(orderId => {
+        const orderRef = doc(db, "orders", orderId);
+        const updateData: { [key: string]: any } = {};
+
+        if (updates.payment) {
+            for (const [key, value] of Object.entries(updates.payment)) {
+                updateData[`payment.${key}`] = value;
+            }
+        }
+
+        if (updates.delivery) {
+             for (const [key, value] of Object.entries(updates.delivery)) {
+                updateData[`delivery.${key}`] = value;
+            }
+        }
+
+        if (Object.keys(updateData).length > 0) {
+            updateData.updatedAt = serverTimestamp();
+            batch.update(orderRef, updateData);
+        }
+    });
+
+    try {
+        await batch.commit();
+    } catch (error) {
+        console.error("Error batch updating delivery details:", error);
+        throw new Error("Failed to update deliveries.");
     }
 }
 
