@@ -23,11 +23,13 @@ import { Badge } from "@/components/ui/badge";
 import { differenceInCalendarDays, parseISO } from 'date-fns';
 import { Calendar, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 
 export default function ProfilePage() {
   const { t } = useTranslation();
   const { user, userData } = useAuth();
   const router = useRouter();
+  const isCompanyOwner = userData?.role === 'empresa';
 
   const handleLogout = async () => {
     await signOut();
@@ -49,8 +51,6 @@ export default function ProfilePage() {
     const daysUntilExpiry = userData?.validityDate
     ? differenceInCalendarDays(parseISO(userData.validityDate as string), new Date())
     : null;
-    
-    const isCompanyOwner = userData?.role === 'empresa';
 
   return (
     <div className="space-y-8">
@@ -68,7 +68,23 @@ export default function ProfilePage() {
                     <CardDescription>{t('profilePage.personalInfoDesc')}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <ProfileForm />
+                    {isCompanyOwner ? (
+                      <ProfileForm />
+                    ) : (
+                      <div className="space-y-6">
+                        <div className="space-y-2">
+                          <Label>{t('auth.fullName')}</Label>
+                          <Input value={userData?.name || ''} disabled />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Email</Label>
+                          <Input value={userData?.email || ''} disabled />
+                           <p className="text-xs text-muted-foreground pt-2">
+                            Apenas o proprietário da conta pode alterar suas informações.
+                           </p>
+                        </div>
+                      </div>
+                    )}
                 </CardContent>
             </Card>
             <Card>
