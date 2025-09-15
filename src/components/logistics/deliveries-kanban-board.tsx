@@ -26,27 +26,18 @@ export function DeliveriesKanbanBoard({ allOrders, routes }: DeliveriesKanbanBoa
     const { t } = useTranslation();
     
     const ordersByStatus = useMemo(() => {
-        const result: Record<string, (Order & { driverName?: string })[]> = {};
+        const result: Record<string, Order[]> = {};
         deliveryStatuses.forEach(status => result[status] = []);
         
-        const routeDriverMap = new Map<string, string>();
-        routes.forEach(route => {
-            route.orders.forEach(orderInRoute => {
-                routeDriverMap.set(orderInRoute.id, route.driverName);
-            });
-        });
-
         allOrders.forEach(order => {
-            const status = order.status;
-            if (result[status]) {
-                const driverName = routeDriverMap.get(order.id);
-                result[status].push({ ...order, driverName });
+            if (result[order.status]) {
+                result[order.status].push(order);
             }
         });
         
         return result;
 
-    }, [allOrders, routes]);
+    }, [allOrders]);
     
     return (
         <Accordion type="multiple" className="w-full space-y-4">
@@ -61,7 +52,7 @@ export function DeliveriesKanbanBoard({ allOrders, routes }: DeliveriesKanbanBoa
                            </div>
                         </AccordionTrigger>
                         <AccordionContent className="px-4 pb-4">
-                            <DeliveriesTable orders={orders} />
+                            <DeliveriesTable orders={orders} routes={routes} />
                         </AccordionContent>
                     </AccordionItem>
                 );
@@ -69,5 +60,3 @@ export function DeliveriesKanbanBoard({ allOrders, routes }: DeliveriesKanbanBoa
         </Accordion>
     );
 }
-
-    

@@ -2,7 +2,7 @@
 
 "use client";
 
-import type { Order, OrderStatus } from "@/lib/types";
+import type { Order, OrderStatus, Route } from "@/lib/types";
 import {
   Card,
   CardContent,
@@ -18,12 +18,21 @@ import { Separator } from "../ui/separator";
 import { useTranslation } from "@/context/i18n-context";
 
 type DeliveriesTableProps = {
-  orders: (Order & { driverName?: string })[];
+  orders: Order[];
+  routes: Route[];
 };
 
-export function DeliveriesTable({ orders }: DeliveriesTableProps) {
+export function DeliveriesTable({ orders, routes }: DeliveriesTableProps) {
     const { formatCurrency } = useCurrency();
     const { t } = useTranslation();
+
+    const getDriverName = (order: Order) => {
+        if (order.shipping?.routeId) {
+            const route = routes.find(r => r.id === order.shipping?.routeId);
+            return route?.driverName;
+        }
+        return null;
+    }
 
     const getDeliveryStatusConfig = (status: OrderStatus) => {
         switch (status) {
@@ -57,6 +66,7 @@ export function DeliveriesTable({ orders }: DeliveriesTableProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {orders.map((order) => {
                 const statusConfig = getDeliveryStatusConfig(order.status);
+                const driverName = getDriverName(order);
                 return (
                 <Card key={order.id} className="flex flex-col">
                     <CardHeader className="p-4">
@@ -80,10 +90,10 @@ export function DeliveriesTable({ orders }: DeliveriesTableProps) {
                            <MapPin className="h-4 w-4" />
                            <span>{order.shipping?.address?.street}, {order.shipping?.address?.number} - {order.shipping?.address?.city || 'N/A'}</span>
                         </div>
-                        {order.driverName && (
+                        {driverName && (
                              <div className="flex items-center gap-2 text-muted-foreground">
                                <Truck className="h-4 w-4" />
-                               <Badge variant="outline">{order.driverName}</Badge>
+                               <Badge variant="outline">{driverName}</Badge>
                             </div>
                         )}
                     </CardContent>
