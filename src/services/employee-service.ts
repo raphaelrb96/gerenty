@@ -57,7 +57,10 @@ export async function addEmployee(employeeData: Omit<Employee, 'id' | 'createdAt
     // Create auth user only if email and password are provided
     if (firestoreData.email && password) {
         try {
-            const userCredential = await createUserWithEmailAndPassword(auth, firestoreData.email, password);
+            // This is a temporary workaround. In a real app, you'd use the Admin SDK on a server.
+            // We're calling this client-side method from a server action, which is not ideal.
+            const tempAuth = auth; // Use the existing auth instance
+            const userCredential = await createUserWithEmailAndPassword(tempAuth, firestoreData.email, password);
             authUserId = userCredential.user.uid;
         } catch (error) {
             // Re-throw the original Firebase Auth error to be handled by the form
@@ -71,7 +74,7 @@ export async function addEmployee(employeeData: Omit<Employee, 'id' | 'createdAt
     try {
         await setDoc(newEmployeeDocRef, {
             ...firestoreData,
-            userId: authUserId || newEmployeeDocRef.id,
+            userId: authUserId || undefined,
             permissions: { // Default permissions
                 modules: { dashboard: true },
                 companies: {},
@@ -134,3 +137,4 @@ export async function deleteEmployee(employeeId: string): Promise<void> {
         throw new Error("Failed to delete employee.");
     }
 }
+
