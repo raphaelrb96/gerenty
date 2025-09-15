@@ -86,8 +86,8 @@ export function RouteForm({ drivers, orders }: RouteFormProps) {
     
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 flex flex-col overflow-hidden">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 overflow-hidden p-1">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="h-full flex flex-col">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 p-1 overflow-auto">
                     <div className="lg:col-span-1 flex flex-col gap-6">
                         <Card>
                             <CardHeader>
@@ -107,7 +107,7 @@ export function RouteForm({ drivers, orders }: RouteFormProps) {
                             </CardContent>
                         </Card>
                     </div>
-                    <div className="lg:col-span-2 flex flex-col">
+                    <div className="lg:col-span-2 flex flex-col min-h-0">
                         <Card className="flex-1 flex flex-col">
                             <CardHeader>
                                 <CardTitle>Pedidos Pendentes</CardTitle>
@@ -115,8 +115,8 @@ export function RouteForm({ drivers, orders }: RouteFormProps) {
                             </CardHeader>
                             <CardContent className="flex-1 overflow-hidden">
                                 <FormField control={form.control} name="orderIds" render={({ field }) => (
-                                    <FormItem>
-                                        <ScrollArea className="h-[calc(100vh-28rem)] border rounded-md">
+                                    <FormItem className="h-full">
+                                        <ScrollArea className="h-full border rounded-md">
                                             {orders.length === 0 ? (
                                                 <div className="flex items-center justify-center h-full">
                                                     <EmptyState icon={<File className="h-12 w-12" />} title="Nenhum Pedido Pendente" description="Não há pedidos aguardando para serem adicionados a uma rota."/>
