@@ -114,6 +114,13 @@ export function RouteDetailsModal({
             setShowConfirmation(false);
         }
     }
+    
+    const handleComingSoon = () => {
+        toast({
+            title: "Funcionalidade em Breve",
+            description: "Esta funcionalidade ainda está em desenvolvimento.",
+        });
+    };
 
     const totalPix = route.orders.reduce((sum, o) => o.payment.method === 'pix' ? sum + o.total : sum, 0);
     const totalCard = route.orders.reduce((sum, o) => (o.payment.method === 'credito' || o.payment.method === 'debito') ? sum + o.total : sum, 0);
@@ -168,7 +175,7 @@ export function RouteDetailsModal({
                         <Textarea id="route-notes" placeholder="Insira anotações importantes aqui..." defaultValue={route.notes}/>
                     </div>
                 </div>
-                <div className="md:col-span-2 border-l pl-6 pr-4">
+                <div className="md:col-span-2 pr-4">
                     <h3 className="text-lg font-semibold flex items-center gap-2 mb-4"><Box className="h-5 w-5" /> Entregas ({route.orders.length})</h3>
                     <p className="text-sm text-muted-foreground mb-4">Marque as entregas que foram concluídas com sucesso. Itens não marcados serão considerados devolvidos.</p>
                     <div className="space-y-3">
@@ -228,8 +235,8 @@ export function RouteDetailsModal({
           <DialogFooter className="pt-4 border-t">
               <div className="flex justify-between w-full">
                   <div className="flex gap-2">
-                        <Button variant="outline" size="sm" disabled>Atualizar Pagamento</Button>
-                        <Button variant="outline" size="sm" disabled>Atualizar Status</Button>
+                        <Button variant="outline" size="sm" onClick={handleComingSoon}>Atualizar Pagamento</Button>
+                        <Button variant="outline" size="sm" onClick={handleComingSoon}>Atualizar Status</Button>
                   </div>
                   <div className="flex gap-2">
                       <Button variant="outline" onClick={onClose}>Fechar</Button>
