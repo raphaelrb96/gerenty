@@ -197,19 +197,47 @@ export default function LogisticsPage() {
                     <TabsTrigger value="management">Gestão de Entregas</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="dashboard" className="mt-6 space-y-6">
-                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
-                        <StatCard title="Entregadores em Rota" value={metrics.driversInRoute} icon={<Truck className="text-muted-foreground" />} />
-                        <StatCard title="Entregas a Processar" value={metrics.deliveriesToProcess} icon={<Hourglass className="text-blue-500" />} />
-                        <StatCard title="Entregas em Andamento" value={metrics.deliveriesInProgress} icon={<Hourglass className="text-yellow-500" />} />
-                        <StatCard title="Rotas Finalizadas (Hoje)" value={metrics.finishedRoutesToday} icon={<CheckCircle className="text-muted-foreground" />} description={`${metrics.finishedRoutesThisWeek} na semana`}/>
-                        <StatCard title="Dinheiro em Rota (a receber)" value={formatCurrency(metrics.cashInProgress)} icon={<DollarSign className="text-muted-foreground" />} />
-                        <StatCard title="Dinheiro Recebido (em rota)" value={formatCurrency(metrics.cashReceivedInRoute)} icon={<DollarSign className="text-green-500" />} />
-                        <StatCard title="Outros Pag. em Andamento" value={formatCurrency(metrics.otherPaymentsInProgress)} icon={<CheckCircle className="text-muted-foreground" />} />
-                        <StatCard title="Outros Pag. Recebidos" value={formatCurrency(metrics.otherPaymentsReceivedInRoute)} icon={<CheckCircle className="text-green-500" />} />
-                        <StatCard title="Entregas Canceladas (em rota)" value={metrics.deliveriesCancelledInRoute} icon={<Ban className="text-red-500" />} description={formatCurrency(metrics.totalCancelledValueInRoute)}/>
-                        <StatCard title="Itens para Devolução" value={metrics.itemsToReturn} icon={<Package className="text-orange-500" />} description={`${metrics.deliveriesReturnedInRoute} entregas devolvidas`}/>
+                <TabsContent value="dashboard" className="mt-6 space-y-8">
+                     <div className="space-y-6">
+                        {/* Operational Metrics */}
+                        <div>
+                            <h3 className="text-lg font-medium mb-2">Operacional</h3>
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                                <StatCard title="Entregadores em Rota" value={metrics.driversInRoute} icon={<Truck className="text-muted-foreground" />} />
+                                <StatCard title="Entregas a Processar" value={metrics.deliveriesToProcess} icon={<Hourglass className="text-blue-500" />} />
+                                <StatCard title="Entregas em Andamento" value={metrics.deliveriesInProgress} icon={<Hourglass className="text-yellow-500" />} />
+                            </div>
+                        </div>
+
+                        {/* Financial Metrics - Cash */}
+                         <div>
+                            <h3 className="text-lg font-medium mb-2">Financeiro (Dinheiro em Rota)</h3>
+                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                                <StatCard title="Dinheiro em Rota (a receber)" value={formatCurrency(metrics.cashInProgress)} icon={<DollarSign className="text-muted-foreground" />} />
+                                <StatCard title="Dinheiro Recebido (em rota)" value={formatCurrency(metrics.cashReceivedInRoute)} icon={<DollarSign className="text-green-500" />} />
+                            </div>
+                        </div>
+
+                        {/* Financial Metrics - Other */}
+                         <div>
+                            <h3 className="text-lg font-medium mb-2">Financeiro (Outros Pagamentos em Rota)</h3>
+                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                                <StatCard title="Outros Pag. em Andamento" value={formatCurrency(metrics.otherPaymentsInProgress)} icon={<CheckCircle className="text-muted-foreground" />} />
+                                <StatCard title="Outros Pag. Recebidos" value={formatCurrency(metrics.otherPaymentsReceivedInRoute)} icon={<CheckCircle className="text-green-500" />} />
+                            </div>
+                        </div>
+
+                         {/* Results and Alerts */}
+                        <div>
+                            <h3 className="text-lg font-medium mb-2">Resultados e Alertas</h3>
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                                <StatCard title="Rotas Finalizadas (Hoje)" value={metrics.finishedRoutesToday} icon={<PackageCheck className="text-muted-foreground" />} description={`${metrics.finishedRoutesThisWeek} na semana`}/>
+                                <StatCard title="Entregas Canceladas (em rota)" value={metrics.deliveriesCancelledInRoute} icon={<Ban className="text-red-500" />} description={formatCurrency(metrics.totalCancelledValueInRoute)}/>
+                                <StatCard title="Itens para Devolução" value={metrics.itemsToReturn} icon={<Package className="text-orange-500" />} description={`${metrics.deliveriesReturnedInRoute} entregas devolvidas`}/>
+                            </div>
+                        </div>
                     </div>
+
 
                      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
                         <Card className="lg:col-span-3">
@@ -307,3 +335,5 @@ export default function LogisticsPage() {
     );
 }
 
+
+    
