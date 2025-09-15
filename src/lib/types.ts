@@ -251,6 +251,14 @@ export type Order = {
   updatedAt: string | Date | Timestamp | FieldValue; // Última atualização do pedido
   completedAt?: string | Date | Timestamp | FieldValue; // Data de conclusão (entrega ou finalização)
   cancelledAt?: string | Date | Timestamp | FieldValue; // Data de cancelamento (se houver)
+
+  delivery?: {
+    routeId?: string;
+    status?: 'em_transito' | 'entregue' | 'devolvida' | 'cancelada';
+    paymentStatus?: 'pago' | 'nao_pago';
+    paymentMethodReceived?: 'dinheiro' | 'cartao' | 'pix' | 'online';
+    returnedProducts?: {productId: string, quantity: number}[];
+  }
 };
 
 

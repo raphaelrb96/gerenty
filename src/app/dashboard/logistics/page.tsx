@@ -145,7 +145,7 @@ export default function LogisticsPage() {
                 </TabsContent>
 
                 <TabsContent value="management" className="mt-4">
-                    <KanbanBoard routes={routes} setRoutes={setRoutes} />
+                    <KanbanBoard routes={routes} setRoutes={setRoutes} onRouteUpdate={fetchRoutes} />
                 </TabsContent>
             </Tabs>
         </div>
