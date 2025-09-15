@@ -64,14 +64,23 @@ export function MainSidebar() {
     { href: "/dashboard/logistics", label: "Logística", icon: Truck, module: 'logistics' as const },
     { href: "/dashboard/reports", label: "Relatórios", icon: BarChart, module: 'reports' as const },
     { href: "/dashboard/team", label: "Equipe", icon: Users, module: 'team' as const },
-    { href: "/dashboard/companies", label: t("companiesPage.sidebarTitle"), icon: Building, module: 'dashboard' as const }, // Companies uses dashboard permission for now
-    { href: "/dashboard/integrations", label: "Integrações", icon: Puzzle, module: 'settings' as const }, // Integrations uses settings permission
+    { href: "/dashboard/companies", label: t("companiesPage.sidebarTitle"), icon: Building, module: 'companies' as const },
+    { href: "/dashboard/integrations", label: "Integrações", icon: Puzzle, module: 'integrations' as const },
     { href: "/dashboard/settings", label: "Configurações", icon: Settings, module: 'settings' as const },
   ];
 
-  const filteredMenuItems = userData?.role === 'empresa'
-    ? allMenuItems
-    : allMenuItems.filter(item => item.module === 'dashboard' || hasAccess(user!.uid, item.module));
+  const getFilteredMenuItems = () => {
+    if (!user || !userData) return [];
+    if (userData.role === 'empresa') return allMenuItems;
+
+    // For sub-accounts
+    return allMenuItems.filter(item => {
+        if (item.href === "/dashboard") return true; // Always show dashboard
+        return hasAccess(user.uid, item.module);
+    });
+  }
+
+  const filteredMenuItems = getFilteredMenuItems();
 
   return (
     <Sidebar>

@@ -20,50 +20,51 @@ const CompanyContext = createContext<CompanyContextType | undefined>(undefined);
 const ACTIVE_COMPANY_STORAGE_KEY = 'activeCompanyId';
 
 export const CompanyProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, effectiveOwnerId, loading: authLoading } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [activeCompany, setActiveCompanyState] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchCompanies = async () => {
-      if (user) {
-        setLoading(true);
-        try {
-          const userCompanies = await getCompaniesForUser(user.uid);
-          setCompanies(userCompanies);
+  const fetchCompanies = useCallback(async () => {
+    if (effectiveOwnerId) {
+      setLoading(true);
+      try {
+        const userCompanies = await getCompaniesForUser(effectiveOwnerId);
+        setCompanies(userCompanies);
 
-          if (userCompanies.length > 0) {
-              const storedCompanyId = localStorage.getItem(ACTIVE_COMPANY_STORAGE_KEY);
-              const companyToActivate = userCompanies.find(c => c.id === storedCompanyId) || userCompanies[0];
-              
-              setActiveCompanyState(companyToActivate);
-              if (companyToActivate) {
-                  localStorage.setItem(ACTIVE_COMPANY_STORAGE_KEY, companyToActivate.id);
-              }
-          } else {
-              setActiveCompanyState(null);
-              localStorage.removeItem(ACTIVE_COMPANY_STORAGE_KEY);
-          }
-
-        } catch (error) {
-          console.error("Failed to fetch companies:", error);
-          setCompanies([]);
-          setActiveCompanyState(null);
-        } finally {
-          setLoading(false);
+        if (userCompanies.length > 0) {
+            const storedCompanyId = localStorage.getItem(ACTIVE_COMPANY_STORAGE_KEY);
+            const companyToActivate = userCompanies.find(c => c.id === storedCompanyId) || userCompanies[0];
+            
+            setActiveCompanyState(companyToActivate);
+            if (companyToActivate) {
+                localStorage.setItem(ACTIVE_COMPANY_STORAGE_KEY, companyToActivate.id);
+            }
+        } else {
+            setActiveCompanyState(null);
+            localStorage.removeItem(ACTIVE_COMPANY_STORAGE_KEY);
         }
-      } else {
+
+      } catch (error) {
+        console.error("Failed to fetch companies:", error);
         setCompanies([]);
         setActiveCompanyState(null);
+      } finally {
         setLoading(false);
       }
-    };
+    } else {
+      setCompanies([]);
+      setActiveCompanyState(null);
+      setLoading(false);
+    }
+  }, [effectiveOwnerId]);
 
+
+  useEffect(() => {
     if (!authLoading) {
       fetchCompanies();
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, effectiveOwnerId, fetchCompanies]);
 
   const setActiveCompany = (company: Company | null) => {
     setActiveCompanyState(company);
@@ -75,22 +76,21 @@ export const CompanyProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
   const refreshCompanies = useCallback(async () => {
-      if (user) {
+      if (effectiveOwnerId) {
           setLoading(true);
           try {
-              const userCompanies = await getCompaniesForUser(user.uid);
+              const userCompanies = await getCompaniesForUser(effectiveOwnerId);
               setCompanies(userCompanies);
-              // Logic to re-evaluate active company could be added here if needed
           } catch (error) {
               console.error("Failed to refresh companies:", error);
           } finally {
               setLoading(false);
           }
       }
-  }, [user]);
+  }, [effectiveOwnerId]);
   
-  if (authLoading || loading) {
-    return null;
+  if (authLoading) {
+    return <div className="flex h-screen w-screen items-center justify-center"><LoadingSpinner /></div>;
   }
 
   return (

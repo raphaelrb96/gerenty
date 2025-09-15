@@ -14,6 +14,7 @@ interface AuthContextType {
   userData: User | null;
   loading: boolean;
   isAuthenticated: boolean;
+  effectiveOwnerId: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -22,6 +23,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [userData, setUserData] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [effectiveOwnerId, setEffectiveOwnerId] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChange(async (firebaseUser) => {
@@ -29,43 +31,42 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (firebaseUser) {
         setUser(firebaseUser);
         
-        // 1. Check if the user is a main account owner
         const userDocRef = doc(db, 'users', firebaseUser.uid);
         const userDoc = await getDoc(userDocRef);
 
         if (userDoc.exists()) {
-          setUserData(userDoc.data() as User);
+          const mainUserData = userDoc.data() as User;
+          setUserData(mainUserData);
+          setEffectiveOwnerId(firebaseUser.uid);
         } else {
-          // 2. If not a main user, check if they are an employee
           const employee = await getEmployeeByAuthId(firebaseUser.uid);
           if (employee) {
-            // 3. If they are an employee, fetch the main account owner's data (for plan, etc.)
             const ownerDocRef = doc(db, 'users', employee.ownerId);
             const ownerDoc = await getDoc(ownerDocRef);
             if (ownerDoc.exists()) {
               const ownerData = ownerDoc.data() as User;
-              // Construct a userData object for the employee, using the owner's plan
-              // and marking the role based on the employee's role.
               const employeeAsUser: User = {
-                ...ownerData, // Inherit plan and other details from the owner
-                uid: firebaseUser.uid, // But use the employee's own UID
+                ...ownerData,
+                uid: firebaseUser.uid,
                 email: firebaseUser.email!,
                 name: employee.name,
-                role: employee.role, // Use the employee's specific role
+                role: employee.role,
               };
               setUserData(employeeAsUser);
+              setEffectiveOwnerId(employee.ownerId);
             } else {
-               // Should not happen if data is consistent
                setUserData(null);
+               setEffectiveOwnerId(null);
             }
           } else {
-            // Neither a main user nor an employee found
             setUserData(null);
+            setEffectiveOwnerId(null);
           }
         }
       } else {
         setUser(null);
         setUserData(null);
+        setEffectiveOwnerId(null);
       }
       setLoading(false);
     });
@@ -76,7 +77,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const isAuthenticated = !!user && !loading;
 
   return (
-    <AuthContext.Provider value={{ user, userData, loading, isAuthenticated }}>
+    <AuthContext.Provider value={{ user, userData, loading, isAuthenticated, effectiveOwnerId }}>
       {children}
     </AuthContext.Provider>
   );
