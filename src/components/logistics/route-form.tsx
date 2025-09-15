@@ -29,6 +29,7 @@ import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { EmptyState } from "@/components/common/empty-state";
 import { Loader2, Users, Package, UserPlus } from "lucide-react";
 import { useCurrency } from "@/context/currency-context";
+import { usePermissions } from "@/context/permissions-context";
 
 const formSchema = z.object({
   title: z.string().min(3, "O título da rota é obrigatório."),
@@ -49,6 +50,7 @@ export function RouteForm({ onFinished }: RouteFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const { formatCurrency } = useCurrency();
+  const { hasAccess } = usePermissions();
 
   const [drivers, setDrivers] = useState<Employee[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -60,7 +62,6 @@ export function RouteForm({ onFinished }: RouteFormProps) {
       if (!effectiveOwnerId) return;
       setLoading(true);
       try {
-        // Business Rule: Fetch drivers regardless of 'team' module permission.
         const [allEmployees, unassignedOrders] = await Promise.all([
           getEmployeesByUser(effectiveOwnerId),
           getUnassignedOrders(companies.map(c => c.id))
@@ -123,101 +124,98 @@ export function RouteForm({ onFinished }: RouteFormProps) {
     return <LoadingSpinner />;
   }
 
-  if (drivers.length === 0) {
-    return (
-        <div className="flex flex-col items-center justify-center h-full p-6">
-             <EmptyState
-                icon={<Users className="h-16 w-16" />}
-                title="Nenhum Entregador Encontrado"
-                description="Você precisa cadastrar ao menos um funcionário com a função 'Entregador' para criar uma rota."
-                action={
-                    <Button onClick={() => router.push('/dashboard/team')}>
-                        <UserPlus className="mr-2 h-4 w-4" />
-                        Cadastrar Funcionário
-                    </Button>
-                }
-            />
-        </div>
-    );
-  }
-
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 flex flex-col overflow-hidden">
-        <ScrollArea className="flex-1 px-6 py-4">
-          <div className="space-y-6">
-            <FormField control={form.control} name="title" render={({ field }) => (
-              <FormItem><FormLabel>Título da Rota</FormLabel><FormControl><Input placeholder="Entregas de Segunda-feira" {...field} /></FormControl><FormMessage /></FormItem>
-            )} />
-
-            <FormField control={form.control} name="driverId" render={({ field }) => (
-              <FormItem><FormLabel>Entregador Responsável</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl><SelectTrigger><SelectValue placeholder="Selecione um entregador" /></SelectTrigger></FormControl>
-                  <SelectContent>
-                    {drivers.map(driver => <SelectItem key={driver.id} value={driver.id}>{driver.name}</SelectItem>)}
-                  </SelectContent>
-                </Select><FormMessage /></FormItem>
-              </FormItem>
-            )} />
-
-            <FormField control={form.control} name="orderIds" render={() => (
-              <FormItem>
-                <FormLabel>Pedidos a Incluir</FormLabel>
-                {orders.length > 0 ? (
-                  <Card className="max-h-60 overflow-y-auto"><CardContent className="p-4 space-y-3">
-                    {orders.map((order) => (
-                      <FormField key={order.id} control={form.control} name="orderIds" render={({ field }) => (
-                        <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-2 rounded-md hover:bg-muted/50">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value?.includes(order.id)}
-                              onCheckedChange={(checked) => {
-                                return checked
-                                  ? field.onChange([...(field.value || []), order.id])
-                                  : field.onChange(field.value?.filter((value) => value !== order.id));
-                              }}
-                            />
-                          </FormControl>
-                          <FormLabel className="font-normal w-full cursor-pointer">
-                            <div className="flex justify-between">
-                              <span>#{order.id.substring(0, 7)} - {order.customer.name}</span>
-                              <span className="font-medium">{formatCurrency(order.total)}</span>
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                              {order.shipping?.address?.neighborhood}, {order.shipping?.address?.city}
-                            </p>
-                          </FormLabel>
-                        </FormItem>
-                      )} />
-                    ))}
-                  </CardContent></Card>
-                ) : (
-                  <EmptyState icon={<Package className="h-12 w-12" />} title="Nenhum Pedido Pendente" description="Não há pedidos aguardando para serem incluídos em uma rota." />
-                )}
-                <FormMessage />
-              </FormItem>
-            )} />
-
-            <FormField control={form.control} name="notes" render={({ field }) => (
-              <FormItem><FormLabel>Observações (Opcional)</FormLabel><FormControl><Textarea placeholder="Instruções especiais para o entregador..." {...field} /></FormControl><FormMessage /></FormItem>
-            )} />
-          </div>
-        </ScrollArea>
-        <div className="px-6 py-4 border-t mt-auto flex-shrink-0">
-          <div className="flex justify-between items-center mb-4">
-            <span className="font-semibold">Total da Rota:</span>
-            <span className="text-xl font-bold">{formatCurrency(totalValue)}</span>
-          </div>
-          <Button type="submit" disabled={isSaving} className="w-full">
-            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Criar Rota
-          </Button>
+    <>
+      {drivers.length === 0 ? (
+        <div className="flex flex-col items-center justify-center h-full p-6">
+          <EmptyState
+            icon={<Users className="h-16 w-16" />}
+            title="Nenhum Entregador Encontrado"
+            description="Você precisa cadastrar ao menos um funcionário com a função 'Entregador' para criar uma rota."
+            action={
+              <Button onClick={() => router.push('/dashboard/team')}>
+                <UserPlus className="mr-2 h-4 w-4" />
+                Cadastrar Funcionário
+              </Button>
+            }
+          />
         </div>
-      </form>
-    </Form>
+      ) : (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 flex flex-col overflow-hidden">
+            <ScrollArea className="flex-1 px-6 py-4">
+              <div className="space-y-6">
+                <FormField control={form.control} name="title" render={({ field }) => (
+                  <FormItem><FormLabel>Título da Rota</FormLabel><FormControl><Input placeholder="Entregas de Segunda-feira" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+
+                <FormField control={form.control} name="driverId" render={({ field }) => (
+                  <FormItem><FormLabel>Entregador Responsável</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl><SelectTrigger><SelectValue placeholder="Selecione um entregador" /></SelectTrigger></FormControl>
+                      <SelectContent>
+                        {drivers.map(driver => <SelectItem key={driver.id} value={driver.id}>{driver.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select><FormMessage /></FormItem>
+                  </FormItem>
+                )} />
+
+                <FormField control={form.control} name="orderIds" render={() => (
+                  <FormItem>
+                    <FormLabel>Pedidos a Incluir</FormLabel>
+                    {orders.length > 0 ? (
+                      <Card className="max-h-60 overflow-y-auto"><CardContent className="p-4 space-y-3">
+                        {orders.map((order) => (
+                          <FormField key={order.id} control={form.control} name="orderIds" render={({ field }) => (
+                            <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-2 rounded-md hover:bg-muted/50">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(order.id)}
+                                  onCheckedChange={(checked) => {
+                                    return checked
+                                      ? field.onChange([...(field.value || []), order.id])
+                                      : field.onChange(field.value?.filter((value) => value !== order.id));
+                                  }}
+                                />
+                              </FormControl>
+                              <FormLabel className="font-normal w-full cursor-pointer">
+                                <div className="flex justify-between">
+                                  <span>#{order.id.substring(0, 7)} - {order.customer.name}</span>
+                                  <span className="font-medium">{formatCurrency(order.total)}</span>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                  {order.shipping?.address?.neighborhood}, {order.shipping?.address?.city}
+                                </p>
+                              </FormLabel>
+                            </FormItem>
+                          )} />
+                        ))}
+                      </CardContent></Card>
+                    ) : (
+                      <EmptyState icon={<Package className="h-12 w-12" />} title="Nenhum Pedido Pendente" description="Não há pedidos aguardando para serem incluídos em uma rota." />
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )} />
+
+                <FormField control={form.control} name="notes" render={({ field }) => (
+                  <FormItem><FormLabel>Observações (Opcional)</FormLabel><FormControl><Textarea placeholder="Instruções especiais para o entregador..." {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+              </div>
+            </ScrollArea>
+            <div className="px-6 py-4 border-t mt-auto flex-shrink-0">
+              <div className="flex justify-between items-center mb-4">
+                <span className="font-semibold">Total da Rota:</span>
+                <span className="text-xl font-bold">{formatCurrency(totalValue)}</span>
+              </div>
+              <Button type="submit" disabled={isSaving} className="w-full">
+                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Criar Rota
+              </Button>
+            </div>
+          </form>
+        </Form>
+      )}
+    </>
   );
 }
-
-    
-    
