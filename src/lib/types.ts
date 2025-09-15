@@ -1,5 +1,4 @@
 
-
 import type { FieldValue, Timestamp } from "firebase/firestore";
 
 export type User = {
@@ -554,8 +553,8 @@ export type Customer = {
   profileImageUrl?: string;
   status: string; // Stage ID
   tags?: string[];
-  globalOrder: number;
-  stageOrder: number;
+  globalOrder?: number;
+  stageOrder?: number;
   address?: {
       street?: string;
       number?: string;

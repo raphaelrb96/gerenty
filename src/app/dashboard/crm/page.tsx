@@ -334,7 +334,7 @@ function CrmPageComponent() {
 
                 const listToReorder = allCustomers.filter(c => {
                     return activeStageId ? c.status === activeStageId : true;
-                }).sort((a,b) => (a[fieldToUpdate] || 0) - (b[fieldToUpdate] || 0));
+                }).sort((a,b) => ((a as any)[fieldToUpdate] || 0) - ((b as any)[fieldToUpdate] || 0));
 
 
                 const oldIndex = listToReorder.findIndex(c => c.id === active.id);
@@ -400,7 +400,7 @@ function CrmPageComponent() {
     // Sort the final list based on the active view
     const sortedAndFilteredCustomers = [...filteredCustomers].sort((a, b) => {
         const fieldToSort = activeStageId ? 'stageOrder' : 'globalOrder';
-        return (a[fieldToSort] || 0) - (b[fieldToSort] || 0);
+        return ((a as any)[fieldToSort] || 0) - ((b as any)[fieldToSort] || 0);
     });
 
     const paginatedCustomers = sortedAndFilteredCustomers.slice(0, visibleCount);

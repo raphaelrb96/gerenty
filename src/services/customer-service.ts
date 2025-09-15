@@ -1,5 +1,4 @@
 
-
 "use server";
 
 import { db } from "@/lib/firebase";
@@ -26,18 +25,19 @@ export async function getCustomersByUser(ownerId: string): Promise<Customer[]> {
         querySnapshot.forEach((doc) => {
             customers.push(convertCustomerTimestamps({ id: doc.id, ...doc.data() }));
         });
-        return customers.sort((a, b) => (a.order || 0) - (b.order || 0));
+        return customers.sort((a, b) => (a.globalOrder || 0) - (b.globalOrder || 0));
     } catch (error) {
         console.error("Error getting customers:", error);
         throw new Error("Failed to fetch customers.");
     }
 }
 
-export async function addCustomer(customerData: Omit<Customer, 'id' | 'createdAt' | 'updatedAt' | 'lastInteraction' | 'order'>): Promise<Customer> {
+export async function addCustomer(customerData: Omit<Customer, 'id' | 'createdAt' | 'updatedAt' | 'lastInteraction' | 'globalOrder' | 'stageOrder'>): Promise<Customer> {
     try {
         const docRef = await addDoc(customersCollection, {
             ...customerData,
-            order: new Date().getTime(),
+            globalOrder: new Date().getTime(),
+            stageOrder: new Date().getTime(),
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
             lastInteraction: serverTimestamp(),
@@ -83,6 +83,7 @@ export async function updateCustomerStatus(customerId: string, status: Customer[
         const customerDoc = doc(db, "customers", customerId);
         await updateDoc(customerDoc, {
             status,
+            stageOrder: new Date().getTime(), // Reset order when moving stage
             updatedAt: serverTimestamp(),
             lastInteraction: serverTimestamp(),
         });
@@ -92,21 +93,24 @@ export async function updateCustomerStatus(customerId: string, status: Customer[
     }
 }
 
-export async function batchUpdateCustomerOrder(customers: { id: string, order: number }[]): Promise<void> {
+export async function batchUpdateCustomerOrder(customers: { id: string, [key: string]: any }[], fieldToUpdate: 'globalOrder' | 'stageOrder'): Promise<void> {
     try {
         const batch = writeBatch(db);
         customers.forEach(customer => {
             const docRef = doc(db, "customers", customer.id);
-            batch.update(docRef, { order: customer.order, updatedAt: serverTimestamp() });
+            const updateData: { [key: string]: any } = { updatedAt: serverTimestamp() };
+            if (customer[fieldToUpdate] !== undefined) {
+                updateData[fieldToUpdate] = customer[fieldToUpdate];
+            }
+            batch.update(docRef, updateData);
         });
         await batch.commit();
     } catch (error) {
-        console.error("Error batch updating customer order:", error);
-        throw new Error("Failed to update customer order.");
+        console.error(`Error batch updating customer ${fieldToUpdate}:`, error);
+        throw new Error(`Failed to update customer ${fieldToUpdate}.`);
     }
 }
 
 
 // Re-exporting the type for easier import
 export type { Customer };
-

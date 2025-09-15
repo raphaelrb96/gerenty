@@ -50,7 +50,7 @@ type CreateCustomerModalProps = {
 
 const formSchema = z.object({
     name: z.string().min(2, "Nome é obrigatório."),
-    phone: z.string().min(1, "Telefone é obrigatório."),
+    phone: z.string().min(1, "Telefone é obrigatório.").optional(),
     email: z.string().email("Email inválido.").optional().or(z.literal('')),
     document: z.string().optional(),
     tags: z.array(z.string()).optional(),
@@ -252,6 +252,3 @@ export function CreateCustomerModal({ isOpen, onClose, onCustomerSaved, customer
     </Sheet>
   );
 }
-
-    
-    
