@@ -39,19 +39,6 @@ export default function TeamPage() {
     const [roleFilter, setRoleFilter] = useState<"all" | Role>("all");
     const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
 
-    // Security Check
-    if (!hasAccess('team')) {
-        return (
-            <div className="flex items-center justify-center h-full">
-                <EmptyState
-                    icon={<Shield className="h-16 w-16" />}
-                    title="Acesso Negado"
-                    description="Você não tem permissão para gerenciar a equipe."
-                />
-            </div>
-        );
-    }
-
     const fetchTeam = async () => {
         if (!effectiveOwnerId) return;
         setLoading(true);

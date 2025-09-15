@@ -26,18 +26,6 @@ export default function LogisticsPage() {
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const { hasAccess } = usePermissions();
 
-    if (!hasAccess('logistics')) {
-        return (
-            <div className="flex items-center justify-center h-full">
-                <EmptyState
-                    icon={<Shield className="h-16 w-16" />}
-                    title="Acesso Negado"
-                    description="Você não tem permissão para acessar o módulo de logística."
-                />
-            </div>
-        );
-    }
-
     const fetchRoutes = async () => {
         if (!effectiveOwnerId) return;
         setLoading(true);
