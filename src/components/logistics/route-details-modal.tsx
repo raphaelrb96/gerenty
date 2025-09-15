@@ -168,7 +168,7 @@ export function RouteDetailsModal({
                         <Textarea id="route-notes" placeholder="Insira anotações importantes aqui..." defaultValue={route.notes}/>
                     </div>
                 </div>
-                <div className="md:col-span-2 border-l pl-6">
+                <div className="md:col-span-2 border-l pl-6 pr-4">
                     <h3 className="text-lg font-semibold flex items-center gap-2 mb-4"><Box className="h-5 w-5" /> Entregas ({route.orders.length})</h3>
                     <p className="text-sm text-muted-foreground mb-4">Marque as entregas que foram concluídas com sucesso. Itens não marcados serão considerados devolvidos.</p>
                     <div className="space-y-3">
