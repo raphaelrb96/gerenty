@@ -217,7 +217,7 @@ export default function LogisticsPage() {
                         {/* Financial Metrics */}
                          <div>
                             <h3 className="text-lg font-medium mb-2">Financeiro (Em Rota)</h3>
-                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                                 <StatCard title="Total a Receber" value={formatCurrency(metrics.totalToReceive)} icon={<Wallet className="text-yellow-500" />} />
                                 <StatCard title="Dinheiro a Receber" value={formatCurrency(metrics.cashInProgress)} icon={<DollarSign className="text-yellow-500" />} />
                                 <StatCard title="Online a Receber" value={formatCurrency(metrics.otherPaymentsInProgress)} icon={<ArrowLeftRight className="text-yellow-500" />} />
