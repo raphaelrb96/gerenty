@@ -3,17 +3,15 @@
 
 import type { Order } from "@/lib/types";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  Card,
+  CardContent,
+  CardFooter
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useCurrency } from "@/context/currency-context";
 import { EmptyState } from "../common/empty-state";
-import { Package } from "lucide-react";
+import { Package, User, MapPin, Truck } from "lucide-react";
+import { Separator } from "../ui/separator";
 
 type DeliveriesTableProps = {
   orders: (Order & { driverName?: string })[];
@@ -35,29 +33,31 @@ export function DeliveriesTable({ orders }: DeliveriesTableProps) {
     }
 
     return (
-        <div className="border rounded-md">
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Cliente</TableHead>
-                        <TableHead>Destino</TableHead>
-                        <TableHead>Entregador</TableHead>
-                        <TableHead className="text-right">Valor</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {orders.map((order) => (
-                        <TableRow key={order.id}>
-                            <TableCell className="font-medium">{order.customer.name}</TableCell>
-                            <TableCell className="text-muted-foreground">{order.shipping?.address?.city || 'N/A'}</TableCell>
-                            <TableCell>
-                                {order.driverName ? <Badge variant="outline">{order.driverName}</Badge> : 'N/A'}
-                            </TableCell>
-                            <TableCell className="text-right font-bold">{formatCurrency(order.total)}</TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {orders.map((order) => (
+                <Card key={order.id}>
+                    <CardContent className="p-4 space-y-3 text-sm">
+                        <div className="flex items-center gap-2 font-semibold">
+                           <User className="h-4 w-4 text-muted-foreground" />
+                           <span>{order.customer.name}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                           <MapPin className="h-4 w-4" />
+                           <span>{order.shipping?.address?.city || 'N/A'}</span>
+                        </div>
+                        {order.driverName && (
+                             <div className="flex items-center gap-2 text-muted-foreground">
+                               <Truck className="h-4 w-4" />
+                               <Badge variant="outline">{order.driverName}</Badge>
+                            </div>
+                        )}
+                    </CardContent>
+                    <Separator />
+                    <CardFooter className="p-4 flex justify-end">
+                        <p className="font-bold text-lg">{formatCurrency(order.total)}</p>
+                    </CardFooter>
+                </Card>
+            ))}
         </div>
     );
 }
