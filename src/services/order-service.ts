@@ -60,6 +60,30 @@ export async function getUnassignedOrders(companyIds: string[]): Promise<Order[]
     }
 }
 
+
+export async function getDeliverableOrders(companyIds: string[]): Promise<Order[]> {
+    if (companyIds.length === 0) return [];
+    try {
+        const q = query(
+            ordersCollection,
+            and(
+                where("companyId", "in", companyIds),
+                where('shipping.method', '!=', 'retirada_loja'),
+                where('status', '!=', 'completed')
+            )
+        );
+        const querySnapshot = await getDocs(q);
+        const orders: Order[] = [];
+        querySnapshot.forEach((doc) => {
+            orders.push(convertOrderTimestamps({ id: doc.id, ...doc.data() }));
+        });
+        return orders;
+    } catch (error) {
+        console.error("Error getting deliverable orders: ", error);
+        throw new Error("Failed to fetch deliverable orders.");
+    }
+}
+
 // Get all orders for a list of companies
 export async function getOrdersForCompanies(companyIds: string[]): Promise<Order[]> {
     if (companyIds.length === 0) {

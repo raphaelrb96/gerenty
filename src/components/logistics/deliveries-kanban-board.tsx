@@ -14,38 +14,38 @@ import { useMemo } from 'react';
 import { useTranslation } from '@/context/i18n-context';
 
 type DeliveriesKanbanBoardProps = {
+    allOrders: Order[];
     routes: Route[];
-    unassignedOrders: Order[];
-    onDataRefresh: () => void;
 }
 
-// All relevant statuses for the logistics/delivery flow
 const deliveryStatuses: OrderStatus[] = ['processing', 'out_for_delivery', 'delivered', 'returned', 'cancelled'];
 
 
-export function DeliveriesKanbanBoard({ routes, unassignedOrders, onDataRefresh }: DeliveriesKanbanBoardProps) {
+export function DeliveriesKanbanBoard({ allOrders, routes }: DeliveriesKanbanBoardProps) {
     const { t } = useTranslation();
-
+    
     const ordersByStatus = useMemo(() => {
         const result: Record<string, (Order & { driverName?: string })[]> = {};
         deliveryStatuses.forEach(status => result[status] = []);
 
-        // 1. Group unassigned orders (they are 'processing' by default)
-        result['processing'] = [...unassignedOrders];
-
-        // 2. Process all orders that are part of any route
+        const routeDriverMap = new Map<string, string>();
         routes.forEach(route => {
             route.orders.forEach(order => {
-                const status = order.status;
-                if (result[status]) {
-                    result[status].push({ ...order, driverName: route.driverName });
-                }
+                routeDriverMap.set(order.id, route.driverName);
             });
+        });
+
+        allOrders.forEach(order => {
+            const status = order.status;
+            if (result[status]) {
+                const driverName = routeDriverMap.get(order.id);
+                result[status].push({ ...order, driverName });
+            }
         });
         
         return result;
 
-    }, [routes, unassignedOrders]);
+    }, [allOrders, routes]);
     
     return (
         <Accordion type="multiple" className="w-full space-y-4">

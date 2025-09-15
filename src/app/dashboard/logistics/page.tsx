@@ -17,7 +17,7 @@ import { useCurrency } from "@/context/currency-context";
 import { subDays, format, eachDayOfInterval, startOfToday } from "date-fns";
 import { EmptyState } from "@/components/common/empty-state";
 import { DeliveriesKanbanBoard } from "@/components/logistics/deliveries-kanban-board";
-import { getUnassignedOrders } from "@/services/order-service";
+import { getUnassignedOrders, getDeliverableOrders } from "@/services/order-service";
 import { RouteManagement } from "@/components/logistics/route-management";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useTranslation } from "@/context/i18n-context";
@@ -56,19 +56,19 @@ export default function LogisticsPage() {
     const { t } = useTranslation();
     const { formatCurrency } = useCurrency();
     const [routes, setRoutes] = useState<Route[]>([]);
-    const [unassignedOrders, setUnassignedOrders] = useState<Order[]>([]);
+    const [deliverableOrders, setDeliverableOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
 
     const fetchLogisticsData = async () => {
         if (!effectiveOwnerId) return;
         setLoading(true);
         try {
-            const [userRoutes, pendingOrders] = await Promise.all([
+            const [userRoutes, allDeliverableOrders] = await Promise.all([
                 getRoutes(effectiveOwnerId),
-                getUnassignedOrders([effectiveOwnerId])
+                getDeliverableOrders([effectiveOwnerId])
             ]);
             setRoutes(userRoutes);
-            setUnassignedOrders(pendingOrders);
+            setDeliverableOrders(allDeliverableOrders);
         } catch (error) {
             console.error("Failed to fetch logistics data", error);
         } finally {
@@ -135,11 +135,12 @@ export default function LogisticsPage() {
         const finishedRoutesThisWeek = routes.filter(r => r.status === 'finalizada' && r.finishedAt && new Date(r.finishedAt as string) >= startOfThisWeek).length;
         
         const itemsToReturn = returnedOrders.flatMap(o => o.items).reduce((sum, item) => sum + item.quantity, 0);
+        const deliveriesToProcess = deliverableOrders.filter(o => o.status === 'processing').length;
 
 
         return {
             driversInRoute,
-            deliveriesToProcess: unassignedOrders.length,
+            deliveriesToProcess,
             deliveriesInProgress,
             deliveriesCancelledInRoute,
             totalCancelledValueInRoute,
@@ -154,7 +155,7 @@ export default function LogisticsPage() {
             itemsToReturn,
             deliveriesReturnedInRoute
         };
-    }, [activeRoutes, routes, unassignedOrders]);
+    }, [activeRoutes, routes, deliverableOrders]);
 
     const chartData = useMemo(() => {
         const days = eachDayOfInterval({ start: subDays(new Date(), 6), end: new Date() });
@@ -339,9 +340,8 @@ export default function LogisticsPage() {
 
                 <TabsContent value="deliveries" className="mt-4">
                      <DeliveriesKanbanBoard 
-                        routes={routes} 
-                        unassignedOrders={unassignedOrders} 
-                        onDataRefresh={fetchLogisticsData}
+                        allOrders={deliverableOrders}
+                        routes={routes}
                     />
                 </TabsContent>
 
