@@ -11,7 +11,7 @@ import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { addOrder } from "@/services/order-service";
 import { getCustomersByUser, addCustomer, Customer } from "@/services/customer-service";
-import type { Product, OrderItem, OrderStatus, PaymentMethod, DeliveryMethod, Order } from "@/lib/types";
+import type { Product, OrderItem, OrderStatus, PaymentMethod, DeliveryMethod, Order, PaymentDetails } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -288,10 +288,14 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
     }
 
     let orderStatus: OrderStatus;
+    let paymentStatus: PaymentDetails['status'];
+
     if (values.deliveryMethod === 'retirada_loja') {
         orderStatus = 'completed';
+        paymentStatus = 'aprovado';
     } else {
         orderStatus = 'pending';
+        paymentStatus = 'aguardando';
     }
 
 
@@ -302,7 +306,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
         status: orderStatus,
         payment: { 
             method: values.paymentMethod as PaymentMethod, 
-            status: values.paymentStatus, 
+            status: paymentStatus, 
             type: values.paymentType 
         },
         shipping: { 
