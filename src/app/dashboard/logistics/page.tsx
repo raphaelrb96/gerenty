@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo } from "react";
 import { PageHeader } from "@/components/common/page-header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Truck, CheckCircle, Hourglass, DollarSign, PlusCircle, Users, XCircle, Ban, Package, PackageCheck } from "lucide-react";
+import { Truck, CheckCircle, Hourglass, DollarSign, PlusCircle, Users, XCircle, Ban, Package, PackageCheck, Wallet, ArrowLeftRight } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { getRoutes, Route, Order } from "@/services/logistics-service";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
@@ -114,6 +114,9 @@ export default function LogisticsPage() {
         const otherPaymentsInProgress = allActiveOrders
             .filter(o => o.delivery?.status === 'em_transito' && o.payment.method !== 'dinheiro')
             .reduce((sum, o) => sum + o.total, 0);
+        
+        const totalToReceive = cashInProgress + otherPaymentsInProgress;
+        const totalReceived = cashReceivedInRoute + otherPaymentsReceivedInRoute;
 
         const finishedRoutesToday = routes.filter(r => r.status === 'finalizada' && r.finishedAt && new Date(r.finishedAt as string) >= today).length;
         const finishedRoutesThisWeek = routes.filter(r => r.status === 'finalizada' && r.finishedAt && new Date(r.finishedAt as string) >= startOfThisWeek).length;
@@ -128,6 +131,8 @@ export default function LogisticsPage() {
             cashInProgress,
             otherPaymentsReceivedInRoute,
             otherPaymentsInProgress,
+            totalToReceive,
+            totalReceived,
             finishedRoutesToday,
             finishedRoutesThisWeek,
             itemsToReturn,
@@ -209,21 +214,14 @@ export default function LogisticsPage() {
                             </div>
                         </div>
 
-                        {/* Financial Metrics - Cash */}
+                        {/* Financial Metrics */}
                          <div>
-                            <h3 className="text-lg font-medium mb-2">Financeiro (Dinheiro em Rota)</h3>
+                            <h3 className="text-lg font-medium mb-2">Financeiro (Em Rota)</h3>
                              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                                <StatCard title="Dinheiro em Rota (a receber)" value={formatCurrency(metrics.cashInProgress)} icon={<DollarSign className="text-muted-foreground" />} />
-                                <StatCard title="Dinheiro Recebido (em rota)" value={formatCurrency(metrics.cashReceivedInRoute)} icon={<DollarSign className="text-green-500" />} />
-                            </div>
-                        </div>
-
-                        {/* Financial Metrics - Other */}
-                         <div>
-                            <h3 className="text-lg font-medium mb-2">Financeiro (Outros Pagamentos em Rota)</h3>
-                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                                <StatCard title="Outros Pag. em Andamento" value={formatCurrency(metrics.otherPaymentsInProgress)} icon={<CheckCircle className="text-muted-foreground" />} />
-                                <StatCard title="Outros Pag. Recebidos" value={formatCurrency(metrics.otherPaymentsReceivedInRoute)} icon={<CheckCircle className="text-green-500" />} />
+                                <StatCard title="Total a Receber" value={formatCurrency(metrics.totalToReceive)} icon={<Wallet className="text-yellow-500" />} />
+                                <StatCard title="Total Recebido" value={formatCurrency(metrics.totalReceived)} icon={<Wallet className="text-green-500" />} />
+                                <StatCard title="Dinheiro a Receber" value={formatCurrency(metrics.cashInProgress)} icon={<DollarSign className="text-muted-foreground" />} />
+                                <StatCard title="Outros Pag. a Receber" value={formatCurrency(metrics.otherPaymentsInProgress)} icon={<ArrowLeftRight className="text-muted-foreground" />} />
                             </div>
                         </div>
 
@@ -334,6 +332,3 @@ export default function LogisticsPage() {
         </div>
     );
 }
-
-
-    
