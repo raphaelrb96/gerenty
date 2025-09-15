@@ -34,7 +34,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { Route, Order, PaymentMethod, OrderStatus, PaymentDetails } from "@/lib/types";
 import { useCurrency } from "@/context/currency-context";
-import { User, Calendar, Truck, DollarSign, Clock, Box, Info, Pencil, AlertTriangle, PackageCheck, PackageX, Loader2, MapPin, Hourglass } from "lucide-react";
+import { User, Calendar, Truck, DollarSign, Clock, Box, Info, Pencil, AlertTriangle, PackageCheck, PackageX, Loader2, MapPin, Hourglass, Package } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -130,10 +130,10 @@ export function RouteDetailsModal({
         }
     }
 
-    const totalPix = route.orders.reduce((sum, o) => o.payment.method === 'pix' ? sum + o.total : sum, 0);
-    const totalCard = route.orders.reduce((sum, o) => (o.payment.method === 'credito' || o.payment.method === 'debito') ? sum + o.total : sum, 0);
+    const totalPix = route.pixTotal || 0;
+    const totalCard = route.cardTotal || 0;
     const totalDinheiro = route.cashTotal || 0;
-    const totalOnline = route.orders.reduce((sum, o) => o.payment.type === 'online' ? sum + o.total : sum, 0);
+    const totalOnline = route.onlineTotal || 0;
 
     const deliveredOrders = route.orders.filter(o => selectedOrders.includes(o.id));
     const returnedOrders = route.orders.filter(o => !selectedOrders.includes(o.id));
