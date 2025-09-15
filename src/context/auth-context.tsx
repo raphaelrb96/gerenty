@@ -41,27 +41,34 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         } else {
           const employee = await getEmployeeByAuthId(firebaseUser.uid);
           if (employee) {
+            // It's a sub-account (employee), fetch the owner's plan data.
+            const ownerDocRef = doc(db, 'users', employee.ownerId);
+            const ownerDoc = await getDoc(ownerDocRef);
+            const ownerData = ownerDoc.data() as User | undefined;
+
              const employeeAsUser: User & { permissions?: EmployeePermissions } = {
                 uid: firebaseUser.uid,
                 email: firebaseUser.email!,
                 name: employee.name,
                 role: employee.role,
                 permissions: employee.permissions,
-                // Inherit plan details from owner for limit checks, but other user data is specific
-                plan: (await getDoc(doc(db, 'users', employee.ownerId))).data()?.plan,
-                statusPlan: (await getDoc(doc(db, 'users', employee.ownerId))).data()?.statusPlan,
-                validityDate: (await getDoc(doc(db, 'users', employee.ownerId))).data()?.validityDate,
+                // Inherit plan details from owner for limit checks
+                plan: ownerData?.plan || null,
+                statusPlan: ownerData?.statusPlan || 'inativo',
+                validityDate: ownerData?.validityDate,
                 authProvider: 'email',
                 createdAt: employee.createdAt,
              };
               setUserData(employeeAsUser);
               setEffectiveOwnerId(employee.ownerId);
           } else {
+            // User is authenticated in Firebase Auth but has no record in 'users' or 'employees'
             setUserData(null);
             setEffectiveOwnerId(null);
           }
         }
       } else {
+        // No user is logged in
         setUser(null);
         setUserData(null);
         setEffectiveOwnerId(null);
