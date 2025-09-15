@@ -147,7 +147,7 @@ const AccountStatCard = ({ icon, title, value, detail, warning }: { icon: React.
 
 export default function DashboardPage() {
   const { t } = useTranslation();
-  const { user, userData } = useAuth();
+  const { user, userData, effectiveOwnerId } = useAuth();
   const { activeCompany, companies, loading: companyLoading } = useCompany();
   const { formatCurrency } = useCurrency();
   
@@ -162,13 +162,13 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function fetchData() {
-        if (!user || companyLoading) {
+        if (!effectiveOwnerId || companyLoading) {
             return;
         }
 
         setLoading(true);
         try {
-            const userProducts = await getProductsByUser(user.uid);
+            const userProducts = await getProductsByUser(effectiveOwnerId);
             setAllProducts(userProducts);
 
             const companyIds = activeCompany ? [activeCompany.id] : companies.map(c => c.id);
@@ -188,10 +188,10 @@ export default function DashboardPage() {
         }
     }
 
-    if (user && companies !== undefined) {
+    if (effectiveOwnerId && companies !== undefined) {
        fetchData();
     }
-  }, [user, activeCompany, companies, companyLoading]);
+  }, [effectiveOwnerId, activeCompany, companies, companyLoading]);
 
   const filteredData = useMemo(() => {
     const ordersInDateRange = allOrders.filter(order => {
