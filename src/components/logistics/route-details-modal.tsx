@@ -94,6 +94,7 @@ export function RouteDetailsModal({
 }: RouteDetailsModalProps) {
     const { formatCurrency } = useCurrency();
     const { toast } = useToast();
+    const { t } = useTranslation();
     const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
     const [isFinalizing, setIsFinalizing] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
@@ -238,7 +239,7 @@ export function RouteDetailsModal({
                                             <Badge variant="secondary" className="capitalize">{order.payment.method}</Badge>
                                              <Badge variant="outline" className={cn(getDeliveryStatusConfig(order.status).variant)}>
                                                 {statusConfig.icon}
-                                                {order.status}
+                                                {t(`orderStatus.${order.status}`)}
                                             </Badge>
                                         </div>
                                     </div>
