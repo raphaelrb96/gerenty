@@ -13,8 +13,8 @@ export default function DashboardLayout({
 }) {
   return (
     <CompanyProvider>
-      <ProtectedRoute>
-        <PermissionsProvider>
+      <PermissionsProvider>
+        <ProtectedRoute>
           <SidebarProvider>
             <div className="flex w-full min-h-screen bg-muted/40">
               <MainSidebar />
@@ -28,8 +28,8 @@ export default function DashboardLayout({
               </SidebarInset>
             </div>
           </SidebarProvider>
-        </PermissionsProvider>
-      </ProtectedRoute>
+        </ProtectedRoute>
+      </PermissionsProvider>
     </CompanyProvider>
   );
 }
