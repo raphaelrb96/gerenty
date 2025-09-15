@@ -60,6 +60,7 @@ export function RouteForm({ onFinished }: RouteFormProps) {
       if (!effectiveOwnerId) return;
       setLoading(true);
       try {
+        // Business Rule: Fetch drivers regardless of 'team' module permission.
         const [allEmployees, unassignedOrders] = await Promise.all([
           getEmployeesByUser(effectiveOwnerId),
           getUnassignedOrders(companies.map(c => c.id))
@@ -218,4 +219,5 @@ export function RouteForm({ onFinished }: RouteFormProps) {
   );
 }
 
+    
     

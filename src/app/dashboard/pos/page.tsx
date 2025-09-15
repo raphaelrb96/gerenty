@@ -8,7 +8,7 @@ import type { Product, OrderItem } from "@/lib/types";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { useCompany } from "@/context/company-context";
 import { EmptyState } from "@/components/common/empty-state";
-import { Package, Building, ChevronsUpDown } from "lucide-react";
+import { Package, Building, ChevronsUpDown, Shield } from "lucide-react";
 import { PosFormStepper } from "@/components/pos/pos-form-stepper";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useTranslation } from "@/context/i18n-context";
+import { usePermissions } from "@/context/permissions-context";
 
 
 function CompanySelector() {
@@ -69,36 +70,40 @@ function CompanySelector() {
 
 
 export default function PosPage() {
-  const { user, userData } = useAuth();
+  const { user, userData, effectiveOwnerId } = useAuth();
   const { activeCompany } = useCompany();
+  const { hasAccess } = usePermissions();
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
   const isCompanyOwner = userData?.role === 'empresa';
 
+  // Specific business rule: Access to POS products is granted if the user can manage orders.
+  const canAccessPosProducts = hasAccess('orders');
 
   useEffect(() => {
-    if (user && activeCompany) {
-      fetchProducts();
+    async function fetchProducts() {
+        if (!effectiveOwnerId || !activeCompany || !canAccessPosProducts) {
+            setLoading(false);
+            return;
+        }
+        setLoading(true);
+        try {
+            const userProducts = await getProductsByUser(effectiveOwnerId);
+            setProducts(userProducts);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    }
+    
+    if (user) {
+        fetchProducts();
     } else {
-      setProducts([]);
-      setCart([]);
-      setLoading(false);
+        setLoading(false);
     }
-  }, [user, activeCompany]);
-
-  const fetchProducts = async () => {
-    if (!user || !activeCompany) return;
-    setLoading(true);
-    try {
-      const userProducts = await getProductsByUser(user.uid);
-      setProducts(userProducts);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [user, activeCompany, effectiveOwnerId, canAccessPosProducts]);
 
   const handleAddToCart = (product: Product) => {
     setCart((prevCart) => {
@@ -184,6 +189,21 @@ export default function PosPage() {
     );
   }
 
+  if (!canAccessPosProducts) {
+       return (
+         <div className="container mx-auto p-6 md:p-8">
+            <CompanySelector />
+            <div className="flex items-center justify-center h-[calc(100vh-20rem)] p-6">
+                 <EmptyState
+                    icon={<Shield className="h-16 w-16" />}
+                    title="Acesso Negado ao PDV"
+                    description="Você não tem permissão para criar pedidos ou visualizar produtos. Por favor, contate o administrador da conta."
+                />
+            </div>
+         </div>
+       );
+  }
+
   return (
     <div className="p-4 md:p-6 space-y-4">
         <CompanySelector />
@@ -199,3 +219,5 @@ export default function PosPage() {
     </div>
   );
 }
+
+    

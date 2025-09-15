@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/common/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Truck, User, Box, PlusCircle } from "lucide-react";
+import { Truck, User, Box, PlusCircle, Shield } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { getRoutes, Route } from "@/services/logistics-service";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
@@ -14,6 +14,8 @@ import { useCurrency } from "@/context/currency-context";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { RouteForm } from "@/components/logistics/route-form";
+import { usePermissions } from "@/context/permissions-context";
+import { EmptyState } from "@/components/common/empty-state";
 
 
 export default function LogisticsPage() {
@@ -22,6 +24,19 @@ export default function LogisticsPage() {
     const [routes, setRoutes] = useState<Route[]>([]);
     const [loading, setLoading] = useState(true);
     const [isSheetOpen, setIsSheetOpen] = useState(false);
+    const { hasAccess } = usePermissions();
+
+    if (!hasAccess('logistics')) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <EmptyState
+                    icon={<Shield className="h-16 w-16" />}
+                    title="Acesso Negado"
+                    description="Você não tem permissão para acessar o módulo de logística."
+                />
+            </div>
+        );
+    }
 
     const fetchRoutes = async () => {
         if (!effectiveOwnerId) return;
@@ -147,4 +162,5 @@ export default function LogisticsPage() {
     );
 }
 
+    
     
