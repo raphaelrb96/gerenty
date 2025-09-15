@@ -28,8 +28,8 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { Route, Order } from "@/lib/types";
 import { useCurrency } from "@/context/currency-context";
-import { User, Calendar, Truck, DollarSign, Clock, Box, Info, Pencil, AlertTriangle, PackageCheck, PackageX, Loader2 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { User, Calendar, Truck, DollarSign, Clock, Box, Info, Pencil, AlertTriangle, PackageCheck, PackageX, Loader2, MapPin } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -167,23 +167,36 @@ export function RouteDetailsModal({
                     <p className="text-sm text-muted-foreground mb-4">Marque as entregas que foram concluídas com sucesso. Itens não marcados serão considerados devolvidos.</p>
                     <div className="space-y-3">
                     {route.orders.map(order => (
-                        <div key={order.id} className="border p-3 rounded-lg flex items-start gap-3">
-                            <Checkbox 
-                              id={`order-${order.id}`}
-                              className="mt-1" 
-                              checked={selectedOrders.includes(order.id)}
-                              onCheckedChange={() => handleToggleOrder(order.id)}
-                            />
-                            <div className="flex-1">
-                                <p className="font-semibold text-sm">Pedido #{order.id.substring(0,7)} - {formatCurrency(order.total)}</p>
-                                <p className="text-xs text-muted-foreground">{order.shipping?.address?.street}, {order.shipping?.address?.number}</p>
-                                <p className="text-xs text-muted-foreground">{order.shipping?.address?.neighborhood}, {order.shipping?.address?.city}</p>
+                        <Card key={order.id} className="p-0">
+                             <div className="p-3 flex items-start gap-3">
+                                <Checkbox 
+                                id={`order-${order.id}`}
+                                className="mt-1" 
+                                checked={selectedOrders.includes(order.id)}
+                                onCheckedChange={() => handleToggleOrder(order.id)}
+                                />
+                                <div className="flex-1 space-y-2">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <p className="font-semibold text-sm leading-tight">Pedido #{order.id.substring(0,7)}</p>
+                                            <p className="text-xs text-muted-foreground">{order.customer.name}</p>
+                                        </div>
+                                        <p className="font-bold text-base">{formatCurrency(order.total)}</p>
+                                    </div>
+                                    <div className="text-xs text-muted-foreground flex items-start gap-2">
+                                        <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                                        <address className="not-italic">
+                                            {order.shipping?.address?.street}, {order.shipping?.address?.number}, {order.shipping?.address?.complement ? `(${order.shipping.address.complement})` : ''} <br/>
+                                            {order.shipping?.address?.neighborhood} - {order.shipping?.address?.city}, {order.shipping?.address?.state}
+                                        </address>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Badge variant="outline" className={getPaymentStatusVariant(order.payment.status)}>{order.payment.status}</Badge>
+                                        <Badge variant="secondary" className="capitalize">{order.payment.method}</Badge>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="flex flex-col items-end gap-1">
-                                <Badge variant="outline" className={getPaymentStatusVariant(order.payment.status)}>{order.payment.status}</Badge>
-                                <Badge variant="secondary" className="capitalize">{order.payment.method}</Badge>
-                            </div>
-                        </div>
+                        </Card>
                     ))}
                     </div>
                 </div>
