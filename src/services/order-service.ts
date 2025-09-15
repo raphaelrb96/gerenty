@@ -45,7 +45,12 @@ export async function getUnassignedOrders(companyIds: string[]): Promise<Order[]
         
         // Filter locally
         return allOrders.filter(order => 
-            order.status === 'processing' && 
+            (
+            order.status === 'processing' ||
+            order.status === 'pending'  ||
+            order.status === 'confirmed'
+            )
+            && 
             order.shipping?.method !== 'retirada_loja'
         );
 
