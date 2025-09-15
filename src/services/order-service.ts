@@ -56,26 +56,6 @@ export async function getUnassignedOrders(companyIds: string[]): Promise<Order[]
 }
 
 
-export async function getDeliverableOrders(ownerId: string): Promise<Order[]> {
-    if (!ownerId) return [];
-    try {
-        const q = query(ordersCollection, where("ownerId", "==", ownerId));
-        const querySnapshot = await getDocs(q);
-        const allOrders = querySnapshot.docs.map(doc => convertOrderTimestamps({ id: doc.id, ...doc.data() }));
-
-        // Filter in-memory to get only deliverable, non-completed orders.
-        return allOrders.filter(order => {
-            const isDeliverable = order.shipping?.method !== 'retirada_loja';
-            const isNotCompleted = order.status !== 'completed';
-            return isDeliverable && isNotCompleted;
-        });
-
-    } catch (error) {
-        console.error("Error getting deliverable orders: ", error);
-        throw new Error("Failed to fetch deliverable orders.");
-    }
-}
-
 // Get all orders for a list of companies
 export async function getOrdersForCompanies(companyIds: string[]): Promise<Order[]> {
     if (companyIds.length === 0) {
@@ -140,3 +120,5 @@ export async function updateOrder(orderId: string, dataToUpdate: Partial<Order>)
         throw new Error("Failed to update order.");
     }
 }
+
+    

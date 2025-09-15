@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Truck, CheckCircle, Hourglass, DollarSign, PlusCircle, Users, XCircle, Ban, Package, PackageCheck, Wallet, ArrowLeftRight, ListFilter, User } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
+import { useCompany } from "@/context/company-context";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -22,7 +23,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useTranslation } from "@/context/i18n-context";
 import { Order, Route } from "@/lib/types";
 import { getRoutes } from "@/services/logistics-service";
-import { getDeliverableOrders } from "@/services/order-service";
+import { getOrdersForCompanies } from "@/services/order-service";
 
 const StatCard = ({ title, value, icon, description }: { title: string, value: string | number, icon: React.ReactNode, description?: string }) => (
     <Card>
@@ -54,27 +55,25 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
 
 export default function LogisticsPage() {
     const { effectiveOwnerId } = useAuth();
+    const { companies } = useCompany();
     const router = useRouter();
     const { t } = useTranslation();
     const { formatCurrency } = useCurrency();
     const [routes, setRoutes] = useState<Route[]>([]);
-    const [deliverableOrders, setDeliverableOrders] = useState<Order[]>([]);
+    const [allOrders, setAllOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
 
     const fetchLogisticsData = async () => {
         if (!effectiveOwnerId) return;
         setLoading(true);
-        console.log('fetchLogistic')
         try {
-            const [userRoutes, allDeliverableOrders] = await Promise.all([
+            const companyIds = companies.map(c => c.id);
+            const [userRoutes, companyOrders] = await Promise.all([
                 getRoutes(effectiveOwnerId),
-                getDeliverableOrders(effectiveOwnerId)
+                companyIds.length > 0 ? getOrdersForCompanies(companyIds) : Promise.resolve([]),
             ]);
-            console.log('userRoutes ' + userRoutes);
-            console.log('allDeliverableOrders ' + allDeliverableOrders);
-            console.log("Logistics ", JSON.stringify(userRoutes));
             setRoutes(userRoutes);
-            setDeliverableOrders(allDeliverableOrders);
+            setAllOrders(companyOrders);
         } catch (error) {
             console.error("Failed to fetch logistics data", error);
         } finally {
@@ -83,15 +82,23 @@ export default function LogisticsPage() {
     };
 
     useEffect(() => {
-        if (effectiveOwnerId) {
+        if (effectiveOwnerId && companies.length > 0) {
             fetchLogisticsData();
-        } else {
+        } else if (!effectiveOwnerId) {
             setLoading(false);
         }
-    }, [effectiveOwnerId]);
+    }, [effectiveOwnerId, companies]);
 
     const activeRoutes = useMemo(() => routes.filter(r => r.status === 'em_andamento'), [routes]);
     
+    const deliverableOrders = useMemo(() => {
+        return allOrders.filter(order => {
+             const isDeliverable = order.shipping?.method !== 'retirada_loja';
+             const isNotCompleted = order.status !== 'completed';
+             return isDeliverable && isNotCompleted;
+        });
+    }, [allOrders]);
+
     const getInitials = (name: string) => {
         const names = name.split(' ');
         if (names.length > 1) {
@@ -366,5 +373,8 @@ export default function LogisticsPage() {
 }
 
     
+
+    
+
 
     
