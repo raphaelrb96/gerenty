@@ -21,7 +21,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { EmptyState } from "@/components/common/empty-state";
 import { Users, File, Loader2 } from "lucide-react";
@@ -38,7 +37,7 @@ const formSchema = z.object({
 type RouteFormValues = z.infer<typeof formSchema>;
 
 export function RouteForm() {
-    const { user, effectiveOwnerId } = useAuth();
+    const { effectiveOwnerId } = useAuth();
     const { activeCompany, companies } = useCompany();
     const { toast } = useToast();
     const router = useRouter();
@@ -52,9 +51,7 @@ export function RouteForm() {
         defaultValues: { orderIds: [] },
     });
 
-    const { fields } = useFieldArray({ control: form.control, name: "orderIds" });
     const selectedOrderIds = form.watch("orderIds");
-
     const selectedOrders = orders.filter(order => selectedOrderIds.includes(order.id));
     const totalRouteValue = selectedOrders.reduce((acc, order) => acc + order.total, 0);
 
@@ -63,9 +60,10 @@ export function RouteForm() {
             if (!effectiveOwnerId) return;
             setLoading(true);
             try {
+                const companyIds = activeCompany ? [activeCompany.id] : companies.map(c => c.id);
                 const [userDrivers, unassignedOrders] = await Promise.all([
                     getEmployeesByUser(effectiveOwnerId),
-                    getUnassignedOrders(activeCompany ? [activeCompany.id] : companies.map(c => c.id))
+                    getUnassignedOrders(companyIds)
                 ]);
                 setDrivers(userDrivers.filter(d => d.role === 'entregador' && d.isActive));
                 setOrders(unassignedOrders);
@@ -79,6 +77,11 @@ export function RouteForm() {
     }, [effectiveOwnerId, activeCompany, companies, toast]);
 
     const onSubmit = async (values: RouteFormValues) => {
+        if (!effectiveOwnerId) {
+            toast({ variant: "destructive", title: "Usuário não autenticado." });
+            return;
+        }
+
         const selectedDriver = drivers.find(d => d.id === values.driverId);
         if (!selectedDriver) {
             toast({ variant: "destructive", title: "Entregador não encontrado." });
@@ -87,7 +90,8 @@ export function RouteForm() {
 
         try {
             await createRoute({
-                ownerId: effectiveOwnerId!,
+                ownerId: effectiveOwnerId,
+                companyId: activeCompany?.id, // Assuming active company context is available
                 driverId: values.driverId,
                 driverName: selectedDriver.name,
                 title: values.title,
@@ -98,6 +102,7 @@ export function RouteForm() {
             router.push("/dashboard/logistics");
         } catch (error) {
             toast({ variant: "destructive", title: "Erro ao criar rota." });
+            console.error(error);
         }
     };
 
@@ -199,4 +204,3 @@ export function RouteForm() {
         </Form>
     );
 }
-

@@ -5,7 +5,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { User, Box, GripVertical, MoreHorizontal } from "lucide-react";
+import { User, Box, GripVertical, MoreHorizontal, DollarSign } from "lucide-react";
 import type { Route } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useCurrency } from "@/context/currency-context";
@@ -73,15 +73,14 @@ export function RouteCard({ route }: { route: Route }) {
                             <Box className="h-4 w-4 text-muted-foreground" />
                             <span>{route.orders.length} entrega(s)</span>
                         </div>
+                         <div className="flex items-center gap-2 font-semibold">
+                            <DollarSign className="h-4 w-4 text-muted-foreground" />
+                            <span>{formatCurrency(route.totalCashInRoute || 0)} em dinheiro</span>
+                        </div>
                     </CardContent>
-                    <CardFooter className="p-4 pt-0 flex justify-between items-center text-sm font-semibold">
-                        <span>Total da Rota</span>
-                        <span>{formatCurrency(route.totalValue)}</span>
-                    </CardFooter>
                 </Card>
             </div>
             <RouteDetailsModal isOpen={isDetailsOpen} onClose={() => setIsDetailsOpen(false)} route={route} />
         </>
     );
 }
-

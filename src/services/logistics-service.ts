@@ -48,22 +48,24 @@ export async function getRoutes(ownerId: string): Promise<Route[]> {
 }
 
 
-export async function createRoute(routeData: Omit<Route, 'id' | 'createdAt' | 'totalValue' | 'totalFee' | 'status'>): Promise<Route> {
+export async function createRoute(routeData: Omit<Route, 'id' | 'createdAt' | 'totalValue' | 'status'>): Promise<Route> {
     const batch = writeBatch(db);
 
     try {
         // 1. Calculate totals
         const totalValue = routeData.orders.reduce((sum, order) => sum + order.total, 0);
-        // Assuming fee is stored somewhere or calculated; defaulting to 0 for now
-        const totalFee = 0; 
-
+        const totalCashInRoute = routeData.orders
+            .filter(o => o.payment.method === 'dinheiro')
+            .reduce((sum, o) => sum + o.total, 0);
+        
         // 2. Create the new route document
         const newRouteRef = doc(collection(db, "routes"));
         const newRoutePayload = {
             ...routeData,
             totalValue,
-            totalFee,
-            status: 'A Processar' as const,
+            totalCashInRoute,
+            totalEarnings: 0, // Default to 0, can be updated later
+            status: 'a_processar' as const,
             createdAt: serverTimestamp(),
         };
         batch.set(newRouteRef, newRoutePayload);
@@ -89,6 +91,18 @@ export async function createRoute(routeData: Omit<Route, 'id' | 'createdAt' | 't
     }
 }
 
+export async function updateRoute(routeId: string, dataToUpdate: Partial<Route>): Promise<void> {
+    try {
+        const routeDoc = doc(db, "routes", routeId);
+        await updateDoc(routeDoc, {
+            ...dataToUpdate,
+            updatedAt: serverTimestamp(),
+        });
+    } catch (error) {
+        console.error("Error updating route: ", error);
+        throw new Error("Failed to update route.");
+    }
+}
+
 
 export type { Route };
-

@@ -12,17 +12,17 @@ type KanbanColumnProps = {
     routes: Route[];
 };
 
+const statusConfig = {
+    'a_processar': { label: 'A Processar', color: 'border-blue-500' },
+    'a_caminho': { label: 'A Caminho', color: 'border-yellow-500' },
+    'entregue': { label: 'Entregue', color: 'border-green-500' },
+    'cancelado': { label: 'Cancelado', color: 'border-red-500' },
+    'devolvido': { label: 'Devolvido', color: 'border-orange-500' },
+}
+
 export function KanbanColumn({ status, routes }: KanbanColumnProps) {
     const { setNodeRef, isOver } = useDroppable({ id: status });
-
-    const getStatusColor = (status: Route['status']) => {
-        switch (status) {
-            case 'A Processar': return 'border-blue-500';
-            case 'Em Trânsito': return 'border-yellow-500';
-            case 'Entregue': return 'border-green-500';
-            case 'Outro': return 'border-gray-500';
-        }
-    }
+    const config = statusConfig[status];
 
     return (
         <div 
@@ -32,8 +32,8 @@ export function KanbanColumn({ status, routes }: KanbanColumnProps) {
                 isOver && "bg-muted"
             )}
         >
-            <h3 className={`font-semibold text-lg border-l-4 pl-2 ${getStatusColor(status)}`}>
-                {status} ({routes.length})
+            <h3 className={`font-semibold text-lg border-l-4 pl-2 ${config.color}`}>
+                {config.label} ({routes.length})
             </h3>
             <SortableContext items={routes.map(r => r.id)} strategy={verticalListSortingStrategy}>
                 <div className="space-y-3">

@@ -4,8 +4,10 @@
 import { DndContext, DragEndEvent, closestCenter } from "@dnd-kit/core";
 import { KanbanColumn } from "./kanban-column";
 import type { Route } from "@/lib/types";
+import { updateRoute } from "@/services/logistics-service";
+import { useToast } from "@/hooks/use-toast";
 
-const statuses: Route['status'][] = ['A Processar', 'Em Trânsito', 'Entregue', 'Outro'];
+const statuses: Route['status'][] = ['a_processar', 'a_caminho', 'entregue', 'cancelado', 'devolvido'];
 
 type KanbanBoardProps = {
     routes: Route[];
@@ -13,27 +15,36 @@ type KanbanBoardProps = {
 }
 
 export function KanbanBoard({ routes, setRoutes }: KanbanBoardProps) {
+    const { toast } = useToast();
     
-    const handleDragEnd = (event: DragEndEvent) => {
+    const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
 
         if (over && active.id !== over.id) {
             const activeRoute = routes.find(r => r.id === active.id);
             const overColumnStatus = over.id.toString();
 
-            if (activeRoute && statuses.includes(overColumnStatus as any)) {
+            if (activeRoute && statuses.includes(overColumnStatus as any) && activeRoute.status !== overColumnStatus) {
+                const originalStatus = activeRoute.status;
                 // Optimistic UI update
                 setRoutes(prev => prev.map(r => r.id === active.id ? { ...r, status: overColumnStatus as Route['status'] } : r));
 
-                // TODO: Here you would call a server action to persist the status change
-                console.log(`Route ${active.id} moved to ${overColumnStatus}`);
+                try {
+                    await updateRoute(activeRoute.id, { status: overColumnStatus as Route['status'] });
+                     toast({ title: "Status da rota atualizado!" });
+                } catch (error) {
+                    // Revert UI on error
+                    setRoutes(prev => prev.map(r => r.id === active.id ? { ...r, status: originalStatus } : r));
+                    toast({ variant: "destructive", title: "Erro ao atualizar rota" });
+                    console.error("Failed to update route status:", error);
+                }
             }
         }
     };
 
     return (
         <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-start">
                 {statuses.map(status => (
                     <KanbanColumn
                         key={status}

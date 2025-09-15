@@ -613,14 +613,16 @@ export type Employee = {
 export interface Route {
   id: string;
   ownerId: string;
+  companyId?: string;
   driverId: string;
   driverName: string;
   title: string;
   notes?: string;
   orders: Order[];
-  status: 'A Processar' | 'Em Trânsito' | 'Entregue' | 'Outro';
+  status: 'a_processar' | 'a_caminho' | 'entregue' | 'cancelado' | 'devolvido';
   totalValue: number;
-  totalFee: number;
+  totalCashInRoute?: number;
+  totalEarnings?: number;
   createdAt: string | Date | Timestamp | FieldValue;
   startedAt?: string | Date | Timestamp | FieldValue;
   finishedAt?: string | Date | Timestamp | FieldValue;
