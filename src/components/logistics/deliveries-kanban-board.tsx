@@ -40,7 +40,7 @@ export function DeliveriesKanbanBoard({ routes, unassignedOrders, onDataRefresh 
     }
     
     return (
-        <Accordion type="multiple" defaultValue={['a_processar', 'em_transito']} className="w-full space-y-4">
+        <Accordion type="multiple" className="w-full space-y-4">
             {statuses.map(status => {
                 const orders = getOrdersForStatus(status);
                 return (
