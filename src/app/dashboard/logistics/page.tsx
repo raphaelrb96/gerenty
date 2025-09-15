@@ -65,7 +65,7 @@ export default function LogisticsPage() {
         try {
             const [userRoutes, pendingOrders] = await Promise.all([
                 getRoutes(effectiveOwnerId),
-                getUnassignedOrders([effectiveOwnerId]) // Simplified for now
+                getUnassignedOrders(effectiveOwnerId)
             ]);
             setRoutes(userRoutes);
             setUnassignedOrders(pendingOrders);
@@ -354,5 +354,7 @@ export default function LogisticsPage() {
         </div>
     );
 }
+
+    
 
     
