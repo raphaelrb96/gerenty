@@ -9,7 +9,6 @@ const routesCollection = collection(db, "routes");
 const ordersCollection = collection(db, "orders");
 const productsCollection = collection(db, "products");
 
-
 const convertRouteTimestamps = (data: any): Route => {
     const route = { id: data.id, ...data };
     for (const key of ['createdAt', 'startedAt', 'finishedAt']) {
@@ -32,15 +31,37 @@ const convertRouteTimestamps = (data: any): Route => {
     return route as Route;
 };
 
+// This function needs to exist to convert timestamps from Firestore for client-side use.
+// Added a local helper since it's not exported from order-service.
+const convertOrderTimestamps = (data: any): Order => {
+    const order = { ...data };
+    for (const key of ['createdAt', 'updatedAt', 'completedAt', 'cancelledAt']) {
+        if (order[key]?.toDate) {
+            order[key] = order[key].toDate().toISOString();
+        }
+    }
+    return order as Order;
+}
+
 
 export async function getRoutes(ownerId: string): Promise<Route[]> {
     try {
         const q = query(routesCollection, where("ownerId", "==", ownerId));
         const querySnapshot = await getDocs(q);
         const routes: Route[] = [];
-        querySnapshot.forEach((doc) => {
-            routes.push(convertRouteTimestamps({ id: doc.id, ...doc.data() }));
-        });
+        for (const doc of querySnapshot.docs) {
+            const routeData = convertRouteTimestamps({ id: doc.id, ...doc.data() });
+            
+            // Fetch the full order objects for the route
+            if (routeData.orderIds && routeData.orderIds.length > 0) {
+                 const ordersQuery = query(ordersCollection, where('__name__', 'in', routeData.orderIds));
+                 const ordersSnapshot = await getDocs(ordersQuery);
+                 routeData.orders = ordersSnapshot.docs.map(orderDoc => convertOrderTimestamps(orderDoc.data()) as Order);
+            } else {
+                routeData.orders = [];
+            }
+            routes.push(routeData);
+        }
         routes.sort((a,b) => new Date(b.createdAt as string).getTime() - new Date(a.createdAt as string).getTime());
         return routes;
     } catch (error) {
@@ -55,9 +76,12 @@ export async function createRoute(routeData: Omit<Route, 'id' | 'createdAt' | 't
     const { orderIds, ...restOfRouteData } = routeData;
 
     try {
-        // 1. Fetch full order details
+        // 1. Fetch full order details to calculate totals
         const orderDocs = await Promise.all(orderIds.map(id => getDoc(doc(ordersCollection, id))));
-        const orders: Order[] = orderDocs.map(d => convertOrderTimestamps({id: d.id, ...d.data()}) as Order);
+        const orders: Order[] = orderDocs.map(d => {
+            if (!d.exists()) throw new Error(`Order with ID ${d.id} not found.`);
+            return convertOrderTimestamps({id: d.id, ...d.data()}) as Order;
+        });
 
         // 2. Calculate totals
         const totalValue = orders.reduce((sum, order) => sum + order.total, 0);
@@ -70,6 +94,7 @@ export async function createRoute(routeData: Omit<Route, 'id' | 'createdAt' | 't
         const newRouteRef = doc(collection(db, "routes"));
         const newRoutePayload = {
             ...restOfRouteData,
+            orderIds, // Store only the IDs
             totalValue,
             cashTotal,
             cardTotal,
@@ -83,7 +108,7 @@ export async function createRoute(routeData: Omit<Route, 'id' | 'createdAt' | 't
         };
         batch.set(newRouteRef, newRoutePayload);
 
-        // 4. Update all selected orders with the new routeId
+        // 4. Update all selected orders with the new routeId and status
         orders.forEach(order => {
             const orderRef = doc(ordersCollection, order.id);
             batch.update(orderRef, { 
@@ -98,13 +123,13 @@ export async function createRoute(routeData: Omit<Route, 'id' | 'createdAt' | 't
         return {
             id: newRouteRef.id,
             ...newRoutePayload,
-            orders, // include full order details in returned object
+            orders, // include full order details in returned object for immediate use
             createdAt: new Date().toISOString(),
             startedAt: new Date().toISOString(),
         } as Route;
 
     } catch (error) {
-        console.error("Error creating route: ", error);
+        console.error("Error creating route with details: ", error);
         throw new Error("Failed to create route.");
     }
 }
@@ -178,4 +203,3 @@ export async function updateDeliveryStatus(orderId: string, newStatus: 'em_trans
         throw new Error("Failed to update delivery status.");
     }
 }
-
