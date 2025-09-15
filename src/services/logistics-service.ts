@@ -1,10 +1,9 @@
 
-
-"use server";
+'use server';
 
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where, addDoc, serverTimestamp, doc, updateDoc, writeBatch, increment, getDoc } from "firebase/firestore";
-import type { Route, Order, PaymentDetails } from "@/lib/types";
+import type { Route, Order, PaymentDetails, OrderStatus } from "@/lib/types";
 
 const routesCollection = collection(db, "routes");
 const ordersCollection = collection(db, "orders");
@@ -194,7 +193,7 @@ export async function finalizeRoute(routeId: string, deliveredOrderIds: string[]
     }
 }
 
-export async function batchUpdateDeliveryDetails(orderIds: string[], updates: { payment?: Partial<PaymentDetails>, status?: Order['status'] }): Promise<void> {
+export async function batchUpdateDeliveryDetails(orderIds: string[], updates: { payment?: Partial<PaymentDetails>, status?: OrderStatus }): Promise<void> {
     const batch = writeBatch(db);
 
     orderIds.forEach(orderId => {
@@ -226,7 +225,7 @@ export async function batchUpdateDeliveryDetails(orderIds: string[], updates: { 
     }
 }
 
-export async function updateDeliveryStatus(orderId: string, newStatus: Order['status'], routeId?: string): Promise<void> {
+export async function updateDeliveryStatus(orderId: string, newStatus: OrderStatus, routeId?: string): Promise<void> {
     try {
         const orderRef = doc(db, 'orders', orderId);
         const updateData: any = {
@@ -241,4 +240,3 @@ export async function updateDeliveryStatus(orderId: string, newStatus: Order['st
         throw new Error("Failed to update delivery status.");
     }
 }
-

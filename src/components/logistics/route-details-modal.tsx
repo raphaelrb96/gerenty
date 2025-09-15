@@ -32,7 +32,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import type { Route, Order, PaymentMethod, DeliveryStatus, PaymentDetails } from "@/lib/types";
+import type { Route, Order, PaymentMethod, OrderStatus, PaymentDetails } from "@/lib/types";
 import { useCurrency } from "@/context/currency-context";
 import { User, Calendar, Truck, DollarSign, Clock, Box, Info, Pencil, AlertTriangle, PackageCheck, PackageX, Loader2, MapPin, Hourglass } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -66,16 +66,16 @@ const StatCard = ({ title, value, icon }: { title: string, value: string, icon: 
     </Card>
 );
 
-const getDeliveryStatusConfig = (status?: DeliveryStatus) => {
+const getDeliveryStatusConfig = (status?: OrderStatus) => {
     switch (status) {
-        case 'entregue':
+        case 'delivered':
             return { variant: 'bg-green-600/20 text-green-700', icon: <PackageCheck className="mr-1 h-3 w-3" /> };
-        case 'em_transito':
+        case 'out_for_delivery':
             return { variant: 'bg-blue-600/20 text-blue-700', icon: <Truck className="mr-1 h-3 w-3" /> };
-        case 'a_processar':
+        case 'processing':
             return { variant: 'bg-yellow-600/20 text-yellow-700', icon: <Hourglass className="mr-1 h-3 w-3" /> };
-        case 'cancelada':
-        case 'devolvida':
+        case 'cancelled':
+        case 'returned':
              return { variant: 'bg-red-600/20 text-red-700', icon: <PackageX className="mr-1 h-3 w-3" /> };
         default:
             return { variant: 'bg-gray-600/20 text-gray-700', icon: <Package className="mr-1 h-3 w-3" /> };
@@ -139,7 +139,7 @@ export function RouteDetailsModal({
     const returnedOrders = route.orders.filter(o => !selectedOrders.includes(o.id));
     const returnedItems = returnedOrders.flatMap(o => o.items.map(item => `${item.quantity}x ${item.productName}`));
 
-    const handleBatchUpdate = async (updates: { payment?: Partial<PaymentDetails>, delivery?: Partial<Route['orders'][0]['delivery']> }) => {
+    const handleBatchUpdate = async (updates: { payment?: Partial<PaymentDetails>, status?: Order['status'] }) => {
         if (selectedOrders.length === 0) {
             toast({ variant: "destructive", title: "Nenhuma entrega selecionada", description: "Selecione ao menos uma entrega para atualizar."});
             return;
@@ -206,7 +206,7 @@ export function RouteDetailsModal({
                     <p className="text-sm text-muted-foreground mb-4">Marque as entregas que foram concluídas com sucesso. Itens não marcados serão considerados devolvidos.</p>
                     <div className="space-y-3">
                     {route.orders.map(order => {
-                         const statusConfig = getDeliveryStatusConfig(order.delivery?.status);
+                         const statusConfig = getDeliveryStatusConfig(order.status);
                          return (
                             <Card key={order.id} className="p-0">
                                 <div className="p-3 flex items-start gap-3">
@@ -235,7 +235,7 @@ export function RouteDetailsModal({
                                             <Badge variant="secondary" className="capitalize">{order.payment.method}</Badge>
                                             <Badge variant="outline" className={cn(statusConfig.variant)}>
                                                 {statusConfig.icon}
-                                                {order.delivery?.status || 'desconhecido'}
+                                                {order.status}
                                             </Badge>
                                         </div>
                                     </div>
@@ -324,7 +324,7 @@ export function RouteDetailsModal({
         <UpdateStatusModal
             isOpen={isStatusModalOpen}
             onClose={() => setStatusModalOpen(false)}
-            onSave={(delivery) => handleBatchUpdate({ delivery })}
+            onSave={(updates) => handleBatchUpdate(updates)}
             selectedCount={selectedOrders.length}
         />
     </>
@@ -385,13 +385,13 @@ function UpdatePaymentModal({ isOpen, onClose, onSave, selectedCount }: { isOpen
     );
 }
 
-function UpdateStatusModal({ isOpen, onClose, onSave, selectedCount }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Route['orders'][0]['delivery']>) => void, selectedCount: number }) {
-    const [deliveryStatus, setDeliveryStatus] = useState<DeliveryStatus | undefined>();
+function UpdateStatusModal({ isOpen, onClose, onSave, selectedCount }: { isOpen: boolean, onClose: () => void, onSave: (data: { status: OrderStatus }) => void, selectedCount: number }) {
+    const [deliveryStatus, setDeliveryStatus] = useState<OrderStatus | undefined>();
 
     const handleSave = () => {
-        const updates: Partial<Route['orders'][0]['delivery']> = {};
-        if (deliveryStatus) updates.status = deliveryStatus;
-        onSave(updates);
+        if (deliveryStatus) {
+            onSave({ status: deliveryStatus });
+        }
     };
 
     return (
@@ -403,12 +403,12 @@ function UpdateStatusModal({ isOpen, onClose, onSave, selectedCount }: { isOpen:
                 </DialogHeader>
                 <div className="py-4">
                     <Label>Novo Status</Label>
-                    <Select onValueChange={(v) => setDeliveryStatus(v as DeliveryStatus)}>
+                    <Select onValueChange={(v) => setDeliveryStatus(v as OrderStatus)}>
                         <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="entregue">Entregue</SelectItem>
-                            <SelectItem value="devolvida">Devolvida</SelectItem>
-                            <SelectItem value="cancelada">Cancelada</SelectItem>
+                            <SelectItem value="delivered">Entregue</SelectItem>
+                            <SelectItem value="returned">Devolvida</SelectItem>
+                            <SelectItem value="cancelled">Cancelada</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
@@ -420,5 +420,3 @@ function UpdateStatusModal({ isOpen, onClose, onSave, selectedCount }: { isOpen:
         </Dialog>
     );
 }
-
-    
