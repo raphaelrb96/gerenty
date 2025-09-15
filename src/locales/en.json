@@ -409,13 +409,13 @@
         }
     },
     "paymentMethods": {
-        "credit": "Credit Card",
-        "debit": "Debit Card",
+        "credito": "Credit Card",
+        "debito": "Debit Card",
         "pix": "PIX",
-        "cash": "Cash",
-        "billet": "Billet",
+        "dinheiro": "Cash",
+        "boleto": "Bank Slip",
         "link": "Payment Link",
-        "other": "Other"
+        "outros": "Other"
     },
     "paymentStatus": {
         "pending": "Pending",

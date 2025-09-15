@@ -215,7 +215,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
   
   const total = subtotal - (Number(watchedDiscount) || 0) + (Number(watchedShippingCost) || 0) + (calculatedFees || 0);
 
-  const deliveryMethodMap: Record<string, string> = {
+  const deliveryMethodMap: Record<DeliveryMethod, string> = {
     retirada_loja: 'pickup',
     entrega_padrao: 'standard',
     correios: 'correios',
@@ -590,11 +590,3 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
     </div>
   );
 }
-
-    
-
-    
-
-    
-
-    

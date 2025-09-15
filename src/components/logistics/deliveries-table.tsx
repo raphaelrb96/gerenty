@@ -2,7 +2,7 @@
 
 "use client";
 
-import type { Order, OrderStatus, Route } from "@/lib/types";
+import type { Order, OrderStatus, Route, PaymentMethod } from "@/lib/types";
 import {
   Card,
   CardContent,
@@ -20,6 +20,16 @@ import { useTranslation } from "@/context/i18n-context";
 type DeliveriesTableProps = {
   orders: Order[];
   routes: Route[];
+};
+
+const paymentMethodTranslationMap: Record<PaymentMethod, string> = {
+    credito: 'credit',
+    debito: 'debit',
+    pix: 'pix',
+    dinheiro: 'cash',
+    boleto: 'billet',
+    link: 'link',
+    outros: 'other'
 };
 
 export function DeliveriesTable({ orders, routes }: DeliveriesTableProps) {
@@ -67,6 +77,8 @@ export function DeliveriesTable({ orders, routes }: DeliveriesTableProps) {
             {orders.map((order) => {
                 const statusConfig = getDeliveryStatusConfig(order.status);
                 const driverName = getDriverName(order);
+                const paymentMethodKey = paymentMethodTranslationMap[order.payment.method] || 'other';
+
                 return (
                 <Card key={order.id} className="flex flex-col">
                     <CardHeader className="p-4">
@@ -99,7 +111,7 @@ export function DeliveriesTable({ orders, routes }: DeliveriesTableProps) {
                     </CardContent>
                     <Separator />
                     <CardFooter className="p-3 flex justify-between items-center text-xs">
-                        <Badge variant="secondary" className="capitalize">{t(`paymentMethods.${order.payment.method.toLowerCase()}`)}</Badge>
+                        <Badge variant="secondary" className="capitalize">{t(`paymentMethods.${paymentMethodKey}`)}</Badge>
                         <Badge variant="outline" className={statusConfig.variant}>
                             {statusConfig.icon}
                             {t(`orderStatus.${order.status}`)}
