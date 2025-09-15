@@ -56,7 +56,7 @@ export async function getRoutes(ownerId: string): Promise<Route[]> {
             if (routeData.orderIds && routeData.orderIds.length > 0) {
                  const ordersQuery = query(ordersCollection, where('__name__', 'in', routeData.orderIds));
                  const ordersSnapshot = await getDocs(ordersQuery);
-                 routeData.orders = ordersSnapshot.docs.map(orderDoc => convertOrderTimestamps(orderDoc.data()) as Order);
+                 routeData.orders = ordersSnapshot.docs.map(orderDoc => convertOrderTimestamps({ id: orderDoc.id, ...orderDoc.data() }) as Order);
             } else {
                 routeData.orders = [];
             }
@@ -129,7 +129,7 @@ export async function createRoute(routeData: Omit<Route, 'id' | 'createdAt' | 't
         } as Route;
 
     } catch (error) {
-        console.error("Error creating route with details: ", error);
+        console.error("Error creating route: ", error);
         throw new Error("Failed to create route.");
     }
 }
