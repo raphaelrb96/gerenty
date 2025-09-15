@@ -64,30 +64,26 @@ export async function getUnassignedOrders(companyIds: string[]): Promise<Order[]
 export async function getDeliverableOrders(companyIds: string[]): Promise<Order[]> {
     if (companyIds.length === 0) return [];
     try {
-        // Firestore doesn't support != queries directly. We need to do two separate queries and merge.
-        const q1 = query(
+        // Fetch all orders for the companies first, then filter in memory.
+        // This avoids complex queries that Firestore doesn't support well,
+        // like combining 'in' with inequality filters.
+        const q = query(
             ordersCollection,
-            where("companyId", "in", companyIds),
-            where('shipping.method', '<', 'retirada_loja')
-        );
-        const q2 = query(
-            ordersCollection,
-            where("companyId", "in", companyIds),
-            where('shipping.method', '>', 'retirada_loja')
+            where("companyId", "in", companyIds)
         );
 
-        const [querySnapshot1, querySnapshot2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+        const querySnapshot = await getDocs(q);
         
-        const combinedOrders: Order[] = [];
-        querySnapshot1.forEach((doc) => {
-            combinedOrders.push(convertOrderTimestamps({ id: doc.id, ...doc.data() }));
-        });
-        querySnapshot2.forEach((doc) => {
-            combinedOrders.push(convertOrderTimestamps({ id: doc.id, ...doc.data() }));
+        const allOrders: Order[] = [];
+        querySnapshot.forEach((doc) => {
+            allOrders.push(convertOrderTimestamps({ id: doc.id, ...doc.data() }));
         });
         
-        // Final filter in-memory
-        return combinedOrders.filter(order => order.status !== 'completed');
+        // Final filter in-memory to get only deliverable, non-completed orders.
+        return allOrders.filter(order => 
+            order.status !== 'completed' && 
+            order.shipping?.method !== 'retirada_loja'
+        );
 
     } catch (error) {
         console.error("Error getting deliverable orders: ", error);
