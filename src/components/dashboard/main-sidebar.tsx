@@ -70,13 +70,22 @@ export function MainSidebar() {
   ];
 
   const getFilteredMenuItems = () => {
-    if (!user || !userData) return [];
-    if (userData.role === 'empresa') return allMenuItems;
+    if (!user || !userData) {
+      return [];
+    }
+    // If the user is the company owner, show all items.
+    if (userData.role === 'empresa') {
+      return allMenuItems;
+    }
 
-    // For sub-accounts
+    // For sub-accounts, filter based on permissions.
     return allMenuItems.filter(item => {
-        if (item.href === "/dashboard") return true; // Always show dashboard
-        return hasAccess(user.uid, item.module);
+      // The main dashboard page is always visible to logged-in users.
+      if (item.href === '/dashboard') {
+        return true;
+      }
+      // For all other modules, check for access permission.
+      return hasAccess(user.uid, item.module);
     });
   }
 
