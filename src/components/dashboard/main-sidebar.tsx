@@ -35,6 +35,7 @@ import { useTranslation } from "@/context/i18n-context";
 import { signOut } from "@/services/auth-service";
 import { useAuth } from "@/context/auth-context";
 import { usePermissions } from "@/context/permissions-context";
+import { useMemo } from "react";
 
 export function MainSidebar() {
   const pathname = usePathname();
@@ -69,28 +70,23 @@ export function MainSidebar() {
     { href: "/dashboard/settings", label: "Configurações", icon: Settings, module: 'settings' as const },
   ];
 
-  const getFilteredMenuItems = () => {
-    if (!user || !userData) {
+  const filteredMenuItems = useMemo(() => {
+    if (!userData) {
       return [];
     }
-
     // Company owner sees all items.
     if (userData.role === 'empresa') {
       return allMenuItems;
     }
-
     // Sub-accounts see only what they have access to.
     return allMenuItems.filter(item => {
-      // The main dashboard page is always visible.
-      if (item.href === '/dashboard') {
-        return true;
-      }
-      // For other modules, check for explicit permission.
-      return hasAccess(user.uid, item.module);
+        // The main dashboard page is always visible for any logged-in user.
+        if (item.module === 'dashboard') {
+            return true;
+        }
+        return hasAccess(item.module);
     });
-  };
-
-  const filteredMenuItems = getFilteredMenuItems();
+  }, [userData, hasAccess, allMenuItems]);
 
   return (
     <Sidebar>

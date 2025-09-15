@@ -1,9 +1,9 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, ReactNode, useCallback } from 'react';
+import { useAuth } from './auth-context';
 
-// Define the shape of permissions for a single module
 type ModulePermissions = {
     dashboard?: boolean;
     products?: boolean;
@@ -16,76 +16,34 @@ type ModulePermissions = {
     settings?: boolean;
 };
 
-// Define the shape of permissions for a single user/employee
-type UserPermissions = {
-    modules: ModulePermissions;
-    companies: Record<string, boolean>; // Key is companyId, value is boolean
-};
-
-// Define the shape of the entire permissions state
-// Key is employeeId
-type PermissionsState = Record<string, UserPermissions>;
-
 interface PermissionsContextType {
-  permissions: PermissionsState;
-  setPermission: (employeeId: string, userPermissions: UserPermissions) => void;
-  getPermissions: (employeeId: string) => UserPermissions | undefined;
-  hasAccess: (employeeId: string, module: keyof ModulePermissions, companyId?: string) => boolean;
+  hasAccess: (module: keyof ModulePermissions) => boolean;
 }
 
 const PermissionsContext = createContext<PermissionsContextType | undefined>(undefined);
 
-const PERMISSIONS_STORAGE_KEY = 'userPermissions';
-
 export const PermissionsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [permissions, setPermissions] = useState<PermissionsState>(() => {
-    try {
-      const item = window.localStorage.getItem(PERMISSIONS_STORAGE_KEY);
-      return item ? JSON.parse(item) : {};
-    } catch (error) {
-      console.error("Failed to load permissions from localStorage", error);
-      return {};
+  const { userData } = useAuth();
+
+  const hasAccess = useCallback((module: keyof ModulePermissions): boolean => {
+    if (!userData) {
+      return false;
     }
-  });
-
-  const setPermission = useCallback((employeeId: string, userPermissions: UserPermissions) => {
-    setPermissions(prevState => {
-        const newState = {
-            ...prevState,
-            [employeeId]: userPermissions
-        };
-        try {
-            window.localStorage.setItem(PERMISSIONS_STORAGE_KEY, JSON.stringify(newState));
-        } catch (error) {
-            console.error("Failed to save permissions to localStorage", error);
-        }
-        return newState;
-    });
-  }, []);
-
-  const getPermissions = useCallback((employeeId: string) => {
-    return permissions[employeeId];
-  }, [permissions]);
-
-  const hasAccess = useCallback((employeeId: string, module: keyof ModulePermissions, companyId?: string) => {
-      const userPerms = permissions[employeeId];
-      if (!userPerms) {
-          return false; // Default to no access if no permissions are set
-      }
-
-      const moduleAccess = userPerms.modules?.[module] ?? false;
-      
-      if (companyId) {
-          const companyAccess = userPerms.companies?.[companyId] ?? false;
-          return moduleAccess && companyAccess;
-      }
-
-      return moduleAccess;
-  }, [permissions]);
+    // Owner has access to everything
+    if (userData.role === 'empresa') {
+      return true;
+    }
+    // For sub-accounts, check their specific permissions object
+    if (userData.permissions?.modules) {
+        return !!userData.permissions.modules[module];
+    }
+    
+    return false;
+  }, [userData]);
 
 
   return (
-    <PermissionsContext.Provider value={{ permissions, setPermission, getPermissions, hasAccess }}>
+    <PermissionsContext.Provider value={{ hasAccess }}>
       {children}
     </PermissionsContext.Provider>
   );

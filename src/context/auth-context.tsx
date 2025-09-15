@@ -6,12 +6,12 @@ import { onAuthStateChange } from '@/services/auth-service';
 import type { User as FirebaseUser } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { User, Employee } from '@/lib/types';
+import type { User, Employee, EmployeePermissions } from '@/lib/types';
 import { getEmployeeByAuthId } from '@/services/employee-service';
 
 interface AuthContextType {
   user: FirebaseUser | null;
-  userData: User | null;
+  userData: (User & { permissions?: EmployeePermissions }) | null;
   loading: boolean;
   isAuthenticated: boolean;
   effectiveOwnerId: string | null;
@@ -21,7 +21,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
-  const [userData, setUserData] = useState<User | null>(null);
+  const [userData, setUserData] = useState<(User & { permissions?: EmployeePermissions }) | null>(null);
   const [loading, setLoading] = useState(true);
   const [effectiveOwnerId, setEffectiveOwnerId] = useState<string | null>(null);
 
@@ -41,23 +41,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         } else {
           const employee = await getEmployeeByAuthId(firebaseUser.uid);
           if (employee) {
-            const ownerDocRef = doc(db, 'users', employee.ownerId);
-            const ownerDoc = await getDoc(ownerDocRef);
-            if (ownerDoc.exists()) {
-              const ownerData = ownerDoc.data() as User;
-              const employeeAsUser: User = {
-                ...ownerData,
+             const employeeAsUser: User & { permissions?: EmployeePermissions } = {
                 uid: firebaseUser.uid,
                 email: firebaseUser.email!,
                 name: employee.name,
                 role: employee.role,
-              };
+                permissions: employee.permissions,
+                // Inherit plan details from owner for limit checks, but other user data is specific
+                plan: (await getDoc(doc(db, 'users', employee.ownerId))).data()?.plan,
+                statusPlan: (await getDoc(doc(db, 'users', employee.ownerId))).data()?.statusPlan,
+                validityDate: (await getDoc(doc(db, 'users', employee.ownerId))).data()?.validityDate,
+                authProvider: 'email',
+                createdAt: employee.createdAt,
+             };
               setUserData(employeeAsUser);
               setEffectiveOwnerId(employee.ownerId);
-            } else {
-               setUserData(null);
-               setEffectiveOwnerId(null);
-            }
           } else {
             setUserData(null);
             setEffectiveOwnerId(null);
