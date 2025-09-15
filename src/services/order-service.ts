@@ -40,19 +40,13 @@ export async function getOrders(companyId: string): Promise<Order[]> {
 export async function getUnassignedOrders(companyIds: string[]): Promise<Order[]> {
     if (companyIds.length === 0) return [];
     try {
-        const q = query(
-            ordersCollection,
-            and(
-                where("companyId", "in", companyIds),
-                where("status", "==", "processing")
-            )
-        );
+        const q = query(ordersCollection, where("companyId", "in", companyIds));
         const querySnapshot = await getDocs(q);
         const orders: Order[] = [];
         querySnapshot.forEach((doc) => {
              const order = convertOrderTimestamps({ id: doc.id, ...doc.data() });
              // Manual filter for properties not supported in compound queries
-             if (order.shipping?.method !== 'retirada_loja') {
+             if (order.status === 'processing' && order.shipping?.method !== 'retirada_loja') {
                 orders.push(order);
              }
         });
