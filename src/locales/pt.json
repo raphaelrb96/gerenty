@@ -484,7 +484,57 @@
         "contact": "Contato",
         "active": "Ativo",
         "vip": "VIP"
+    },
+    "logistics": {
+        "title": "Logística e Entregas",
+        "description": "Acompanhe e gerencie o fluxo de suas entregas.",
+        "newRoute": "Nova Rota",
+        "tabs": {
+            "dashboard": "Painel",
+            "deliveries": "Entregas",
+            "routes": "Rotas"
+        },
+        "operational": {
+            "title": "Resumo Operacional (Rotas Ativas)",
+            "driversInRoute": "Motoristas em Rota",
+            "deliveriesToProcess": "Entregas a Processar",
+            "deliveriesInProgress": "Entregas em Andamento"
+        },
+        "financial": {
+            "title": "Financeiro (Rotas Ativas)",
+            "totalToReceive": "Total a Receber",
+            "cashToReceive": "Dinheiro a Receber",
+            "onlineToReceive": "Outros Pagamentos",
+            "totalReceived": "Total Recebido",
+            "cashReceived": "Dinheiro Recebido",
+            "onlineReceived": "Outros Pagamentos Recebidos"
+        },
+        "results": {
+            "title": "Resultados",
+            "routesFinishedToday": "Rotas Finalizadas (Hoje)",
+            "inTheWeek": "na semana",
+            "cancelledDeliveries": "Entregas Canceladas",
+            "itemsToReturn": "Itens para Devolução",
+            "returnedDeliveries": "entregas retornaram"
+        },
+        "charts": {
+            "performance": {
+                "title": "Desempenho de Entregas",
+                "description": "Total de entregas concluídas nos últimos 7 dias."
+            },
+            "payment": {
+                "title": "Distribuição de Meios de Pagamento",
+                "description": "Meios a serem cobrados nas rotas ativas.",
+                "empty": {
+                    "title": "Sem Dados",
+                    "description": "Não há pagamentos pendentes em rotas ativas."
+                }
+            }
+        },
+        "routesInProgress": "Rotas em Andamento",
+        "noRoutesInProgress": "Nenhuma rota em andamento no momento.",
+        "deliveries": "Entregas",
+        "cash": "Dinheiro",
+        "online": "Online"
     }
 }
-
-    

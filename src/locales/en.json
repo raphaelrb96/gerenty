@@ -484,7 +484,57 @@
         "contact": "Contact",
         "active": "Active",
         "vip": "VIP"
+    },
+    "logistics": {
+        "title": "Logistics & Deliveries",
+        "description": "Track and manage your delivery flow.",
+        "newRoute": "New Route",
+        "tabs": {
+            "dashboard": "Dashboard",
+            "deliveries": "Deliveries",
+            "routes": "Routes"
+        },
+        "operational": {
+            "title": "Operational Summary (Active Routes)",
+            "driversInRoute": "Drivers in Route",
+            "deliveriesToProcess": "Deliveries to Process",
+            "deliveriesInProgress": "Deliveries in Progress"
+        },
+        "financial": {
+            "title": "Financial (Active Routes)",
+            "totalToReceive": "Total to Receive",
+            "cashToReceive": "Cash to Receive",
+            "onlineToReceive": "Other Payments",
+            "totalReceived": "Total Received",
+            "cashReceived": "Cash Received",
+            "onlineReceived": "Other Payments Received"
+        },
+        "results": {
+            "title": "Results",
+            "routesFinishedToday": "Routes Finished (Today)",
+            "inTheWeek": "in the week",
+            "cancelledDeliveries": "Cancelled Deliveries",
+            "itemsToReturn": "Items to Return",
+            "returnedDeliveries": "returned deliveries"
+        },
+        "charts": {
+            "performance": {
+                "title": "Delivery Performance",
+                "description": "Total deliveries completed in the last 7 days."
+            },
+            "payment": {
+                "title": "Payment Method Distribution",
+                "description": "Methods to be collected on active routes.",
+                "empty": {
+                    "title": "No Data",
+                    "description": "No pending payments on active routes."
+                }
+            }
+        },
+        "routesInProgress": "Routes in Progress",
+        "noRoutesInProgress": "No routes currently in progress.",
+        "deliveries": "Deliveries",
+        "cash": "Cash",
+        "online": "Online"
     }
 }
-
-    

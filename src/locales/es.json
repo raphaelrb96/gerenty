@@ -484,7 +484,57 @@
         "contact": "Contacto",
         "active": "Activo",
         "vip": "VIP"
+    },
+    "logistics": {
+        "title": "Logística y Entregas",
+        "description": "Rastrea y gestiona tu flujo de entregas.",
+        "newRoute": "Nueva Ruta",
+        "tabs": {
+            "dashboard": "Panel",
+            "deliveries": "Entregas",
+            "routes": "Rutas"
+        },
+        "operational": {
+            "title": "Resumen Operacional (Rutas Activas)",
+            "driversInRoute": "Conductores en Ruta",
+            "deliveriesToProcess": "Entregas a Procesar",
+            "deliveriesInProgress": "Entregas en Progreso"
+        },
+        "financial": {
+            "title": "Financiero (Rutas Activas)",
+            "totalToReceive": "Total a Recibir",
+            "cashToReceive": "Efectivo a Recibir",
+            "onlineToReceive": "Otros Pagos",
+            "totalReceived": "Total Recibido",
+            "cashReceived": "Efectivo Recibido",
+            "onlineReceived": "Otros Pagos Recibidos"
+        },
+        "results": {
+            "title": "Resultados",
+            "routesFinishedToday": "Rutas Finalizadas (Hoy)",
+            "inTheWeek": "en la semana",
+            "cancelledDeliveries": "Entregas Canceladas",
+            "itemsToReturn": "Artículos a Devolver",
+            "returnedDeliveries": "entregas devueltas"
+        },
+        "charts": {
+            "performance": {
+                "title": "Rendimiento de Entrega",
+                "description": "Total de entregas completadas en los últimos 7 días."
+            },
+            "payment": {
+                "title": "Distribución de Métodos de Pago",
+                "description": "Métodos a cobrar en rutas activas.",
+                "empty": {
+                    "title": "Sin Datos",
+                    "description": "No hay pagos pendientes en las rutas activas."
+                }
+            }
+        },
+        "routesInProgress": "Rutas en Progreso",
+        "noRoutesInProgress": "No hay rutas en progreso actualmente.",
+        "deliveries": "Entregas",
+        "cash": "Efectivo",
+        "online": "En línea"
     }
 }
-
-    
