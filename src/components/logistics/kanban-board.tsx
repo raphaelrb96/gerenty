@@ -7,7 +7,7 @@ import type { Route } from "@/lib/types";
 import { updateRoute } from "@/services/logistics-service";
 import { useToast } from "@/hooks/use-toast";
 
-const statuses: Route['status'][] = ['a_processar', 'a_caminho', 'entregue', 'cancelado', 'devolvido'];
+const statuses: Route['status'][] = ['em_andamento', 'finalizada'];
 
 type KanbanBoardProps = {
     routes: Route[];
@@ -27,8 +27,7 @@ export function KanbanBoard({ routes, setRoutes, onRouteUpdate }: KanbanBoardPro
 
             if (activeRoute && statuses.includes(overColumnStatus as any) && activeRoute.status !== overColumnStatus) {
                 
-                // Disallow dragging directly to 'entregue' or 'devolvido' - this must be done via the modal
-                if (overColumnStatus === 'entregue' || overColumnStatus === 'devolvido') {
+                if (overColumnStatus === 'finalizada') {
                     toast({
                         variant: "destructive",
                         title: "Ação Inválida",
@@ -56,7 +55,7 @@ export function KanbanBoard({ routes, setRoutes, onRouteUpdate }: KanbanBoardPro
 
     return (
         <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-start">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
                 {statuses.map(status => (
                     <KanbanColumn
                         key={status}

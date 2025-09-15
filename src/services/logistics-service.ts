@@ -50,41 +50,57 @@ export async function getRoutes(ownerId: string): Promise<Route[]> {
 }
 
 
-export async function createRoute(routeData: Omit<Route, 'id' | 'createdAt' | 'totalValue' | 'status'>): Promise<Route> {
+export async function createRoute(routeData: Omit<Route, 'id' | 'createdAt' | 'totalValue' | 'status' | 'orders'> & { orderIds: string[] }): Promise<Route> {
     const batch = writeBatch(db);
+    const { orderIds, ...restOfRouteData } = routeData;
 
     try {
-        // 1. Calculate totals
-        const totalValue = routeData.orders.reduce((sum, order) => sum + order.total, 0);
-        const totalCashInRoute = routeData.orders
-            .filter(o => o.payment.method === 'dinheiro')
-            .reduce((sum, o) => sum + o.total, 0);
-        
-        // 2. Create the new route document
+        // 1. Fetch full order details
+        const orderDocs = await Promise.all(orderIds.map(id => getDoc(doc(ordersCollection, id))));
+        const orders: Order[] = orderDocs.map(d => convertOrderTimestamps({id: d.id, ...d.data()}) as Order);
+
+        // 2. Calculate totals
+        const totalValue = orders.reduce((sum, order) => sum + order.total, 0);
+        const cashTotal = orders.filter(o => o.payment.method === 'dinheiro').reduce((sum, o) => sum + o.total, 0);
+        const cardTotal = orders.filter(o => o.payment.method === 'credito' || o.payment.method === 'debito').reduce((sum, o) => sum + o.total, 0);
+        const pixTotal = orders.filter(o => o.payment.method === 'pix').reduce((sum, o) => sum + o.total, 0);
+        const onlineTotal = orders.filter(o => o.payment.type === 'online').reduce((sum, o) => sum + o.total, 0);
+
+        // 3. Create the new route document
         const newRouteRef = doc(collection(db, "routes"));
         const newRoutePayload = {
-            ...routeData,
+            ...restOfRouteData,
             totalValue,
-            totalCashInRoute,
-            totalEarnings: 0, // Default to 0, can be updated later
-            status: 'a_processar' as const,
+            cashTotal,
+            cardTotal,
+            pixTotal,
+            onlineTotal,
+            cashAccounted: 0,
+            earnings: routeData.earnings || { type: 'fixed', value: 0 },
+            status: 'em_andamento' as const,
             createdAt: serverTimestamp(),
+            startedAt: serverTimestamp(),
         };
         batch.set(newRouteRef, newRoutePayload);
 
-        // 3. Update all selected orders with the new routeId
-        routeData.orders.forEach(order => {
+        // 4. Update all selected orders with the new routeId
+        orders.forEach(order => {
             const orderRef = doc(ordersCollection, order.id);
-            batch.update(orderRef, { 'shipping.routeId': newRouteRef.id, status: 'processing' });
+            batch.update(orderRef, { 
+                'delivery.routeId': newRouteRef.id, 
+                'delivery.status': 'em_transito', 
+            });
         });
 
-        // 4. Commit the batch
+        // 5. Commit the batch
         await batch.commit();
 
         return {
             id: newRouteRef.id,
             ...newRoutePayload,
-            createdAt: new Date().toISOString()
+            orders, // include full order details in returned object
+            createdAt: new Date().toISOString(),
+            startedAt: new Date().toISOString(),
         } as Route;
 
     } catch (error) {
@@ -93,7 +109,7 @@ export async function createRoute(routeData: Omit<Route, 'id' | 'createdAt' | 't
     }
 }
 
-export async function updateRoute(routeId: string, dataToUpdate: Partial<Omit<Route, 'id'>>): Promise<void> {
+export async function updateRoute(routeId: string, dataToUpdate: Partial<Omit<Route, 'id' | 'orders'>>): Promise<void> {
     try {
         const routeDoc = doc(db, "routes", routeId);
         await updateDoc(routeDoc, {
@@ -117,22 +133,27 @@ export async function finalizeRoute(routeId: string, deliveredOrderIds: string[]
         }
         const route = routeDoc.data() as Route;
         
-        batch.update(routeRef, { status: 'entregue', finishedAt: serverTimestamp() });
+        batch.update(routeRef, { status: 'finalizada', finishedAt: serverTimestamp() });
         
-        for (const order of route.orders) {
-            const orderRef = doc(db, 'orders', order.id);
-            
-            if (deliveredOrderIds.includes(order.id)) {
-                batch.update(orderRef, { status: 'delivered', 'delivery.status': 'entregue', completedAt: serverTimestamp() });
-            } else {
-                batch.update(orderRef, { status: 'devolvido', 'delivery.status': 'devolvida' });
+        // This is a simplified fetch. In a real scenario, you might need to fetch them again
+        // or ensure they are passed correctly.
+        const ordersInRoute = await getDocs(query(ordersCollection, where('delivery.routeId', '==', routeId)));
+
+        ordersInRoute.docs.forEach(orderDoc => {
+             const orderRef = orderDoc.ref;
+             const orderData = orderDoc.data() as Order;
+
+             if (deliveredOrderIds.includes(orderDoc.id)) {
+                 batch.update(orderRef, { 'delivery.status': 'entregue', status: 'delivered', completedAt: serverTimestamp() });
+             } else {
+                 batch.update(orderRef, { 'delivery.status': 'devolvida', status: 'devolvido' });
                 
-                for (const item of order.items) {
+                 for (const item of orderData.items) {
                     const productRef = doc(db, 'products', item.productId);
                     batch.update(productRef, { availableStock: increment(item.quantity) });
                 }
-            }
-        }
+             }
+        });
         
         await batch.commit();
         
@@ -141,3 +162,20 @@ export async function finalizeRoute(routeId: string, deliveredOrderIds: string[]
         throw new Error("Failed to finalize route.");
     }
 }
+
+export async function updateDeliveryStatus(orderId: string, newStatus: 'em_transito' | 'entregue' | 'devolvida' | 'cancelada', routeId?: string): Promise<void> {
+    try {
+        const orderRef = doc(db, 'orders', orderId);
+        const updateData: any = {
+            'delivery.status': newStatus,
+        };
+        if (routeId) {
+            updateData['delivery.routeId'] = routeId;
+        }
+        await updateDoc(orderRef, updateData);
+    } catch (error) {
+        console.error("Error updating delivery status:", error);
+        throw new Error("Failed to update delivery status.");
+    }
+}
+

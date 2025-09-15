@@ -42,8 +42,7 @@ export async function getUnassignedOrders(companyIds: string[]): Promise<Order[]
         const q = query(
             ordersCollection,
             where("companyId", "in", companyIds),
-            where("shipping.routeId", "==", null || undefined),
-            where("status", "in", ["confirmed", "processing"])
+            where("delivery.status", "==", "a_processar")
         );
         const querySnapshot = await getDocs(q);
         const orders: Order[] = [];
@@ -79,17 +78,23 @@ export async function getOrdersForCompanies(companyIds: string[]): Promise<Order
 
 
 // Add a new order
-export async function addOrder(orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>): Promise<Order> {
+export async function addOrder(orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt' | 'delivery'>): Promise<Order> {
     try {
-        const docRef = await addDoc(ordersCollection, {
+        const fullOrderData = {
             ...orderData,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
-        });
+            delivery: {
+                status: 'a_processar' as const,
+            }
+        };
+
+        const docRef = await addDoc(ordersCollection, fullOrderData);
         
         const newOrder: Order = {
             id: docRef.id,
             ...orderData,
+            delivery: { status: 'a_processar' },
             createdAt: Timestamp.now(), // Use Firestore Timestamp for consistency
             updatedAt: Timestamp.now()
         };

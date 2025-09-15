@@ -91,12 +91,12 @@ export function RouteForm() {
         try {
             await createRoute({
                 ownerId: effectiveOwnerId,
-                companyId: activeCompany?.id, // Assuming active company context is available
+                companyId: activeCompany?.id,
                 driverId: values.driverId,
                 driverName: selectedDriver.name,
                 title: values.title,
                 notes: values.notes,
-                orders: selectedOrders,
+                orderIds: values.orderIds,
             });
             toast({ title: "Rota criada com sucesso!" });
             router.push("/dashboard/logistics");

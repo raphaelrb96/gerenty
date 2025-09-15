@@ -1,4 +1,5 @@
 
+
 import type { FieldValue, Timestamp } from "firebase/firestore";
 
 export type User = {
@@ -251,13 +252,7 @@ export type Order = {
   completedAt?: string | Date | Timestamp | FieldValue; // Data de conclusão (entrega ou finalização)
   cancelledAt?: string | Date | Timestamp | FieldValue; // Data de cancelamento (se houver)
 
-  delivery?: {
-    routeId?: string;
-    status?: 'em_transito' | 'entregue' | 'devolvida' | 'cancelada';
-    paymentStatus?: 'pago' | 'nao_pago';
-    paymentMethodReceived?: 'dinheiro' | 'cartao' | 'pix' | 'online';
-    returnedProducts?: {productId: string, quantity: number}[];
-  }
+  delivery: Delivery;
 };
 
 
@@ -339,7 +334,6 @@ export type DeliveryMethod =
 // Detalhes da entrega
 export type ShippingDetails = {
   method: DeliveryMethod; // Método de entrega escolhido
-  routeId?: string; // ID da rota de logística
   trackingCode?: string; // Código de rastreio
   cost: number; // Valor do frete
   estimatedDelivery: {
@@ -357,6 +351,16 @@ export type ShippingDetails = {
     zipCode: string;
   };
 };
+
+export type DeliveryStatus = 'a_processar' | 'em_transito' | 'entregue' | 'devolvida' | 'cancelada';
+
+export type Delivery = {
+  routeId?: string;
+  status: DeliveryStatus;
+  paymentStatus?: 'pago' | 'nao_pago';
+  paymentMethodReceived?: 'dinheiro' | 'cartao' | 'pix' | 'online';
+  returnedProducts?: {productId: string, quantity: number}[];
+}
 
 
 // Dados do cliente no momento da compra
@@ -626,11 +630,22 @@ export interface Route {
   driverName: string;
   title: string;
   notes?: string;
+  status: 'em_andamento' | 'finalizada';
   orders: Order[];
-  status: 'a_processar' | 'a_caminho' | 'entregue' | 'cancelado' | 'devolvido';
+  
+  // Finanças da Rota
   totalValue: number;
-  totalCashInRoute?: number;
-  totalEarnings?: number;
+  cashTotal?: number;
+  cardTotal?: number;
+  pixTotal?: number;
+  onlineTotal?: number;
+  cashAccounted?: number;
+
+  earnings?: {
+      type: 'fixed' | 'per_delivery';
+      value: number;
+  };
+  
   createdAt: string | Date | Timestamp | FieldValue;
   startedAt?: string | Date | Timestamp | FieldValue;
   finishedAt?: string | Date | Timestamp | FieldValue;

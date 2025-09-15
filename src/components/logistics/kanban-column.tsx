@@ -14,11 +14,8 @@ type KanbanColumnProps = {
 };
 
 const statusConfig = {
-    'a_processar': { label: 'A Processar', color: 'border-blue-500' },
-    'a_caminho': { label: 'A Caminho', color: 'border-yellow-500' },
-    'entregue': { label: 'Entregue', color: 'border-green-500' },
-    'cancelado': { label: 'Cancelado', color: 'border-red-500' },
-    'devolvido': { label: 'Devolvido', color: 'border-orange-500' },
+    'em_andamento': { label: 'Em Andamento', color: 'border-yellow-500' },
+    'finalizada': { label: 'Finalizada', color: 'border-green-500' },
 }
 
 export function KanbanColumn({ status, routes, onRouteUpdate }: KanbanColumnProps) {

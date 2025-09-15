@@ -27,7 +27,7 @@ export function RouteCard({ route, onRouteFinalized }: { route: Route, onRouteFi
         transform,
         transition,
         isDragging,
-    } = useSortable({ id: route.id });
+    } = useSortable({ id: route.id, data: { type: 'Route', route } });
     
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -75,7 +75,7 @@ export function RouteCard({ route, onRouteFinalized }: { route: Route, onRouteFi
                         </div>
                          <div className="flex items-center gap-2 font-semibold">
                             <DollarSign className="h-4 w-4 text-muted-foreground" />
-                            <span>{formatCurrency(route.totalCashInRoute || 0)} em dinheiro</span>
+                            <span>{formatCurrency(route.cashTotal || 0)} em dinheiro</span>
                         </div>
                     </CardContent>
                 </Card>

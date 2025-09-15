@@ -18,6 +18,8 @@ import { useCurrency } from "@/context/currency-context";
 import { subDays, format, eachDayOfInterval, startOfToday } from "date-fns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { EmptyState } from "@/components/common/empty-state";
+import { DeliveriesKanbanBoard } from "@/components/logistics/deliveries-kanban-board";
+import { getUnassignedOrders } from "@/services/order-service";
 
 const StatCard = ({ title, value, icon, description }: { title: string, value: string | number, icon: React.ReactNode, description?: string }) => (
     <Card>
@@ -52,16 +54,21 @@ export default function LogisticsPage() {
     const router = useRouter();
     const { formatCurrency } = useCurrency();
     const [routes, setRoutes] = useState<Route[]>([]);
+    const [unassignedOrders, setUnassignedOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const fetchRoutes = async () => {
+    const fetchLogisticsData = async () => {
         if (!effectiveOwnerId) return;
         setLoading(true);
         try {
-            const userRoutes = await getRoutes(effectiveOwnerId);
+            const [userRoutes, pendingOrders] = await Promise.all([
+                getRoutes(effectiveOwnerId),
+                getUnassignedOrders([effectiveOwnerId]) // Simplified for now
+            ]);
             setRoutes(userRoutes);
+            setUnassignedOrders(pendingOrders);
         } catch (error) {
-            console.error("Failed to fetch routes", error);
+            console.error("Failed to fetch logistics data", error);
         } finally {
             setLoading(false);
         }
@@ -69,13 +76,13 @@ export default function LogisticsPage() {
 
     useEffect(() => {
         if (effectiveOwnerId) {
-            fetchRoutes();
+            fetchLogisticsData();
         } else {
             setLoading(false);
         }
     }, [effectiveOwnerId]);
 
-    const activeRoutes = useMemo(() => routes.filter(r => r.status === 'a_caminho'), [routes]);
+    const activeRoutes = useMemo(() => routes.filter(r => r.status === 'em_andamento'), [routes]);
 
     const metrics = useMemo(() => {
         const today = startOfToday();
@@ -85,24 +92,38 @@ export default function LogisticsPage() {
         
         const allActiveOrders = activeRoutes.flatMap(r => r.orders.map(o => ({...o, routeId: r.id})));
         
-        const deliveriesInProgress = allActiveOrders.filter(o => o.delivery?.status !== 'entregue' && o.delivery?.status !== 'cancelada').length;
+        const deliveriesInProgress = allActiveOrders.filter(o => o.delivery?.status === 'em_transito').length;
         const deliveriesCancelledInRoute = allActiveOrders.filter(o => o.delivery?.status === 'cancelada').length;
+        const totalCancelledValueInRoute = allActiveOrders
+            .filter(o => o.delivery?.status === 'cancelada')
+            .reduce((sum, o) => sum + o.total, 0);
+
         const deliveriesReturnedInRoute = allActiveOrders.filter(o => o.delivery?.status === 'devolvida').length;
         const itemsToReturn = allActiveOrders.filter(o => o.delivery?.status === 'devolvida').reduce((acc, order) => acc + (order.delivery?.returnedProducts?.reduce((itemAcc, item) => itemAcc + item.quantity, 0) || 0), 0);
         
-        const cashReceivedInRoute = allActiveOrders.filter(o => o.delivery?.paymentStatus === 'pago' && o.delivery.paymentMethodReceived === 'dinheiro').reduce((sum, o) => sum + o.total, 0);
-        const cashInProgress = allActiveOrders.filter(o => o.delivery?.status !== 'entregue' && o.payment.method === 'dinheiro').reduce((sum, o) => sum + o.total, 0);
+        const cashReceivedInRoute = allActiveOrders
+            .filter(o => o.delivery?.paymentStatus === 'pago' && o.delivery.paymentMethodReceived === 'dinheiro')
+            .reduce((sum, o) => sum + o.total, 0);
+        const cashInProgress = allActiveOrders
+            .filter(o => o.delivery?.status === 'em_transito' && o.payment.method === 'dinheiro')
+            .reduce((sum, o) => sum + o.total, 0);
         
-        const otherPaymentsReceivedInRoute = allActiveOrders.filter(o => o.delivery?.paymentStatus === 'pago' && o.delivery.paymentMethodReceived && o.delivery.paymentMethodReceived !== 'dinheiro').reduce((sum, o) => sum + o.total, 0);
-        const otherPaymentsInProgress = allActiveOrders.filter(o => o.delivery?.status !== 'entregue' && o.payment.method !== 'dinheiro').reduce((sum, o) => sum + o.total, 0);
+        const otherPaymentsReceivedInRoute = allActiveOrders
+            .filter(o => o.delivery?.paymentStatus === 'pago' && o.delivery.paymentMethodReceived && o.delivery.paymentMethodReceived !== 'dinheiro')
+            .reduce((sum, o) => sum + o.total, 0);
+        const otherPaymentsInProgress = allActiveOrders
+            .filter(o => o.delivery?.status === 'em_transito' && o.payment.method !== 'dinheiro')
+            .reduce((sum, o) => sum + o.total, 0);
 
-        const finishedRoutesToday = routes.filter(r => r.status === 'entregue' && r.finishedAt && new Date(r.finishedAt as string) >= today).length;
-        const finishedRoutesThisWeek = routes.filter(r => r.status === 'entregue' && r.finishedAt && new Date(r.finishedAt as string) >= startOfThisWeek).length;
+        const finishedRoutesToday = routes.filter(r => r.status === 'finalizada' && r.finishedAt && new Date(r.finishedAt as string) >= today).length;
+        const finishedRoutesThisWeek = routes.filter(r => r.status === 'finalizada' && r.finishedAt && new Date(r.finishedAt as string) >= startOfThisWeek).length;
 
         return {
             driversInRoute,
+            deliveriesToProcess: unassignedOrders.length,
             deliveriesInProgress,
             deliveriesCancelledInRoute,
+            totalCancelledValueInRoute,
             cashReceivedInRoute,
             cashInProgress,
             otherPaymentsReceivedInRoute,
@@ -112,7 +133,7 @@ export default function LogisticsPage() {
             itemsToReturn,
             deliveriesReturnedInRoute
         };
-    }, [activeRoutes, routes]);
+    }, [activeRoutes, routes, unassignedOrders]);
 
     const chartData = useMemo(() => {
         const days = eachDayOfInterval({ start: subDays(new Date(), 6), end: new Date() });
@@ -122,11 +143,11 @@ export default function LogisticsPage() {
         }));
 
         routes.forEach(route => {
-            if (route.status === 'entregue' && route.finishedAt) {
+             if (route.status === 'finalizada' && route.finishedAt) {
                 const finishedDateStr = format(new Date(route.finishedAt as string), 'dd/MM');
                 const dayData = data.find(d => d.name === finishedDateStr);
                 if (dayData) {
-                    dayData.Entregas += route.orders.length;
+                    dayData.Entregas += route.orders.filter(o => o.delivery.status === 'entregue').length;
                 }
             }
         });
@@ -141,11 +162,13 @@ export default function LogisticsPage() {
             Online: 0,
         };
         activeRoutes.flatMap(r => r.orders).forEach(order => {
-            switch (order.payment.method) {
-                case 'dinheiro': distribution.Dinheiro++; break;
-                case 'credito': case 'debito': distribution.Cartão++; break;
-                case 'pix': distribution.Pix++; break;
-                default: distribution.Online++; break;
+            if (order.delivery.status === 'em_transito') {
+                switch (order.payment.method) {
+                    case 'dinheiro': distribution.Dinheiro++; break;
+                    case 'credito': case 'debito': distribution.Cartão++; break;
+                    case 'pix': distribution.Pix++; break;
+                    default: distribution.Online++; break;
+                }
             }
         });
         return Object.entries(distribution).map(([name, value]) => ({ name, value })).filter(d => d.value > 0);
@@ -171,18 +194,20 @@ export default function LogisticsPage() {
             <Tabs defaultValue="dashboard">
                 <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-                    <TabsTrigger value="management">Gestão de Rotas</TabsTrigger>
+                    <TabsTrigger value="management">Gestão de Entregas</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="dashboard" className="mt-6 space-y-6">
-                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                        <StatCard title="Entregadores em Rota" value={metrics.driversInRoute} icon={<Truck className="text-muted-foreground" />} description="Motoristas com rotas ativas." />
-                        <StatCard title="Entregas em Andamento" value={metrics.deliveriesInProgress} icon={<Hourglass className="text-muted-foreground" />} description="Pedidos aguardando entrega."/>
-                        <StatCard title="Dinheiro em Rota (a receber)" value={formatCurrency(metrics.cashInProgress)} icon={<DollarSign className="text-muted-foreground" />} description="Valor em dinheiro das entregas pendentes."/>
+                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+                        <StatCard title="Entregadores em Rota" value={metrics.driversInRoute} icon={<Truck className="text-muted-foreground" />} />
+                        <StatCard title="Entregas a Processar" value={metrics.deliveriesToProcess} icon={<Hourglass className="text-blue-500" />} />
+                        <StatCard title="Entregas em Andamento" value={metrics.deliveriesInProgress} icon={<Hourglass className="text-yellow-500" />} />
                         <StatCard title="Rotas Finalizadas (Hoje)" value={metrics.finishedRoutesToday} icon={<CheckCircle className="text-muted-foreground" />} description={`${metrics.finishedRoutesThisWeek} na semana`}/>
-                        <StatCard title="Dinheiro Recebido (em rota)" value={formatCurrency(metrics.cashReceivedInRoute)} icon={<DollarSign className="text-green-500" />} description="Dinheiro já coletado hoje."/>
-                        <StatCard title="Outros Pagamentos Recebidos" value={formatCurrency(metrics.otherPaymentsReceivedInRoute)} icon={<CheckCircle className="text-green-500" />} description="Pix/Cartão já recebidos."/>
-                        <StatCard title="Entregas Canceladas (em rota)" value={metrics.deliveriesCancelledInRoute} icon={<Ban className="text-red-500" />} description="Pedidos cancelados durante a rota."/>
+                        <StatCard title="Dinheiro em Rota (a receber)" value={formatCurrency(metrics.cashInProgress)} icon={<DollarSign className="text-muted-foreground" />} />
+                        <StatCard title="Dinheiro Recebido (em rota)" value={formatCurrency(metrics.cashReceivedInRoute)} icon={<DollarSign className="text-green-500" />} />
+                        <StatCard title="Outros Pag. em Andamento" value={formatCurrency(metrics.otherPaymentsInProgress)} icon={<CheckCircle className="text-muted-foreground" />} />
+                        <StatCard title="Outros Pag. Recebidos" value={formatCurrency(metrics.otherPaymentsReceivedInRoute)} icon={<CheckCircle className="text-green-500" />} />
+                        <StatCard title="Entregas Canceladas (em rota)" value={metrics.deliveriesCancelledInRoute} icon={<Ban className="text-red-500" />} description={formatCurrency(metrics.totalCancelledValueInRoute)}/>
                         <StatCard title="Itens para Devolução" value={metrics.itemsToReturn} icon={<Package className="text-orange-500" />} description={`${metrics.deliveriesReturnedInRoute} entregas devolvidas`}/>
                     </div>
 
@@ -253,12 +278,12 @@ export default function LogisticsPage() {
                                         </TableRow>
                                     )}
                                     {activeRoutes.map(route => {
-                                        const onlineTotal = route.orders.reduce((sum, o) => o.payment.method !== 'dinheiro' ? sum + o.total : sum, 0);
+                                        const onlineTotal = (route.cardTotal || 0) + (route.pixTotal || 0) + (route.onlineTotal || 0);
                                         return (
                                             <TableRow key={route.id} className="cursor-pointer" onClick={() => router.push('/dashboard/logistics')}>
                                                 <TableCell className="font-medium">{route.driverName}</TableCell>
                                                 <TableCell>{route.orders.length}</TableCell>
-                                                <TableCell>{formatCurrency(route.totalCashInRoute || 0)}</TableCell>
+                                                <TableCell>{formatCurrency(route.cashTotal || 0)}</TableCell>
                                                 <TableCell>{formatCurrency(onlineTotal)}</TableCell>
                                                 <TableCell>{new Date(route.createdAt as string).toLocaleDateString()}</TableCell>
                                             </TableRow>
@@ -271,7 +296,11 @@ export default function LogisticsPage() {
                 </TabsContent>
 
                 <TabsContent value="management" className="mt-4">
-                    <KanbanBoard routes={routes} setRoutes={setRoutes} onRouteUpdate={fetchRoutes} />
+                     <DeliveriesKanbanBoard 
+                        routes={routes} 
+                        unassignedOrders={unassignedOrders} 
+                        onDataRefresh={fetchLogisticsData}
+                    />
                 </TabsContent>
             </Tabs>
         </div>
