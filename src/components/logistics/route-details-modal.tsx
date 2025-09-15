@@ -129,75 +129,75 @@ export function RouteDetailsModal({
               Informações completas sobre a rota, entregador e pedidos.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 overflow-hidden">
-              <div className="md:col-span-1 space-y-4 flex flex-col">
-                  <div className="space-y-1">
-                      <h4 className="font-semibold text-sm flex items-center gap-2"><User className="h-4 w-4"/> Entregador</h4>
-                      <p className="text-muted-foreground">{route.driverName}</p>
-                  </div>
-                   <div className="space-y-1">
-                      <h4 className="font-semibold text-sm flex items-center gap-2"><Calendar className="h-4 w-4"/> Data de Criação</h4>
-                      <p className="text-muted-foreground">{new Date(route.createdAt as string).toLocaleString()}</p>
-                  </div>
-                   <div className="space-y-1">
-                      <h4 className="font-semibold text-sm flex items-center gap-2"><Clock className="h-4 w-4"/> Status</h4>
-                      <Badge>{route.status}</Badge>
-                  </div>
-                   <Separator />
-                  <div className="space-y-3">
-                       <h4 className="font-semibold text-sm">Resumo Financeiro da Rota</h4>
-                       <StatCard title="Total em PIX" value={formatCurrency(totalPix)} icon={<Info className="h-5 w-5 text-blue-500" />} />
-                       <StatCard title="Total em Cartão" value={formatCurrency(totalCard)} icon={<Info className="h-5 w-5 text-orange-500" />} />
-                       <StatCard title="Total em Dinheiro" value={formatCurrency(totalDinheiro)} icon={<DollarSign className="h-5 w-5 text-green-500" />} />
-                       <StatCard title="Pagamentos Online" value={formatCurrency(totalOnline)} icon={<Info className="h-5 w-5 text-purple-500" />} />
-                  </div>
-                   <Separator />
-                   <div className="space-y-2">
-                      <Label htmlFor="driver-earning">Pagamento do Entregador (Opcional)</Label>
-                      <Input id="driver-earning" type="number" placeholder="R$ 0,00" />
-                   </div>
-                    <div className="space-y-2 flex-1 flex flex-col">
-                      <Label htmlFor="route-notes">Anotações da Rota</Label>
-                      <Textarea id="route-notes" placeholder="Insira anotações importantes aqui..." className="flex-1" defaultValue={route.notes}/>
-                   </div>
-              </div>
-              <div className="md:col-span-2 flex flex-col overflow-hidden border-l pl-6">
-                  <h3 className="text-lg font-semibold flex items-center gap-2 mb-4"><Box className="h-5 w-5" /> Entregas ({route.orders.length})</h3>
-                  <p className="text-sm text-muted-foreground mb-4">Marque as entregas que foram concluídas com sucesso. Itens não marcados serão considerados devolvidos.</p>
-                   <div className="flex-1 overflow-y-auto pr-2">
-                      <div className="space-y-3">
-                      {route.orders.map(order => (
-                          <div key={order.id} className="border p-3 rounded-lg flex items-start gap-3">
-                              <Checkbox 
-                                id={`order-${order.id}`}
-                                className="mt-1" 
-                                checked={selectedOrders.includes(order.id)}
-                                onCheckedChange={() => handleToggleOrder(order.id)}
-                              />
-                              <div className="flex-1">
-                                  <p className="font-semibold text-sm">Pedido #{order.id.substring(0,7)} - {formatCurrency(order.total)}</p>
-                                  <p className="text-xs text-muted-foreground">{order.shipping?.address?.street}, {order.shipping?.address?.number}</p>
-                                  <p className="text-xs text-muted-foreground">{order.shipping?.address?.neighborhood}, {order.shipping?.address?.city}</p>
-                              </div>
-                              <div className="flex flex-col items-end gap-1">
-                                  <Badge variant="outline" className={getPaymentStatusVariant(order.payment.status)}>{order.payment.status}</Badge>
-                                  <Badge variant="secondary" className="capitalize">{order.payment.method}</Badge>
-                              </div>
-                          </div>
-                      ))}
-                      </div>
-                  </div>
-              </div>
-          </div>
+          <ScrollArea className="flex-1">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-4">
+                <div className="md:col-span-1 space-y-4">
+                    <div className="space-y-1">
+                        <h4 className="font-semibold text-sm flex items-center gap-2"><User className="h-4 w-4"/> Entregador</h4>
+                        <p className="text-muted-foreground">{route.driverName}</p>
+                    </div>
+                    <div className="space-y-1">
+                        <h4 className="font-semibold text-sm flex items-center gap-2"><Calendar className="h-4 w-4"/> Data de Criação</h4>
+                        <p className="text-muted-foreground">{new Date(route.createdAt as string).toLocaleString()}</p>
+                    </div>
+                    <div className="space-y-1">
+                        <h4 className="font-semibold text-sm flex items-center gap-2"><Clock className="h-4 w-4"/> Status</h4>
+                        <Badge>{route.status}</Badge>
+                    </div>
+                    <Separator />
+                    <div className="space-y-3">
+                        <h4 className="font-semibold text-sm">Resumo Financeiro da Rota</h4>
+                        <StatCard title="Total em PIX" value={formatCurrency(totalPix)} icon={<Info className="h-5 w-5 text-blue-500" />} />
+                        <StatCard title="Total em Cartão" value={formatCurrency(totalCard)} icon={<Info className="h-5 w-5 text-orange-500" />} />
+                        <StatCard title="Total em Dinheiro" value={formatCurrency(totalDinheiro)} icon={<DollarSign className="h-5 w-5 text-green-500" />} />
+                        <StatCard title="Pagamentos Online" value={formatCurrency(totalOnline)} icon={<Info className="h-5 w-5 text-purple-500" />} />
+                    </div>
+                    <Separator />
+                    <div className="space-y-2">
+                        <Label htmlFor="driver-earning">Pagamento do Entregador (Opcional)</Label>
+                        <Input id="driver-earning" type="number" placeholder="R$ 0,00" />
+                    </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="route-notes">Anotações da Rota</Label>
+                        <Textarea id="route-notes" placeholder="Insira anotações importantes aqui..." defaultValue={route.notes}/>
+                    </div>
+                </div>
+                <div className="md:col-span-2 border-l pl-6">
+                    <h3 className="text-lg font-semibold flex items-center gap-2 mb-4"><Box className="h-5 w-5" /> Entregas ({route.orders.length})</h3>
+                    <p className="text-sm text-muted-foreground mb-4">Marque as entregas que foram concluídas com sucesso. Itens não marcados serão considerados devolvidos.</p>
+                    <div className="space-y-3">
+                    {route.orders.map(order => (
+                        <div key={order.id} className="border p-3 rounded-lg flex items-start gap-3">
+                            <Checkbox 
+                              id={`order-${order.id}`}
+                              className="mt-1" 
+                              checked={selectedOrders.includes(order.id)}
+                              onCheckedChange={() => handleToggleOrder(order.id)}
+                            />
+                            <div className="flex-1">
+                                <p className="font-semibold text-sm">Pedido #{order.id.substring(0,7)} - {formatCurrency(order.total)}</p>
+                                <p className="text-xs text-muted-foreground">{order.shipping?.address?.street}, {order.shipping?.address?.number}</p>
+                                <p className="text-xs text-muted-foreground">{order.shipping?.address?.neighborhood}, {order.shipping?.address?.city}</p>
+                            </div>
+                            <div className="flex flex-col items-end gap-1">
+                                <Badge variant="outline" className={getPaymentStatusVariant(order.payment.status)}>{order.payment.status}</Badge>
+                                <Badge variant="secondary" className="capitalize">{order.payment.method}</Badge>
+                            </div>
+                        </div>
+                    ))}
+                    </div>
+                </div>
+            </div>
+          </ScrollArea>
           <DialogFooter className="pt-4 border-t">
               <div className="flex justify-between w-full">
                   <div className="flex gap-2">
-                       <Button variant="outline" size="sm" disabled>Atualizar Pagamento</Button>
-                       <Button variant="outline" size="sm" disabled>Atualizar Status</Button>
+                        <Button variant="outline" size="sm" disabled>Atualizar Pagamento</Button>
+                        <Button variant="outline" size="sm" disabled>Atualizar Status</Button>
                   </div>
                   <div className="flex gap-2">
                       <Button variant="outline" onClick={onClose}>Fechar</Button>
-                      <Button onClick={() => setShowConfirmation(true)} disabled={route.status !== 'a_caminho'}>Finalizar Rota</Button>
+                      <Button onClick={() => setShowConfirmation(true)} disabled={route.status !== 'em_andamento'}>Finalizar Rota</Button>
                   </div>
               </div>
           </DialogFooter>
