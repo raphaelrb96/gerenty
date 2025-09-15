@@ -10,17 +10,19 @@ import type { Employee, Role } from "@/lib/types";
 
 import { PageHeader } from "@/components/common/page-header";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Users } from "lucide-react";
+import { PlusCircle, Users, Shield } from "lucide-react";
 import { EmptyState } from "@/components/common/empty-state";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { MemberForm } from "@/components/team/member-form";
 import { UsersGrid } from "@/components/team/users-grid";
 import { UsersFilterBar } from "@/components/team/users-filter-bar";
 import { AccessControlModal } from "@/components/team/access-control-modal";
+import { usePermissions } from "@/context/permissions-context";
 
 export default function TeamPage() {
     const { user, effectiveOwnerId } = useAuth();
     const { toast } = useToast();
+    const { hasAccess } = usePermissions();
     const [team, setTeam] = useState<Employee[]>([]);
     const [loading, setLoading] = useState(true);
     
@@ -36,6 +38,19 @@ export default function TeamPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [roleFilter, setRoleFilter] = useState<"all" | Role>("all");
     const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+
+    // Security Check
+    if (!hasAccess('team')) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <EmptyState
+                    icon={<Shield className="h-16 w-16" />}
+                    title="Acesso Negado"
+                    description="Você não tem permissão para gerenciar a equipe."
+                />
+            </div>
+        );
+    }
 
     const fetchTeam = async () => {
         if (!effectiveOwnerId) return;
