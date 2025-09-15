@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { db } from "@/lib/firebase";
@@ -55,11 +56,12 @@ export async function getUnassignedOrders(companyIds: string[]): Promise<Order[]
 }
 
 
-export async function getDeliverableOrders(companyIds: string[]): Promise<Order[]> {
-    if (companyIds.length === 0) return [];
+export async function getDeliverableOrders(ownerId: string): Promise<Order[]> {
+    if (!ownerId) return [];
     try {
-        // Fetch all orders for the given companies.
-        const allOrders = await getOrdersForCompanies(companyIds);
+        const q = query(ordersCollection, where("ownerId", "==", ownerId));
+        const querySnapshot = await getDocs(q);
+        const allOrders = querySnapshot.docs.map(doc => convertOrderTimestamps({ id: doc.id, ...doc.data() }));
 
         // Filter in-memory to get only deliverable, non-completed orders.
         return allOrders.filter(order => {
@@ -80,16 +82,18 @@ export async function getOrdersForCompanies(companyIds: string[]): Promise<Order
         return [];
     }
     try {
-        // Firestore 'in' query is limited to 30 items in the array.
-        // If companyIds can exceed 30, this needs to be chunked.
-        const q = query(ordersCollection, where("companyId", "in", companyIds));
-        const querySnapshot = await getDocs(q);
-        const orders: Order[] = [];
-        querySnapshot.forEach((doc) => {
-            orders.push(convertOrderTimestamps({ id: doc.id, ...doc.data() }));
-        });
-        orders.sort((a, b) => new Date(b.createdAt as string).getTime() - new Date(a.createdAt as string).getTime());
-        return orders;
+        const allOrders: Order[] = [];
+        // Chunk the companyIds array to avoid Firestore's 30-item limit on 'in' queries
+        for (let i = 0; i < companyIds.length; i += 30) {
+            const chunk = companyIds.slice(i, i + 30);
+            const q = query(ordersCollection, where("companyId", "in", chunk));
+            const querySnapshot = await getDocs(q);
+            querySnapshot.forEach((doc) => {
+                allOrders.push(convertOrderTimestamps({ id: doc.id, ...doc.data() }));
+            });
+        }
+        allOrders.sort((a, b) => new Date(b.createdAt as string).getTime() - new Date(a.createdAt as string).getTime());
+        return allOrders;
     } catch (error) {
         console.error("Error getting orders for companies: ", error);
         throw new Error("Failed to fetch orders.");

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -65,13 +66,11 @@ export default function LogisticsPage() {
         setLoading(true);
         console.log('fetchLogistic')
         try {
-            // const [userRoutes, allDeliverableOrders] = await Promise.all([
-            //     getRoutes(effectiveOwnerId),
-            //     getDeliverableOrders([effectiveOwnerId])
-            // ]);
-            const userRoutes = await getRoutes(effectiveOwnerId);
+            const [userRoutes, allDeliverableOrders] = await Promise.all([
+                getRoutes(effectiveOwnerId),
+                getDeliverableOrders(effectiveOwnerId)
+            ]);
             console.log('userRoutes ' + userRoutes);
-            const allDeliverableOrders = await getDeliverableOrders([effectiveOwnerId]);
             console.log('allDeliverableOrders ' + allDeliverableOrders);
             console.log("Logistics ", JSON.stringify(userRoutes));
             setRoutes(userRoutes);
