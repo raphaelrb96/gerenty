@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -43,6 +44,7 @@ import { finalizeRoute, batchUpdateDeliveryDetails } from "@/services/logistics-
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/context/i18n-context";
 
 
 type RouteDetailsModalProps = {
@@ -233,8 +235,8 @@ export function RouteDetailsModal({
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <Badge variant="secondary" className="capitalize">{order.payment.method}</Badge>
-                                            <Badge variant="outline" className={cn(statusConfig.variant)}>
-                                                {statusConfig.icon}
+                                             <Badge variant="outline" className={cn(getDeliveryStatusConfig(order.status).variant)}>
+                                                {getDeliveryStatusConfig(order.status).icon}
                                                 {order.status}
                                             </Badge>
                                         </div>
@@ -385,8 +387,11 @@ function UpdatePaymentModal({ isOpen, onClose, onSave, selectedCount }: { isOpen
     );
 }
 
+const allStatuses: OrderStatus[] = ["pending", "confirmed", "processing", "out_for_delivery", "delivered", "completed", "cancelled", "refunded", "returned"];
+
 function UpdateStatusModal({ isOpen, onClose, onSave, selectedCount }: { isOpen: boolean, onClose: () => void, onSave: (data: { status: OrderStatus }) => void, selectedCount: number }) {
     const [deliveryStatus, setDeliveryStatus] = useState<OrderStatus | undefined>();
+    const { t } = useTranslation();
 
     const handleSave = () => {
         if (deliveryStatus) {
@@ -406,9 +411,9 @@ function UpdateStatusModal({ isOpen, onClose, onSave, selectedCount }: { isOpen:
                     <Select onValueChange={(v) => setDeliveryStatus(v as OrderStatus)}>
                         <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="delivered">Entregue</SelectItem>
-                            <SelectItem value="returned">Devolvida</SelectItem>
-                            <SelectItem value="cancelled">Cancelada</SelectItem>
+                           {allStatuses.map(status => (
+                               <SelectItem key={status} value={status}>{t(`orderStatus.${status}`)}</SelectItem>
+                           ))}
                         </SelectContent>
                     </Select>
                 </div>
