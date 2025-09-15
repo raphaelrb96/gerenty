@@ -345,7 +345,9 @@
         "delivered": "Delivered",
         "completed": "Completed",
         "cancelled": "Cancelled",
-        "refunded": "Refunded"
+        "refunded": "Refunded",
+        "out_for_delivery": "Out for Delivery",
+        "returned": "Returned"
     },
     "orderDetails": {
         "orderId": "Order #{id}",
