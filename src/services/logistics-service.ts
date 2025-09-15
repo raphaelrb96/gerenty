@@ -1,4 +1,5 @@
 
+
 "use server";
 
 import { db } from "@/lib/firebase";
@@ -113,7 +114,7 @@ export async function createRoute(routeData: Omit<Route, 'id' | 'createdAt' | 't
             const orderRef = doc(ordersCollection, order.id);
             batch.update(orderRef, { 
                 'delivery.routeId': newRouteRef.id, 
-                'delivery.status': 'em_transito', 
+                'status': 'out_for_delivery', 
             });
         });
 
@@ -156,27 +157,34 @@ export async function finalizeRoute(routeId: string, deliveredOrderIds: string[]
         if (!routeDoc.exists()) {
             throw new Error("Route not found");
         }
-        const route = routeDoc.data() as Route;
         
         batch.update(routeRef, { status: 'finalizada', finishedAt: serverTimestamp() });
         
-        const ordersInRoute = await getDocs(query(ordersCollection, where('delivery.routeId', '==', routeId)));
+        const routeData = routeDoc.data() as Route & { orderIds: string[] };
+        const allOrderIdsInRoute = routeData.orderIds || [];
 
-        ordersInRoute.docs.forEach(orderDoc => {
-             const orderRef = orderDoc.ref;
-             const orderData = orderDoc.data() as Order;
-
-             if (deliveredOrderIds.includes(orderDoc.id)) {
-                 batch.update(orderRef, { 'delivery.status': 'entregue', status: 'delivered', completedAt: serverTimestamp() });
-             } else {
-                 batch.update(orderRef, { 'delivery.status': 'devolvida', status: 'devolvido' });
+        for (const orderId of allOrderIdsInRoute) {
+            const orderRef = doc(db, "orders", orderId);
+            
+            if (deliveredOrderIds.includes(orderId)) {
+                batch.update(orderRef, { status: 'delivered', completedAt: serverTimestamp() });
+            } else {
+                batch.update(orderRef, { status: 'returned' });
                 
-                 for (const item of orderData.items) {
-                    const productRef = doc(db, 'products', item.productId);
-                    batch.update(productRef, { availableStock: increment(item.quantity) });
+                const orderSnap = await getDoc(orderRef);
+                if (orderSnap.exists()) {
+                    const orderData = orderSnap.data() as Order;
+                    for (const item of orderData.items) {
+                        const productRef = doc(db, 'products', item.productId);
+                        // Increment stock only if manageStock is a number
+                        const productSnap = await getDoc(productRef);
+                        if(productSnap.exists() && typeof productSnap.data().availableStock === 'number') {
+                           batch.update(productRef, { availableStock: increment(item.quantity) });
+                        }
+                    }
                 }
-             }
-        });
+            }
+        }
         
         await batch.commit();
         
@@ -186,7 +194,7 @@ export async function finalizeRoute(routeId: string, deliveredOrderIds: string[]
     }
 }
 
-export async function batchUpdateDeliveryDetails(orderIds: string[], updates: { payment?: Partial<PaymentDetails>, delivery?: Partial<Order['delivery']> }): Promise<void> {
+export async function batchUpdateDeliveryDetails(orderIds: string[], updates: { payment?: Partial<PaymentDetails>, status?: Order['status'] }): Promise<void> {
     const batch = writeBatch(db);
 
     orderIds.forEach(orderId => {
@@ -198,12 +206,11 @@ export async function batchUpdateDeliveryDetails(orderIds: string[], updates: { 
                 updateData[`payment.${key}`] = value;
             }
         }
-
-        if (updates.delivery) {
-             for (const [key, value] of Object.entries(updates.delivery)) {
-                updateData[`delivery.${key}`] = value;
-            }
+        
+        if (updates.status) {
+            updateData['status'] = updates.status;
         }
+
 
         if (Object.keys(updateData).length > 0) {
             updateData.updatedAt = serverTimestamp();
@@ -219,11 +226,11 @@ export async function batchUpdateDeliveryDetails(orderIds: string[], updates: { 
     }
 }
 
-export async function updateDeliveryStatus(orderId: string, newStatus: 'em_transito' | 'entregue' | 'devolvida' | 'cancelada', routeId?: string): Promise<void> {
+export async function updateDeliveryStatus(orderId: string, newStatus: Order['status'], routeId?: string): Promise<void> {
     try {
         const orderRef = doc(db, 'orders', orderId);
         const updateData: any = {
-            'delivery.status': newStatus,
+            'status': newStatus,
         };
         if (routeId) {
             updateData['delivery.routeId'] = routeId;
@@ -234,3 +241,4 @@ export async function updateDeliveryStatus(orderId: string, newStatus: 'em_trans
         throw new Error("Failed to update delivery status.");
     }
 }
+

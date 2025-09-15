@@ -289,15 +289,15 @@ export type OrderItem = {
 
 // Status padrão de um pedido
 export type OrderStatus =
-  | 'pending'        // Aguardando pagamento ou aprovação
-  | 'confirmed'      // Pedido confirmado
-  | 'processing'     // Em separação ou produção
-  | 'shipped'        // Enviado para o cliente
-  | 'delivered'      // Entregue com sucesso
-  | 'completed'      // Pedido finalizado
-  | 'cancelled'      // Pedido cancelado
-  | 'refunded'       // Reembolso realizado
-  | 'devolvido';     // Pedido devolvido
+  | 'pending'           // Aguardando ações iniciais, como pagamento.
+  | 'confirmed'         // Pagamento recebido, pedido confirmado.
+  | 'processing'        // Em preparação/separação para envio.
+  | 'out_for_delivery'  // Em rota de entrega.
+  | 'delivered'         // Entregue ao cliente.
+  | 'completed'         // Pedido finalizado (pós-entrega, sem pendências).
+  | 'cancelled'         // Pedido cancelado.
+  | 'refunded'          // Pedido reembolsado.
+  | 'returned';         // Pedido devolvido pelo cliente.
 
 
 // Meios de pagamento disponíveis

@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { db } from "@/lib/firebase";
@@ -42,7 +43,7 @@ export async function getUnassignedOrders(companyIds: string[]): Promise<Order[]
         const q = query(
             ordersCollection,
             where("companyId", "in", companyIds),
-            where("delivery.status", "==", "a_processar")
+            where("status", "==", "processing")
         );
         const querySnapshot = await getDocs(q);
         const orders: Order[] = [];
@@ -84,9 +85,6 @@ export async function addOrder(orderData: Omit<Order, 'id' | 'createdAt' | 'upda
             ...orderData,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
-            delivery: {
-                status: 'a_processar' as const,
-            }
         };
 
         const docRef = await addDoc(ordersCollection, fullOrderData);
@@ -94,10 +92,9 @@ export async function addOrder(orderData: Omit<Order, 'id' | 'createdAt' | 'upda
         const newOrder: Order = {
             id: docRef.id,
             ...orderData,
-            delivery: { status: 'a_processar' },
             createdAt: Timestamp.now(), // Use Firestore Timestamp for consistency
             updatedAt: Timestamp.now()
-        };
+        } as Order;
 
         return newOrder;
 

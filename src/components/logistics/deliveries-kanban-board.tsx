@@ -1,7 +1,8 @@
 
+
 "use client";
 
-import type { Route, Order, DeliveryStatus } from '@/lib/types';
+import type { Route, Order, OrderStatus } from '@/lib/types';
 import {
   Accordion,
   AccordionContent,
@@ -18,36 +19,44 @@ type DeliveriesKanbanBoardProps = {
     onDataRefresh: () => void;
 }
 
-const statuses: DeliveryStatus[] = ['a_processar', 'em_transito', 'entregue', 'cancelada'];
+const statuses: OrderStatus[] = ['processing', 'out_for_delivery', 'delivered', 'cancelled'];
 
-const statusConfig: Record<DeliveryStatus, { label: string }> = {
-    'a_processar': { label: 'A Processar' },
-    'em_transito': { label: 'Em Trânsito' },
-    'entregue': { label: 'Entregue' },
-    'cancelada': { label: 'Cancelada' },
-    'devolvida': { label: 'Devolvida' }, // Mantido para config mas não será usado no render
+const statusConfig: Record<OrderStatus, { label: string }> = {
+    'processing': { label: 'A Processar' },
+    'out_for_delivery': { label: 'Em Trânsito' },
+    'delivered': { label: 'Entregue' },
+    'cancelled': { label: 'Cancelada' },
+    'pending': { label: 'Pendente'},
+    'confirmed': { label: 'Confirmado' },
+    'completed': { label: 'Completo' },
+    'refunded': { label: 'Reembolsado' },
+    'returned': { label: 'Devolvido'},
 }
 
 
 export function DeliveriesKanbanBoard({ routes, unassignedOrders, onDataRefresh }: DeliveriesKanbanBoardProps) {
 
     const ordersByStatus = useMemo(() => {
-        const result: Record<DeliveryStatus, (Order & { driverName?: string })[]> = {
-            'a_processar': [],
-            'em_transito': [],
-            'entregue': [],
-            'cancelada': [],
-            'devolvida': [],
+        const result: Record<OrderStatus, (Order & { driverName?: string })[]> = {
+            'pending': [],
+            'confirmed': [],
+            'processing': [],
+            'out_for_delivery': [],
+            'delivered': [],
+            'completed': [],
+            'cancelled': [],
+            'refunded': [],
+            'returned': [],
         };
         
-        // Populate unassigned orders
-        result['a_processar'] = [...unassignedOrders];
+        // Populate unassigned orders (which are in 'processing' state)
+        result['processing'] = [...unassignedOrders];
 
         // Populate orders from routes
         routes.forEach(route => {
             route.orders.forEach(order => {
-                if (order.delivery.status && result[order.delivery.status]) {
-                    result[order.delivery.status].push({ ...order, driverName: route.driverName });
+                if (order.status && result[order.status]) {
+                    result[order.status].push({ ...order, driverName: route.driverName });
                 }
             });
         });

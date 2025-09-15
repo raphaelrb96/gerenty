@@ -1,7 +1,8 @@
 
+
 "use client";
 
-import type { Order } from "@/lib/types";
+import type { Order, OrderStatus } from "@/lib/types";
 import {
   Card,
   CardContent,
@@ -22,16 +23,16 @@ type DeliveriesTableProps = {
 export function DeliveriesTable({ orders }: DeliveriesTableProps) {
     const { formatCurrency } = useCurrency();
 
-    const getDeliveryStatusConfig = (status: Order['delivery']['status']) => {
+    const getDeliveryStatusConfig = (status: OrderStatus) => {
         switch (status) {
-            case 'entregue':
+            case 'delivered':
                 return { variant: 'bg-green-600/20 text-green-700', icon: <PackageCheck className="mr-1 h-3 w-3" /> };
-            case 'em_transito':
+            case 'out_for_delivery':
                 return { variant: 'bg-blue-600/20 text-blue-700', icon: <Truck className="mr-1 h-3 w-3" /> };
-            case 'a_processar':
+            case 'processing':
                 return { variant: 'bg-yellow-600/20 text-yellow-700', icon: <Hourglass className="mr-1 h-3 w-3" /> };
-            case 'cancelada':
-            case 'devolvida':
+            case 'cancelled':
+            case 'returned':
                  return { variant: 'bg-red-600/20 text-red-700', icon: <PackageX className="mr-1 h-3 w-3" /> };
             default:
                 return { variant: 'bg-gray-600/20 text-gray-700', icon: <Package className="mr-1 h-3 w-3" /> };
@@ -53,7 +54,7 @@ export function DeliveriesTable({ orders }: DeliveriesTableProps) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {orders.map((order) => {
-                const statusConfig = getDeliveryStatusConfig(order.delivery.status);
+                const statusConfig = getDeliveryStatusConfig(order.status);
                 return (
                 <Card key={order.id} className="flex flex-col">
                     <CardHeader className="p-4">
@@ -89,7 +90,7 @@ export function DeliveriesTable({ orders }: DeliveriesTableProps) {
                         <Badge variant="secondary" className="capitalize">{order.payment.method}</Badge>
                         <Badge variant="outline" className={statusConfig.variant}>
                             {statusConfig.icon}
-                            {order.delivery.status}
+                            {order.status}
                         </Badge>
                     </CardFooter>
                 </Card>

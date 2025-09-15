@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import {
@@ -26,7 +27,7 @@ type OrderDetailsProps = {
     onStatusChange: (orderId: string, newStatus: OrderStatus) => Promise<void>;
 }
 
-const statuses: OrderStatus[] = ["pending", "confirmed", "processing", "shipped", "delivered", "completed", "cancelled", "refunded"];
+const statuses: OrderStatus[] = ["pending", "confirmed", "processing", "out_for_delivery", "delivered", "completed", "cancelled", "refunded", "returned"];
 
 const getStatusVariant = (status: Order['status']) => {
     switch (status) {
@@ -34,13 +35,14 @@ const getStatusVariant = (status: Order['status']) => {
         case 'delivered':
             return 'bg-green-600/20 text-green-700 hover:bg-green-600/30 border-green-600/30';
         case 'processing':
-        case 'shipped':
+        case 'out_for_delivery':
         case 'confirmed':
             return 'bg-blue-600/20 text-blue-700 hover:bg-blue-600/30 border-blue-600/30';
         case 'pending':
             return 'bg-yellow-600/20 text-yellow-700 hover:bg-yellow-600/30 border-yellow-600/30';
         case 'cancelled':
         case 'refunded':
+        case 'returned':
             return 'bg-red-600/20 text-red-700 hover:bg-red-600/30 border-red-600/30';
         default:
             return 'bg-gray-600/20 text-gray-700 hover:bg-gray-600/30 border-gray-600/30';
