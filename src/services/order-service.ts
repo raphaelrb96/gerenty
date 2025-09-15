@@ -64,20 +64,31 @@ export async function getUnassignedOrders(companyIds: string[]): Promise<Order[]
 export async function getDeliverableOrders(companyIds: string[]): Promise<Order[]> {
     if (companyIds.length === 0) return [];
     try {
-        const q = query(
+        // Firestore doesn't support != queries directly. We need to do two separate queries and merge.
+        const q1 = query(
             ordersCollection,
-            and(
-                where("companyId", "in", companyIds),
-                where('shipping.method', '!=', 'retirada_loja'),
-                where('status', '!=', 'completed')
-            )
+            where("companyId", "in", companyIds),
+            where('shipping.method', '<', 'retirada_loja')
         );
-        const querySnapshot = await getDocs(q);
-        const orders: Order[] = [];
-        querySnapshot.forEach((doc) => {
-            orders.push(convertOrderTimestamps({ id: doc.id, ...doc.data() }));
+        const q2 = query(
+            ordersCollection,
+            where("companyId", "in", companyIds),
+            where('shipping.method', '>', 'retirada_loja')
+        );
+
+        const [querySnapshot1, querySnapshot2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+        
+        const combinedOrders: Order[] = [];
+        querySnapshot1.forEach((doc) => {
+            combinedOrders.push(convertOrderTimestamps({ id: doc.id, ...doc.data() }));
         });
-        return orders;
+        querySnapshot2.forEach((doc) => {
+            combinedOrders.push(convertOrderTimestamps({ id: doc.id, ...doc.data() }));
+        });
+        
+        // Final filter in-memory
+        return combinedOrders.filter(order => order.status !== 'completed');
+
     } catch (error) {
         console.error("Error getting deliverable orders: ", error);
         throw new Error("Failed to fetch deliverable orders.");
