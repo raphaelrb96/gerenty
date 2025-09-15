@@ -39,8 +39,8 @@ export function RouteManagement({ routes, onDataRefresh }: RouteManagementProps)
     return (
         <div className="space-y-4">
             <Card>
-                <CardContent className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="md:col-span-2 relative">
+                <CardContent className="p-4 space-y-4">
+                    <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input 
                             placeholder="Buscar por entregador ou ID da rota..."
@@ -49,19 +49,19 @@ export function RouteManagement({ routes, onDataRefresh }: RouteManagementProps)
                             className="pl-10"
                         />
                     </div>
-                    <div className="md:col-span-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <DateRangePicker date={dateRange} onDateChange={setDateRange} />
+                        <Select value={statusFilter} onValueChange={setStatusFilter as (value: string) => void}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Filtrar por status..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos os Status</SelectItem>
+                                <SelectItem value="em_andamento">Em Andamento</SelectItem>
+                                <SelectItem value="finalizada">Finalizada</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
-                    <Select value={statusFilter} onValueChange={setStatusFilter as (value: string) => void}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Filtrar por status..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Todos os Status</SelectItem>
-                            <SelectItem value="em_andamento">Em Andamento</SelectItem>
-                            <SelectItem value="finalizada">Finalizada</SelectItem>
-                        </SelectContent>
-                    </Select>
                 </CardContent>
             </Card>
 
