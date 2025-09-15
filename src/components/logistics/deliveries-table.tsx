@@ -12,7 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useCurrency } from "@/context/currency-context";
 import { EmptyState } from "../common/empty-state";
-import { Package, User, MapPin, Truck, DollarSign, Clock } from "lucide-react";
+import { Package, User, MapPin, Truck, DollarSign, Clock, PackageCheck, PackageX, Hourglass } from "lucide-react";
 import { Separator } from "../ui/separator";
 
 type DeliveriesTableProps = {
@@ -22,11 +22,19 @@ type DeliveriesTableProps = {
 export function DeliveriesTable({ orders }: DeliveriesTableProps) {
     const { formatCurrency } = useCurrency();
 
-    const getPaymentStatusVariant = (status: Order['payment']['status']) => {
+    const getDeliveryStatusConfig = (status: Order['delivery']['status']) => {
         switch (status) {
-            case 'aprovado': return 'bg-green-600/20 text-green-700';
-            case 'aguardando': return 'bg-yellow-600/20 text-yellow-700';
-            case 'recusado': default: return 'bg-red-600/20 text-red-700';
+            case 'entregue':
+                return { variant: 'bg-green-600/20 text-green-700', icon: <PackageCheck className="mr-1 h-3 w-3" /> };
+            case 'em_transito':
+                return { variant: 'bg-blue-600/20 text-blue-700', icon: <Truck className="mr-1 h-3 w-3" /> };
+            case 'a_processar':
+                return { variant: 'bg-yellow-600/20 text-yellow-700', icon: <Hourglass className="mr-1 h-3 w-3" /> };
+            case 'cancelada':
+            case 'devolvida':
+                 return { variant: 'bg-red-600/20 text-red-700', icon: <PackageX className="mr-1 h-3 w-3" /> };
+            default:
+                return { variant: 'bg-gray-600/20 text-gray-700', icon: <Package className="mr-1 h-3 w-3" /> };
         }
     }
 
@@ -44,7 +52,9 @@ export function DeliveriesTable({ orders }: DeliveriesTableProps) {
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {orders.map((order) => (
+            {orders.map((order) => {
+                const statusConfig = getDeliveryStatusConfig(order.delivery.status);
+                return (
                 <Card key={order.id} className="flex flex-col">
                     <CardHeader className="p-4">
                         <div className="flex justify-between items-start">
@@ -77,10 +87,13 @@ export function DeliveriesTable({ orders }: DeliveriesTableProps) {
                     <Separator />
                     <CardFooter className="p-3 flex justify-between items-center text-xs">
                         <Badge variant="secondary" className="capitalize">{order.payment.method}</Badge>
-                        <Badge variant="outline" className={getPaymentStatusVariant(order.payment.status)}>{order.payment.status}</Badge>
+                        <Badge variant="outline" className={statusConfig.variant}>
+                            {statusConfig.icon}
+                            {order.delivery.status}
+                        </Badge>
                     </CardFooter>
                 </Card>
-            ))}
+            )})}
         </div>
     );
 }
