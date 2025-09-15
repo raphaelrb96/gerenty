@@ -12,8 +12,6 @@ import { getRoutes, Route } from "@/services/logistics-service";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { useCurrency } from "@/context/currency-context";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { RouteForm } from "@/components/logistics/route-form";
 import { usePermissions } from "@/context/permissions-context";
 import { EmptyState } from "@/components/common/empty-state";
 
@@ -23,7 +21,6 @@ export default function LogisticsPage() {
     const { formatCurrency } = useCurrency();
     const [routes, setRoutes] = useState<Route[]>([]);
     const [loading, setLoading] = useState(true);
-    const [isSheetOpen, setIsSheetOpen] = useState(false);
     const { hasAccess } = usePermissions();
 
     const fetchRoutes = async () => {
@@ -100,12 +97,6 @@ export default function LogisticsPage() {
             <PageHeader 
                 title="Logística e Entregas"
                 description="Acompanhe o status das suas rotas de entrega."
-                 action={
-                    <Button onClick={() => setIsSheetOpen(true)}>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Nova Rota
-                    </Button>
-                }
             />
 
             <Tabs defaultValue="A Processar">
@@ -130,25 +121,6 @@ export default function LogisticsPage() {
                 </TabsContent>
             </Tabs>
 
-            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-                <SheetContent className="sm:max-w-xl flex flex-col">
-                    <SheetHeader className="px-6 pt-6">
-                        <SheetTitle>Criar Nova Rota</SheetTitle>
-                        <SheetDescription>
-                            Selecione um entregador e os pedidos para montar uma nova rota de entrega.
-                        </SheetDescription>
-                    </SheetHeader>
-                    <RouteForm 
-                        onFinished={() => {
-                            setIsSheetOpen(false);
-                            fetchRoutes();
-                        }} 
-                    />
-                </SheetContent>
-            </Sheet>
         </div>
     );
 }
-
-    
-    
