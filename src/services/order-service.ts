@@ -42,15 +42,16 @@ export async function getUnassignedOrders(companyIds: string[]): Promise<Order[]
     try {
         const q = query(ordersCollection, where("companyId", "in", companyIds));
         const querySnapshot = await getDocs(q);
-        const orders: Order[] = [];
+        const allOrders: Order[] = [];
         querySnapshot.forEach((doc) => {
-             const order = convertOrderTimestamps({ id: doc.id, ...doc.data() });
-             // Manual filter for properties not supported in compound queries
-             if (order.status === 'processing' && order.shipping?.method !== 'retirada_loja') {
-                orders.push(order);
-             }
+             allOrders.push(convertOrderTimestamps({ id: doc.id, ...doc.data() }));
         });
-        return orders;
+        
+        return allOrders.filter(order => 
+            order.status === 'processing' && 
+            order.shipping?.method !== 'retirada_loja'
+        );
+
     } catch (error) {
         console.error("Error getting unassigned orders: ", error);
         throw new Error("Failed to fetch unassigned orders.");
@@ -103,7 +104,7 @@ export async function getOrdersForCompanies(companyIds: string[]): Promise<Order
 
 
 // Add a new order
-export async function addOrder(orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt' | 'delivery'>): Promise<Order> {
+export async function addOrder(orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>): Promise<Order> {
     try {
         const fullOrderData = {
             ...orderData,

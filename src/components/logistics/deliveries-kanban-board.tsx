@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import type { Route, Order, OrderStatus } from '@/lib/types';
@@ -48,7 +49,7 @@ export function DeliveriesKanbanBoard({ allOrders, routes }: DeliveriesKanbanBoa
     }, [allOrders, routes]);
     
     return (
-        <Accordion type="multiple" className="w-full space-y-4">
+        <Accordion type="multiple" className="w-full space-y-4" defaultValue={deliveryStatuses}>
             {deliveryStatuses.map(status => {
                 const orders = ordersByStatus[status] || [];
                 return (

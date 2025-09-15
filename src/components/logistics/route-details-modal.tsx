@@ -197,7 +197,7 @@ export function RouteDetailsModal({
                             <Label htmlFor="driver-earning">Pagamento do Entregador (Opcional)</Label>
                             <Input id="driver-earning" type="number" placeholder="R$ 0,00" />
                         </div>
-                        <div className="space-y-2 ml-1 mb-2.5">
+                        <div className="space-y-2 ml-1 mb-10">
                             <Label htmlFor="route-notes">Anotações da Rota</Label>
                             <Textarea id="route-notes" placeholder="Insira anotações importantes aqui..." defaultValue={route.notes}/>
                         </div>

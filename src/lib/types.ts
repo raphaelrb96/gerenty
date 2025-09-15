@@ -251,8 +251,6 @@ export type Order = {
   updatedAt: string | Date | Timestamp | FieldValue; // Última atualização do pedido
   completedAt?: string | Date | Timestamp | FieldValue; // Data de conclusão (entrega ou finalização)
   cancelledAt?: string | Date | Timestamp | FieldValue; // Data de cancelamento (se houver)
-
-  delivery: Delivery;
 };
 
 
@@ -334,6 +332,7 @@ export type DeliveryMethod =
 // Detalhes da entrega
 export type ShippingDetails = {
   method: DeliveryMethod; // Método de entrega escolhido
+  routeId?: string; // ID da rota de entrega (se aplicável)
   trackingCode?: string; // Código de rastreio
   cost: number; // Valor do frete
   estimatedDelivery: {
@@ -353,14 +352,6 @@ export type ShippingDetails = {
 };
 
 export type DeliveryStatus = 'a_processar' | 'em_transito' | 'entregue' | 'devolvida' | 'cancelada';
-
-export type Delivery = {
-  routeId?: string;
-  status: DeliveryStatus;
-  paymentStatus?: 'pago' | 'nao_pago';
-  paymentMethodReceived?: 'dinheiro' | 'cartao' | 'pix' | 'online';
-  returnedProducts?: {productId: string, quantity: number}[];
-}
 
 
 // Dados do cliente no momento da compra
