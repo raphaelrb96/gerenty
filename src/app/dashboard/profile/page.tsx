@@ -49,6 +49,8 @@ export default function ProfilePage() {
     const daysUntilExpiry = userData?.validityDate
     ? differenceInCalendarDays(parseISO(userData.validityDate as string), new Date())
     : null;
+    
+    const isCompanyOwner = userData?.role === 'empresa';
 
   return (
     <div className="space-y-8">
@@ -124,11 +126,13 @@ export default function ProfilePage() {
                 {userData?.statusPlan === 'ativo' && userData.validityDate ? t('profilePage.subscription.renewalDate', {date: new Date(userData?.validityDate as any).toLocaleDateString()}) : t('profilePage.subscription.inactiveText')}
             </p>
           </CardContent>
-           <CardFooter className="border-t pt-4">
+           {isCompanyOwner && (
+            <CardFooter className="border-t pt-4">
               <Button onClick={() => router.push('/dashboard/billing')} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="w-full">
                   {t('profilePage.manageButton')}
               </Button>
-          </CardFooter>
+            </CardFooter>
+           )}
         </Card>
       </div>
     </div>
