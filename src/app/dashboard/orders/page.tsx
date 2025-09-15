@@ -32,6 +32,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ALL_ORDER_STATUSES } from "@/lib/order-statuses";
 
 
 function CompanySelector() {
@@ -69,8 +70,6 @@ function CompanySelector() {
         </DropdownMenu>
     );
 }
-
-const allStatuses: OrderStatus[] = ["pending", "confirmed", "processing", "shipped", "delivered", "completed", "cancelled", "refunded"];
 
 export default function OrdersPage() {
     const { t } = useTranslation();
@@ -169,11 +168,13 @@ export default function OrdersPage() {
             case 'processing':
             case 'shipped':
             case 'confirmed':
+            case 'out_for_delivery':
                 return 'bg-blue-600/20 text-blue-700 hover:bg-blue-600/30';
             case 'pending':
                 return 'bg-yellow-600/20 text-yellow-700 hover:bg-yellow-600/30';
             case 'cancelled':
             case 'refunded':
+            case 'returned':
                 return 'bg-red-600/20 text-red-700 hover:bg-red-600/30';
             default:
                 return 'bg-gray-600/20 text-gray-700 hover:bg-gray-600/30';
@@ -203,7 +204,7 @@ export default function OrdersPage() {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">Todos os Status</SelectItem>
-                            {allStatuses.map(status => (
+                            {ALL_ORDER_STATUSES.map(status => (
                                 <SelectItem key={status} value={status}>
                                     {t(`orderStatus.${status}`)}
                                 </SelectItem>
@@ -282,5 +283,3 @@ export default function OrdersPage() {
     </div>
   );
 }
-
-    

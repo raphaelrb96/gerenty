@@ -45,6 +45,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/context/i18n-context";
+import { ALL_ORDER_STATUSES } from "@/lib/order-statuses";
 
 
 type RouteDetailsModalProps = {
@@ -387,8 +388,6 @@ function UpdatePaymentModal({ isOpen, onClose, onSave, selectedCount }: { isOpen
     );
 }
 
-const allStatuses: OrderStatus[] = ["pending", "confirmed", "processing", "out_for_delivery", "delivered", "completed", "cancelled", "refunded", "returned"];
-
 function UpdateStatusModal({ isOpen, onClose, onSave, selectedCount }: { isOpen: boolean, onClose: () => void, onSave: (data: { status: OrderStatus }) => void, selectedCount: number }) {
     const [deliveryStatus, setDeliveryStatus] = useState<OrderStatus | undefined>();
     const { t } = useTranslation();
@@ -411,7 +410,7 @@ function UpdateStatusModal({ isOpen, onClose, onSave, selectedCount }: { isOpen:
                     <Select onValueChange={(v) => setDeliveryStatus(v as OrderStatus)}>
                         <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                         <SelectContent>
-                           {allStatuses.map(status => (
+                           {ALL_ORDER_STATUSES.map(status => (
                                <SelectItem key={status} value={status}>{t(`orderStatus.${status}`)}</SelectItem>
                            ))}
                         </SelectContent>
@@ -425,5 +424,3 @@ function UpdateStatusModal({ isOpen, onClose, onSave, selectedCount }: { isOpen:
         </Dialog>
     );
 }
-
-    

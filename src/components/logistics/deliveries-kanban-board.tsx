@@ -13,21 +13,19 @@ import { DeliveriesTable } from './deliveries-table';
 import { Badge } from '../ui/badge';
 import { useMemo } from 'react';
 import { useTranslation } from '@/context/i18n-context';
+import { DELIVERY_KANBAN_STATUSES } from '@/lib/order-statuses';
 
 type DeliveriesKanbanBoardProps = {
     allOrders: Order[];
     routes: Route[];
 }
 
-const deliveryStatuses: OrderStatus[] = ['processing', 'out_for_delivery', 'delivered', 'returned', 'cancelled'];
-
-
 export function DeliveriesKanbanBoard({ allOrders, routes }: DeliveriesKanbanBoardProps) {
     const { t } = useTranslation();
     
     const ordersByStatus = useMemo(() => {
         const result: Record<string, Order[]> = {};
-        deliveryStatuses.forEach(status => result[status] = []);
+        DELIVERY_KANBAN_STATUSES.forEach(status => result[status] = []);
         
         allOrders.forEach(order => {
             if (result[order.status]) {
@@ -41,7 +39,7 @@ export function DeliveriesKanbanBoard({ allOrders, routes }: DeliveriesKanbanBoa
     
     return (
         <Accordion type="multiple" className="w-full space-y-4">
-            {deliveryStatuses.map(status => {
+            {DELIVERY_KANBAN_STATUSES.map(status => {
                 const orders = ordersByStatus[status] || [];
                 return (
                     <AccordionItem value={status} key={status} className="border rounded-lg bg-card">

@@ -20,14 +20,13 @@ import { useState } from "react";
 import { Loader2, User, Truck, Handshake } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { ALL_ORDER_STATUSES } from "@/lib/order-statuses";
 
 type OrderDetailsProps = {
     order?: Order | null,
     onFinished: () => void;
     onStatusChange: (orderId: string, newStatus: OrderStatus) => Promise<void>;
 }
-
-const statuses: OrderStatus[] = ["pending", "confirmed", "processing", "out_for_delivery", "delivered", "completed", "cancelled", "refunded", "returned"];
 
 const getStatusVariant = (status: Order['status']) => {
     switch (status) {
@@ -160,7 +159,7 @@ export function OrderDetails({ order, onFinished, onStatusChange }: OrderDetails
                         <SelectValue placeholder={t('orderDetails.selectStatus')} />
                     </SelectTrigger>
                     <SelectContent>
-                        {statuses.map(status => (
+                        {ALL_ORDER_STATUSES.map(status => (
                             <SelectItem key={status} value={status}>{t(`orderStatus.${status}`)}</SelectItem>
                         ))}
                     </SelectContent>
