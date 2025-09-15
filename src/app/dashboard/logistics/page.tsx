@@ -5,12 +5,11 @@ import { useState, useEffect, useMemo } from "react";
 import { PageHeader } from "@/components/common/page-header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Truck, CheckCircle, Hourglass, DollarSign, PlusCircle, Users, XCircle, Ban, Package, PackageCheck, Wallet, ArrowLeftRight } from "lucide-react";
+import { Truck, CheckCircle, Hourglass, DollarSign, PlusCircle, Users, XCircle, Ban, Package, PackageCheck, Wallet, ArrowLeftRight, ListFilter } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { getRoutes, Route, Order } from "@/services/logistics-service";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { Button } from "@/components/ui/button";
-import { KanbanBoard } from "@/components/logistics/kanban-board";
 import { useRouter } from "next/navigation";
 import { Bar, BarChart as RechartsBarChart, Pie, PieChart as RechartsPieChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, Legend, Cell } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
@@ -20,6 +19,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { EmptyState } from "@/components/common/empty-state";
 import { DeliveriesKanbanBoard } from "@/components/logistics/deliveries-kanban-board";
 import { getUnassignedOrders } from "@/services/order-service";
+import { RouteManagement } from "@/components/logistics/route-management";
 
 const StatCard = ({ title, value, icon, description }: { title: string, value: string | number, icon: React.ReactNode, description?: string }) => (
     <Card>
@@ -197,14 +197,14 @@ export default function LogisticsPage() {
             />
 
             <Tabs defaultValue="dashboard">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-                    <TabsTrigger value="management">Gestão de Entregas</TabsTrigger>
+                    <TabsTrigger value="deliveries">Gestão de Entregas</TabsTrigger>
+                    <TabsTrigger value="routes">Gerenciamento de Rotas</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="dashboard" className="mt-6 space-y-8">
                      <div className="space-y-6">
-                        {/* Operational Metrics */}
                         <div>
                             <h3 className="text-lg font-medium mb-2">Operacional</h3>
                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -214,7 +214,6 @@ export default function LogisticsPage() {
                             </div>
                         </div>
 
-                        {/* Financial Metrics */}
                          <div>
                             <h3 className="text-lg font-medium mb-2">Financeiro (Em Rota)</h3>
                              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -227,7 +226,6 @@ export default function LogisticsPage() {
                             </div>
                         </div>
 
-                         {/* Results and Alerts */}
                         <div>
                             <h3 className="text-lg font-medium mb-2">Resultados e Alertas</h3>
                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -323,16 +321,22 @@ export default function LogisticsPage() {
                     </Card>
                 </TabsContent>
 
-                <TabsContent value="management" className="mt-4">
+                <TabsContent value="deliveries" className="mt-4">
                      <DeliveriesKanbanBoard 
                         routes={routes} 
                         unassignedOrders={unassignedOrders} 
                         onDataRefresh={fetchLogisticsData}
                     />
                 </TabsContent>
+
+                <TabsContent value="routes" className="mt-4">
+                     <RouteManagement 
+                        routes={routes} 
+                        onDataRefresh={fetchLogisticsData}
+                     />
+                </TabsContent>
+
             </Tabs>
         </div>
     );
 }
-
-    
