@@ -33,7 +33,7 @@ export function KanbanColumn({ status, routes, onRouteUpdate }: KanbanColumnProp
                 isOver && "bg-muted"
             )}
         >
-            <h3 className={`font-semibold text-lg border-l-4 pl-2 ${config.color}`}>
+            <h3 className={cn('font-semibold text-lg border-l-4 pl-2', config.color)}>
                 {config.label} ({routes.length})
             </h3>
             <SortableContext items={routes.map(r => r.id)} strategy={verticalListSortingStrategy}>
