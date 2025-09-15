@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/accordion";
 import { DeliveriesTable } from './deliveries-table';
 import { Badge } from '../ui/badge';
+import { useMemo } from 'react';
 
 type DeliveriesKanbanBoardProps = {
     routes: Route[];
@@ -30,19 +31,35 @@ const statusConfig: Record<DeliveryStatus, { label: string }> = {
 
 export function DeliveriesKanbanBoard({ routes, unassignedOrders, onDataRefresh }: DeliveriesKanbanBoardProps) {
 
-    const ordersInTransit = routes.flatMap(r => r.orders.map(o => ({...o, driverName: r.driverName})));
+    const ordersByStatus = useMemo(() => {
+        const result: Record<DeliveryStatus, (Order & { driverName?: string })[]> = {
+            'a_processar': [],
+            'em_transito': [],
+            'entregue': [],
+            'cancelada': [],
+            'devolvida': [],
+        };
+        
+        // Populate unassigned orders
+        result['a_processar'] = [...unassignedOrders];
 
-    const getOrdersForStatus = (status: DeliveryStatus) => {
-        if (status === 'a_processar') {
-            return unassignedOrders;
-        }
-        return ordersInTransit.filter(o => o.delivery.status === status);
-    }
+        // Populate orders from routes
+        routes.forEach(route => {
+            route.orders.forEach(order => {
+                if (order.delivery.status && result[order.delivery.status]) {
+                    result[order.delivery.status].push({ ...order, driverName: route.driverName });
+                }
+            });
+        });
+        
+        return result;
+
+    }, [routes, unassignedOrders]);
     
     return (
         <Accordion type="multiple" className="w-full space-y-4">
             {statuses.map(status => {
-                const orders = getOrdersForStatus(status);
+                const orders = ordersByStatus[status] || [];
                 return (
                     <AccordionItem value={status} key={status} className="border rounded-lg bg-card">
                         <AccordionTrigger className="px-4 py-3 text-lg font-medium hover:no-underline">
