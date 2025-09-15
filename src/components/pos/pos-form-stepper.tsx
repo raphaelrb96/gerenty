@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -286,11 +287,14 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
         }
     }
 
+    const orderStatus: OrderStatus = values.deliveryMethod === 'retirada_loja' ? 'pending' : 'processing';
+
+
     const orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'> = {
         companyId: activeCompany.id,
         customer: { id: customerId, name: values.customerName, email: values.customerEmail || '', phone: values.customerPhone, document: values.customerDocument },
         items: cart.map(({imageUrl, ...item}) => item),
-        status: 'pending' as OrderStatus,
+        status: orderStatus,
         payment: { 
             method: values.paymentMethod as PaymentMethod, 
             status: values.paymentStatus, 
