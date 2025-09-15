@@ -15,6 +15,7 @@ import { useCurrency } from "@/context/currency-context";
 import { EmptyState } from "../common/empty-state";
 import { Package, User, MapPin, Truck, DollarSign, Clock, PackageCheck, PackageX, Hourglass } from "lucide-react";
 import { Separator } from "../ui/separator";
+import { useTranslation } from "@/context/i18n-context";
 
 type DeliveriesTableProps = {
   orders: (Order & { driverName?: string })[];
@@ -22,6 +23,7 @@ type DeliveriesTableProps = {
 
 export function DeliveriesTable({ orders }: DeliveriesTableProps) {
     const { formatCurrency } = useCurrency();
+    const { t } = useTranslation();
 
     const getDeliveryStatusConfig = (status: OrderStatus) => {
         switch (status) {
@@ -87,10 +89,10 @@ export function DeliveriesTable({ orders }: DeliveriesTableProps) {
                     </CardContent>
                     <Separator />
                     <CardFooter className="p-3 flex justify-between items-center text-xs">
-                        <Badge variant="secondary" className="capitalize">{order.payment.method}</Badge>
+                        <Badge variant="secondary" className="capitalize">{t(`paymentMethods.${order.payment.method.toLowerCase()}`)}</Badge>
                         <Badge variant="outline" className={statusConfig.variant}>
                             {statusConfig.icon}
-                            {order.status}
+                            {t(`orderStatus.${order.status}`)}
                         </Badge>
                     </CardFooter>
                 </Card>

@@ -44,14 +44,17 @@ export async function getUnassignedOrders(companyIds: string[]): Promise<Order[]
             ordersCollection,
             and(
                 where("companyId", "in", companyIds),
-                where("status", "==", "processing"),
-                where("shipping.method", "!=", "retirada_loja")
+                where("status", "==", "processing")
             )
         );
         const querySnapshot = await getDocs(q);
         const orders: Order[] = [];
         querySnapshot.forEach((doc) => {
-            orders.push(convertOrderTimestamps({ id: doc.id, ...doc.data() }));
+             const order = convertOrderTimestamps({ id: doc.id, ...doc.data() });
+             // Manual filter for properties not supported in compound queries
+             if (order.shipping?.method !== 'retirada_loja') {
+                orders.push(order);
+             }
         });
         return orders;
     } catch (error) {
@@ -64,14 +67,7 @@ export async function getUnassignedOrders(companyIds: string[]): Promise<Order[]
 export async function getDeliverableOrders(companyIds: string[]): Promise<Order[]> {
     if (companyIds.length === 0) return [];
     try {
-        // Fetch all orders for the companies first, then filter in memory.
-        // This avoids complex queries that Firestore doesn't support well,
-        // like combining 'in' with inequality filters.
-        const q = query(
-            ordersCollection,
-            where("companyId", "in", companyIds)
-        );
-
+        const q = query(ordersCollection, where("companyId", "in", companyIds));
         const querySnapshot = await getDocs(q);
         
         const allOrders: Order[] = [];
