@@ -124,7 +124,7 @@ export function RouteDetailsModal({
 
     const totalPix = route.orders.reduce((sum, o) => o.payment.method === 'pix' ? sum + o.total : sum, 0);
     const totalCard = route.orders.reduce((sum, o) => (o.payment.method === 'credito' || o.payment.method === 'debito') ? sum + o.total : sum, 0);
-    const totalDinheiro = route.totalCashInRoute || 0;
+    const totalDinheiro = route.cashTotal || 0;
     const totalOnline = route.orders.reduce((sum, o) => o.payment.type === 'online' ? sum + o.total : sum, 0);
 
     const deliveredOrders = route.orders.filter(o => selectedOrders.includes(o.id));
@@ -142,40 +142,41 @@ export function RouteDetailsModal({
               Informações completas sobre a rota, entregador e pedidos.
             </DialogDescription>
           </DialogHeader>
-          <ScrollArea className="flex-1">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-4">
-                <div className="md:col-span-1 space-y-4">
-                    <div className="space-y-1">
-                        <h4 className="font-semibold text-sm flex items-center gap-2"><User className="h-4 w-4"/> Entregador</h4>
-                        <p className="text-muted-foreground">{route.driverName}</p>
+          <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 py-4 min-h-0">
+                <ScrollArea className="md:col-span-1">
+                    <div className="space-y-4 pr-4">
+                        <div className="space-y-1">
+                            <h4 className="font-semibold text-sm flex items-center gap-2"><User className="h-4 w-4"/> Entregador</h4>
+                            <p className="text-muted-foreground">{route.driverName}</p>
+                        </div>
+                        <div className="space-y-1">
+                            <h4 className="font-semibold text-sm flex items-center gap-2"><Calendar className="h-4 w-4"/> Data de Criação</h4>
+                            <p className="text-muted-foreground">{new Date(route.createdAt as string).toLocaleString()}</p>
+                        </div>
+                        <div className="space-y-1">
+                            <h4 className="font-semibold text-sm flex items-center gap-2"><Clock className="h-4 w-4"/> Status</h4>
+                            <Badge>{route.status}</Badge>
+                        </div>
+                        <Separator />
+                        <div className="space-y-3">
+                            <h4 className="font-semibold text-sm">Resumo Financeiro da Rota</h4>
+                            <StatCard title="Total em PIX" value={formatCurrency(totalPix)} icon={<Info className="h-5 w-5 text-blue-500" />} />
+                            <StatCard title="Total em Cartão" value={formatCurrency(totalCard)} icon={<Info className="h-5 w-5 text-orange-500" />} />
+                            <StatCard title="Total em Dinheiro" value={formatCurrency(totalDinheiro)} icon={<DollarSign className="h-5 w-5 text-green-500" />} />
+                            <StatCard title="Pagamentos Online" value={formatCurrency(totalOnline)} icon={<Info className="h-5 w-5 text-purple-500" />} />
+                        </div>
+                        <Separator />
+                        <div className="space-y-2 ml-1">
+                            <Label htmlFor="driver-earning">Pagamento do Entregador (Opcional)</Label>
+                            <Input id="driver-earning" type="number" placeholder="R$ 0,00" />
+                        </div>
+                        <div className="space-y-2 ml-1">
+                            <Label htmlFor="route-notes">Anotações da Rota</Label>
+                            <Textarea id="route-notes" placeholder="Insira anotações importantes aqui..." defaultValue={route.notes}/>
+                        </div>
                     </div>
-                    <div className="space-y-1">
-                        <h4 className="font-semibold text-sm flex items-center gap-2"><Calendar className="h-4 w-4"/> Data de Criação</h4>
-                        <p className="text-muted-foreground">{new Date(route.createdAt as string).toLocaleString()}</p>
-                    </div>
-                    <div className="space-y-1">
-                        <h4 className="font-semibold text-sm flex items-center gap-2"><Clock className="h-4 w-4"/> Status</h4>
-                        <Badge>{route.status}</Badge>
-                    </div>
-                    <Separator />
-                    <div className="space-y-3">
-                        <h4 className="font-semibold text-sm">Resumo Financeiro da Rota</h4>
-                        <StatCard title="Total em PIX" value={formatCurrency(totalPix)} icon={<Info className="h-5 w-5 text-blue-500" />} />
-                        <StatCard title="Total em Cartão" value={formatCurrency(totalCard)} icon={<Info className="h-5 w-5 text-orange-500" />} />
-                        <StatCard title="Total em Dinheiro" value={formatCurrency(totalDinheiro)} icon={<DollarSign className="h-5 w-5 text-green-500" />} />
-                        <StatCard title="Pagamentos Online" value={formatCurrency(totalOnline)} icon={<Info className="h-5 w-5 text-purple-500" />} />
-                    </div>
-                    <Separator />
-                    <div className="space-y-2">
-                        <Label htmlFor="driver-earning">Pagamento do Entregador (Opcional)</Label>
-                        <Input id="driver-earning" type="number" placeholder="R$ 0,00" />
-                    </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="route-notes">Anotações da Rota</Label>
-                        <Textarea id="route-notes" placeholder="Insira anotações importantes aqui..." defaultValue={route.notes}/>
-                    </div>
-                </div>
-                <div className="md:col-span-2 pr-4">
+                </ScrollArea>
+                <ScrollArea className="md:col-span-2 pr-4">
                     <h3 className="text-lg font-semibold flex items-center gap-2 mb-4"><Box className="h-5 w-5" /> Entregas ({route.orders.length})</h3>
                     <p className="text-sm text-muted-foreground mb-4">Marque as entregas que foram concluídas com sucesso. Itens não marcados serão considerados devolvidos.</p>
                     <div className="space-y-3">
@@ -229,14 +230,13 @@ export function RouteDetailsModal({
                         </Card>
                     ))}
                     </div>
-                </div>
-            </div>
-          </ScrollArea>
+                </ScrollArea>
+          </div>
           <DialogFooter className="pt-4 border-t">
               <div className="flex justify-between w-full">
                   <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={handleComingSoon}>Atualizar Pagamento</Button>
-                        <Button variant="outline" size="sm" onClick={handleComingSoon}>Atualizar Status</Button>
+                        <Button variant="outline" size="sm" onClick={handleComingSoon} disabled={selectedOrders.length === 0}>Atualizar Pagamento</Button>
+                        <Button variant="outline" size="sm" onClick={handleComingSoon} disabled={selectedOrders.length === 0}>Atualizar Status</Button>
                   </div>
                   <div className="flex gap-2">
                       <Button variant="outline" onClick={onClose}>Fechar</Button>
