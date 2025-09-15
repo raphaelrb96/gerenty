@@ -7,8 +7,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
-import { getEmployeesByUser } from "@/services/employee-service";
-import { getUnassignedOrders } from "@/services/order-service";
 import { createRoute } from "@/services/logistics-service";
 import type { Employee, Order } from "@/lib/types";
 import { useRouter } from "next/navigation";
@@ -21,9 +19,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
-import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { EmptyState } from "@/components/common/empty-state";
-import { Users, File, Loader2 } from "lucide-react";
+import { File, Loader2 } from "lucide-react";
 import { useCurrency } from "@/context/currency-context";
 import { useCompany } from "@/context/company-context";
 
@@ -36,16 +33,18 @@ const formSchema = z.object({
 
 type RouteFormValues = z.infer<typeof formSchema>;
 
-export function RouteForm() {
+type RouteFormProps = {
+    drivers: Employee[];
+    orders: Order[];
+}
+
+export function RouteForm({ drivers, orders }: RouteFormProps) {
     const { effectiveOwnerId } = useAuth();
-    const { activeCompany, companies } = useCompany();
+    const { activeCompany } = useCompany();
     const { toast } = useToast();
     const router = useRouter();
     const { formatCurrency } = useCurrency();
-    const [loading, setLoading] = useState(true);
-    const [drivers, setDrivers] = useState<Employee[]>([]);
-    const [orders, setOrders] = useState<Order[]>([]);
-
+    
     const form = useForm<RouteFormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: { orderIds: [] },
@@ -54,27 +53,6 @@ export function RouteForm() {
     const selectedOrderIds = form.watch("orderIds");
     const selectedOrders = orders.filter(order => selectedOrderIds.includes(order.id));
     const totalRouteValue = selectedOrders.reduce((acc, order) => acc + order.total, 0);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            if (!effectiveOwnerId) return;
-            setLoading(true);
-            try {
-                const companyIds = activeCompany ? [activeCompany.id] : companies.map(c => c.id);
-                const [userDrivers, unassignedOrders] = await Promise.all([
-                    getEmployeesByUser(effectiveOwnerId),
-                    getUnassignedOrders(companyIds)
-                ]);
-                setDrivers(userDrivers.filter(d => d.role === 'entregador' && d.isActive));
-                setOrders(unassignedOrders);
-            } catch (error) {
-                toast({ variant: "destructive", title: "Erro ao carregar dados" });
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
-    }, [effectiveOwnerId, activeCompany, companies, toast]);
 
     const onSubmit = async (values: RouteFormValues) => {
         if (!effectiveOwnerId) {
@@ -105,27 +83,6 @@ export function RouteForm() {
             console.error(error);
         }
     };
-
-    if (loading) {
-        return <LoadingSpinner />;
-    }
-
-    if (drivers.length === 0) {
-        return (
-            <div className="flex flex-col items-center justify-center h-full p-6">
-                <EmptyState
-                    icon={<Users className="h-16 w-16" />}
-                    title="Nenhum Entregador Cadastrado"
-                    description="Você precisa ter pelo menos um entregador ativo cadastrado para criar uma rota."
-                    action={
-                        <Button onClick={() => router.push('/dashboard/team')}>
-                            Cadastrar Entregador
-                        </Button>
-                    }
-                />
-            </div>
-        );
-    }
     
     return (
         <Form {...form}>
