@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import * as React from "react";
@@ -125,11 +124,11 @@ export function RouteForm({ onFinished }: RouteFormProps) {
       setIsSaving(false);
     }
   };
-  
+
   if (loading) {
     return <LoadingSpinner />;
   }
-  
+
   if (drivers.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-6">
