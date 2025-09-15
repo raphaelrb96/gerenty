@@ -17,7 +17,7 @@ import { useCurrency } from "@/context/currency-context";
 import { subDays, format, eachDayOfInterval, startOfToday } from "date-fns";
 import { EmptyState } from "@/components/common/empty-state";
 import { DeliveriesKanbanBoard } from "@/components/logistics/deliveries-kanban-board";
-import { getUnassignedOrders, getDeliverableOrders } from "@/services/order-service";
+import { getDeliverableOrders } from "@/services/order-service";
 import { RouteManagement } from "@/components/logistics/route-management";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useTranslation } from "@/context/i18n-context";
@@ -103,40 +103,42 @@ export default function LogisticsPage() {
         const allActiveOrders = activeRoutes.flatMap(r => r.orders.map(o => ({...o, routeId: r.id})));
         
         const deliveriesInProgress = allActiveOrders.filter(o => o.status === 'out_for_delivery').length;
+        
+        const finishedRoutesToday = routes.filter(r => r.status === 'finalizada' && r.finishedAt && new Date(r.finishedAt as string) >= today).length;
+        const finishedRoutesThisWeek = routes.filter(r => r.status === 'finalizada' && r.finishedAt && new Date(r.finishedAt as string) >= startOfThisWeek).length;
+
+        const allOrdersInSystem = routes.flatMap(r => r.orders);
+        
         const deliveriesCancelledInRoute = allActiveOrders.filter(o => o.status === 'cancelled').length;
         const totalCancelledValueInRoute = allActiveOrders
             .filter(o => o.status === 'cancelled')
             .reduce((sum, o) => sum + o.total, 0);
-        
-        const allOrdersFromAllRoutes = routes.flatMap(r => r.orders);
-        const returnedOrders = allOrdersFromAllRoutes.filter(o => o.status === 'returned');
+
+        const returnedOrders = allOrdersInSystem.filter(o => o.status === 'returned');
         const deliveriesReturnedInRoute = returnedOrders.length;
+        const itemsToReturn = returnedOrders.flatMap(o => o.items).reduce((sum, item) => sum + item.quantity, 0);
         
+        const deliveriesToProcess = deliverableOrders.filter(o => o.status === 'processing').length;
+        
+        // Financial Metrics
         const cashReceivedInRoute = allActiveOrders
-            .filter(o => o.delivery?.paymentStatus === 'pago' && o.delivery.paymentMethodReceived === 'dinheiro')
+            .filter(o => o.payment?.status === 'aprovado' && o.payment.method === 'dinheiro')
             .reduce((sum, o) => sum + o.total, 0);
 
         const otherPaymentsReceivedInRoute = allActiveOrders
-            .filter(o => o.delivery?.paymentStatus === 'pago' && o.delivery.paymentMethodReceived && o.delivery.paymentMethodReceived !== 'dinheiro')
+            .filter(o => o.payment?.status === 'aprovado' && o.payment.method !== 'dinheiro')
             .reduce((sum, o) => sum + o.total, 0);
 
         const cashInProgress = allActiveOrders
-            .filter(o => o.status === 'out_for_delivery' && o.payment.method === 'dinheiro' && o.delivery?.paymentStatus !== 'pago')
+            .filter(o => o.status === 'out_for_delivery' && o.payment.method === 'dinheiro' && o.payment.status !== 'aprovado')
             .reduce((sum, o) => sum + o.total, 0);
 
         const otherPaymentsInProgress = allActiveOrders
-            .filter(o => o.status === 'out_for_delivery' && o.payment.method !== 'dinheiro' && o.delivery?.paymentStatus !== 'pago')
+            .filter(o => o.status === 'out_for_delivery' && o.payment.method !== 'dinheiro' && o.payment.status !== 'aprovado')
             .reduce((sum, o) => sum + o.total, 0);
         
         const totalToReceive = cashInProgress + otherPaymentsInProgress;
         const totalReceived = cashReceivedInRoute + otherPaymentsReceivedInRoute;
-
-        const finishedRoutesToday = routes.filter(r => r.status === 'finalizada' && r.finishedAt && new Date(r.finishedAt as string) >= today).length;
-        const finishedRoutesThisWeek = routes.filter(r => r.status === 'finalizada' && r.finishedAt && new Date(r.finishedAt as string) >= startOfThisWeek).length;
-        
-        const itemsToReturn = returnedOrders.flatMap(o => o.items).reduce((sum, item) => sum + item.quantity, 0);
-        const deliveriesToProcess = deliverableOrders.filter(o => o.status === 'processing').length;
-
 
         return {
             driversInRoute,
@@ -356,5 +358,7 @@ export default function LogisticsPage() {
         </div>
     );
 }
+
+    
 
     

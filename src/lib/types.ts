@@ -351,9 +351,6 @@ export type ShippingDetails = {
   };
 };
 
-export type DeliveryStatus = 'a_processar' | 'em_transito' | 'entregue' | 'devolvida' | 'cancelada';
-
-
 // Dados do cliente no momento da compra
 export type OrderCustomer = {
   id?: string;
@@ -623,6 +620,7 @@ export interface Route {
   notes?: string;
   status: 'em_andamento' | 'finalizada';
   orders: Order[];
+  orderIds?: string[];
   
   // Finanças da Rota
   totalValue: number;
@@ -678,3 +676,5 @@ export type Webhook = {
   secret?: string; // Only stored if auth type is header
   createdAt: string | Date | Timestamp | FieldValue;
 }
+
+    

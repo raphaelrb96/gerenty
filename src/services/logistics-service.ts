@@ -112,8 +112,8 @@ export async function createRoute(routeData: Omit<Route, 'id' | 'createdAt' | 't
         orders.forEach(order => {
             const orderRef = doc(ordersCollection, order.id);
             batch.update(orderRef, { 
-                'delivery.routeId': newRouteRef.id, 
-                'status': 'out_for_delivery', 
+                'shipping.routeId': newRouteRef.id, 
+                status: 'out_for_delivery', 
             });
         });
 
@@ -229,10 +229,10 @@ export async function updateDeliveryStatus(orderId: string, newStatus: OrderStat
     try {
         const orderRef = doc(db, 'orders', orderId);
         const updateData: any = {
-            'status': newStatus,
+            status: newStatus,
         };
         if (routeId) {
-            updateData['delivery.routeId'] = routeId;
+            updateData['shipping.routeId'] = routeId;
         }
         await updateDoc(orderRef, updateData);
     } catch (error) {
@@ -240,3 +240,5 @@ export async function updateDeliveryStatus(orderId: string, newStatus: OrderStat
         throw new Error("Failed to update delivery status.");
     }
 }
+
+    
