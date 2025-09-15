@@ -28,11 +28,11 @@ export function DeliveriesKanbanBoard({ allOrders, routes }: DeliveriesKanbanBoa
     const ordersByStatus = useMemo(() => {
         const result: Record<string, (Order & { driverName?: string })[]> = {};
         deliveryStatuses.forEach(status => result[status] = []);
-
+        
         const routeDriverMap = new Map<string, string>();
         routes.forEach(route => {
-            route.orders.forEach(order => {
-                routeDriverMap.set(order.id, route.driverName);
+            route.orders.forEach(orderInRoute => {
+                routeDriverMap.set(orderInRoute.id, route.driverName);
             });
         });
 
