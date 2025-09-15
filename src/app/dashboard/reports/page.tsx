@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -15,7 +16,9 @@ import { useCurrency } from "@/context/currency-context";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { DateRange } from "react-day-picker";
 import { subDays, startOfDay, endOfDay } from "date-fns";
-import { BarChart, Users, Package } from "lucide-react";
+import { BarChart, Users, Package, Shield } from "lucide-react";
+import { usePermissions } from "@/context/permissions-context";
+import { EmptyState } from "@/components/common/empty-state";
 
 
 function TopSellingProducts({ orders }: { orders: Order[] }) {
@@ -78,19 +81,33 @@ function TopSellingProducts({ orders }: { orders: Order[] }) {
 
 
 export default function ReportsPage() {
-    const { user } = useAuth();
+    const { user, effectiveOwnerId } = useAuth();
     const { companies, activeCompany } = useCompany();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
+    const { hasAccess } = usePermissions();
 
     const [dateRange, setDateRange] = useState<DateRange | undefined>({
         from: subDays(new Date(), 29),
         to: new Date(),
     });
 
+    // Security Check
+    if (!hasAccess('reports')) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <EmptyState
+                    icon={<Shield className="h-16 w-16" />}
+                    title="Acesso Negado"
+                    description="Você não tem permissão para visualizar relatórios."
+                />
+            </div>
+        );
+    }
+
     useEffect(() => {
         const fetchOrders = async () => {
-            if (!user) return;
+            if (!effectiveOwnerId) return;
             setLoading(true);
             try {
                 const companyIds = activeCompany ? [activeCompany.id] : companies.map(c => c.id);
@@ -107,7 +124,7 @@ export default function ReportsPage() {
             }
         };
         fetchOrders();
-    }, [user, companies, activeCompany]);
+    }, [effectiveOwnerId, companies, activeCompany]);
 
     const filteredOrders = useMemo(() => {
         return orders.filter(order => {

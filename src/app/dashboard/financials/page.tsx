@@ -14,9 +14,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { useCurrency } from "@/context/currency-context";
-import { DollarSign, ShoppingCart, TrendingUp, BarChart, TrendingDown, PlusCircle } from "lucide-react";
+import { DollarSign, ShoppingCart, TrendingUp, BarChart, TrendingDown, PlusCircle, Shield } from "lucide-react";
 import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { usePermissions } from "@/context/permissions-context";
+import { EmptyState } from "@/components/common/empty-state";
 
 const StatCard = ({ title, value, icon }: { title: string, value: string, icon: React.ReactNode }) => (
     <Card>
@@ -31,11 +33,12 @@ const StatCard = ({ title, value, icon }: { title: string, value: string, icon: 
 );
 
 export default function FinancialsPage() {
-    const { user } = useAuth();
+    const { user, effectiveOwnerId } = useAuth();
     const { activeCompany, companies } = useCompany();
     const { formatCurrency } = useCurrency();
     const [financialData, setFinancialData] = useState<FinancialData | null>(null);
     const [loading, setLoading] = useState(true);
+    const { hasAccess } = usePermissions();
 
     const [dateRange, setDateRange] = useState<DateRange | undefined>({
         from: subDays(new Date(), 29),
@@ -43,9 +46,22 @@ export default function FinancialsPage() {
     });
     const [activeFilter, setActiveFilter] = useState<string>('30d');
 
+    // Security Check
+    if (!hasAccess('financials')) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <EmptyState
+                    icon={<Shield className="h-16 w-16" />}
+                    title="Acesso Negado"
+                    description="Você não tem permissão para acessar o módulo financeiro."
+                />
+            </div>
+        );
+    }
+
     useEffect(() => {
         const fetchFinancials = async () => {
-            if (!user || !dateRange?.from || !dateRange?.to) return;
+            if (!effectiveOwnerId || !dateRange?.from || !dateRange?.to) return;
             setLoading(true);
             try {
                 const companyIds = activeCompany ? [activeCompany.id] : companies.map(c => c.id);
@@ -63,10 +79,10 @@ export default function FinancialsPage() {
             }
         };
 
-        if (user && companies) {
+        if (effectiveOwnerId && companies) {
            fetchFinancials();
         }
-    }, [user, activeCompany, companies, dateRange]);
+    }, [effectiveOwnerId, activeCompany, companies, dateRange]);
     
     const handleDateFilterClick = (filter: string) => {
         setActiveFilter(filter);
@@ -147,7 +163,3 @@ export default function FinancialsPage() {
         </div>
     );
 }
-
-    
-
-    

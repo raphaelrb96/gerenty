@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
-import { PlusCircle, Building } from "lucide-react";
+import { PlusCircle, Building, Shield } from "lucide-react";
 import { useTranslation } from "@/context/i18n-context";
 import { EmptyState } from "@/components/common/empty-state";
 import { useAuth } from "@/context/auth-context";
@@ -23,16 +23,20 @@ export default function CompaniesPage() {
 
     const isCompanyOwner = userData?.role === 'empresa';
 
-    const handleCreateCompany = () => {
-        if (!isCompanyOwner) {
-             toast({
-                variant: "destructive",
-                title: "Acesso Negado",
-                description: "Apenas o dono da conta pode criar novas empresas.",
-            });
-            return;
-        }
+    // Security Check: Only company owners can access this page.
+    if (!isCompanyOwner) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <EmptyState
+                    icon={<Shield className="h-16 w-16" />}
+                    title="Acesso Negado"
+                    description="Apenas o dono da conta pode gerenciar as empresas."
+                />
+            </div>
+        );
+    }
 
+    const handleCreateCompany = () => {
         const companyLimit = userData?.plan?.limits?.companies ?? 1;
         
         if (companies.length >= companyLimit) {
@@ -55,7 +59,7 @@ export default function CompaniesPage() {
                 title={t('companiesPage.title')}
                 description={t('companiesPage.description')}
                 action={
-                    <Button onClick={handleCreateCompany} disabled={isLimitReached || !isCompanyOwner}>
+                    <Button onClick={handleCreateCompany} disabled={isLimitReached}>
                         <PlusCircle className="mr-2 h-4 w-4" /> {t('companiesPage.createButton')}
                     </Button>
                 }
@@ -67,7 +71,7 @@ export default function CompaniesPage() {
                     title={t('companiesPage.empty.title')}
                     description={t('companiesPage.empty.description')}
                     action={
-                         <Button onClick={handleCreateCompany} disabled={isLimitReached || !isCompanyOwner}>
+                         <Button onClick={handleCreateCompany} disabled={isLimitReached}>
                             <PlusCircle className="mr-2 h-4 w-4" /> {t('companiesPage.empty.action')}
                         </Button>
                     }

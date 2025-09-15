@@ -4,8 +4,10 @@
 import { PageHeader } from "@/components/common/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Shield } from "lucide-react";
 import Image from "next/image";
+import { usePermissions } from "@/context/permissions-context";
+import { EmptyState } from "@/components/common/empty-state";
 
 type Integration = {
   name: string;
@@ -91,6 +93,21 @@ const IntegrationCard = ({ integration }: { integration: Integration }) => (
 );
 
 export default function IntegrationsPage() {
+  const { hasAccess } = usePermissions();
+
+  // Security Check
+  if (!hasAccess('integrations')) {
+      return (
+          <div className="flex items-center justify-center h-full">
+              <EmptyState
+                  icon={<Shield className="h-16 w-16" />}
+                  title="Acesso Negado"
+                  description="Você não tem permissão para gerenciar integrações."
+              />
+          </div>
+      );
+  }
+
   return (
     <div className="space-y-8">
       <PageHeader

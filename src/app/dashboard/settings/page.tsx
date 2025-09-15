@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -35,15 +34,17 @@ import {
   SheetDescription,
   SheetFooter
 } from "@/components/ui/sheet";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { KeyRound, Webhook, Copy, PlusCircle, Trash2, MoreVertical, Loader2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { DatePicker } from "@/components/ui/date-picker";
+import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
-import { ApiKey, Webhook as WebhookType, WebhookEvent } from "@/lib/types";
 import { createApiKey, getApiKeys, revokeApiKey } from "@/services/api-key-service";
 import { createWebhook, getWebhooks, deleteWebhook } from "@/services/webhook-service";
-import { format } from 'date-fns';
-import { DatePicker } from "@/components/ui/date-picker";
-import { Checkbox } from "@/components/ui/checkbox";
+import { ApiKey, Webhook as WebhookType, WebhookEvent } from "@/lib/types";
+import { usePermissions } from "@/context/permissions-context";
+import { EmptyState } from "@/components/common/empty-state";
+import { KeyRound, Webhook, Copy, PlusCircle, Trash2, MoreVertical, Loader2, Shield } from "lucide-react";
+
 
 function ApiKeysTab() {
     const { user, effectiveOwnerId } = useAuth();
@@ -480,6 +481,21 @@ function WebhookFormSheetContent({ onSave, onCancel }: { onSave: (v: any) => voi
 }
 
 export default function SettingsPage() {
+    const { hasAccess } = usePermissions();
+
+    // Security Check
+    if (!hasAccess('settings')) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <EmptyState
+                    icon={<Shield className="h-16 w-16" />}
+                    title="Acesso Negado"
+                    description="Você não tem permissão para acessar as configurações avançadas."
+                />
+            </div>
+        );
+    }
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -502,5 +518,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-    

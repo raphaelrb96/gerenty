@@ -4,20 +4,34 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, Loader2 } from "lucide-react";
+import { Check, Loader2, Shield } from "lucide-react";
 import { useTranslation } from "@/context/i18n-context";
 import { useAuth } from "@/context/auth-context";
 import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
 import { useCurrency } from "@/context/currency-context";
 import { CurrencyToggle } from "@/components/currency-toggle";
+import { EmptyState } from "@/components/common/empty-state";
 
 export default function BillingPage() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
   const router = useRouter();
   const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
   const { formatPlanPrice } = useCurrency();
+
+  // Security Check: Only company owners can access this page.
+  if (userData?.role !== 'empresa') {
+      return (
+          <div className="flex items-center justify-center h-full">
+              <EmptyState
+                  icon={<Shield className="h-16 w-16" />}
+                  title="Acesso Negado"
+                  description="Apenas o dono da conta pode acessar a área de faturamento e assinaturas."
+              />
+          </div>
+      );
+  }
 
   const tiers = [
     {

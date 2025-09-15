@@ -14,7 +14,7 @@ import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-ki
 import { PageHeader } from "@/components/common/page-header";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Loader2 } from "lucide-react";
+import { PlusCircle, Loader2, Shield } from "lucide-react";
 import { CreateCustomerModal } from "@/components/crm/create-customer-modal";
 import { CustomerDetailsModal } from "@/components/crm/customer-details-modal";
 import { StageMenu } from "@/components/crm/stage-menu";
@@ -34,6 +34,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useTranslation } from "@/context/i18n-context";
 import { CrmFilterBar } from "@/components/crm/crm-filter-bar";
+import { usePermissions } from "@/context/permissions-context";
+import { EmptyState } from "@/components/common/empty-state";
 
 const CUSTOMERS_PER_PAGE = 50;
 
@@ -43,6 +45,7 @@ function CrmPageComponent() {
     const { toast } = useToast();
     const { t } = useTranslation();
     const searchParams = useSearchParams();
+    const { hasAccess } = usePermissions();
 
     const [allCustomers, setAllCustomers] = useState<Customer[]>([]);
     const [stages, setStages] = useState<Stage[]>([]);
@@ -64,6 +67,19 @@ function CrmPageComponent() {
     const [searchField, setSearchField] = useState("name");
 
     const [visibleCount, setVisibleCount] = useState(CUSTOMERS_PER_PAGE);
+
+    // Security Check
+    if (!hasAccess('crm')) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <EmptyState
+                    icon={<Shield className="h-16 w-16" />}
+                    title="Acesso Negado"
+                    description="Você não tem permissão para acessar o módulo de CRM."
+                />
+            </div>
+        );
+    }
 
     const allAvailableTags = useMemo(() => {
         const tagSet = new Set<string>();
@@ -521,9 +537,3 @@ export default function CrmPage() {
         </Suspense>
     );
 }
-
-    
-
-    
-
-    
