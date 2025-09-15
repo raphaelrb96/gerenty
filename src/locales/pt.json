@@ -337,6 +337,10 @@
         "out-of-stock": "Esgotado",
         "discontinued": "Descontinuado"
     },
+    "routeStatus": {
+        "em_andamento": "Em Andamento",
+        "finalizada": "Finalizada"
+    },
     "orderStatus": {
         "pending": "Pendente",
         "confirmed": "Confirmado",
@@ -538,3 +542,5 @@
         "online": "Online"
     }
 }
+
+    

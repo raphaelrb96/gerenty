@@ -184,7 +184,7 @@ export function RouteDetailsModal({
                         </div>
                         <div className="space-y-1">
                             <h4 className="font-semibold text-sm flex items-center gap-2"><Clock className="h-4 w-4"/> Status</h4>
-                            <Badge>{route.status}</Badge>
+                            <Badge>{t(`routeStatus.${route.status}`)}</Badge>
                         </div>
                         <Separator />
                         <div className="space-y-3">
@@ -425,3 +425,5 @@ function UpdateStatusModal({ isOpen, onClose, onSave, selectedCount }: { isOpen:
         </Dialog>
     );
 }
+
+    
