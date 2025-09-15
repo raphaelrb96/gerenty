@@ -3,7 +3,7 @@
 'use server';
 
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where, addDoc, serverTimestamp, doc, updateDoc, Timestamp } from "firebase/firestore";
+import { collection, getDocs, query, where, addDoc, serverTimestamp, doc, updateDoc, Timestamp, and } from "firebase/firestore";
 import type { Order, OrderStatus } from "@/lib/types";
 
 const ordersCollection = collection(db, "orders");
@@ -42,8 +42,11 @@ export async function getUnassignedOrders(companyIds: string[]): Promise<Order[]
     try {
         const q = query(
             ordersCollection,
-            where("companyId", "in", companyIds),
-            where("status", "==", "processing")
+            and(
+                where("companyId", "in", companyIds),
+                where("status", "==", "processing"),
+                where("shipping.method", "!=", "retirada_loja")
+            )
         );
         const querySnapshot = await getDocs(q);
         const orders: Order[] = [];
@@ -117,3 +120,5 @@ export async function updateOrder(orderId: string, dataToUpdate: Partial<Order>)
         throw new Error("Failed to update order.");
     }
 }
+
+    
