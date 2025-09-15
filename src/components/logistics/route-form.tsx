@@ -64,6 +64,7 @@ export function RouteForm({ onFinished }: RouteFormProps) {
         if (companyIds.length === 0) {
             setDrivers([]);
             setOrders([]);
+            setLoading(false);
             return;
         }
 
@@ -124,11 +125,11 @@ export function RouteForm({ onFinished }: RouteFormProps) {
       setIsSaving(false);
     }
   };
-
+  
   if (loading) {
     return <LoadingSpinner />;
   }
-
+  
   if (drivers.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-6">
