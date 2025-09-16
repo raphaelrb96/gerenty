@@ -177,6 +177,8 @@ export function RouteDetailsModal({
             setFines(0);
         }
     }
+    
+    const isFinalized = route.status === 'finalizada';
 
     const canFinalize = route.orders.every(o => o.status === 'delivered' || o.status === 'cancelled' || o.status === 'returned');
 
@@ -220,7 +222,7 @@ export function RouteDetailsModal({
                     <Separator />
                     <div className="space-y-2 ml-1 mb-10">
                         <Label htmlFor="route-notes">Anotações da Rota</Label>
-                        <Textarea id="route-notes" placeholder="Insira anotações importantes aqui..." defaultValue={route.notes}/>
+                        <Textarea id="route-notes" placeholder="Insira anotações importantes aqui..." defaultValue={route.notes} disabled={isFinalized}/>
                     </div>
                 </div>
                 <div className="md:col-span-2 space-y-4">
@@ -228,7 +230,7 @@ export function RouteDetailsModal({
                     <p className="text-sm text-muted-foreground">Atualize individualmente o status e pagamento de cada entrega.</p>
                     <Accordion type="multiple" className="w-full space-y-3">
                         {route.orders.map(order => (
-                            <OrderUpdateCard key={order.id} order={order} onUpdate={onRouteFinalized} />
+                            <OrderUpdateCard key={order.id} order={order} onUpdate={onRouteFinalized} isFinalized={isFinalized} />
                         ))}
                     </Accordion>
                 </div>
@@ -237,7 +239,7 @@ export function RouteDetailsModal({
           <DialogFooter className="pt-4 border-t flex-shrink-0 px-6 pb-6">
               <div className="flex justify-end w-full gap-2">
                   <Button variant="outline" onClick={onClose}>Fechar</Button>
-                  <Button onClick={handleOpenConfirmation} disabled={!canFinalize || route.status !== 'em_andamento'}>Finalizar Rota</Button>
+                  <Button onClick={handleOpenConfirmation} disabled={!canFinalize || isFinalized}>Finalizar Rota</Button>
               </div>
           </DialogFooter>
         </DialogContent>
@@ -361,7 +363,7 @@ const deliveryUpdateStatuses: OrderStatus[] = [
     'out_for_delivery', 'delivered', 'cancelled', 'returned'
 ];
 
-function OrderUpdateCard({ order, onUpdate }: { order: Order; onUpdate: () => void; }) {
+function OrderUpdateCard({ order, onUpdate, isFinalized }: { order: Order; onUpdate: () => void; isFinalized: boolean; }) {
     const { t } = useTranslation();
     const { formatCurrency } = useCurrency();
     const { toast } = useToast();
@@ -438,12 +440,12 @@ function OrderUpdateCard({ order, onUpdate }: { order: Order; onUpdate: () => vo
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <FormField control={form.control} name="status" render={({ field }) => (
-                                    <FormItem><FormLabel>Status da Entrega</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>
+                                    <FormItem><FormLabel>Status da Entrega</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isFinalized}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>
                                         {deliveryUpdateStatuses.map(s => <SelectItem key={s} value={s}>{t(`orderStatus.${s}`)}</SelectItem>)}
                                     </SelectContent></Select><FormMessage /></FormItem>
                                 )}/>
                                  <FormField control={form.control} name="paymentMethod" render={({ field }) => (
-                                    <FormItem><FormLabel>Forma de Pagamento</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>
+                                    <FormItem><FormLabel>Forma de Pagamento</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isFinalized}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>
                                         <SelectItem value="dinheiro">Dinheiro</SelectItem>
                                         <SelectItem value="credito">Crédito</SelectItem>
                                         <SelectItem value="debito">Débito</SelectItem>
@@ -460,14 +462,14 @@ function OrderUpdateCard({ order, onUpdate }: { order: Order; onUpdate: () => vo
                                     </SelectContent></Select><FormMessage /></FormItem>
                                 )}/>
                                 <FormField control={form.control} name="amountPaid" render={({ field }) => (
-                                    <FormItem><FormLabel>Valor Pago</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>Valor Pago</FormLabel><FormControl><Input type="number" {...field} disabled={isFinalized} /></FormControl><FormMessage /></FormItem>
                                 )}/>
                             </div>
                             <FormField control={form.control} name="notes" render={({ field }) => (
-                                <FormItem><FormLabel>Observações</FormLabel><FormControl><Textarea placeholder="ID da transação, motivo do cancelamento, etc." {...field} /></FormControl><FormMessage /></FormItem>
+                                <FormItem><FormLabel>Observações</FormLabel><FormControl><Textarea placeholder="ID da transação, motivo do cancelamento, etc." {...field} disabled={isFinalized} /></FormControl><FormMessage /></FormItem>
                             )}/>
                             <div className="flex justify-end">
-                                <Button type="submit" size="sm" disabled={isSaving}>
+                                <Button type="submit" size="sm" disabled={isSaving || isFinalized}>
                                     {isSaving ? <Loader2 className="h-4 w-4 animate-spin"/> : <Save className="h-4 w-4" />}
                                 </Button>
                             </div>
@@ -504,4 +506,5 @@ const getDeliveryStatusConfig = (status?: OrderStatus) => {
     
 
     
+
 
