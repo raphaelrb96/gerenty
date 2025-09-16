@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import * as React from "react";
@@ -124,6 +123,9 @@ export function RouteDetailsModal({
     const deliveredOrders = route.orders.filter(o => selectedOrders.includes(o.id));
     const returnedOrders = route.orders.filter(o => !selectedOrders.includes(o.id));
     const returnedItems = returnedOrders.flatMap(o => o.items.map(item => `${item.quantity}x ${item.productName}`));
+    
+    const canFinalize = route.orders.every(o => o.status === 'delivered' || o.status === 'cancelled');
+
 
   return (
     <>
@@ -182,7 +184,7 @@ export function RouteDetailsModal({
           <DialogFooter className="pt-4 border-t flex-shrink-0 px-6 pb-6">
               <div className="flex justify-end w-full gap-2">
                   <Button variant="outline" onClick={onClose}>Fechar</Button>
-                  <Button onClick={() => setShowConfirmation(true)} disabled={route.status !== 'em_andamento'}>Finalizar Rota</Button>
+                  <Button onClick={() => setShowConfirmation(true)} disabled={!canFinalize || route.status !== 'em_andamento'}>Finalizar Rota</Button>
               </div>
           </DialogFooter>
         </DialogContent>
@@ -369,5 +371,7 @@ const getDeliveryStatusConfig = (status?: OrderStatus) => {
             return { variant: 'bg-gray-600/20 text-gray-700 border-gray-500', icon: <Package className="mr-1 h-3 w-3" /> };
     }
 }
+
+    
 
     
