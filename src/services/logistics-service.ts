@@ -180,12 +180,14 @@ export async function finalizeRoute(routeId: string, deliveredOrderIds: string[]
             const isDelivered = deliveredOrderIds.includes(orderId);
 
             if (isDelivered) {
-                batch.update(orderRef, { status: 'delivered', completedAt: serverTimestamp() });
+                batch.update(orderRef, { status: 'completed', completedAt: serverTimestamp() });
             } else {
                 batch.update(orderRef, { status: 'returned' });
                 const isReverseLogistics = orderData.type === 'return' || orderData.type === 'exchange';
 
-                if (isReverseLogistics || orderData.status === 'returned') {
+                // Check original status for stock return logic.
+                // Only return to stock if it wasn't an item that was being picked up for return/exchange initially.
+                if (!isReverseLogistics) {
                      for (const item of orderData.items) {
                         const productRef = doc(db, 'products', item.productId);
                         const productSnap = await getDoc(productRef);
@@ -221,9 +223,11 @@ export async function updateDeliveryDetails(orderId: string, updates: { status: 
         }
     }
      if (updates.status === 'delivered') {
-        updateData.completedAt = serverTimestamp();
+        updateData['payment.status'] = 'aprovado';
+    } else if (updates.status === 'out_for_delivery') {
+        updateData['payment.status'] = 'aguardando';
     } else if (updates.status === 'cancelled' || updates.status === 'returned') {
-        updateData.cancelledAt = serverTimestamp();
+        updateData['payment.status'] = 'recusado';
     }
 
 
@@ -251,5 +255,7 @@ export async function updateDeliveryStatus(orderId: string, newStatus: OrderStat
         throw new Error("Failed to update delivery status.");
     }
 }
+
+    
 
     
