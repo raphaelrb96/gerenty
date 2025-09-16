@@ -222,11 +222,11 @@ const updateSchema = z.object({
   amountPaid: z.preprocess((a) => parseFloat(String(a || "0").replace(",", ".")), z.number().min(0)),
   notes: z.string().optional(),
 }).refine(data => {
-    if ((data.status === 'cancelled' || data.status === 'returned') && (!data.notes || data.notes.trim().length === 0)) {
-        return false;
+    if ((data.status === 'cancelled' || data.status === 'returned')) {
+        return data.notes && data.notes.trim().length > 0;
     }
-    if (data.paymentMethod !== 'dinheiro' && data.status === 'delivered' && (!data.notes || data.notes.trim().length === 0)) {
-        return false;
+    if (data.paymentMethod !== 'dinheiro' && data.status === 'delivered') {
+        return data.notes && data.notes.trim().length > 0;
     }
     return true;
 }, {
@@ -371,3 +371,4 @@ const getDeliveryStatusConfig = (status?: OrderStatus) => {
 }
 
     
+
