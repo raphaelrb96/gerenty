@@ -244,8 +244,8 @@ const deliveryUpdateStatuses: OrderStatus[] = [
 ];
 
 function OrderUpdateCard({ order, onUpdate }: { order: Order; onUpdate: () => void; }) {
-    const { formatCurrency } = useCurrency();
     const { t } = useTranslation();
+    const { formatCurrency } = useCurrency();
     const { toast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
     
@@ -261,6 +261,7 @@ function OrderUpdateCard({ order, onUpdate }: { order: Order; onUpdate: () => vo
     });
 
     const watchedStatus = form.watch('status');
+    const watchedPaymentMethod = form.watch('paymentMethod');
 
     useEffect(() => {
         if (watchedStatus === 'cancelled' || watchedStatus === 'returned') {
@@ -275,6 +276,13 @@ function OrderUpdateCard({ order, onUpdate }: { order: Order; onUpdate: () => vo
             form.setValue('amountPaid', order.total);
         }
     }, [watchedStatus, form, order.total]);
+    
+    useEffect(() => {
+        if (watchedPaymentMethod === 'dinheiro') {
+            form.setValue('paymentStatus', 'aguardando');
+        }
+    }, [watchedPaymentMethod, form]);
+
 
     const onSubmit = async (data: UpdateFormValues) => {
         setIsSaving(true);
@@ -326,14 +334,7 @@ function OrderUpdateCard({ order, onUpdate }: { order: Order; onUpdate: () => vo
                                         {deliveryUpdateStatuses.map(s => <SelectItem key={s} value={s}>{t(`orderStatus.${s}`)}</SelectItem>)}
                                     </SelectContent></Select><FormMessage /></FormItem>
                                 )}/>
-                                <FormField control={form.control} name="paymentStatus" render={({ field }) => (
-                                    <FormItem><FormLabel>Status do Pagamento</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>
-                                        <SelectItem value="aprovado">Aprovado</SelectItem>
-                                        <SelectItem value="recusado">Cancelado</SelectItem>
-                                        <SelectItem value="aguardando">Aguardando</SelectItem>
-                                    </SelectContent></Select><FormMessage /></FormItem>
-                                )}/>
-                                <FormField control={form.control} name="paymentMethod" render={({ field }) => (
+                                 <FormField control={form.control} name="paymentMethod" render={({ field }) => (
                                     <FormItem><FormLabel>Forma de Pagamento</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>
                                         <SelectItem value="dinheiro">Dinheiro</SelectItem>
                                         <SelectItem value="credito">Crédito</SelectItem>
@@ -341,6 +342,13 @@ function OrderUpdateCard({ order, onUpdate }: { order: Order; onUpdate: () => vo
                                         <SelectItem value="pix">PIX</SelectItem>
                                         <SelectItem value="link">Link</SelectItem>
                                         <SelectItem value="outros">Outros</SelectItem>
+                                    </SelectContent></Select><FormMessage /></FormItem>
+                                )}/>
+                                <FormField control={form.control} name="paymentStatus" render={({ field }) => (
+                                    <FormItem><FormLabel>Status do Pagamento</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={watchedPaymentMethod === 'dinheiro'}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>
+                                        <SelectItem value="aguardando">Aguardando</SelectItem>
+                                        <SelectItem value="aprovado">Aprovado</SelectItem>
+                                        <SelectItem value="recusado">Cancelado</SelectItem>
                                     </SelectContent></Select><FormMessage /></FormItem>
                                 )}/>
                                 <FormField control={form.control} name="amountPaid" render={({ field }) => (
@@ -378,9 +386,3 @@ const getDeliveryStatusConfig = (status?: OrderStatus) => {
             return { variant: 'bg-gray-600/20 text-gray-700 border-gray-500', icon: <Package className="mr-1 h-3 w-3" /> };
     }
 }
-
-    
-
-    
-
-    
