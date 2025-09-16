@@ -37,6 +37,11 @@ const priceRuleSchema = z.object({
   value: z.any().optional(),
 });
 
+const commissionSchema = z.object({
+    type: z.enum(['fixed', 'percentage']).default('fixed'),
+    value: z.preprocess((a) => parseFloat(String(a || "0").replace(",", ".")), z.number().min(0).optional()),
+});
+
 const formSchema = z.object({
   name: z.string().min(3, "O nome do produto deve ter pelo menos 3 caracteres."),
   slug: z.string().optional(),
@@ -44,12 +49,12 @@ const formSchema = z.object({
   sku: z.string().optional(),
   
   costPrice: z.preprocess((a) => parseFloat(String(a || "0").replace(",", ".")), z.number().min(0)),
-  commission: z.preprocess((a) => parseFloat(String(a || "0").replace(",", ".")), z.number().min(0).max(100).optional()),
-
+  
   pricing: z.array(z.object({
     label: z.string().min(1, "O rótulo é obrigatório"),
     price: z.preprocess((a) => parseFloat(String(a || "0").replace(",", ".")), z.number().min(0)),
     rule: priceRuleSchema.optional(),
+    commission: commissionSchema.optional(),
   })).min(1, "Adicione pelo menos um preço."),
 
   manageStock: z.boolean().default(true),
@@ -151,17 +156,6 @@ function PricingCalculatorCard({ control }: { control: Control<ProductFormValues
                         </FormItem>
                     )}
                 />
-                 <FormField
-                    control={control}
-                    name="commission"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Comissão (%)</FormLabel>
-                            <FormControl><Input type="number" placeholder="10" {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
                 <div className="grid grid-cols-2 gap-4">
                      <FormItem>
                         <FormLabel>Margem de Lucro (%)</FormLabel>
@@ -201,8 +195,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
             description: "",
             sku: "",
             costPrice: 0,
-            commission: 0,
-            pricing: [{ label: 'Padrão', price: 0, rule: { type: 'none' } }],
+            pricing: [{ label: 'Padrão', price: 0, rule: { type: 'none' }, commission: { type: 'fixed', value: 0 } }],
             manageStock: true,
             availableStock: 0,
             status: "available",
@@ -232,12 +225,12 @@ export function ProductFormNew({ product }: ProductFormProps) {
                 description: product.description ?? "",
                 sku: product.sku ?? "",
                 costPrice: product.costPrice ?? 0,
-                commission: product.commission ?? 0,
                 pricing: product.pricing?.map(p => ({ 
                     label: p.label, 
                     price: p.price, 
-                    rule: p.rule || { type: 'none' }
-                })) || [{ label: 'Padrão', price: 0, rule: { type: 'none' } }],
+                    rule: p.rule || { type: 'none' },
+                    commission: p.commission || { type: 'fixed', value: 0 }
+                })) || [{ label: 'Padrão', price: 0, rule: { type: 'none' }, commission: { type: 'fixed', value: 0 } }],
                 manageStock: stockIsManaged,
                 availableStock: stockIsManaged ? (product?.availableStock || 0) : 0,
                 status: product.status ?? "available",
@@ -431,18 +424,27 @@ export function ProductFormNew({ product }: ProductFormProps) {
                         <PricingCalculatorCard control={control} />
 
                         <Card>
-                            <CardHeader><CardTitle>Preços e Regras</CardTitle></CardHeader>
+                            <CardHeader><CardTitle>Preços, Regras e Comissões</CardTitle></CardHeader>
                             <CardContent className="space-y-4">
                                 {priceFields.map((field, index) => (
-                                    <div key={field.id} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-2 border rounded-md">
-                                        <FormField control={form.control} name={`pricing.${index}.label`} render={({ field }) => (<FormItem className="col-span-1 sm:col-span-2 md:col-span-3"><FormLabel>Rótulo</FormLabel><FormControl><Input placeholder="Varejo" {...field} disabled={index === 0} value={index === 0 ? "Padrão" : field.value} /></FormControl><FormMessage /></FormItem>)}/>
-                                        <FormField control={form.control} name={`pricing.${index}.price`} render={({ field }) => (<FormItem><FormLabel>Preço</FormLabel><FormControl><Input type="number" placeholder="99.90" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                                        <FormField control={form.control} name={`pricing.${index}.rule.type`} render={({ field }) => (<FormItem><FormLabel>Regra</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value} disabled={index === 0}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="none">Padrão (Sem Regra)</SelectItem><SelectItem value="minQuantity">Quantidade Mínima</SelectItem><SelectItem value="minCartValue">Valor Mínimo do Carrinho</SelectItem><SelectItem value="paymentMethod">Forma de Pagamento</SelectItem><SelectItem value="purchaseType">Tipo de Compra</SelectItem></SelectContent></Select><FormMessage /></FormItem>)}/>
-                                        <PriceRuleInput control={form.control} index={index} ruleType={watchedPricing[index]?.rule?.type ?? 'none'} />
-                                        {index > 0 && (<Button type="button" variant="destructive" size="icon" onClick={() => removePrice(index)} className="self-end"><Trash2 className="h-4 w-4" /></Button>)}
+                                    <div key={field.id} className="p-4 border rounded-md space-y-4">
+                                        <div className="flex justify-between items-center">
+                                            <p className="font-semibold">{index === 0 ? "Preço Padrão" : `Faixa de Preço ${index + 1}`}</p>
+                                            {index > 0 && (<Button type="button" variant="ghost" size="icon" onClick={() => removePrice(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>)}
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                                            <FormField control={form.control} name={`pricing.${index}.label`} render={({ field }) => (<FormItem><FormLabel>Rótulo</FormLabel><FormControl><Input placeholder="Varejo" {...field} disabled={index === 0} value={index === 0 ? "Padrão" : field.value} /></FormControl><FormMessage /></FormItem>)}/>
+                                            <FormField control={form.control} name={`pricing.${index}.price`} render={({ field }) => (<FormItem><FormLabel>Preço</FormLabel><FormControl><Input type="number" placeholder="99.90" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                            <FormField control={form.control} name={`pricing.${index}.rule.type`} render={({ field }) => (<FormItem><FormLabel>Regra</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value} disabled={index === 0}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="none">Padrão (Sem Regra)</SelectItem><SelectItem value="minQuantity">Quantidade Mínima</SelectItem><SelectItem value="minCartValue">Valor Mínimo do Carrinho</SelectItem><SelectItem value="paymentMethod">Forma de Pagamento</SelectItem><SelectItem value="purchaseType">Tipo de Compra</SelectItem></SelectContent></Select><FormMessage /></FormItem>)}/>
+                                            <PriceRuleInput control={form.control} index={index} ruleType={watchedPricing[index]?.rule?.type ?? 'none'} />
+                                        </div>
+                                         <div className="grid grid-cols-2 gap-4">
+                                            <FormField control={form.control} name={`pricing.${index}.commission.type`} render={({ field }) => (<FormItem><FormLabel>Tipo de Comissão</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="fixed">Fixo (R$)</SelectItem><SelectItem value="percentage">Porcentagem (%)</SelectItem></SelectContent></Select><FormMessage /></FormItem>)}/>
+                                            <FormField control={form.control} name={`pricing.${index}.commission.value`} render={({ field }) => (<FormItem><FormLabel>Valor da Comissão</FormLabel><FormControl><Input type="number" placeholder="10.00" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                        </div>
                                     </div>
                                 ))}
-                                <Button type="button" variant="outline" size="sm" onClick={() => appendPrice({ label: '', price: 0, rule: { type: 'none' } })}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Faixa de Preço</Button>
+                                <Button type="button" variant="outline" size="sm" onClick={() => appendPrice({ label: '', price: 0, rule: { type: 'none' }, commission: { type: 'fixed', value: 0 }  })}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Faixa de Preço</Button>
                             </CardContent>
                         </Card>
 

@@ -275,7 +275,11 @@ export type OrderItem = {
   unitPrice: number; // Preço unitário no momento da compra
   totalPrice: number; // Preço total (unitPrice * quantity)
   costPrice?: number; // Preço de custo do produto
-  commissionRate?: number; // Percentual de comissão do produto no momento da compra
+  
+  commission?: { // Comissão específica para este item no momento da venda
+      type: 'fixed' | 'percentage';
+      value: number;
+  };
 
   variant?: {
     name: string; // Nome da variação (ex: "Cor", "Tamanho")

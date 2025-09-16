@@ -315,8 +315,14 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
     }
 
     const orderCommission = cart.reduce((acc, item) => {
-        const commissionRate = item.commissionRate || 0;
-        return acc + (item.totalPrice * (commissionRate / 100));
+        const commissionConfig = item.commission;
+        if (!commissionConfig) return acc;
+
+        if (commissionConfig.type === 'fixed') {
+            return acc + (commissionConfig.value || 0) * item.quantity;
+        } else { // percentage
+            return acc + (item.totalPrice * ((commissionConfig.value || 0) / 100));
+        }
     }, 0);
 
     const orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'> = {
