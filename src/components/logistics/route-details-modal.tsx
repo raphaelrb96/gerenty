@@ -90,6 +90,7 @@ export function RouteDetailsModal({
 }: RouteDetailsModalProps) {
     const { formatCurrency } = useCurrency();
     const { t } = useTranslation();
+    const { toast } = useToast();
     const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
     const [isFinalizing, setIsFinalizing] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
@@ -301,8 +302,10 @@ const updateSchema = z.object({
   amountPaid: z.preprocess((a) => parseFloat(String(a || "0").replace(",", ".")), z.number().min(0)),
   notes: z.string().optional(),
 }).refine(data => {
-    if ((data.status === 'cancelled' || data.status === 'returned') && (!data.notes || data.notes.trim().length === 0)) {
-        return false;
+    if (data.status === 'cancelled' || data.status === 'returned') {
+        if (!data.notes || data.notes.trim().length === 0) {
+            return false;
+        }
     }
     return true;
 }, {
@@ -455,8 +458,6 @@ const getDeliveryStatusConfig = (status?: OrderStatus) => {
     
 
 
-
-    
 
     
 
