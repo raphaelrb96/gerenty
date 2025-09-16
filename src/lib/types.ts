@@ -65,9 +65,6 @@ export type Product = {
   // Preço de custo do produto
   costPrice?: number;
   
-  // Comissão do produto em porcentagem
-  commission?: number;
-
   // Preço do produto em diferentes faixas (ex: Varejo, Atacado)
   pricing: ProductPriceTier[];
 
@@ -173,6 +170,10 @@ export type ProductPriceTier = {
   rule?: {
     type: 'none' | 'minQuantity' | 'minCartValue' | 'paymentMethod' | 'purchaseType';
     value?: any; // Pode ser número (para quantidade/valor) ou string (para método)
+  };
+  commission?: {
+    type: 'fixed' | 'percentage';
+    value: number;
   };
 };
 
@@ -648,6 +649,16 @@ export interface Route {
       value: number;
   };
   
+  finalizationDetails?: {
+      settlementAmount: number;
+      settlementDirection: 'to_driver' | 'to_company';
+      driverFinalPayment: number;
+      deliveredCount: number;
+      returnedCount: number;
+      duration: string;
+      notes?: string;
+  };
+
   createdAt: string | Date | Timestamp | FieldValue;
   startedAt?: string | Date | Timestamp | FieldValue;
   finishedAt?: string | Date | Timestamp | FieldValue;

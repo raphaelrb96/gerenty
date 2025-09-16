@@ -29,6 +29,7 @@ import { CartItem } from "./cart-item";
 import { cn } from "@/lib/utils";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 
 const formSchema = z.object({
   customerName: z.string().min(2, "Nome do cliente é obrigatório."),
@@ -405,36 +406,47 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                 <form onSubmit={(e) => { e.preventDefault(); if (currentStep === 4) form.handleSubmit(onSubmit)(); }}>
                     {/* The rest of the form steps go inside this form tag */}
                     <div style={{ display: currentStep === 2 ? 'block' : 'none' }}>
-                        <div className="max-w-2xl mx-auto p-1">
+                        <div className="max-w-2xl mx-auto p-1 space-y-6">
                             {renderStepHeader("Informações do Cliente")}
-                            <div className="space-y-4">
-                                <CustomerSearch onCustomerSelect={handleCustomerSelect} />
-                                <Separator />
-                                <FormField control={form.control} name="employeeId" render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Vendedor</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                      <FormControl>
-                                        <SelectTrigger>
-                                          <SelectValue placeholder="Selecione um vendedor" />
-                                        </SelectTrigger>
-                                      </FormControl>
-                                      <SelectContent>
-                                        <SelectItem value="direct_sale">Venda Direta (Sem Vendedor)</SelectItem>
-                                        {salespeople.map(sp => (
-                                          <SelectItem key={sp.id} value={sp.id}>{sp.name}</SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}/>
-                                <p className="text-center text-sm text-muted-foreground">Ou preencha os dados manualmente</p>
-                                <FormField control={form.control} name="customerName" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.name')}</FormLabel><FormControl><Input placeholder={t('pos.customer.namePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                                <FormField control={form.control} name="customerPhone" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.phone')}</FormLabel><FormControl><Input placeholder="(00) 00000-0000" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                                <FormField control={form.control} name="customerEmail" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.email')} (Opcional)</FormLabel><FormControl><Input type="email" placeholder="email@cliente.com" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                                <FormField control={form.control} name="customerDocument" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.document')} (Opcional)</FormLabel><FormControl><Input placeholder="CPF ou CNPJ" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                            </div>
+                            <Card>
+                                <CardHeader><CardTitle>Buscar Cliente</CardTitle></CardHeader>
+                                <CardContent>
+                                    <CustomerSearch onCustomerSelect={handleCustomerSelect} />
+                                    <p className="text-center text-sm text-muted-foreground mt-4">Ou preencha os dados manualmente abaixo</p>
+                                </CardContent>
+                            </Card>
+                             <Card>
+                                <CardHeader><CardTitle>Vendedor</CardTitle></CardHeader>
+                                <CardContent>
+                                     <FormField control={form.control} name="employeeId" render={({ field }) => (
+                                      <FormItem>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                          <FormControl>
+                                            <SelectTrigger>
+                                              <SelectValue placeholder="Selecione um vendedor" />
+                                            </SelectTrigger>
+                                          </FormControl>
+                                          <SelectContent>
+                                            <SelectItem value="direct_sale">Venda Direta (Sem Vendedor)</SelectItem>
+                                            {salespeople.map(sp => (
+                                              <SelectItem key={sp.id} value={sp.id}>{sp.name}</SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}/>
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardHeader><CardTitle>Dados do Cliente</CardTitle></CardHeader>
+                                <CardContent className="space-y-4">
+                                    <FormField control={form.control} name="customerName" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.name')}</FormLabel><FormControl><Input placeholder={t('pos.customer.namePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                    <FormField control={form.control} name="customerPhone" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.phone')}</FormLabel><FormControl><Input placeholder="(00) 00000-0000" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                    <FormField control={form.control} name="customerEmail" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.email')} (Opcional)</FormLabel><FormControl><Input type="email" placeholder="email@cliente.com" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                    <FormField control={form.control} name="customerDocument" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.document')} (Opcional)</FormLabel><FormControl><Input placeholder="CPF ou CNPJ" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                </CardContent>
+                            </Card>
                         </div>
                     </div>
                     

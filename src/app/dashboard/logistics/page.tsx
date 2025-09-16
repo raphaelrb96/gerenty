@@ -12,7 +12,7 @@ import { useCompany } from "@/context/company-context";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import { Bar, BarChart as RechartsBarChart, Pie, PieChart as RechartsPieChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, Legend, Cell } from "recharts";
+import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { useCurrency } from "@/context/currency-context";
 import { subDays, format, eachDayOfInterval, startOfToday } from "date-fns";
@@ -37,21 +37,6 @@ const StatCard = ({ title, value, icon, description }: { title: string, value: s
         </CardContent>
     </Card>
 );
-
-const chartColors = ['#22c55e', '#f97316', '#3b82f6', '#8b5cf6'];
-const RADIAN = Math.PI / 180;
-const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name }: any) => {
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-    const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-    return (
-        <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central">
-            {`${(percent * 100).toFixed(0)}%`}
-        </text>
-    );
-};
-
 
 export default function LogisticsPage() {
     const { effectiveOwnerId } = useAuth();
@@ -191,29 +176,6 @@ export default function LogisticsPage() {
         return data;
     }, [routes]);
     
-    const paymentDistributionData = useMemo(() => {
-        const distribution: Record<string, number> = {
-            Dinheiro: 0,
-            Cartão: 0,
-            Pix: 0,
-            Online: 0,
-        };
-        activeRoutes.flatMap(r => r.orders).forEach(order => {
-            if (order.status === 'out_for_delivery') {
-                const methodName = t(`paymentMethods.${order.payment.method.toLowerCase()}`);
-                if (distribution[methodName] !== undefined) {
-                    distribution[methodName]++;
-                } else {
-                     switch (order.payment.method) {
-                        case 'credito': case 'debito': distribution['Cartão']++; break;
-                        default: distribution['Online']++; break;
-                    }
-                }
-            }
-        });
-        return Object.entries(distribution).map(([name, value]) => ({ name, value })).filter(d => d.value > 0);
-    }, [activeRoutes, t]);
-
     if (loading) {
         return <LoadingSpinner />;
     }
@@ -273,7 +235,7 @@ export default function LogisticsPage() {
 
 
                      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                        <Card className="lg:col-span-3">
+                        <Card className="lg:col-span-5">
                             <CardHeader>
                                 <CardTitle>{t('logistics.charts.performance.title')}</CardTitle>
                                 <CardDescription>{t('logistics.charts.performance.description')}</CardDescription>
@@ -288,31 +250,6 @@ export default function LogisticsPage() {
                                         <Bar dataKey="Entregas" fill="var(--color-Entregas)" radius={8} />
                                     </RechartsBarChart>
                                 </ChartContainer>
-                            </CardContent>
-                        </Card>
-                        <Card className="lg:col-span-2">
-                             <CardHeader>
-                                <CardTitle>{t('logistics.charts.payment.title')}</CardTitle>
-                                <CardDescription>{t('logistics.charts.payment.description')}</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                {paymentDistributionData.length > 0 ? (
-                                    <ChartContainer config={{}} className="h-[300px] w-full">
-                                        <RechartsPieChart>
-                                            <Pie data={paymentDistributionData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} labelLine={false} label={renderCustomizedLabel}>
-                                                {paymentDistributionData.map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
-                                                ))}
-                                            </Pie>
-                                            <Tooltip content={<ChartTooltipContent />} />
-                                            <Legend />
-                                        </RechartsPieChart>
-                                    </ChartContainer>
-                                ) : (
-                                    <div className="h-[300px] flex items-center justify-center">
-                                        <EmptyState icon={<DollarSign className="h-12 w-12" />} title={t('logistics.charts.payment.empty.title')} description={t('logistics.charts.payment.empty.description')} />
-                                    </div>
-                                )}
                             </CardContent>
                         </Card>
                     </div>
