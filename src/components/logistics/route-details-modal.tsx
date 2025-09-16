@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -266,8 +267,14 @@ function OrderUpdateCard({ order, onUpdate }: { order: Order; onUpdate: () => vo
             form.setValue('paymentStatus', 'recusado');
             form.setValue('amountPaid', 0);
             form.setValue('paymentMethod', 'outros');
+        } else if (watchedStatus === 'delivered') {
+            form.setValue('paymentStatus', 'aprovado');
+            form.setValue('amountPaid', order.total);
+        } else if (watchedStatus === 'out_for_delivery') {
+            form.setValue('paymentStatus', 'aguardando');
+            form.setValue('amountPaid', order.total);
         }
-    }, [watchedStatus, form]);
+    }, [watchedStatus, form, order.total]);
 
     const onSubmit = async (data: UpdateFormValues) => {
         setIsSaving(true);
@@ -298,7 +305,7 @@ function OrderUpdateCard({ order, onUpdate }: { order: Order; onUpdate: () => vo
          <Card className="p-0 border-l-4" style={{ borderColor: getDeliveryStatusConfig(form.watch('status')).variant.match(/bg-(.*?)\-/)?.[1] }}>
             <AccordionItem value={order.id} className="border-b-0">
                 <AccordionTrigger className="p-3 text-left hover:no-underline">
-                     <div className="flex-1 space-y-1">
+                    <div className="flex-1 space-y-1">
                         <p className="font-semibold text-sm leading-tight">{order.customer.name}</p>
                         <p className="text-xs text-muted-foreground truncate" title={`${firstItem.quantity}x ${firstItem.productName} ${moreItemsCount > 0 ? `(+${moreItemsCount} itens)` : ''}`}>
                             {firstItem.quantity}x {firstItem.productName} {moreItemsCount > 0 ? `(+${moreItemsCount} itens)` : ''}
@@ -371,6 +378,8 @@ const getDeliveryStatusConfig = (status?: OrderStatus) => {
             return { variant: 'bg-gray-600/20 text-gray-700 border-gray-500', icon: <Package className="mr-1 h-3 w-3" /> };
     }
 }
+
+    
 
     
 
