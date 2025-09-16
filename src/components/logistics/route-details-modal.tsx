@@ -38,7 +38,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { Route, Order, PaymentMethod, OrderStatus, PaymentDetails } from "@/lib/types";
 import { useCurrency } from "@/context/currency-context";
-import { User, Calendar, Truck, DollarSign, Clock, Box, Info, Pencil, AlertTriangle, PackageCheck, PackageX, Loader2, MapPin, Hourglass, Package, Save, CheckCircle, Ban } from "lucide-react";
+import { User, Calendar, Truck, DollarSign, Clock, Box, Info, Pencil, AlertTriangle, PackageCheck, PackageX, Loader2, MapPin, Hourglass, Package, Save, CheckCircle, Ban, ArrowDown, ArrowUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -94,7 +94,11 @@ export function RouteDetailsModal({
     const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
     const [isFinalizing, setIsFinalizing] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
-    const [driverEarning, setDriverEarning] = useState<number>(0);
+    
+    const [initialDriverEarning, setInitialDriverEarning] = useState<number>(0);
+    const [extraFees, setExtraFees] = useState<number>(0);
+    const [fines, setFines] = useState<number>(0);
+
     const [routeDuration, setRouteDuration] = useState<string>("");
     const [finalizationNotes, setFinalizationNotes] = useState("");
 
@@ -104,15 +108,15 @@ export function RouteDetailsModal({
         }
 
         return route.orders.reduce((acc, order) => {
-            if (order.status !== 'cancelled' && order.status !== 'returned') {
+            if (order.status === 'delivered') {
                  if (order.payment.method === 'pix') {
-                    acc.totalPix += order.total;
+                    acc.totalPix += order.payment.amountPaid || order.total;
                 } else if (order.payment.method === 'credito' || order.payment.method === 'debito') {
-                    acc.totalCard += order.total;
+                    acc.totalCard += order.payment.amountPaid || order.total;
                 } else if (order.payment.method === 'dinheiro') {
-                    acc.totalDinheiro += order.total;
+                    acc.totalDinheiro += order.payment.amountPaid || order.total;
                 } else if (order.payment.type === 'online') {
-                    acc.totalOnline += order.total;
+                    acc.totalOnline += order.payment.amountPaid || order.total;
                 }
             }
             return acc;
@@ -145,18 +149,20 @@ export function RouteDetailsModal({
         if (route) {
             const delivered = route.orders.filter(o => o.status === 'delivered');
             const calculatedEarnings = delivered.reduce((sum, order) => sum + (order.shippingCost || 0), 0);
-            setDriverEarning(calculatedEarnings);
+            setInitialDriverEarning(calculatedEarnings);
         }
         setShowConfirmation(true);
     };
 
+    const finalDriverPayment = initialDriverEarning + extraFees - fines;
+    const settlementDifference = financialSummary.totalDinheiro - finalDriverPayment;
 
     if (!route) return null;
     
     const handleFinalizeRoute = async () => {
         setIsFinalizing(true);
         try {
-            await finalizeRoute(route.id, selectedOrders, driverEarning, finalizationNotes);
+            await finalizeRoute(route.id, selectedOrders, finalDriverPayment, finalizationNotes);
             toast({ title: "Rota Finalizada", description: "A rota foi concluída e os status foram atualizados." });
             onRouteFinalized();
             onClose();
@@ -167,13 +173,15 @@ export function RouteDetailsModal({
             setIsFinalizing(false);
             setShowConfirmation(false);
             setFinalizationNotes("");
+            setExtraFees(0);
+            setFines(0);
         }
     }
 
-    const canFinalize = route.orders.every(o => o.status === 'delivered' || o.status === 'cancelled');
+    const canFinalize = route.orders.every(o => o.status === 'delivered' || o.status === 'cancelled' || o.status === 'returned');
 
     const deliveredCount = route.orders.filter(o => o.status === 'delivered').length;
-    const returnedCount = route.orders.filter(o => o.status === 'cancelled').length;
+    const returnedCount = route.orders.filter(o => o.status === 'cancelled' || o.status === 'returned').length;
 
 
   return (
@@ -243,7 +251,7 @@ export function RouteDetailsModal({
               Revise os detalhes do fechamento. Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="space-y-4 my-4 max-h-[50vh] overflow-y-auto p-1">
+          <div className="space-y-4 my-4 max-h-[60vh] overflow-y-auto p-1">
             <div className="rounded-lg border bg-card p-4 space-y-4">
                  <div className="grid grid-cols-3 gap-4 text-center">
                     <div>
@@ -261,16 +269,49 @@ export function RouteDetailsModal({
                  </div>
 
                 <Separator />
+                
+                <div className="space-y-2">
+                    <Label htmlFor="extra-fees">Taxas Extras (Bônus, Gorjeta)</Label>
+                    <Input id="extra-fees" type="number" placeholder="0.00" value={extraFees} onChange={(e) => setExtraFees(Number(e.target.value))}/>
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="fines">Multas (Dívidas, Perdas)</Label>
+                    <Input id="fines" type="number" placeholder="0.00" value={fines} onChange={(e) => setFines(Number(e.target.value))}/>
+                </div>
+                
+                <Separator />
 
                 <div>
                     <h4 className="font-semibold flex items-center gap-2 mb-2"><DollarSign className="h-5 w-5 text-green-500" /> Prestação de Contas</h4>
-                    <p>Valor total em dinheiro a ser recebido: <strong className="text-lg">{formatCurrency(financialSummary.totalDinheiro)}</strong></p>
+                    <div className="space-y-2">
+                        <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground">Taxa de Entrega Calculada:</span>
+                            <span className="font-medium">{formatCurrency(initialDriverEarning)}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground">Pagamento Final do Entregador:</span>
+                            <span className="font-bold text-base">{formatCurrency(finalDriverPayment)}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground">Total em Dinheiro Recebido:</span>
+                            <span className="font-bold text-base">{formatCurrency(financialSummary.totalDinheiro)}</span>
+                        </div>
+                         <Separator className="my-2"/>
+                         <div className={cn(
+                             "flex justify-between items-center text-lg p-2 rounded-md",
+                             settlementDifference >= 0 ? "bg-green-100 dark:bg-green-900/50" : "bg-red-100 dark:bg-red-900/50"
+                         )}>
+                            <div className="flex items-center gap-2">
+                                {settlementDifference >= 0 ? <ArrowDown className="h-5 w-5 text-green-600"/> : <ArrowUp className="h-5 w-5 text-red-600"/>}
+                                <span className="font-bold">
+                                    {settlementDifference >= 0 ? "Motorista Devolve:" : "Loja Paga:"}
+                                </span>
+                            </div>
+                            <span className="font-bold">{formatCurrency(Math.abs(settlementDifference))}</span>
+                        </div>
+                    </div>
                 </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="driver-earning">Pagamento do Entregador</Label>
-                    <Input id="driver-earning" type="number" placeholder="R$ 0,00" value={driverEarning} onChange={(e) => setDriverEarning(Number(e.target.value))}/>
-                    <p className="text-xs text-muted-foreground">Valor calculado com base nas taxas de entrega dos pedidos concluídos.</p>
-                </div>
+
                 <div className="space-y-2">
                     <Label htmlFor="finalization-notes">Observações de Fechamento</Label>
                     <Textarea 
@@ -317,7 +358,7 @@ const updateSchema = z.object({
 type UpdateFormValues = z.infer<typeof updateSchema>;
 
 const deliveryUpdateStatuses: OrderStatus[] = [
-    'out_for_delivery', 'delivered', 'cancelled'
+    'out_for_delivery', 'delivered', 'cancelled', 'returned'
 ];
 
 function OrderUpdateCard({ order, onUpdate }: { order: Order; onUpdate: () => void; }) {
@@ -347,7 +388,6 @@ function OrderUpdateCard({ order, onUpdate }: { order: Order; onUpdate: () => vo
         } else if (watchedStatus === 'cancelled' || watchedStatus === 'returned') {
             form.setValue('paymentStatus', 'recusado');
             form.setValue('amountPaid', 0);
-            form.setValue('paymentMethod', 'outros');
         }
     }, [watchedStatus, form, order.total]);
 
@@ -464,3 +504,4 @@ const getDeliveryStatusConfig = (status?: OrderStatus) => {
     
 
     
+
