@@ -337,15 +337,14 @@ function OrderUpdateCard({ order, onUpdate }: { order: Order; onUpdate: () => vo
     const watchedStatus = form.watch('status');
 
     useEffect(() => {
-        if (watchedStatus === 'cancelled' || watchedStatus === 'returned') {
+        if (watchedStatus === 'delivered') {
+            form.setValue('paymentStatus', 'aprovado');
+        } else if (watchedStatus === 'out_for_delivery') {
+            form.setValue('paymentStatus', 'aguardando');
+        } else if (watchedStatus === 'cancelled' || watchedStatus === 'returned') {
             form.setValue('paymentStatus', 'recusado');
             form.setValue('amountPaid', 0);
             form.setValue('paymentMethod', 'outros');
-        } else if (watchedStatus === 'delivered') {
-            form.setValue('paymentStatus', 'aprovado');
-            form.setValue('amountPaid', order.total);
-        } else if (watchedStatus === 'out_for_delivery') {
-            form.setValue('paymentStatus', 'aguardando');
         }
     }, [watchedStatus, form, order.total]);
 
@@ -411,7 +410,7 @@ function OrderUpdateCard({ order, onUpdate }: { order: Order; onUpdate: () => vo
                                     </SelectContent></Select><FormMessage /></FormItem>
                                 )}/>
                                 <FormField control={form.control} name="paymentStatus" render={({ field }) => (
-                                    <FormItem><FormLabel>Status do Pagamento</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>
+                                    <FormItem><FormLabel>Status do Pagamento</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>
                                         <SelectItem value="aguardando">Aguardando</SelectItem>
                                         <SelectItem value="aprovado">Aprovado</SelectItem>
                                         <SelectItem value="recusado">Cancelado</SelectItem>
@@ -456,6 +455,8 @@ const getDeliveryStatusConfig = (status?: OrderStatus) => {
     
 
 
+
+    
 
     
 
