@@ -49,6 +49,7 @@ const formSchema = z.object({
   sku: z.string().optional(),
   
   costPrice: z.preprocess((a) => parseFloat(String(a || "0").replace(",", ".")), z.number().min(0)),
+  extraCosts: z.preprocess((a) => parseFloat(String(a || "0").replace(",", ".")), z.number().min(0).optional()),
   
   pricing: z.array(z.object({
     label: z.string().min(1, "O rótulo é obrigatório"),
@@ -105,75 +106,36 @@ const PriceRuleInput = ({ control, index, ruleType }: { control: any, index: num
     }
 };
 
-function PricingCalculatorCard({ control }: { control: Control<ProductFormValues> }) {
-    const { setValue } = useFormContext<ProductFormValues>();
-    const costPrice = useWatch({ control, name: 'costPrice' });
-    const sellingPrice = useWatch({ control, name: 'pricing.0.price' });
-
-    const [profitMargin, setProfitMargin] = useState(0);
-    const [profitValue, setProfitValue] = useState(0);
-
-    const calculateFromPrices = useCallback(() => {
-        if (costPrice > 0 && sellingPrice > 0) {
-            const profit = sellingPrice - costPrice;
-            const margin = (profit / sellingPrice) * 100;
-            setProfitValue(parseFloat(profit.toFixed(2)));
-            setProfitMargin(parseFloat(margin.toFixed(2)));
-        } else {
-            setProfitValue(0);
-            setProfitMargin(0);
-        }
-    }, [costPrice, sellingPrice]);
-
-    useEffect(() => {
-        calculateFromPrices();
-    }, [costPrice, sellingPrice, calculateFromPrices]);
-
-    const handleMarginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newMargin = parseFloat(e.target.value) || 0;
-        setProfitMargin(newMargin);
-        if (costPrice > 0 && newMargin < 100) {
-            const newSellingPrice = costPrice / (1 - newMargin / 100);
-            setValue('pricing.0.price', parseFloat(newSellingPrice.toFixed(2)), { shouldValidate: true });
-        }
-    };
+const ProfitCalculator = ({ priceTier, costPrice, extraCosts }: { priceTier: any, costPrice: number, extraCosts: number }) => {
+    const sellingPrice = priceTier.price || 0;
+    const commissionType = priceTier.commission?.type || 'fixed';
+    const commissionValue = priceTier.commission?.value || 0;
     
+    const commissionAmount = commissionType === 'percentage' 
+        ? sellingPrice * (commissionValue / 100) 
+        : commissionValue;
+
+    const totalCost = (costPrice || 0) + (extraCosts || 0) + commissionAmount;
+    const profit = sellingPrice - totalCost;
+    const margin = sellingPrice > 0 ? (profit / sellingPrice) * 100 : 0;
+
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Custo e Lucro</CardTitle>
-                <CardDescription>Defina seu custo para calcular a margem de lucro.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <FormField
-                    control={control}
-                    name="costPrice"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Preço de Custo</FormLabel>
-                            <FormControl><Input type="number" placeholder="19.90" {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <div className="grid grid-cols-2 gap-4">
-                     <FormItem>
-                        <FormLabel>Margem de Lucro (%)</FormLabel>
-                        <FormControl>
-                            <Input type="number" placeholder="100" value={profitMargin} onChange={handleMarginChange} />
-                        </FormControl>
-                    </FormItem>
-                    <FormItem>
-                        <FormLabel>Lucro (R$)</FormLabel>
-                        <FormControl>
-                            <Input type="number" value={profitValue} disabled className="font-bold" />
-                        </FormControl>
-                    </FormItem>
-                </div>
-            </CardContent>
-        </Card>
+        <div className="grid grid-cols-2 gap-4 mt-2">
+            <FormItem>
+                <FormLabel>Lucro (R$)</FormLabel>
+                <FormControl>
+                    <Input type="number" value={profit.toFixed(2)} disabled className="font-bold text-base" />
+                </FormControl>
+            </FormItem>
+            <FormItem>
+                <FormLabel>Margem (%)</FormLabel>
+                <FormControl>
+                    <Input type="number" value={margin.toFixed(2)} disabled className="font-bold text-base" />
+                </FormControl>
+            </FormItem>
+        </div>
     );
-}
+};
 
 
 export function ProductFormNew({ product }: ProductFormProps) {
@@ -195,6 +157,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
             description: "",
             sku: "",
             costPrice: 0,
+            extraCosts: 0,
             pricing: [{ label: 'Padrão', price: 0, rule: { type: 'none' }, commission: { type: 'fixed', value: 0 } }],
             manageStock: true,
             availableStock: 0,
@@ -215,6 +178,9 @@ export function ProductFormNew({ product }: ProductFormProps) {
 
     const watchManageStock = form.watch("manageStock");
     const watchedPricing = form.watch("pricing");
+    const watchedCostPrice = form.watch("costPrice");
+    const watchedExtraCosts = form.watch("extraCosts");
+
 
     useEffect(() => {
         if (product) {
@@ -225,6 +191,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
                 description: product.description ?? "",
                 sku: product.sku ?? "",
                 costPrice: product.costPrice ?? 0,
+                extraCosts: product.extraCosts ?? 0,
                 pricing: product.pricing?.map(p => ({ 
                     label: p.label, 
                     price: p.price, 
@@ -421,11 +388,29 @@ export function ProductFormNew({ product }: ProductFormProps) {
                             </CardContent>
                         </Card>
                         
-                        <PricingCalculatorCard control={control} />
-
-                        <Card>
-                            <CardHeader><CardTitle>Preços, Regras e Comissões</CardTitle></CardHeader>
+                         <Card>
+                            <CardHeader>
+                                <CardTitle>Custos, Lucro e Preços</CardTitle>
+                                <CardDescription>Defina seus custos e as faixas de preço para este produto.</CardDescription>
+                            </CardHeader>
                             <CardContent className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FormField control={form.control} name="costPrice" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Preço de Custo</FormLabel>
+                                            <FormControl><Input type="number" placeholder="19.90" {...field} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}/>
+                                     <FormField control={form.control} name="extraCosts" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Custos Extras (p/ un.)</FormLabel>
+                                            <FormControl><Input type="number" placeholder="1.50" {...field} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}/>
+                                </div>
+                                <Separator />
                                 {priceFields.map((field, index) => (
                                     <div key={field.id} className="p-4 border rounded-md space-y-4">
                                         <div className="flex justify-between items-center">
@@ -434,7 +419,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
                                         </div>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                                             <FormField control={form.control} name={`pricing.${index}.label`} render={({ field }) => (<FormItem><FormLabel>Rótulo</FormLabel><FormControl><Input placeholder="Varejo" {...field} disabled={index === 0} value={index === 0 ? "Padrão" : field.value} /></FormControl><FormMessage /></FormItem>)}/>
-                                            <FormField control={form.control} name={`pricing.${index}.price`} render={({ field }) => (<FormItem><FormLabel>Preço</FormLabel><FormControl><Input type="number" placeholder="99.90" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                            <FormField control={form.control} name={`pricing.${index}.price`} render={({ field }) => (<FormItem><FormLabel>Preço de Venda</FormLabel><FormControl><Input type="number" placeholder="99.90" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                                             <FormField control={form.control} name={`pricing.${index}.rule.type`} render={({ field }) => (<FormItem><FormLabel>Regra</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value} disabled={index === 0}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="none">Padrão (Sem Regra)</SelectItem><SelectItem value="minQuantity">Quantidade Mínima</SelectItem><SelectItem value="minCartValue">Valor Mínimo do Carrinho</SelectItem><SelectItem value="paymentMethod">Forma de Pagamento</SelectItem><SelectItem value="purchaseType">Tipo de Compra</SelectItem></SelectContent></Select><FormMessage /></FormItem>)}/>
                                             <PriceRuleInput control={form.control} index={index} ruleType={watchedPricing[index]?.rule?.type ?? 'none'} />
                                         </div>
@@ -442,11 +427,17 @@ export function ProductFormNew({ product }: ProductFormProps) {
                                             <FormField control={form.control} name={`pricing.${index}.commission.type`} render={({ field }) => (<FormItem><FormLabel>Tipo de Comissão</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="fixed">Fixo (R$)</SelectItem><SelectItem value="percentage">Porcentagem (%)</SelectItem></SelectContent></Select><FormMessage /></FormItem>)}/>
                                             <FormField control={form.control} name={`pricing.${index}.commission.value`} render={({ field }) => (<FormItem><FormLabel>Valor da Comissão</FormLabel><FormControl><Input type="number" placeholder="10.00" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                                         </div>
+                                        <ProfitCalculator 
+                                            priceTier={watchedPricing[index]} 
+                                            costPrice={watchedCostPrice} 
+                                            extraCosts={watchedExtraCosts || 0}
+                                        />
                                     </div>
                                 ))}
                                 <Button type="button" variant="outline" size="sm" onClick={() => appendPrice({ label: '', price: 0, rule: { type: 'none' }, commission: { type: 'fixed', value: 0 }  })}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Faixa de Preço</Button>
                             </CardContent>
                         </Card>
+
 
                         <Card>
                             <CardHeader><CardTitle>Atributos e Variações</CardTitle></CardHeader>
@@ -507,3 +498,4 @@ export function ProductFormNew({ product }: ProductFormProps) {
 }
 
     
+

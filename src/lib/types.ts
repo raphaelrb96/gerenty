@@ -65,6 +65,8 @@ export type Product = {
   // Preço de custo do produto
   costPrice?: number;
   
+  extraCosts?: number;
+  
   // Preço do produto em diferentes faixas (ex: Varejo, Atacado)
   pricing: ProductPriceTier[];
 
@@ -706,3 +708,4 @@ export type Webhook = {
 }
 
     
+
