@@ -231,6 +231,8 @@ export type Order = {
   companyId: string; // Empresa responsável por este pedido
   catalogId?: string; // Catálogo relacionado, se aplicável
   employeeId?: string; // ID do funcionário (vendedor) que realizou a venda
+  
+  type?: 'sale' | 'exchange' | 'return'; // Tipo do pedido
 
   customer: OrderCustomer; // Dados do cliente no momento do pedido
   items: OrderItem[]; // Lista de itens comprados
@@ -295,7 +297,9 @@ export type OrderStatus =
   | 'completed'         // Pedido finalizado (pós-entrega, sem pendências).
   | 'cancelled'         // Pedido cancelado.
   | 'refunded'          // Pedido reembolsado.
-  | 'returned';         // Pedido devolvido pelo cliente.
+  | 'returned'          // Pedido devolvido pelo cliente.
+  | 'exchange'          // Pedido de troca.
+  | 'return';           // Pedido de devolução.
 
 
 // Meios de pagamento disponíveis

@@ -1,4 +1,5 @@
 
+
 import type { OrderStatus } from './types';
 
 export const ALL_ORDER_STATUSES: OrderStatus[] = [
@@ -10,7 +11,9 @@ export const ALL_ORDER_STATUSES: OrderStatus[] = [
   "completed", 
   "cancelled", 
   "refunded", 
-  "returned"
+  "returned",
+  "exchange",
+  "return",
 ];
 
 export const DELIVERY_KANBAN_STATUSES: OrderStatus[] = [

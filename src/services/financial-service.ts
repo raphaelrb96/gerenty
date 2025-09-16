@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { getOrdersForCompanies } from './order-service';
@@ -18,7 +19,9 @@ export async function getFinancialData(companyIds: string[], from: Date, to: Dat
 
     const completedOrdersInDateRange = orders.filter(order => {
         const orderDate = new Date(order.createdAt as string);
-        return order.status === 'completed' && orderDate >= startOfDay(from) && orderDate <= endOfDay(to);
+        // Only include actual sales in financial calculations
+        const isSale = !order.type || order.type === 'sale';
+        return isSale && order.status === 'completed' && orderDate >= startOfDay(from) && orderDate <= endOfDay(to);
     });
 
     const netRevenue = completedOrdersInDateRange.reduce((sum, order) => sum + order.total, 0);

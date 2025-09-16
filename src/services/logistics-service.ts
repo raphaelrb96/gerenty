@@ -166,16 +166,23 @@ export async function finalizeRoute(routeId: string, deliveredOrderIds: string[]
 
         for (const orderId of allOrderIdsInRoute) {
             const orderRef = doc(db, "orders", orderId);
+            const orderSnap = await getDoc(orderRef);
+            if (!orderSnap.exists()) continue; // Skip if order somehow doesn't exist
 
-            if (deliveredOrderIds.includes(orderId)) {
+            const orderData = orderSnap.data() as Order;
+            const isDelivered = deliveredOrderIds.includes(orderId);
+
+            if (isDelivered) {
                 batch.update(orderRef, { status: 'delivered', completedAt: serverTimestamp() });
             } else {
+                // If not delivered, it's considered returned
                 batch.update(orderRef, { status: 'returned' });
 
-                const orderSnap = await getDoc(orderRef);
-                if (orderSnap.exists()) {
-                    const orderData = orderSnap.data() as Order;
-                    for (const item of orderData.items) {
+                // For any return or exchange, items go back into stock.
+                const isReverseLogistics = orderData.type === 'return' || orderData.type === 'exchange';
+
+                if (isReverseLogistics || orderData.status === 'returned') {
+                     for (const item of orderData.items) {
                         const productRef = doc(db, 'products', item.productId);
                         // Increment stock only if manageStock is a number
                         const productSnap = await getDoc(productRef);
