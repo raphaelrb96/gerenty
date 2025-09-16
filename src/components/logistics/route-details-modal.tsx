@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import * as React from "react";
@@ -80,7 +79,6 @@ export function RouteDetailsModal({
   onRouteFinalized
 }: RouteDetailsModalProps) {
     const { formatCurrency } = useCurrency();
-    const { toast } = useToast();
     const { t } = useTranslation();
     const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
     const [isFinalizing, setIsFinalizing] = useState(false);
@@ -228,7 +226,8 @@ const updateSchema = z.object({
 type UpdateFormValues = z.infer<typeof updateSchema>;
 
 function OrderUpdateCard({ order, onUpdate }: { order: Order; onUpdate: () => void; }) {
-    const { formatCurrency, t } = useCurrency();
+    const { formatCurrency } = useCurrency();
+    const { t } = useTranslation();
     const { toast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
     
