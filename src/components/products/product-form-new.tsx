@@ -107,15 +107,15 @@ const PriceRuleInput = ({ control, index, ruleType }: { control: any, index: num
 };
 
 const ProfitCalculator = ({ priceTier, costPrice, extraCosts }: { priceTier: any, costPrice: number, extraCosts: number }) => {
-    const sellingPrice = priceTier.price || 0;
+    const sellingPrice = Number(priceTier.price) || 0;
     const commissionType = priceTier.commission?.type || 'fixed';
-    const commissionValue = priceTier.commission?.value || 0;
+    const commissionValue = Number(priceTier.commission?.value) || 0;
     
     const commissionAmount = commissionType === 'percentage' 
         ? sellingPrice * (commissionValue / 100) 
         : commissionValue;
 
-    const totalCost = (costPrice || 0) + (extraCosts || 0) + commissionAmount;
+    const totalCost = (Number(costPrice) || 0) + (Number(extraCosts) || 0) + commissionAmount;
     const profit = sellingPrice - totalCost;
     const margin = sellingPrice > 0 ? (profit / sellingPrice) * 100 : 0;
 
@@ -498,5 +498,6 @@ export function ProductFormNew({ product }: ProductFormProps) {
 }
 
     
+
 
 
