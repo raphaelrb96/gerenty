@@ -320,6 +320,13 @@ function OrderUpdateCard({ order, onUpdate }: { order: Order; onUpdate: () => vo
     const watchedPaymentMethod = form.watch('paymentMethod');
 
     useEffect(() => {
+        // Rule 1: Cash payment always forces status to 'aguardando'
+        if (watchedPaymentMethod === 'dinheiro') {
+            form.setValue('paymentStatus', 'aguardando');
+            return; // Exit early to prevent other rules from overriding
+        }
+    
+        // Rule 2: Automate based on delivery status, but only if not cash
         if (watchedStatus === 'cancelled' || watchedStatus === 'returned') {
             form.setValue('paymentStatus', 'recusado');
             form.setValue('amountPaid', 0);
@@ -331,13 +338,7 @@ function OrderUpdateCard({ order, onUpdate }: { order: Order; onUpdate: () => vo
             form.setValue('paymentStatus', 'aguardando');
             form.setValue('amountPaid', order.total);
         }
-    }, [watchedStatus, form, order.total]);
-    
-    useEffect(() => {
-        if (watchedPaymentMethod === 'dinheiro') {
-            form.setValue('paymentStatus', 'aguardando');
-        }
-    }, [watchedPaymentMethod, form]);
+    }, [watchedStatus, watchedPaymentMethod, form, order.total]);
 
 
     const onSubmit = async (data: UpdateFormValues) => {
