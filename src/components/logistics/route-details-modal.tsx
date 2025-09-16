@@ -1,8 +1,9 @@
 
+
 "use client";
 
 import * as React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -47,7 +48,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/context/i18n-context";
-import { ALL_ORDER_STATUSES } from "@/lib/order-statuses";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
 
 
@@ -221,9 +221,24 @@ const updateSchema = z.object({
   paymentStatus: z.custom<PaymentDetails['status']>(),
   amountPaid: z.preprocess((a) => parseFloat(String(a || "0").replace(",", ".")), z.number().min(0)),
   notes: z.string().optional(),
+}).refine(data => {
+    if ((data.status === 'cancelled' || data.status === 'returned') && (!data.notes || data.notes.trim().length === 0)) {
+        return false;
+    }
+    if (data.paymentMethod !== 'dinheiro' && data.status === 'delivered' && (!data.notes || data.notes.trim().length === 0)) {
+        return false;
+    }
+    return true;
+}, {
+    message: "Observações são obrigatórias para este status ou forma de pagamento.",
+    path: ["notes"],
 });
 
 type UpdateFormValues = z.infer<typeof updateSchema>;
+
+const deliveryUpdateStatuses: OrderStatus[] = [
+    'out_for_delivery', 'delivered', 'cancelled', 'returned'
+];
 
 function OrderUpdateCard({ order, onUpdate }: { order: Order; onUpdate: () => void; }) {
     const { formatCurrency } = useCurrency();
@@ -241,6 +256,16 @@ function OrderUpdateCard({ order, onUpdate }: { order: Order; onUpdate: () => vo
             notes: order.payment.notes ?? '',
         },
     });
+
+    const watchedStatus = form.watch('status');
+
+    useEffect(() => {
+        if (watchedStatus === 'cancelled' || watchedStatus === 'returned') {
+            form.setValue('paymentStatus', 'recusado');
+            form.setValue('amountPaid', 0);
+            form.setValue('paymentMethod', 'outros');
+        }
+    }, [watchedStatus, form]);
 
     const onSubmit = async (data: UpdateFormValues) => {
         setIsSaving(true);
@@ -273,7 +298,9 @@ function OrderUpdateCard({ order, onUpdate }: { order: Order; onUpdate: () => vo
                 <AccordionTrigger className="p-3 text-left hover:no-underline">
                      <div className="flex-1 space-y-1">
                         <p className="font-semibold text-sm leading-tight">{order.customer.name}</p>
-                        <p className="text-xs text-muted-foreground truncate">{firstItem.quantity}x {firstItem.productName} {moreItemsCount > 0 ? `(+${moreItemsCount} itens)` : ''}</p>
+                        <p className="text-xs text-muted-foreground truncate" title={`${firstItem.quantity}x ${firstItem.productName} ${moreItemsCount > 0 ? `(+${moreItemsCount} itens)` : ''}`}>
+                            {firstItem.quantity}x {firstItem.productName} {moreItemsCount > 0 ? `(+${moreItemsCount} itens)` : ''}
+                        </p>
                         <p className="text-xs text-muted-foreground flex items-center gap-2">
                            <MapPin className="h-3 w-3" /> 
                            Bairro: {order.shipping?.address?.neighborhood || 'N/A'}
@@ -287,7 +314,7 @@ function OrderUpdateCard({ order, onUpdate }: { order: Order; onUpdate: () => vo
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <FormField control={form.control} name="status" render={({ field }) => (
                                     <FormItem><FormLabel>Status da Entrega</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>
-                                        {ALL_ORDER_STATUSES.map(s => <SelectItem key={s} value={s}>{t(`orderStatus.${s}`)}</SelectItem>)}
+                                        {deliveryUpdateStatuses.map(s => <SelectItem key={s} value={s}>{t(`orderStatus.${s}`)}</SelectItem>)}
                                     </SelectContent></Select><FormMessage /></FormItem>
                                 )}/>
                                 <FormField control={form.control} name="paymentStatus" render={({ field }) => (
