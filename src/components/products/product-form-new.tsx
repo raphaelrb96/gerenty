@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,6 +30,7 @@ import { MultiSelect } from "../ui/multi-select";
 import { Switch } from "../ui/switch";
 import { CategorySelector } from "./category-selector";
 import { CollectionSelector } from "./collection-selector";
+import { Separator } from "../ui/separator";
 
 const priceRuleSchema = z.object({
   type: z.enum(["none", "minQuantity", "minCartValue", "paymentMethod", "purchaseType"]),
@@ -498,4 +498,5 @@ export function ProductFormNew({ product }: ProductFormProps) {
 }
 
     
+
 
