@@ -335,16 +335,8 @@ function OrderUpdateCard({ order, onUpdate }: { order: Order; onUpdate: () => vo
     });
 
     const watchedStatus = form.watch('status');
-    const watchedPaymentMethod = form.watch('paymentMethod');
 
     useEffect(() => {
-        // Rule 1: Cash payment always forces status to 'aguardando' and is the highest priority
-        if (watchedPaymentMethod === 'dinheiro') {
-            form.setValue('paymentStatus', 'aguardando');
-            return; // Exit early to prevent other rules from overriding
-        }
-    
-        // Rule 2: Automate based on delivery status, but only if not cash
         if (watchedStatus === 'cancelled' || watchedStatus === 'returned') {
             form.setValue('paymentStatus', 'recusado');
             form.setValue('amountPaid', 0);
@@ -354,9 +346,8 @@ function OrderUpdateCard({ order, onUpdate }: { order: Order; onUpdate: () => vo
             form.setValue('amountPaid', order.total);
         } else if (watchedStatus === 'out_for_delivery') {
             form.setValue('paymentStatus', 'aguardando');
-            form.setValue('amountPaid', order.total);
         }
-    }, [watchedStatus, watchedPaymentMethod, form, order.total]);
+    }, [watchedStatus, form, order.total]);
 
 
     const onSubmit = async (data: UpdateFormValues) => {
@@ -420,7 +411,7 @@ function OrderUpdateCard({ order, onUpdate }: { order: Order; onUpdate: () => vo
                                     </SelectContent></Select><FormMessage /></FormItem>
                                 )}/>
                                 <FormField control={form.control} name="paymentStatus" render={({ field }) => (
-                                    <FormItem><FormLabel>Status do Pagamento</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={watchedPaymentMethod === 'dinheiro'}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>
+                                    <FormItem><FormLabel>Status do Pagamento</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>
                                         <SelectItem value="aguardando">Aguardando</SelectItem>
                                         <SelectItem value="aprovado">Aprovado</SelectItem>
                                         <SelectItem value="recusado">Cancelado</SelectItem>
@@ -465,6 +456,8 @@ const getDeliveryStatusConfig = (status?: OrderStatus) => {
     
 
 
+
+    
 
     
 
