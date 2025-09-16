@@ -57,8 +57,10 @@ export function OrderDetails({ order, onFinished, onStatusChange }: OrderDetails
   
   if (!order) return null;
 
+  const isStatusLocked = order.status === 'completed' || order.status === 'returned' || order.status === 'cancelled';
+
   const handleSave = async () => {
-    if (currentStatus && currentStatus !== order.status) {
+    if (currentStatus && currentStatus !== order.status && !isStatusLocked) {
         setIsSaving(true);
         await onStatusChange(order.id, currentStatus);
         setIsSaving(false);
@@ -154,7 +156,7 @@ export function OrderDetails({ order, onFinished, onStatusChange }: OrderDetails
 
             <div className="grid gap-4">
                 <div className="font-semibold">{t('orderDetails.updateStatus')}</div>
-                 <Select value={currentStatus} onValueChange={(value) => setCurrentStatus(value as OrderStatus)}>
+                 <Select value={currentStatus} onValueChange={(value) => setCurrentStatus(value as OrderStatus)} disabled={isStatusLocked}>
                     <SelectTrigger className={cn(currentStatus && getStatusVariant(currentStatus))}>
                         <SelectValue placeholder={t('orderDetails.selectStatus')} />
                     </SelectTrigger>
@@ -164,13 +166,16 @@ export function OrderDetails({ order, onFinished, onStatusChange }: OrderDetails
                         ))}
                     </SelectContent>
                 </Select>
+                 {isStatusLocked && (
+                    <p className="text-xs text-muted-foreground">O status de pedidos finalizados ou cancelados não pode ser alterado.</p>
+                )}
             </div>
         </div>
       </ScrollArea>
       <SheetFooter className="border-t pt-4 p-6 flex-shrink-0">
         <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={onFinished}>{t('orderDetails.close')}</Button>
-            <Button type="button" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} onClick={handleSave} disabled={isSaving}>
+            <Button type="button" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} onClick={handleSave} disabled={isSaving || isStatusLocked}>
                 {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {t('orderDetails.updateOrder')}
             </Button>
