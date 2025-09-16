@@ -3,7 +3,7 @@
 "use client";
 
 import * as React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -97,6 +97,29 @@ export function RouteDetailsModal({
     const [routeDuration, setRouteDuration] = useState<string>("");
     const [finalizationNotes, setFinalizationNotes] = useState("");
 
+    const financialSummary = useMemo(() => {
+        if (!route?.orders) {
+            return { totalPix: 0, totalCard: 0, totalDinheiro: 0, totalOnline: 0 };
+        }
+
+        return route.orders.reduce((acc, order) => {
+            if (order.status !== 'cancelled' && order.status !== 'returned') {
+                 if (order.payment.method === 'pix') {
+                    acc.totalPix += order.total;
+                } else if (order.payment.method === 'credito' || order.payment.method === 'debito') {
+                    acc.totalCard += order.total;
+                } else if (order.payment.method === 'dinheiro') {
+                    acc.totalDinheiro += order.total;
+                } else if (order.payment.type === 'online') {
+                    acc.totalOnline += order.total;
+                }
+            }
+            return acc;
+        }, { totalPix: 0, totalCard: 0, totalDinheiro: 0, totalOnline: 0 });
+
+    }, [route?.orders]);
+
+
     useEffect(() => {
         if (route) {
             setSelectedOrders(route.orders.filter(o => o.status === 'delivered').map(o => o.id));
@@ -146,11 +169,6 @@ export function RouteDetailsModal({
         }
     }
 
-    const totalPix = route.pixTotal || 0;
-    const totalCard = route.cardTotal || 0;
-    const totalDinheiro = route.cashTotal || 0;
-    const totalOnline = route.onlineTotal || 0;
-
     const canFinalize = route.orders.every(o => o.status === 'delivered' || o.status === 'cancelled');
 
     const deliveredCount = route.orders.filter(o => o.status === 'delivered').length;
@@ -185,10 +203,10 @@ export function RouteDetailsModal({
                     <Separator />
                     <div className="space-y-3">
                         <h4 className="font-semibold text-sm">Resumo Financeiro da Rota</h4>
-                        <StatCard title="Total em PIX" value={formatCurrency(totalPix)} icon={<Info className="h-5 w-5 text-blue-500" />} />
-                        <StatCard title="Total em Cartão" value={formatCurrency(totalCard)} icon={<Info className="h-5 w-5 text-orange-500" />} />
-                        <StatCard title="Total em Dinheiro" value={formatCurrency(totalDinheiro)} icon={<DollarSign className="h-5 w-5 text-green-500" />} />
-                        <StatCard title="Pagamentos Online" value={formatCurrency(totalOnline)} icon={<Info className="h-5 w-5 text-purple-500" />} />
+                        <StatCard title="Total em PIX" value={formatCurrency(financialSummary.totalPix)} icon={<Info className="h-5 w-5 text-blue-500" />} />
+                        <StatCard title="Total em Cartão" value={formatCurrency(financialSummary.totalCard)} icon={<Info className="h-5 w-5 text-orange-500" />} />
+                        <StatCard title="Total em Dinheiro" value={formatCurrency(financialSummary.totalDinheiro)} icon={<DollarSign className="h-5 w-5 text-green-500" />} />
+                        <StatCard title="Pagamentos Online" value={formatCurrency(financialSummary.totalOnline)} icon={<Info className="h-5 w-5 text-purple-500" />} />
                     </div>
                     <Separator />
                     <div className="space-y-2 ml-1 mb-10">
@@ -245,7 +263,7 @@ export function RouteDetailsModal({
 
                 <div>
                     <h4 className="font-semibold flex items-center gap-2 mb-2"><DollarSign className="h-5 w-5 text-green-500" /> Prestação de Contas</h4>
-                    <p>Valor total em dinheiro a ser recebido: <strong className="text-lg">{formatCurrency(totalDinheiro)}</strong></p>
+                    <p>Valor total em dinheiro a ser recebido: <strong className="text-lg">{formatCurrency(financialSummary.totalDinheiro)}</strong></p>
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="driver-earning">Pagamento do Entregador</Label>
@@ -320,7 +338,7 @@ function OrderUpdateCard({ order, onUpdate }: { order: Order; onUpdate: () => vo
     const watchedPaymentMethod = form.watch('paymentMethod');
 
     useEffect(() => {
-        // Rule 1: Cash payment always forces status to 'aguardando'
+        // Rule 1: Cash payment always forces status to 'aguardando' and is the highest priority
         if (watchedPaymentMethod === 'dinheiro') {
             form.setValue('paymentStatus', 'aguardando');
             return; // Exit early to prevent other rules from overriding
@@ -447,5 +465,7 @@ const getDeliveryStatusConfig = (status?: OrderStatus) => {
     
 
 
+
+    
 
     
