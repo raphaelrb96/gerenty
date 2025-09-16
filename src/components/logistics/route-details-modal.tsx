@@ -38,7 +38,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { Route, Order, PaymentMethod, OrderStatus, PaymentDetails } from "@/lib/types";
 import { useCurrency } from "@/context/currency-context";
-import { User, Calendar, Truck, DollarSign, Clock, Box, Info, Pencil, AlertTriangle, PackageCheck, PackageX, Loader2, MapPin, Hourglass, Package, Save } from "lucide-react";
+import { User, Calendar, Truck, DollarSign, Clock, Box, Info, Pencil, AlertTriangle, PackageCheck, PackageX, Loader2, MapPin, Hourglass, Package, Save, CheckCircle, Ban } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,6 +49,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/context/i18n-context";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
+import { formatDistanceStrict, intervalToDuration } from 'date-fns';
 
 
 type RouteDetailsModalProps = {
@@ -72,6 +73,15 @@ const StatCard = ({ title, value, icon }: { title: string, value: string, icon: 
     </Card>
 );
 
+const formatDuration = (duration: Duration) => {
+    const parts = [];
+    if (duration.hours) parts.push(`${duration.hours}h`);
+    if (duration.minutes) parts.push(`${duration.minutes}m`);
+    parts.push(`${duration.seconds}s`);
+    return parts.join(' ');
+}
+
+
 export function RouteDetailsModal({
   isOpen,
   onClose,
@@ -84,30 +94,47 @@ export function RouteDetailsModal({
     const [isFinalizing, setIsFinalizing] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [driverEarning, setDriverEarning] = useState<number>(0);
-    
+    const [routeDuration, setRouteDuration] = useState<string>("");
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (route) {
             setSelectedOrders(route.orders.filter(o => o.status === 'delivered').map(o => o.id));
         }
     }, [route]);
 
+     useEffect(() => {
+        let timer: NodeJS.Timeout;
+        if (showConfirmation && route?.createdAt) {
+            timer = setInterval(() => {
+                const duration = intervalToDuration({
+                    start: new Date(route.createdAt as string),
+                    end: new Date(),
+                });
+                setRouteDuration(formatDuration(duration));
+            }, 1000);
+        }
+        return () => clearInterval(timer);
+    }, [showConfirmation, route?.createdAt]);
+
+    const handleOpenConfirmation = () => {
+        if (route) {
+            const delivered = route.orders.filter(o => selectedOrders.includes(o.id));
+            const calculatedEarnings = delivered.reduce((sum, order) => sum + (order.shippingCost || 0), 0);
+            setDriverEarning(calculatedEarnings);
+        }
+        setShowConfirmation(true);
+    };
+
 
     if (!route) return null;
-    
-    const handleToggleOrder = (orderId: string) => {
-        setSelectedOrders(prev => 
-            prev.includes(orderId) ? prev.filter(id => id !== orderId) : [...prev, orderId]
-        );
-    }
     
     const handleFinalizeRoute = async () => {
         setIsFinalizing(true);
         try {
             await finalizeRoute(route.id, selectedOrders, driverEarning);
             toast({ title: "Rota Finalizada", description: "A rota foi concluída e os status foram atualizados." });
-            onRouteFinalized(); // Callback to refresh the Kanban board
-            onClose(); // Close the main modal
+            onRouteFinalized();
+            onClose();
         } catch (error) {
             console.error("Error finalizing route:", error);
             toast({ variant: "destructive", title: "Erro ao Finalizar", description: "Não foi possível finalizar a rota. Tente novamente." });
@@ -122,11 +149,10 @@ export function RouteDetailsModal({
     const totalDinheiro = route.cashTotal || 0;
     const totalOnline = route.onlineTotal || 0;
 
-    const deliveredOrders = route.orders.filter(o => selectedOrders.includes(o.id));
-    const returnedOrders = route.orders.filter(o => !selectedOrders.includes(o.id));
-    const returnedItems = returnedOrders.flatMap(o => o.items.map(item => `${item.quantity}x ${item.productName}`));
-    
     const canFinalize = route.orders.every(o => o.status === 'delivered' || o.status === 'cancelled');
+
+    const deliveredCount = selectedOrders.length;
+    const returnedCount = route.orders.length - deliveredCount;
 
 
   return (
@@ -182,7 +208,7 @@ export function RouteDetailsModal({
           <DialogFooter className="pt-4 border-t flex-shrink-0 px-6 pb-6">
               <div className="flex justify-end w-full gap-2">
                   <Button variant="outline" onClick={onClose}>Fechar</Button>
-                  <Button onClick={() => setShowConfirmation(true)} disabled={!canFinalize || route.status !== 'em_andamento'}>Finalizar Rota</Button>
+                  <Button onClick={handleOpenConfirmation} disabled={!canFinalize || route.status !== 'em_andamento'}>Finalizar Rota</Button>
               </div>
           </DialogFooter>
         </DialogContent>
@@ -193,18 +219,36 @@ export function RouteDetailsModal({
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar Fechamento da Rota?</AlertDialogTitle>
             <AlertDialogDescription>
-              Revise os detalhes do fechamento antes de confirmar. Esta ação não pode ser desfeita. Entregas marcadas como 'Entregue' serão confirmadas. Outras serão marcadas como 'Devolvido'.
+              Revise os detalhes do fechamento. Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="space-y-4 my-4 max-h-[40vh] overflow-y-auto">
+          <div className="space-y-4 my-4 max-h-[50vh] overflow-y-auto p-1">
             <div className="rounded-lg border bg-card p-4 space-y-4">
+                 <div className="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                        <p className="text-2xl font-bold">{deliveredCount}</p>
+                        <p className="text-xs text-muted-foreground flex items-center justify-center gap-1"><CheckCircle className="h-3 w-3 text-green-500"/> Entregues</p>
+                    </div>
+                     <div>
+                        <p className="text-2xl font-bold">{returnedCount}</p>
+                        <p className="text-xs text-muted-foreground flex items-center justify-center gap-1"><Ban className="h-3 w-3 text-red-500"/> Devolvidos</p>
+                    </div>
+                     <div>
+                        <p className="text-2xl font-bold">{routeDuration}</p>
+                        <p className="text-xs text-muted-foreground flex items-center justify-center gap-1"><Clock className="h-3 w-3"/> Duração</p>
+                    </div>
+                 </div>
+
+                <Separator />
+
                 <div>
                     <h4 className="font-semibold flex items-center gap-2 mb-2"><DollarSign className="h-5 w-5 text-green-500" /> Prestação de Contas</h4>
-                    <p>Valor total em dinheiro a ser recebido do entregador: <strong className="text-lg">{formatCurrency(totalDinheiro)}</strong></p>
+                    <p>Valor total em dinheiro a ser recebido: <strong className="text-lg">{formatCurrency(totalDinheiro)}</strong></p>
                 </div>
                  <div className="space-y-2">
-                    <Label htmlFor="driver-earning">Pagamento do Entregador (Opcional)</Label>
+                    <Label htmlFor="driver-earning">Pagamento do Entregador</Label>
                     <Input id="driver-earning" type="number" placeholder="R$ 0,00" value={driverEarning} onChange={(e) => setDriverEarning(Number(e.target.value))}/>
+                    <p className="text-xs text-muted-foreground">Valor calculado com base nas taxas de entrega dos pedidos concluídos.</p>
                 </div>
             </div>
           </div>
@@ -228,17 +272,15 @@ const updateSchema = z.object({
   amountPaid: z.preprocess((a) => parseFloat(String(a || "0").replace(",", ".")), z.number().min(0)),
   notes: z.string().optional(),
 }).refine(data => {
-    if ((data.status === 'cancelled' || data.status === 'returned')) {
-        return data.notes && data.notes.trim().length > 0;
-    }
-    if (data.paymentMethod !== 'dinheiro' && data.status === 'delivered') {
-        return data.notes && data.notes.trim().length > 0;
+    if ((data.status === 'cancelled' || data.status === 'returned') && (!data.notes || data.notes.trim().length === 0)) {
+        return false;
     }
     return true;
 }, {
-    message: "Observações são obrigatórias para este status ou forma de pagamento.",
+    message: "Observações são obrigatórias para este status.",
     path: ["notes"],
 });
+
 
 type UpdateFormValues = z.infer<typeof updateSchema>;
 
