@@ -272,7 +272,7 @@ function OrderUpdateCard({ order, onUpdate }: { order: Order; onUpdate: () => vo
                         <p className="font-semibold text-sm leading-tight">Pedido #{order.id.substring(0,7)} - {order.customer.name}</p>
                         <p className="text-xs text-muted-foreground flex items-center gap-2">
                            <MapPin className="h-3 w-3" /> 
-                           {order.shipping?.address?.street}, {order.shipping?.address?.neighborhood}
+                           Bairro: {order.shipping?.address?.neighborhood || 'N/A'}
                         </p>
                     </div>
                     <p className="font-bold text-base px-4">{formatCurrency(order.total)}</p>
