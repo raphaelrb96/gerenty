@@ -421,6 +421,17 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                                     <p className="text-center text-sm text-muted-foreground mt-4">Ou preencha os dados manualmente abaixo</p>
                                 </CardContent>
                             </Card>
+                            
+                            <Card>
+                                <CardHeader><CardTitle>Dados do Cliente</CardTitle></CardHeader>
+                                <CardContent className="space-y-4">
+                                    <FormField control={form.control} name="customerName" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.name')}</FormLabel><FormControl><Input placeholder={t('pos.customer.namePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                    <FormField control={form.control} name="customerPhone" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.phone')}</FormLabel><FormControl><Input placeholder="(00) 00000-0000" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                    <FormField control={form.control} name="customerEmail" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.email')} (Opcional)</FormLabel><FormControl><Input type="email" placeholder="email@cliente.com" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                    <FormField control={form.control} name="customerDocument" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.document')} (Opcional)</FormLabel><FormControl><Input placeholder="CPF ou CNPJ" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                </CardContent>
+                            </Card>
+
                              <Card>
                                 <CardHeader><CardTitle>Vendedor</CardTitle></CardHeader>
                                 <CardContent>
@@ -442,15 +453,6 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                                         <FormMessage />
                                       </FormItem>
                                     )}/>
-                                </CardContent>
-                            </Card>
-                            <Card>
-                                <CardHeader><CardTitle>Dados do Cliente</CardTitle></CardHeader>
-                                <CardContent className="space-y-4">
-                                    <FormField control={form.control} name="customerName" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.name')}</FormLabel><FormControl><Input placeholder={t('pos.customer.namePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                                    <FormField control={form.control} name="customerPhone" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.phone')}</FormLabel><FormControl><Input placeholder="(00) 00000-0000" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                                    <FormField control={form.control} name="customerEmail" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.email')} (Opcional)</FormLabel><FormControl><Input type="email" placeholder="email@cliente.com" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                                    <FormField control={form.control} name="customerDocument" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.document')} (Opcional)</FormLabel><FormControl><Input placeholder="CPF ou CNPJ" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                                 </CardContent>
                             </Card>
                         </div>
@@ -599,9 +601,9 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
             </Form>
         </main>
         
-        <footer className="fixed bottom-0 right-0 z-10 border-t bg-background/80 backdrop-blur-sm p-4 md:left-[var(--sidebar-width)] peer-data-[state=collapsed]:md:left-[var(--sidebar-width-icon)] transition-[left] ease-linear">
+        <footer className="fixed bottom-0 z-10 border-t bg-background/80 backdrop-blur-sm p-4 left-0 md:left-[var(--sidebar-width)] w-full peer-data-[state=collapsed]:md:left-[var(--sidebar-width-icon)] transition-[left] ease-linear">
              <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4">
-                <div className="flex items-center gap-1 sm:gap-2">
+                <div className="hidden sm:flex items-center gap-1 sm:gap-2">
                     <div className="flex items-center gap-1 sm:gap-2">
                     {steps.map((step, index) => (
                         <React.Fragment key={step.id}>
@@ -657,4 +659,3 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
     </div>
   );
 }
-
