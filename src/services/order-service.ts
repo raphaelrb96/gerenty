@@ -3,7 +3,7 @@
 'use server';
 
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where, addDoc, serverTimestamp, doc, updateDoc, Timestamp, and } from "firebase/firestore";
+import { collection, getDocs, query, where, addDoc, serverTimestamp, doc, updateDoc, Timestamp, and, getDoc } from "firebase/firestore";
 import type { Order, OrderStatus } from "@/lib/types";
 
 const ordersCollection = collection(db, "orders");
@@ -97,14 +97,14 @@ export async function addOrder(orderData: Omit<Order, 'id' | 'createdAt' | 'upda
 
         const docRef = await addDoc(ordersCollection, fullOrderData);
         
-        const newOrder: Order = {
-            id: docRef.id,
-            ...orderData,
-            createdAt: Timestamp.now(), // Use Firestore Timestamp for consistency
-            updatedAt: Timestamp.now()
-        } as Order;
+        // Fetch the newly created document to get the server-generated timestamps
+        const newDocSnap = await getDoc(docRef);
+        const newDocData = newDocSnap.data();
 
-        return newOrder;
+        return convertOrderTimestamps({
+            id: docRef.id,
+            ...newDocData
+        }) as Order;
 
     } catch (error) {
         console.error("Error adding order: ", error);
