@@ -8,9 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
 import { useTranslation } from "@/context/i18n-context";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 type ProductDetailsProps = {
     product: Product;
@@ -135,53 +134,48 @@ export function ProductDetails({ product, allCompanies, allCategories, allCollec
 
                 <div>
                     <h3 className="font-semibold mb-2 text-base">Preços e Lucratividade</h3>
-                    <div className="overflow-x-auto">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Rótulo</TableHead>
-                                    <TableHead>Preço</TableHead>
-                                    <TableHead>Regra</TableHead>
-                                    <TableHead>Comissão</TableHead>
-                                    <TableHead>Lucro</TableHead>
-                                    <TableHead>Margem</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {product.pricing.map((p, i) => {
-                                    const sellingPrice = p.price || 0;
-                                    const commissionType = p.commission?.type || 'fixed';
-                                    const commissionValue = p.commission?.value || 0;
-                                    const commissionAmount = commissionType === 'percentage' 
-                                        ? sellingPrice * (commissionValue / 100) 
-                                        : commissionValue;
-                                    
-                                    const totalCost = costPrice + extraCosts + commissionAmount;
-                                    const profit = sellingPrice - totalCost;
-                                    const margin = sellingPrice > 0 ? (profit / sellingPrice) * 100 : 0;
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {product.pricing.map((p, i) => {
+                            const sellingPrice = p.price || 0;
+                            const commissionType = p.commission?.type || 'fixed';
+                            const commissionValue = p.commission?.value || 0;
+                            const commissionAmount = commissionType === 'percentage' 
+                                ? sellingPrice * (commissionValue / 100) 
+                                : commissionValue;
+                            
+                            const totalCost = costPrice + extraCosts + commissionAmount;
+                            const profit = sellingPrice - totalCost;
+                            const margin = sellingPrice > 0 ? (profit / sellingPrice) * 100 : 0;
 
-                                    return (
-                                        <TableRow key={i}>
-                                            <TableCell>{p.label}</TableCell>
-                                            <TableCell>{formatCurrency(sellingPrice)}</TableCell>
-                                            <TableCell>
-                                                {p.rule?.type && p.rule.type !== 'none' 
-                                                    ? getFriendlyRuleName(p.rule.type, p.rule.value) 
-                                                    : 'N/A'
-                                                }
-                                            </TableCell>
-                                            <TableCell>
-                                                {commissionType === 'fixed' 
-                                                    ? formatCurrency(commissionValue) 
-                                                    : `${commissionValue.toFixed(2)}%`}
-                                            </TableCell>
-                                            <TableCell>{formatCurrency(profit)}</TableCell>
-                                            <TableCell>{margin.toFixed(2)}%</TableCell>
-                                        </TableRow>
-                                    )
-                                })}
-                            </TableBody>
-                        </Table>
+                            return (
+                                <Card key={i}>
+                                    <CardHeader className="p-4">
+                                        <div className="flex justify-between items-center">
+                                            <CardTitle className="text-base">{p.label}</CardTitle>
+                                            <p className="font-bold text-lg">{formatCurrency(sellingPrice)}</p>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="p-4 pt-0 space-y-2 text-xs">
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">Regra:</span>
+                                            <span>{p.rule?.type && p.rule.type !== 'none' ? getFriendlyRuleName(p.rule.type, p.rule.value) : 'N/A'}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">Comissão:</span>
+                                            <span>{commissionType === 'fixed' ? formatCurrency(commissionValue) : `${commissionValue.toFixed(2)}%`}</span>
+                                        </div>
+                                        <div className="flex justify-between font-semibold">
+                                            <span className="text-muted-foreground">Lucro:</span>
+                                            <span className={profit > 0 ? "text-green-600" : "text-red-600"}>{formatCurrency(profit)}</span>
+                                        </div>
+                                        <div className="flex justify-between font-semibold">
+                                            <span className="text-muted-foreground">Margem:</span>
+                                            <span className={margin > 0 ? "text-green-600" : "text-red-600"}>{margin.toFixed(2)}%</span>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            )
+                        })}
                     </div>
                 </div>
 
