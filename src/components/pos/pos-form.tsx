@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState } from "react";
@@ -106,6 +107,14 @@ export function PosForm({ cart, setCart }: PosFormProps) {
     setCart(cart.filter(item => item.productId !== productId));
   }
 
+  const handleUpdatePrice = (productId: string, newPrice: number) => {
+      setCart(cart.map(item => 
+          item.productId === productId 
+          ? { ...item, unitPrice: newPrice, totalPrice: newPrice * item.quantity }
+          : item
+      ));
+  };
+
 
   async function onSubmit(values: PosFormValues) {
     if (!user || !activeCompany) {
@@ -182,6 +191,7 @@ export function PosForm({ cart, setCart }: PosFormProps) {
                                     key={item.productId}
                                     item={item}
                                     onUpdateQuantity={handleUpdateQuantity}
+                                    onUpdatePrice={handleUpdatePrice}
                                     onRemove={handleRemoveFromCart}
                                 />
                             ))}

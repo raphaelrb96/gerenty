@@ -10,7 +10,8 @@ export interface FinancialData {
     netRevenue: number;
     totalCosts: number;
     grossProfit: number;
-    totalExpenses: number; // Placeholder for now
+    totalExpenses: number;
+    totalCommissions: number;
     revenueByPeriod: { period: string, total: number }[];
 }
 
@@ -19,7 +20,6 @@ export async function getFinancialData(companyIds: string[], from: Date, to: Dat
 
     const completedOrdersInDateRange = orders.filter(order => {
         const orderDate = new Date(order.createdAt as string);
-        // Only include actual sales in financial calculations
         const isSale = !order.type || order.type === 'sale';
         return isSale && order.status === 'completed' && orderDate >= startOfDay(from) && orderDate <= endOfDay(to);
     });
@@ -32,6 +32,8 @@ export async function getFinancialData(companyIds: string[], from: Date, to: Dat
     
     const grossProfit = netRevenue - totalCosts;
 
+    const totalCommissions = completedOrdersInDateRange.reduce((sum, order) => sum + (order.commission || 0), 0);
+
     // This will be replaced by data from a new 'expenses' collection in the future.
     const totalExpenses = 0; 
 
@@ -39,7 +41,6 @@ export async function getFinancialData(companyIds: string[], from: Date, to: Dat
     const revenueByPeriod: { [key: string]: number } = {};
     const days = eachDayOfInterval({ start: from, end: to });
     
-    // Determine date format based on range duration
     const dateFormat = differenceInDays(to, from) > 31 ? 'MMM/yy' : 'dd/MM';
 
     days.forEach(day => {
@@ -64,8 +65,7 @@ export async function getFinancialData(companyIds: string[], from: Date, to: Dat
         totalCosts,
         grossProfit,
         totalExpenses,
+        totalCommissions,
         revenueByPeriod: revenueChartData,
     };
 }
-
-    

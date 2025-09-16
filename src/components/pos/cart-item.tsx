@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import type { OrderItem } from "@/lib/types";
@@ -56,24 +57,24 @@ export function CartItem({ item, onUpdateQuantity, onUpdatePrice, onRemove }: Ca
                         <Plus className="h-3 w-3" />
                     </Button>
                 </div>
-                 <div className="mt-2 flex flex-col gap-2">
+                 <div className="mt-2 flex items-center justify-between gap-2">
                     <div className="relative w-28">
                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">R$</span>
                        <Input
                             type="number"
                             step="0.01"
-                            className="h-8 pl-7 font-bold text-sm"
+                            className="h-8 pl-7 text-sm"
                             value={item.unitPrice.toFixed(2)}
                             onChange={(e) => onUpdatePrice(item.productId, parseFloat(e.target.value) || 0)}
                         />
                     </div>
-                    <div className="flex justify-between items-center">
+                    <div className="flex flex-col items-end">
                         <p className="font-bold text-sm">{formatCurrency(item.totalPrice)}</p>
                         <Button
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            className="h-6 w-6 text-muted-foreground hover:text-destructive"
                             onClick={() => onRemove(item.productId)}
                         >
                             <Trash2 className="h-4 w-4" />

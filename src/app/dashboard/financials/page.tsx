@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -14,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { useCurrency } from "@/context/currency-context";
-import { DollarSign, ShoppingCart, TrendingUp, BarChart, TrendingDown, PlusCircle, Shield } from "lucide-react";
+import { DollarSign, ShoppingCart, TrendingUp, BarChart, TrendingDown, PlusCircle, Shield, Percent } from "lucide-react";
 import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { usePermissions } from "@/context/permissions-context";
@@ -105,7 +106,7 @@ export default function FinancialsPage() {
     }
     
     const revenueChartData = financialData?.revenueByPeriod.map(d => ({ name: d.period, Receita: d.total })) || [];
-    const netProfit = (financialData?.grossProfit || 0) - (financialData?.totalExpenses || 0);
+    const netProfit = (financialData?.grossProfit || 0) - (financialData?.totalExpenses || 0) - (financialData?.totalCommissions || 0);
 
     return (
         <div className="space-y-8">
@@ -131,10 +132,11 @@ export default function FinancialsPage() {
                 </CardContent>
             </Card>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
                 <StatCard title="Receita Bruta" value={formatCurrency(financialData?.netRevenue || 0)} icon={<DollarSign className="h-4 w-4 text-muted-foreground" />} />
                 <StatCard title="Lucro Bruto" value={formatCurrency(financialData?.grossProfit || 0)} icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />} />
-                <StatCard title="Despesas Totais" value={formatCurrency(financialData?.totalExpenses || 0)} icon={<TrendingDown className="h-4 w-4 text-muted-foreground" />} />
+                <StatCard title="Comissões" value={formatCurrency(financialData?.totalCommissions || 0)} icon={<Percent className="h-4 w-4 text-muted-foreground" />} />
+                <StatCard title="Despesas" value={formatCurrency(financialData?.totalExpenses || 0)} icon={<TrendingDown className="h-4 w-4 text-muted-foreground" />} />
                 <StatCard title="Lucro Líquido" value={formatCurrency(netProfit)} icon={<BarChart className="h-4 w-4 text-muted-foreground" />} />
             </div>
 

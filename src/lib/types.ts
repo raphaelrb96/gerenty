@@ -64,6 +64,9 @@ export type Product = {
   
   // Preço de custo do produto
   costPrice?: number;
+  
+  // Comissão do produto em porcentagem
+  commission?: number;
 
   // Preço do produto em diferentes faixas (ex: Varejo, Atacado)
   pricing: ProductPriceTier[];
@@ -239,6 +242,7 @@ export type Order = {
 
   status: OrderStatus; // Status atual do pedido
   payment: PaymentDetails; // Informações de pagamento
+
   shipping?: ShippingDetails; // Informações de entrega (caso não seja digital)
 
   subtotal: number; // Soma dos preços dos produtos (sem descontos ou frete)
@@ -247,6 +251,8 @@ export type Order = {
   taxas?: number;
   total: number; // Valor total final do pedido
 
+  commission?: number; // Valor total da comissão para o vendedor
+  
   notes?: string; // Notas internas ou observações do comprador
 
   createdAt: string | Date | Timestamp | FieldValue; // Data de criação do pedido
@@ -268,6 +274,7 @@ export type OrderItem = {
   unitPrice: number; // Preço unitário no momento da compra
   totalPrice: number; // Preço total (unitPrice * quantity)
   costPrice?: number; // Preço de custo do produto
+  commissionRate?: number; // Percentual de comissão do produto no momento da compra
 
   variant?: {
     name: string; // Nome da variação (ex: "Cor", "Tamanho")
@@ -317,7 +324,7 @@ export type PaymentMethod =
 export type PaymentDetails = {
   method: PaymentMethod; // Método selecionado
   type: 'presencial' | 'online';
-  status: 'aguardando' | 'aprovado' | 'recusado' | 'estornado';
+  status: 'aguardando' | 'aprovado' | 'recusado' | 'estornado' | 'parcial';
   transactionId?: string; // ID da transação no gateway
   paidAt?: Date; // Data de pagamento (se aprovado)
   installments?: number; // Número de parcelas (se aplicável)
@@ -607,9 +614,9 @@ export type Employee = {
         zipCode?: string;
     };
     performanceMetrics?: {
-        totalSales?: number;
-        ordersDelivered?: number;
-        commission?: number;
+        totalSalesValue?: number;
+        totalOrders?: number;
+        totalCommission?: number;
     };
     createdAt: string | Date | Timestamp | FieldValue;
     updatedAt: string | Date | Timestamp | FieldValue;

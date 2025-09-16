@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -127,6 +128,7 @@ export default function PosPage() {
           quantity: 1,
           unitPrice: product.pricing[0].price,
           totalPrice: product.pricing[0].price,
+          commissionRate: product.commission || 0,
           isDigital: false,
           imageUrl: product.images?.mainImage,
           costPrice: product.costPrice || 0,

@@ -11,7 +11,8 @@ import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { addOrder } from "@/services/order-service";
 import { getCustomersByUser, addCustomer, Customer } from "@/services/customer-service";
-import type { Product, OrderItem, OrderStatus, PaymentMethod, DeliveryMethod, Order, PaymentDetails } from "@/lib/types";
+import { getEmployeesByUser } from "@/services/employee-service";
+import type { Product, OrderItem, OrderStatus, PaymentMethod, DeliveryMethod, Order, PaymentDetails, Employee } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -35,6 +36,8 @@ const formSchema = z.object({
   customerPhone: z.string().min(1, "Telefone é obrigatório."),
   customerDocument: z.string().optional(),
   
+  employeeId: z.string().optional(),
+
   paymentMethod: z.enum(["credito", "debito", "pix", "dinheiro", "boleto", "link", "outros"]),
   paymentType: z.enum(["presencial", "online"]),
   paymentStatus: z.enum(["aguardando", "aprovado", "recusado", "estornado"]),
@@ -157,13 +160,24 @@ function CustomerSearch({ onCustomerSelect }: { onCustomerSelect: (customer: Cus
 
 export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuantity, onUpdateCartPrice, onRemoveFromCart, onClearCart }: PosFormStepperProps) {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, effectiveOwnerId } = useAuth();
   const { activeCompany } = useCompany();
   const { toast } = useToast();
   const { formatCurrency } = useCurrency();
   const [isSaving, setIsSaving] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+  const [salespeople, setSalespeople] = useState<Employee[]>([]);
+
+  useEffect(() => {
+    async function fetchSalespeople() {
+      if (effectiveOwnerId) {
+        const allEmployees = await getEmployeesByUser(effectiveOwnerId);
+        setSalespeople(allEmployees.filter(emp => emp.role === 'salesperson' && emp.isActive));
+      }
+    }
+    fetchSalespeople();
+  }, [effectiveOwnerId]);
 
   const form = useForm<PosFormValues>({
     resolver: zodResolver(formSchema),
@@ -172,6 +186,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
       customerEmail: "",
       customerPhone: "",
       customerDocument: "",
+      employeeId: "direct_sale",
       paymentMethod: "credito",
       paymentType: "presencial",
       paymentStatus: "aprovado",
@@ -298,9 +313,14 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
         paymentStatus = 'aguardando';
     }
 
+    const orderCommission = cart.reduce((acc, item) => {
+        const commissionRate = item.commissionRate || 0;
+        return acc + (item.totalPrice * (commissionRate / 100));
+    }, 0);
 
     const orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'> = {
         companyId: activeCompany.id,
+        employeeId: values.employeeId === 'direct_sale' ? undefined : values.employeeId,
         customer: { id: customerId, name: values.customerName, email: values.customerEmail || '', phone: values.customerPhone, document: values.customerDocument },
         items: cart.map(({imageUrl, ...item}) => item),
         status: orderStatus,
@@ -320,6 +340,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
         shippingCost: values.shippingCost,
         taxas: calculatedFees,
         total,
+        commission: orderCommission,
         notes: values.notes,
     };
 
@@ -389,6 +410,25 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                             <div className="space-y-4">
                                 <CustomerSearch onCustomerSelect={handleCustomerSelect} />
                                 <Separator />
+                                <FormField control={form.control} name="employeeId" render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Vendedor</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                      <FormControl>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Selecione um vendedor" />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        <SelectItem value="direct_sale">Venda Direta (Sem Vendedor)</SelectItem>
+                                        {salespeople.map(sp => (
+                                          <SelectItem key={sp.id} value={sp.id}>{sp.name}</SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}/>
                                 <p className="text-center text-sm text-muted-foreground">Ou preencha os dados manualmente</p>
                                 <FormField control={form.control} name="customerName" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.name')}</FormLabel><FormControl><Input placeholder={t('pos.customer.namePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>)}/>
                                 <FormField control={form.control} name="customerPhone" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.phone')}</FormLabel><FormControl><Input placeholder="(00) 00000-0000" {...field} /></FormControl><FormMessage /></FormItem>)}/>
@@ -599,3 +639,4 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
     </div>
   );
 }
+

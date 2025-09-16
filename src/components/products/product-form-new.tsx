@@ -44,6 +44,7 @@ const formSchema = z.object({
   sku: z.string().optional(),
   
   costPrice: z.preprocess((a) => parseFloat(String(a || "0").replace(",", ".")), z.number().min(0)),
+  commission: z.preprocess((a) => parseFloat(String(a || "0").replace(",", ".")), z.number().min(0).max(100).optional()),
 
   pricing: z.array(z.object({
     label: z.string().min(1, "O rótulo é obrigatório"),
@@ -150,6 +151,17 @@ function PricingCalculatorCard({ control }: { control: Control<ProductFormValues
                         </FormItem>
                     )}
                 />
+                 <FormField
+                    control={control}
+                    name="commission"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Comissão (%)</FormLabel>
+                            <FormControl><Input type="number" placeholder="10" {...field} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
                 <div className="grid grid-cols-2 gap-4">
                      <FormItem>
                         <FormLabel>Margem de Lucro (%)</FormLabel>
@@ -189,6 +201,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
             description: "",
             sku: "",
             costPrice: 0,
+            commission: 0,
             pricing: [{ label: 'Padrão', price: 0, rule: { type: 'none' } }],
             manageStock: true,
             availableStock: 0,
@@ -219,6 +232,7 @@ export function ProductFormNew({ product }: ProductFormProps) {
                 description: product.description ?? "",
                 sku: product.sku ?? "",
                 costPrice: product.costPrice ?? 0,
+                commission: product.commission ?? 0,
                 pricing: product.pricing?.map(p => ({ 
                     label: p.label, 
                     price: p.price, 
