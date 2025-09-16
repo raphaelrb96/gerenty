@@ -65,11 +65,8 @@ export function ProductDetails({ product, allCompanies, allCategories, allCollec
         }
     }
 
-
     const costPrice = product.costPrice || 0;
-    const sellingPrice = product.pricing?.[0]?.price || 0;
-    const profitValue = sellingPrice - costPrice;
-    const profitMargin = sellingPrice > 0 ? (profitValue / sellingPrice) * 100 : 0;
+    const extraCosts = product.extraCosts || 0;
 
     return (
         <div className="space-y-6">
@@ -130,37 +127,62 @@ export function ProductDetails({ product, allCompanies, allCategories, allCollec
                              <div><span className="font-medium">Estoque Atual:</span> <span className="text-muted-foreground">{product.availableStock}</span></div>
                          )}
                         <div><span className="font-medium">Preço de Custo:</span> <span className="text-muted-foreground">{formatCurrency(costPrice)}</span></div>
-                        <div><span className="font-medium">Lucro Bruto:</span> <span className="text-muted-foreground">{formatCurrency(profitValue)} ({profitMargin.toFixed(2)}%)</span></div>
+                        <div><span className="font-medium">Custos Extras (p/ un.):</span> <span className="text-muted-foreground">{formatCurrency(extraCosts)}</span></div>
                     </div>
                 </div>
 
                 <Separator />
 
                 <div>
-                    <h3 className="font-semibold mb-2 text-base">Preços e Regras</h3>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Rótulo</TableHead>
-                                <TableHead>Preço</TableHead>
-                                <TableHead>Regra</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {product.pricing.map((p, i) => (
-                                 <TableRow key={i}>
-                                    <TableCell>{p.label}</TableCell>
-                                    <TableCell>{formatCurrency(p.price)}</TableCell>
-                                    <TableCell>
-                                        {p.rule?.type && p.rule.type !== 'none' 
-                                            ? getFriendlyRuleName(p.rule.type, p.rule.value) 
-                                            : 'N/A'
-                                        }
-                                    </TableCell>
+                    <h3 className="font-semibold mb-2 text-base">Preços e Lucratividade</h3>
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Rótulo</TableHead>
+                                    <TableHead>Preço</TableHead>
+                                    <TableHead>Regra</TableHead>
+                                    <TableHead>Comissão</TableHead>
+                                    <TableHead>Lucro</TableHead>
+                                    <TableHead>Margem</TableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                            </TableHeader>
+                            <TableBody>
+                                {product.pricing.map((p, i) => {
+                                    const sellingPrice = p.price || 0;
+                                    const commissionType = p.commission?.type || 'fixed';
+                                    const commissionValue = p.commission?.value || 0;
+                                    const commissionAmount = commissionType === 'percentage' 
+                                        ? sellingPrice * (commissionValue / 100) 
+                                        : commissionValue;
+                                    
+                                    const totalCost = costPrice + extraCosts + commissionAmount;
+                                    const profit = sellingPrice - totalCost;
+                                    const margin = sellingPrice > 0 ? (profit / sellingPrice) * 100 : 0;
+
+                                    return (
+                                        <TableRow key={i}>
+                                            <TableCell>{p.label}</TableCell>
+                                            <TableCell>{formatCurrency(sellingPrice)}</TableCell>
+                                            <TableCell>
+                                                {p.rule?.type && p.rule.type !== 'none' 
+                                                    ? getFriendlyRuleName(p.rule.type, p.rule.value) 
+                                                    : 'N/A'
+                                                }
+                                            </TableCell>
+                                            <TableCell>
+                                                {commissionType === 'fixed' 
+                                                    ? formatCurrency(commissionValue) 
+                                                    : `${commissionValue.toFixed(2)}%`}
+                                            </TableCell>
+                                            <TableCell>{formatCurrency(profit)}</TableCell>
+                                            <TableCell>{margin.toFixed(2)}%</TableCell>
+                                        </TableRow>
+                                    )
+                                })}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </div>
 
                  <div>
