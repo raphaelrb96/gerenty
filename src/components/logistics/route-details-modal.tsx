@@ -237,7 +237,7 @@ const updateSchema = z.object({
 type UpdateFormValues = z.infer<typeof updateSchema>;
 
 const deliveryUpdateStatuses: OrderStatus[] = [
-    'out_for_delivery', 'delivered', 'cancelled', 'returned'
+    'out_for_delivery', 'delivered', 'cancelled'
 ];
 
 function OrderUpdateCard({ order, onUpdate }: { order: Order; onUpdate: () => void; }) {
@@ -371,4 +371,5 @@ const getDeliveryStatusConfig = (status?: OrderStatus) => {
 }
 
     
+
 
