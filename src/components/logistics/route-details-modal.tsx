@@ -254,7 +254,7 @@ function OrderUpdateCard({ order, onUpdate }: { order: Order; onUpdate: () => vo
                     notes: data.notes,
                 }
             });
-            toast({ title: "Entrega atualizada!", description: `O pedido #${order.id.substring(0,7)} foi salvo.` });
+            toast({ title: "Entrega atualizada!", description: `O pedido para ${order.customer.name} foi salvo.` });
             onUpdate(); // Re-fetch data
         } catch (error) {
             console.error("Failed to update delivery:", error);
@@ -263,13 +263,17 @@ function OrderUpdateCard({ order, onUpdate }: { order: Order; onUpdate: () => vo
             setIsSaving(false);
         }
     };
+
+    const firstItem = order.items[0];
+    const moreItemsCount = order.items.length - 1;
     
     return (
          <Card className="p-0 border-l-4" style={{ borderColor: getDeliveryStatusConfig(form.watch('status')).variant.match(/bg-(.*?)\-/)?.[1] }}>
             <AccordionItem value={order.id} className="border-b-0">
                 <AccordionTrigger className="p-3 text-left hover:no-underline">
                      <div className="flex-1 space-y-1">
-                        <p className="font-semibold text-sm leading-tight">Pedido #{order.id.substring(0,7)} - {order.customer.name}</p>
+                        <p className="font-semibold text-sm leading-tight">{order.customer.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{firstItem.quantity}x {firstItem.productName} {moreItemsCount > 0 ? `(+${moreItemsCount} itens)` : ''}</p>
                         <p className="text-xs text-muted-foreground flex items-center gap-2">
                            <MapPin className="h-3 w-3" /> 
                            Bairro: {order.shipping?.address?.neighborhood || 'N/A'}
@@ -338,3 +342,5 @@ const getDeliveryStatusConfig = (status?: OrderStatus) => {
             return { variant: 'bg-gray-600/20 text-gray-700 border-gray-500', icon: <Package className="mr-1 h-3 w-3" /> };
     }
 }
+
+    
