@@ -149,7 +149,7 @@ export async function updateRoute(routeId: string, dataToUpdate: Partial<Omit<Ro
     }
 }
 
-export async function finalizeRoute(routeId: string, deliveredOrderIds: string[]): Promise<void> {
+export async function finalizeRoute(routeId: string, deliveredOrderIds: string[], driverEarning: number): Promise<void> {
     const batch = writeBatch(db);
     const routeRef = doc(db, 'routes', routeId);
 
@@ -159,9 +159,15 @@ export async function finalizeRoute(routeId: string, deliveredOrderIds: string[]
             throw new Error("Route not found");
         }
 
-        batch.update(routeRef, { status: 'finalizada', finishedAt: serverTimestamp() });
-
         const routeData = routeDoc.data() as Route & { orderIds: string[] };
+
+        batch.update(routeRef, { 
+            status: 'finalizada', 
+            finishedAt: serverTimestamp(),
+            'earnings.value': driverEarning || routeData.earnings?.value || 0,
+            'earnings.type': 'fixed' // Assuming fixed for now
+        });
+
         const allOrderIdsInRoute = routeData.orderIds || [];
 
         for (const orderId of allOrderIdsInRoute) {
@@ -248,3 +254,5 @@ export async function updateDeliveryStatus(orderId: string, newStatus: OrderStat
         throw new Error("Failed to update delivery status.");
     }
 }
+
+    

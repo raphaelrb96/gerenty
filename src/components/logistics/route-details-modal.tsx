@@ -83,6 +83,7 @@ export function RouteDetailsModal({
     const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
     const [isFinalizing, setIsFinalizing] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
+    const [driverEarning, setDriverEarning] = useState<number>(0);
     
 
     React.useEffect(() => {
@@ -103,7 +104,7 @@ export function RouteDetailsModal({
     const handleFinalizeRoute = async () => {
         setIsFinalizing(true);
         try {
-            await finalizeRoute(route.id, selectedOrders);
+            await finalizeRoute(route.id, selectedOrders, driverEarning);
             toast({ title: "Rota Finalizada", description: "A rota foi concluída e os status foram atualizados." });
             onRouteFinalized(); // Callback to refresh the Kanban board
             onClose(); // Close the main modal
@@ -162,10 +163,6 @@ export function RouteDetailsModal({
                         <StatCard title="Pagamentos Online" value={formatCurrency(totalOnline)} icon={<Info className="h-5 w-5 text-purple-500" />} />
                     </div>
                     <Separator />
-                    <div className="space-y-2 ml-1">
-                        <Label htmlFor="driver-earning">Pagamento do Entregador (Opcional)</Label>
-                        <Input id="driver-earning" type="number" placeholder="R$ 0,00" />
-                    </div>
                     <div className="space-y-2 ml-1 mb-10">
                         <Label htmlFor="route-notes">Anotações da Rota</Label>
                         <Textarea id="route-notes" placeholder="Insira anotações importantes aqui..." defaultValue={route.notes}/>
@@ -200,9 +197,15 @@ export function RouteDetailsModal({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-4 my-4 max-h-[40vh] overflow-y-auto">
-            <div className="rounded-lg border bg-card p-4">
-              <h4 className="font-semibold flex items-center gap-2 mb-2"><DollarSign className="h-5 w-5 text-green-500" /> Prestação de Contas</h4>
-              <p>Valor total em dinheiro a ser recebido do entregador: <strong className="text-lg">{formatCurrency(totalDinheiro)}</strong></p>
+            <div className="rounded-lg border bg-card p-4 space-y-4">
+                <div>
+                    <h4 className="font-semibold flex items-center gap-2 mb-2"><DollarSign className="h-5 w-5 text-green-500" /> Prestação de Contas</h4>
+                    <p>Valor total em dinheiro a ser recebido do entregador: <strong className="text-lg">{formatCurrency(totalDinheiro)}</strong></p>
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="driver-earning">Pagamento do Entregador (Opcional)</Label>
+                    <Input id="driver-earning" type="number" placeholder="R$ 0,00" value={driverEarning} onChange={(e) => setDriverEarning(Number(e.target.value))}/>
+                </div>
             </div>
           </div>
           <AlertDialogFooter>
@@ -386,3 +389,5 @@ const getDeliveryStatusConfig = (status?: OrderStatus) => {
             return { variant: 'bg-gray-600/20 text-gray-700 border-gray-500', icon: <Package className="mr-1 h-3 w-3" /> };
     }
 }
+
+    
