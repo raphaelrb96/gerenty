@@ -77,7 +77,7 @@ const formatDuration = (duration: Duration) => {
     const parts = [];
     if (duration.hours) parts.push(`${duration.hours}h`);
     if (duration.minutes) parts.push(`${duration.minutes}m`);
-    parts.push(`${duration.seconds}s`);
+    parts.push(`${duration.seconds ?? 0}s`); // Ensure seconds is always defined
     return parts.join(' ');
 }
 
@@ -95,6 +95,7 @@ export function RouteDetailsModal({
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [driverEarning, setDriverEarning] = useState<number>(0);
     const [routeDuration, setRouteDuration] = useState<string>("");
+    const [finalizationNotes, setFinalizationNotes] = useState("");
 
     useEffect(() => {
         if (route) {
@@ -118,7 +119,7 @@ export function RouteDetailsModal({
 
     const handleOpenConfirmation = () => {
         if (route) {
-            const delivered = route.orders.filter(o => selectedOrders.includes(o.id));
+            const delivered = route.orders.filter(o => o.status === 'delivered');
             const calculatedEarnings = delivered.reduce((sum, order) => sum + (order.shippingCost || 0), 0);
             setDriverEarning(calculatedEarnings);
         }
@@ -131,7 +132,7 @@ export function RouteDetailsModal({
     const handleFinalizeRoute = async () => {
         setIsFinalizing(true);
         try {
-            await finalizeRoute(route.id, selectedOrders, driverEarning);
+            await finalizeRoute(route.id, selectedOrders, driverEarning, finalizationNotes);
             toast({ title: "Rota Finalizada", description: "A rota foi concluída e os status foram atualizados." });
             onRouteFinalized();
             onClose();
@@ -141,6 +142,7 @@ export function RouteDetailsModal({
         } finally {
             setIsFinalizing(false);
             setShowConfirmation(false);
+            setFinalizationNotes("");
         }
     }
 
@@ -151,8 +153,8 @@ export function RouteDetailsModal({
 
     const canFinalize = route.orders.every(o => o.status === 'delivered' || o.status === 'cancelled');
 
-    const deliveredCount = selectedOrders.length;
-    const returnedCount = route.orders.length - deliveredCount;
+    const deliveredCount = route.orders.filter(o => o.status === 'delivered').length;
+    const returnedCount = route.orders.filter(o => o.status === 'cancelled').length;
 
 
   return (
@@ -249,6 +251,15 @@ export function RouteDetailsModal({
                     <Label htmlFor="driver-earning">Pagamento do Entregador</Label>
                     <Input id="driver-earning" type="number" placeholder="R$ 0,00" value={driverEarning} onChange={(e) => setDriverEarning(Number(e.target.value))}/>
                     <p className="text-xs text-muted-foreground">Valor calculado com base nas taxas de entrega dos pedidos concluídos.</p>
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="finalization-notes">Observações de Fechamento</Label>
+                    <Textarea 
+                        id="finalization-notes" 
+                        placeholder="Observações sobre o fechamento da rota..." 
+                        value={finalizationNotes}
+                        onChange={(e) => setFinalizationNotes(e.target.value)}
+                    />
                 </div>
             </div>
           </div>
@@ -433,3 +444,4 @@ const getDeliveryStatusConfig = (status?: OrderStatus) => {
 }
 
     
+

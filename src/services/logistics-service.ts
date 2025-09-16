@@ -149,7 +149,7 @@ export async function updateRoute(routeId: string, dataToUpdate: Partial<Omit<Ro
     }
 }
 
-export async function finalizeRoute(routeId: string, deliveredOrderIds: string[], driverEarning: number): Promise<void> {
+export async function finalizeRoute(routeId: string, deliveredOrderIds: string[], driverEarning: number, notes?: string): Promise<void> {
     const batch = writeBatch(db);
     const routeRef = doc(db, 'routes', routeId);
 
@@ -164,8 +164,9 @@ export async function finalizeRoute(routeId: string, deliveredOrderIds: string[]
         batch.update(routeRef, { 
             status: 'finalizada', 
             finishedAt: serverTimestamp(),
+            notes: notes || routeData.notes || '',
             'earnings.value': driverEarning || routeData.earnings?.value || 0,
-            'earnings.type': 'fixed' // Assuming fixed for now
+            'earnings.type': 'fixed'
         });
 
         const allOrderIdsInRoute = routeData.orderIds || [];
@@ -173,7 +174,7 @@ export async function finalizeRoute(routeId: string, deliveredOrderIds: string[]
         for (const orderId of allOrderIdsInRoute) {
             const orderRef = doc(db, "orders", orderId);
             const orderSnap = await getDoc(orderRef);
-            if (!orderSnap.exists()) continue; // Skip if order somehow doesn't exist
+            if (!orderSnap.exists()) continue;
 
             const orderData = orderSnap.data() as Order;
             const isDelivered = deliveredOrderIds.includes(orderId);
@@ -181,16 +182,12 @@ export async function finalizeRoute(routeId: string, deliveredOrderIds: string[]
             if (isDelivered) {
                 batch.update(orderRef, { status: 'delivered', completedAt: serverTimestamp() });
             } else {
-                // If not delivered, it's considered returned
                 batch.update(orderRef, { status: 'returned' });
-
-                // For any return or exchange, items go back into stock.
                 const isReverseLogistics = orderData.type === 'return' || orderData.type === 'exchange';
 
                 if (isReverseLogistics || orderData.status === 'returned') {
                      for (const item of orderData.items) {
                         const productRef = doc(db, 'products', item.productId);
-                        // Increment stock only if manageStock is a number
                         const productSnap = await getDoc(productRef);
                         if (productSnap.exists() && typeof productSnap.data().availableStock === 'number') {
                             batch.update(productRef, { availableStock: increment(item.quantity) });
