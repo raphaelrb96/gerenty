@@ -18,9 +18,5 @@ export const DELIVERY_KANBAN_STATUSES: OrderStatus[] = [
   "confirmed", 
   "processing", 
   "out_for_delivery", 
-  "delivered", 
-  "completed", 
-  "cancelled", 
-  "refunded", 
-  "returned"
+  "delivered"
 ];

@@ -317,6 +317,8 @@ export type PaymentDetails = {
   transactionId?: string; // ID da transação no gateway
   paidAt?: Date; // Data de pagamento (se aprovado)
   installments?: number; // Número de parcelas (se aplicável)
+  amountPaid?: number; // Valor efetivamente pago
+  notes?: string; // Observações sobre o pagamento
 };
 
 

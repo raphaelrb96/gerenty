@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { db } from "@/lib/firebase";
@@ -194,37 +195,36 @@ export async function finalizeRoute(routeId: string, deliveredOrderIds: string[]
     }
 }
 
-export async function batchUpdateDeliveryDetails(orderIds: string[], updates: { payment?: Partial<PaymentDetails>, status?: OrderStatus }): Promise<void> {
-    const batch = writeBatch(db);
+export async function updateDeliveryDetails(orderId: string, updates: { status: OrderStatus, payment: Partial<PaymentDetails> }): Promise<void> {
+    const orderRef = doc(db, "orders", orderId);
+    
+    const updateData: { [key: string]: any } = {
+        status: updates.status,
+        updatedAt: serverTimestamp(),
+    };
 
-    orderIds.forEach(orderId => {
-        const orderRef = doc(db, "orders", orderId);
-        const updateData: { [key: string]: any } = {};
-
-        if (updates.payment) {
-            for (const [key, value] of Object.entries(updates.payment)) {
+    if (updates.payment) {
+        for (const [key, value] of Object.entries(updates.payment)) {
+            if (value !== undefined) {
                 updateData[`payment.${key}`] = value;
             }
         }
+    }
+     if (updates.status === 'delivered') {
+        updateData.completedAt = serverTimestamp();
+    } else if (updates.status === 'cancelled' || updates.status === 'returned') {
+        updateData.cancelledAt = serverTimestamp();
+    }
 
-        if (updates.status) {
-            updateData['status'] = updates.status;
-        }
-
-
-        if (Object.keys(updateData).length > 0) {
-            updateData.updatedAt = serverTimestamp();
-            batch.update(orderRef, updateData);
-        }
-    });
 
     try {
-        await batch.commit();
+        await updateDoc(orderRef, updateData);
     } catch (error) {
-        console.error("Error batch updating delivery details:", error);
-        throw new Error("Failed to update deliveries.");
+        console.error("Error updating delivery details:", error);
+        throw new Error("Failed to update delivery details.");
     }
 }
+
 
 export async function updateDeliveryStatus(orderId: string, newStatus: OrderStatus, routeId?: string): Promise<void> {
     try {

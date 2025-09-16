@@ -508,7 +508,7 @@
             "title": "Financeiro (Rotas Ativas)",
             "totalToReceive": "Total a Receber",
             "cashToReceive": "Dinheiro a Receber",
-            "onlineToReceive": "Outros Pagamentos",
+            "onlineToReceive": "A Receber na Conta",
             "totalReceived": "Total Recebido",
             "cashReceived": "Dinheiro Recebido",
             "onlineReceived": "Outros Pagamentos Recebidos"
