@@ -237,7 +237,7 @@ const updateSchema = z.object({
 type UpdateFormValues = z.infer<typeof updateSchema>;
 
 const deliveryUpdateStatuses: OrderStatus[] = [
-    'out_for_delivery', 'delivered', 'cancelled'
+    'pending', 'confirmed', 'processing', 'out_for_delivery', 'delivered', 'cancelled'
 ];
 
 function OrderUpdateCard({ order, onUpdate }: { order: Order; onUpdate: () => void; }) {
@@ -320,7 +320,7 @@ function OrderUpdateCard({ order, onUpdate }: { order: Order; onUpdate: () => vo
                                 <FormField control={form.control} name="paymentStatus" render={({ field }) => (
                                     <FormItem><FormLabel>Status do Pagamento</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>
                                         <SelectItem value="aprovado">Aprovado</SelectItem>
-                                        <SelectItem value="recusado">Recusado</SelectItem>
+                                        <SelectItem value="recusado">Cancelado</SelectItem>
                                         <SelectItem value="aguardando">Aguardando</SelectItem>
                                     </SelectContent></Select><FormMessage /></FormItem>
                                 )}/>
@@ -371,5 +371,3 @@ const getDeliveryStatusConfig = (status?: OrderStatus) => {
 }
 
     
-
-

@@ -424,7 +424,7 @@
     "paymentStatus": {
         "pending": "Aguardando",
         "approved": "Aprovado",
-        "refused": "Recusado",
+        "refused": "Cancelado",
         "estornado": "Estornado"
     },
     "deliveryMethods": {
