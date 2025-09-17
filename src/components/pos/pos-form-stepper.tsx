@@ -411,54 +411,56 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                 <form onSubmit={(e) => { e.preventDefault(); if (currentStep === 4) form.handleSubmit(onSubmit)(); }}>
                     {/* The rest of the form steps go inside this form tag */}
                     <div style={{ display: currentStep === 2 ? 'block' : 'none' }}>
-                        <div className="max-w-2xl mx-auto p-1 space-y-6">
-                            {renderStepHeader("Informações do Cliente")}
-                            <Card>
-                                <CardHeader><CardTitle>Buscar Cliente</CardTitle></CardHeader>
-                                <CardContent>
-                                    <CustomerSearch onCustomerSelect={handleCustomerSelect} />
-                                    <p className="text-center text-sm text-muted-foreground mt-4">Ou preencha os dados manualmente abaixo</p>
-                                </CardContent>
-                            </Card>
-                            
-                            <Card>
-                                <CardHeader><CardTitle>Dados do Cliente</CardTitle></CardHeader>
-                                <CardContent className="space-y-4">
-                                    <FormField control={form.control} name="customerName" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.name')}</FormLabel><FormControl><Input placeholder={t('pos.customer.namePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                                    <FormField control={form.control} name="customerPhone" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.phone')}</FormLabel><FormControl><Input placeholder="(00) 00000-0000" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                                    <FormField control={form.control} name="customerEmail" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.email')} (Opcional)</FormLabel><FormControl><Input type="email" placeholder="email@cliente.com" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                                    <FormField control={form.control} name="customerDocument" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.document')} (Opcional)</FormLabel><FormControl><Input placeholder="CPF ou CNPJ" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                                </CardContent>
-                            </Card>
+                        <div className="p-1 space-y-6 lg:grid lg:grid-cols-3 lg:gap-6">
+                            <div className="lg:col-span-2 space-y-6">
+                                {renderStepHeader("Informações do Cliente")}
+                                <Card>
+                                    <CardHeader><CardTitle>Buscar Cliente</CardTitle></CardHeader>
+                                    <CardContent>
+                                        <CustomerSearch onCustomerSelect={handleCustomerSelect} />
+                                        <p className="text-center text-sm text-muted-foreground mt-4">Ou preencha os dados manualmente abaixo</p>
+                                    </CardContent>
+                                </Card>
+                                
+                                <Card>
+                                    <CardHeader><CardTitle>Dados do Cliente</CardTitle></CardHeader>
+                                    <CardContent className="space-y-4">
+                                        <FormField control={form.control} name="customerName" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.name')}</FormLabel><FormControl><Input placeholder={t('pos.customer.namePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                        <FormField control={form.control} name="customerPhone" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.phone')}</FormLabel><FormControl><Input placeholder="(00) 00000-0000" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                        <FormField control={form.control} name="customerEmail" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.email')} (Opcional)</FormLabel><FormControl><Input type="email" placeholder="email@cliente.com" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                        <FormField control={form.control} name="customerDocument" render={({ field }) => (<FormItem><FormLabel>{t('pos.customer.document')} (Opcional)</FormLabel><FormControl><Input placeholder="CPF ou CNPJ" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                    </CardContent>
+                                </Card>
 
-                             <Card>
-                                <CardHeader><CardTitle>Vendedor</CardTitle></CardHeader>
-                                <CardContent>
-                                     <FormField control={form.control} name="employeeId" render={({ field }) => (
-                                      <FormItem>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                          <FormControl>
-                                            <SelectTrigger>
-                                              <SelectValue placeholder="Selecione um vendedor" />
-                                            </SelectTrigger>
-                                          </FormControl>
-                                          <SelectContent>
-                                            <SelectItem value="direct_sale">Venda Direta (Sem Vendedor)</SelectItem>
-                                            {salespeople.map(sp => (
-                                              <SelectItem key={sp.id} value={sp.id}>{sp.name}</SelectItem>
-                                            ))}
-                                          </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                      </FormItem>
-                                    )}/>
-                                </CardContent>
-                            </Card>
+                                <Card>
+                                    <CardHeader><CardTitle>Vendedor</CardTitle></CardHeader>
+                                    <CardContent>
+                                        <FormField control={form.control} name="employeeId" render={({ field }) => (
+                                        <FormItem>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                <SelectValue placeholder="Selecione um vendedor" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="direct_sale">Venda Direta (Sem Vendedor)</SelectItem>
+                                                {salespeople.map(sp => (
+                                                <SelectItem key={sp.id} value={sp.id}>{sp.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                        )}/>
+                                    </CardContent>
+                                </Card>
+                            </div>
                         </div>
                     </div>
                     
                     <div style={{ display: currentStep === 3 ? 'block' : 'none' }}>
-                        <div className="max-w-4xl mx-auto p-1">
+                        <div className="p-1">
                             {renderStepHeader("Pagamento e Entrega")}
                             <div className="grid md:grid-cols-2 gap-8">
                                 <div className="space-y-6">
@@ -543,42 +545,49 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                     </div>
 
                     <div style={{ display: currentStep === 4 ? 'block' : 'none' }}>
-                         <div className="max-w-3xl mx-auto p-1">
-                            {renderStepHeader("Revisar e Finalizar")}
-                            <div className="space-y-6">
-                                <div className="rounded-lg border p-4 space-y-4">
-                                    <h3 className="font-semibold text-lg">Itens do Pedido</h3>
-                                    {cart.map(item => (
-                                        <div key={item.productId} className="flex justify-between items-center text-sm">
-                                            <div>
-                                                <p className="font-medium">{item.productName}</p>
-                                                <p className="text-muted-foreground">Qtde: {item.quantity} x {formatCurrency(item.unitPrice)}</p>
+                         <div className="p-1 lg:grid lg:grid-cols-3 lg:gap-6">
+                            <div className="lg:col-span-2 space-y-6">
+                                {renderStepHeader("Revisar e Finalizar")}
+                                <div className="space-y-6">
+                                    <div className="rounded-lg border bg-card p-4 space-y-4">
+                                        <h3 className="font-semibold text-lg">Itens do Pedido</h3>
+                                        {cart.map(item => (
+                                            <div key={item.productId} className="flex justify-between items-center text-sm">
+                                                <div>
+                                                    <p className="font-medium">{item.productName}</p>
+                                                    <p className="text-muted-foreground">Qtde: {item.quantity} x {formatCurrency(item.unitPrice)}</p>
+                                                </div>
+                                                <p className="font-medium">{formatCurrency(item.totalPrice)}</p>
                                             </div>
-                                            <p className="font-medium">{formatCurrency(item.totalPrice)}</p>
+                                        ))}
+                                    </div>
+                                    <div className="grid md:grid-cols-2 gap-6">
+                                        <div className="rounded-lg border bg-card p-4 space-y-2">
+                                            <h3 className="font-semibold text-lg">Cliente</h3>
+                                            <p className="text-sm"><strong>Nome:</strong> {form.getValues('customerName')}</p>
+                                            <p className="text-sm"><strong>Telefone:</strong> {form.getValues('customerPhone')}</p>
+                                            <p className="text-sm"><strong>Email:</strong> {form.getValues('customerEmail') || 'N/A'}</p>
                                         </div>
-                                    ))}
-                                </div>
-                                <div className="grid md:grid-cols-2 gap-6">
-                                    <div className="rounded-lg border p-4 space-y-2">
-                                        <h3 className="font-semibold text-lg">Cliente</h3>
-                                        <p className="text-sm"><strong>Nome:</strong> {form.getValues('customerName')}</p>
-                                        <p className="text-sm"><strong>Telefone:</strong> {form.getValues('customerPhone')}</p>
-                                        <p className="text-sm"><strong>Email:</strong> {form.getValues('customerEmail') || 'N/A'}</p>
+                                        <div className="rounded-lg border bg-card p-4 space-y-2">
+                                            <h3 className="font-semibold text-lg">Entrega</h3>
+                                            <p className="text-sm"><strong>Método:</strong> {t(`deliveryMethods.${deliveryMethodMap[form.getValues('deliveryMethod')]}`)}</p>
+                                            {needsShippingAddress && (
+                                                <address className="text-sm not-italic">
+                                                    {form.getValues('address.street')}, {form.getValues('address.number')} <br />
+                                                    {form.getValues('address.neighborhood')}, {form.getValues('address.city')} - {form.getValues('address.state')} <br/>
+                                                    {form.getValues('address.zipCode')}
+                                                </address>
+                                            )}
+                                        </div>
                                     </div>
-                                     <div className="rounded-lg border p-4 space-y-2">
-                                        <h3 className="font-semibold text-lg">Entrega</h3>
-                                        <p className="text-sm"><strong>Método:</strong> {t(`deliveryMethods.${deliveryMethodMap[form.getValues('deliveryMethod')]}`)}</p>
-                                        {needsShippingAddress && (
-                                             <address className="text-sm not-italic">
-                                                {form.getValues('address.street')}, {form.getValues('address.number')} <br />
-                                                {form.getValues('address.neighborhood')}, {form.getValues('address.city')} - {form.getValues('address.state')} <br/>
-                                                {form.getValues('address.zipCode')}
-                                            </address>
-                                        )}
-                                    </div>
-                                </div>
 
-                                <div className="rounded-lg border p-4">
+                                    <FormField control={form.control} name="notes" render={({ field }) => (
+                                        <FormItem><FormLabel>Observações (opcional)</FormLabel><FormControl><Textarea placeholder="Alguma observação sobre o pedido..." {...field} /></FormControl><FormMessage /></FormItem>
+                                    )}/>
+                                </div>
+                            </div>
+                            <div className="lg:col-span-1 space-y-6 lg:pt-20">
+                                <div className="rounded-lg border bg-card p-4">
                                     <h3 className="font-semibold text-lg mb-2">Resumo Financeiro</h3>
                                     <div className="text-sm space-y-1">
                                         <div className="flex justify-between"><span>Subtotal:</span> <span>{formatCurrency(subtotal)}</span></div>
@@ -589,10 +598,6 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                                         <div className="flex justify-between font-bold text-lg"><span>Total:</span> <span>{formatCurrency(total)}</span></div>
                                     </div>
                                 </div>
-
-                                <FormField control={form.control} name="notes" render={({ field }) => (
-                                    <FormItem><FormLabel>Observações (opcional)</FormLabel><FormControl><Textarea placeholder="Alguma observação sobre o pedido..." {...field} /></FormControl><FormMessage /></FormItem>
-                                )}/>
                             </div>
                         </div>
                     </div>
@@ -602,8 +607,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
         
         <footer className="fixed bottom-0 z-10 w-full border-t bg-background/80 p-4 backdrop-blur-sm right-0 md:w-[calc(100%-var(--sidebar-width))] peer-data-[state=collapsed]:md:w-[calc(100%-var(--sidebar-width-icon))]">
              <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4">
-                {/* Stepper */}
-                <div className="flex flex-1 items-center gap-1 sm:gap-2">
+                <div className="flex flex-1 mr-auto items-center gap-1 sm:gap-2">
                     {steps.map((step, index) => (
                     <React.Fragment key={step.id}>
                         <div className="flex flex-col items-center text-center">
@@ -627,7 +631,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                             </p>
                         </div>
                         {index < steps.length - 1 && (
-                            <div className="flex items-center flex-1">
+                            <div className="flex-1 items-center justify-center h-full">
                                 <div
                                     className={cn(
                                         'h-0.5 w-full transition-colors',
@@ -640,7 +644,6 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                     ))}
                 </div>
 
-                {/* Actions */}
                 <div className="flex items-center justify-end gap-2 sm:gap-4">
                     <span className="text-md sm:text-lg font-bold">{formatCurrency(total)}</span>
                     {currentStep < steps.length ? (
