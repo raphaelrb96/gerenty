@@ -162,7 +162,11 @@ export function RouteDetailsModal({
     const handleFinalizeRoute = async () => {
         setIsFinalizing(true);
         try {
-            await finalizeRoute(route.id, selectedOrders, finalDriverPayment, finalizationNotes);
+            await finalizeRoute(route.id, {
+                deliveredOrderIds: selectedOrders,
+                driverFinalPayment: finalDriverPayment,
+                notes: finalizationNotes
+            });
             toast({ title: "Rota Finalizada", description: "A rota foi concluída e os status foram atualizados." });
             onRouteFinalized();
             onClose();
@@ -184,6 +188,8 @@ export function RouteDetailsModal({
 
     const deliveredCount = route.orders.filter(o => o.status === 'delivered').length;
     const returnedCount = route.orders.filter(o => o.status === 'cancelled' || o.status === 'returned').length;
+
+    const finalization = route.finalizationDetails;
 
 
   return (
@@ -211,23 +217,40 @@ export function RouteDetailsModal({
                         <h4 className="font-semibold text-sm flex items-center gap-2"><Clock className="h-4 w-4"/> Status</h4>
                         <Badge>{t(`routeStatus.${route.status}`)}</Badge>
                     </div>
-                    <Separator />
-                    <div className="space-y-3">
-                        <h4 className="font-semibold text-sm">Resumo Financeiro da Rota</h4>
-                        <StatCard title="Total em PIX" value={formatCurrency(financialSummary.totalPix)} icon={<Info className="h-5 w-5 text-blue-500" />} />
-                        <StatCard title="Total em Cartão" value={formatCurrency(financialSummary.totalCard)} icon={<Info className="h-5 w-5 text-orange-500" />} />
-                        <StatCard title="Total em Dinheiro" value={formatCurrency(financialSummary.totalDinheiro)} icon={<DollarSign className="h-5 w-5 text-green-500" />} />
-                        <StatCard title="Pagamentos Online" value={formatCurrency(financialSummary.totalOnline)} icon={<Info className="h-5 w-5 text-purple-500" />} />
-                    </div>
-                    <Separator />
-                    <div className="space-y-2 ml-1 mb-10">
-                        <Label htmlFor="route-notes">Anotações da Rota</Label>
-                        <Textarea id="route-notes" placeholder="Insira anotações importantes aqui..." defaultValue={route.notes} disabled={isFinalized}/>
-                    </div>
+
+                    {isFinalized && finalization && (
+                        <>
+                            <Separator />
+                            <div className="space-y-3">
+                                <h4 className="font-semibold text-sm">Resumo da Finalização</h4>
+                                 <div className="grid grid-cols-2 gap-2">
+                                    <StatCard title="Pagamento do Motorista" value={formatCurrency(finalization.driverFinalPayment)} icon={<DollarSign className="h-4 w-4 text-muted-foreground" />} />
+                                    <StatCard title="Total Prestado Contas" value={formatCurrency(finalization.settlementAmount)} icon={<Wallet className="h-4 w-4 text-muted-foreground" />} />
+                                    <StatCard title="Entregues" value={String(finalization.deliveredCount)} icon={<PackageCheck className="h-4 w-4 text-green-500" />} />
+                                    <StatCard title="Devolvidas" value={String(finalization.returnedCount)} icon={<PackageX className="h-4 w-4 text-red-500" />} />
+                                </div>
+                                <div className="text-xs text-muted-foreground">Finalizada em: {new Date(route.finishedAt as string).toLocaleString()}</div>
+                                {finalization.notes && <p className="text-xs text-muted-foreground border-l-2 pl-2">Nota: {finalization.notes}</p>}
+                            </div>
+                        </>
+                    )}
+                    
+                    {!isFinalized && (
+                         <>
+                            <Separator />
+                            <div className="space-y-3">
+                                <h4 className="font-semibold text-sm">Resumo Financeiro (Apenas Entregues)</h4>
+                                <StatCard title="Total em PIX" value={formatCurrency(financialSummary.totalPix)} icon={<Info className="h-5 w-5 text-blue-500" />} />
+                                <StatCard title="Total em Cartão" value={formatCurrency(financialSummary.totalCard)} icon={<Info className="h-5 w-5 text-orange-500" />} />
+                                <StatCard title="Total em Dinheiro" value={formatCurrency(financialSummary.totalDinheiro)} icon={<DollarSign className="h-5 w-5 text-green-500" />} />
+                                <StatCard title="Pagamentos Online" value={formatCurrency(financialSummary.totalOnline)} icon={<Info className="h-5 w-5 text-purple-500" />} />
+                            </div>
+                        </>
+                    )}
                 </div>
                 <div className="md:col-span-2 space-y-4">
                     <h3 className="text-lg font-semibold flex items-center gap-2"><Box className="h-5 w-5" /> Entregas ({route.orders.length})</h3>
-                    <p className="text-sm text-muted-foreground">Atualize individualmente o status e pagamento de cada entrega.</p>
+                    {!isFinalized && <p className="text-sm text-muted-foreground">Atualize individualmente o status e pagamento de cada entrega.</p>}
                     <Accordion type="multiple" className="w-full space-y-3">
                         {route.orders.map(order => (
                             <OrderUpdateCard key={order.id} order={order} onUpdate={onRouteFinalized} isFinalized={isFinalized} />
@@ -239,7 +262,9 @@ export function RouteDetailsModal({
           <DialogFooter className="pt-4 border-t flex-shrink-0 px-6 pb-6">
               <div className="flex justify-end w-full gap-2">
                   <Button variant="outline" onClick={onClose}>Fechar</Button>
-                  <Button onClick={handleOpenConfirmation} disabled={!canFinalize || isFinalized}>Finalizar Rota</Button>
+                  {!isFinalized && (
+                    <Button onClick={handleOpenConfirmation} disabled={!canFinalize}>Finalizar Rota</Button>
+                  )}
               </div>
           </DialogFooter>
         </DialogContent>
@@ -506,5 +531,6 @@ const getDeliveryStatusConfig = (status?: OrderStatus) => {
     
 
     
+
 
 

@@ -529,7 +529,7 @@
             "title": "Resultados",
             "routesFinishedToday": "Rotas Finalizadas (Hoje)",
             "inTheWeek": "na semana",
-            "deliveredDeliveries": "Entregas Realizadas (em rota)",
+            "deliveredDeliveries": "Entregas Realizadas",
             "cancelledDeliveries": "Entregas Canceladas",
             "itemsToReturn": "Itens para Devolução",
             "returnedDeliveries": "entregas retornaram"

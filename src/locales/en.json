@@ -523,13 +523,13 @@
             "onlineToReceive": "Other Payments",
             "totalReceived": "Total Received",
             "cashReceived": "Cash Received",
-            "onlineReceived": "Other Payments Received"
+            "onlineReceived": "Account Received"
         },
         "results": {
             "title": "Results",
             "routesFinishedToday": "Routes Finished (Today)",
             "inTheWeek": "in the week",
-            "deliveredDeliveries": "Deliveries Made (in route)",
+            "deliveredDeliveries": "Deliveries Made",
             "cancelledDeliveries": "Cancelled Deliveries",
             "itemsToReturn": "Items to Return",
             "returnedDeliveries": "returned deliveries"

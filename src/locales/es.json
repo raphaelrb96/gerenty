@@ -523,13 +523,13 @@
             "onlineToReceive": "Otros Pagos",
             "totalReceived": "Total Recibido",
             "cashReceived": "Efectivo Recibido",
-            "onlineReceived": "Otros Pagos Recibidos"
+            "onlineReceived": "Recibido en Cuenta"
         },
         "results": {
             "title": "Resultados",
             "routesFinishedToday": "Rutas Finalizadas (Hoy)",
             "inTheWeek": "en la semana",
-            "deliveredDeliveries": "Entregas Realizadas (en ruta)",
+            "deliveredDeliveries": "Entregas Realizadas",
             "cancelledDeliveries": "Entregas Canceladas",
             "itemsToReturn": "Artículos a Devolver",
             "returnedDeliveries": "entregas devueltas"

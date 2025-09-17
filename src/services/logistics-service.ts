@@ -149,7 +149,11 @@ export async function updateRoute(routeId: string, dataToUpdate: Partial<Omit<Ro
     }
 }
 
-export async function finalizeRoute(routeId: string, deliveredOrderIds: string[], driverEarning: number, notes?: string): Promise<void> {
+export async function finalizeRoute(routeId: string, finalizationData: {
+    deliveredOrderIds: string[];
+    driverFinalPayment: number;
+    notes?: string;
+}): Promise<void> {
     const batch = writeBatch(db);
     const routeRef = doc(db, 'routes', routeId);
 
@@ -160,16 +164,25 @@ export async function finalizeRoute(routeId: string, deliveredOrderIds: string[]
         }
 
         const routeData = routeDoc.data() as Route & { orderIds: string[] };
+        const allOrderIdsInRoute = routeData.orderIds || [];
 
+        const deliveredCount = finalizationData.deliveredOrderIds.length;
+        const returnedCount = allOrderIdsInRoute.length - deliveredCount;
+        const totalCash = routeData.cashTotal || 0;
+        
         batch.update(routeRef, { 
             status: 'finalizada', 
             finishedAt: serverTimestamp(),
-            notes: notes || routeData.notes || '',
-            'earnings.value': driverEarning || routeData.earnings?.value || 0,
-            'earnings.type': 'fixed'
+            finalizationDetails: {
+                settlementAmount: totalCash,
+                settlementDirection: totalCash >= finalizationData.driverFinalPayment ? 'to_company' : 'to_driver',
+                driverFinalPayment: finalizationData.driverFinalPayment,
+                deliveredCount: deliveredCount,
+                returnedCount: returnedCount,
+                duration: routeData.createdAt ? formatDistanceStrict(new Date(), new Date(routeData.createdAt as string)) : 'N/A',
+                notes: finalizationData.notes || '',
+            }
         });
-
-        const allOrderIdsInRoute = routeData.orderIds || [];
 
         for (const orderId of allOrderIdsInRoute) {
             const orderRef = doc(db, "orders", orderId);
@@ -177,16 +190,14 @@ export async function finalizeRoute(routeId: string, deliveredOrderIds: string[]
             if (!orderSnap.exists()) continue;
 
             const orderData = orderSnap.data() as Order;
-            const isDelivered = deliveredOrderIds.includes(orderId);
+            const isDelivered = finalizationData.deliveredOrderIds.includes(orderId);
 
             if (isDelivered) {
                 batch.update(orderRef, { status: 'completed', completedAt: serverTimestamp() });
             } else {
                 batch.update(orderRef, { status: 'returned' });
                 const isReverseLogistics = orderData.type === 'return' || orderData.type === 'exchange';
-
-                // Check original status for stock return logic.
-                // Only return to stock if it wasn't an item that was being picked up for return/exchange initially.
+                
                 if (!isReverseLogistics) {
                      for (const item of orderData.items) {
                         const productRef = doc(db, 'products', item.productId);

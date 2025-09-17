@@ -117,14 +117,22 @@ function LogisticsPageComponent() {
         const deliveriesInProgress = allActiveOrders.filter(o => o.status === 'out_for_delivery').length;
         
         const finishedRoutesToday = routes.filter(r => r.status === 'finalizada' && r.finishedAt && new Date(r.finishedAt as string) >= today).length;
-        const finishedRoutesThisWeek = routes.filter(r => r.status === 'finalizada' && r.finishedAt && new Date(r.finishedAt as string) >= startOfThisWeek).length;
         
-        const cancelledOrdersInRoute = allActiveOrders.filter(o => o.status === 'cancelled');
-        const deliveriesCancelledInRoute = cancelledOrdersInRoute.length;
-        const deliveriesDeliveredInRoute = allActiveOrders.filter(o => o.status === 'delivered').length;
-        const totalCancelledValueInRoute = cancelledOrdersInRoute.reduce((sum, o) => sum + o.total, 0);
+        // This is now based on the last 7 days
+        const finishedRoutesThisWeek = routes.filter(r => r.status === 'finalizada' && r.finishedAt && new Date(r.finishedAt as string) >= startOfThisWeek).length;
 
-        const itemsToReturnFromCancelled = cancelledOrdersInRoute
+        const cancelledOrdersInActiveRoutes = activeRoutes.flatMap(r => r.orders).filter(o => o.status === 'cancelled');
+
+        const deliveriesCancelledThisWeek = routes.filter(r => r.finishedAt && new Date(r.finishedAt as string) >= startOfThisWeek)
+            .flatMap(r => r.orders)
+            .filter(o => o.status === 'cancelled' || o.status === 'returned').length;
+
+        const deliveredOrdersThisWeek = routes.filter(r => r.finishedAt && new Date(r.finishedAt as string) >= startOfThisWeek)
+            .flatMap(r => r.orders)
+            .filter(o => o.status === 'delivered').length;
+
+        
+        const itemsToReturnFromCancelled = cancelledOrdersInActiveRoutes
             .flatMap(o => o.items)
             .reduce((sum, item) => sum + item.quantity, 0);
         
@@ -153,8 +161,6 @@ function LogisticsPageComponent() {
             driversInRoute,
             deliveriesToProcess,
             deliveriesInProgress,
-            deliveriesCancelledInRoute,
-            totalCancelledValueInRoute,
             cashReceivedInRoute,
             cashInProgress,
             otherPaymentsReceivedInRoute,
@@ -164,8 +170,9 @@ function LogisticsPageComponent() {
             finishedRoutesToday,
             finishedRoutesThisWeek,
             itemsToReturnFromCancelled,
-            deliveriesReturnedInRoute: cancelledOrdersInRoute.length, // Changed logic
-            deliveriesDeliveredInRoute,
+            deliveriesReturnedInRoute: cancelledOrdersInActiveRoutes.length,
+            deliveriesCancelledThisWeek,
+            deliveredOrdersThisWeek,
         };
     }, [activeRoutes, routes, deliverableOrders]);
 
@@ -231,7 +238,7 @@ function LogisticsPageComponent() {
                                 <StatCard title={t('logistics.financial.onlineToReceive')} value={formatCurrency(metrics.otherPaymentsInProgress)} icon={<ArrowLeftRight className="text-yellow-500" />} />
                                 <StatCard title={t('logistics.financial.totalReceived')} value={formatCurrency(metrics.totalReceived)} icon={<Wallet className="text-green-500" />} />
                                 <StatCard title={t('logistics.financial.cashReceived')} value={formatCurrency(metrics.cashReceivedInRoute)} icon={<DollarSign className="text-green-500" />} />
-                                <StatCard title={t('logistics.financial.onlineReceived')} value={t('logistics.financial.onlineReceived')} icon={<ArrowLeftRight className="text-green-500" />} />
+                                <StatCard title={t('logistics.financial.onlineReceived')} value={formatCurrency(metrics.otherPaymentsReceivedInRoute)} icon={<ArrowLeftRight className="text-green-500" />} />
                             </div>
                         </div>
 
@@ -239,35 +246,14 @@ function LogisticsPageComponent() {
                             <h3 className="text-lg font-medium mb-2">{t('logistics.results.title')}</h3>
                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                                 <StatCard title={t('logistics.results.routesFinishedToday')} value={metrics.finishedRoutesToday} icon={<PackageCheck className="text-muted-foreground" />} description={`${metrics.finishedRoutesThisWeek} ${t('logistics.results.inTheWeek')}`}/>
-                                <StatCard title={t('logistics.results.deliveredDeliveries')} value={metrics.deliveriesDeliveredInRoute} icon={<PackageCheck className="text-green-500" />} />
-                                <StatCard title={t('logistics.results.cancelledDeliveries')} value={metrics.deliveriesCancelledInRoute} icon={<Ban className="text-red-500" />} description={formatCurrency(metrics.totalCancelledValueInRoute)}/>
+                                <StatCard title={t('logistics.results.deliveredDeliveries')} value={metrics.deliveredOrdersThisWeek} icon={<PackageCheck className="text-green-500" />} description={t('logistics.results.inTheWeek')} />
+                                <StatCard title={t('logistics.results.cancelledDeliveries')} value={metrics.deliveriesCancelledThisWeek} icon={<Ban className="text-red-500" />} description={t('logistics.results.inTheWeek')}/>
                                 <StatCard title={t('logistics.results.itemsToReturn')} value={metrics.itemsToReturnFromCancelled} icon={<Package className="text-orange-500" />} description={`${metrics.deliveriesReturnedInRoute} ${t('logistics.results.returnedDeliveries')}`}/>
                             </div>
                         </div>
                     </div>
 
-
-                     <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                        <Card className="lg:col-span-5">
-                            <CardHeader>
-                                <CardTitle>{t('logistics.charts.performance.title')}</CardTitle>
-                                <CardDescription>{t('logistics.charts.performance.description')}</CardDescription>
-                            </CardHeader>
-                            <CardContent className="pl-2">
-                                <ChartContainer config={{ Entregas: { label: "Entregas", color: "hsl(var(--chart-1))" } }} className="h-[300px] w-full">
-                                    <RechartsBarChart data={chartData}>
-                                        <CartesianGrid vertical={false} />
-                                        <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} />
-                                        <YAxis tickLine={false} axisLine={false} tickMargin={10} allowDecimals={false} />
-                                        <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-                                        <Bar dataKey="Entregas" fill="var(--color-Entregas)" radius={8} />
-                                    </RechartsBarChart>
-                                </ChartContainer>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                     <Card>
+                    <Card>
                         <CardHeader>
                             <CardTitle>{t('logistics.routesInProgress')}</CardTitle>
                         </CardHeader>
@@ -301,6 +287,27 @@ function LogisticsPageComponent() {
                            )}
                         </CardContent>
                     </Card>
+
+                     <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                        <Card className="lg:col-span-5">
+                            <CardHeader>
+                                <CardTitle>{t('logistics.charts.performance.title')}</CardTitle>
+                                <CardDescription>{t('logistics.charts.performance.description')}</CardDescription>
+                            </CardHeader>
+                            <CardContent className="pl-2">
+                                <ChartContainer config={{ Entregas: { label: "Entregas", color: "hsl(var(--chart-1))" } }} className="h-[300px] w-full">
+                                    <RechartsBarChart data={chartData}>
+                                        <CartesianGrid vertical={false} />
+                                        <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} />
+                                        <YAxis tickLine={false} axisLine={false} tickMargin={10} allowDecimals={false} />
+                                        <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+                                        <Bar dataKey="Entregas" fill="var(--color-Entregas)" radius={8} />
+                                    </RechartsBarChart>
+                                </ChartContainer>
+                            </CardContent>
+                        </Card>
+                    </div>
+
                 </TabsContent>
 
                 <TabsContent value="deliveries" className="mt-4">
@@ -346,6 +353,7 @@ export default function LogisticsPage() {
 
 
     
+
 
 
 
