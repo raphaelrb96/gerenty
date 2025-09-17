@@ -88,7 +88,7 @@ export function OrderDetails({ order, onFinished, onStatusChange }: OrderDetails
                     </Button>
                 )}
                  {order.shipping?.routeId && (
-                    <Button variant="outline" size="sm" onClick={() => handleNavigation(`/dashboard/logistics?routeId=${order.shipping.routeId}`)}>
+                    <Button variant="outline" size="sm" onClick={() => handleNavigation(`/dashboard/logistics`)}>
                         <Truck className="mr-2 h-4 w-4" /> Ver Logística
                     </Button>
                 )}
