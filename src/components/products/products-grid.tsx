@@ -3,7 +3,7 @@
 "use client"
 
 import * as React from "react"
-import { MoreHorizontal } from "lucide-react"
+import { MoreHorizontal, Percent } from "lucide-react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 
@@ -110,52 +110,63 @@ export function ProductsGrid({ data, onProductDeleted }: ProductsGridProps) {
   return (
     <>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        {data.map((product) => (
-            <Card key={product.id} className="overflow-hidden flex flex-col cursor-pointer" onClick={() => handleViewDetails(product)}>
-                <CardHeader className="p-0 relative aspect-square">
-                    <Image
-                        src={product.images?.mainImage || "https://placehold.co/400x400.png"}
-                        alt={product.name}
-                        layout="fill"
-                        objectFit="cover"
-                        className="w-full h-full"
-                    />
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="secondary" size="icon" className="absolute top-2 right-2 h-8 w-8 rounded-full" onClick={(e) => e.stopPropagation()}>
-                            <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                            <DropdownMenuLabel>{t('productsPage.actionsLabel')}</DropdownMenuLabel>
-                            <DropdownMenuItem onSelect={() => router.push(`/dashboard/products/${product.id}/edit`)}>
-                            {t('productsPage.edit')}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                                onSelect={(e) => {
-                                    e.preventDefault();
-                                    setProductToDelete(product);
-                                }} 
-                                className="text-red-600"
-                            >
-                                {t('productsPage.delete')}
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </CardHeader>
-                <CardContent className="p-3 flex-grow">
-                    <CardTitle className="text-base font-semibold truncate" title={product.name}>{product.name}</CardTitle>
-                    <div className="flex items-center justify-between mt-2">
-                        <p className="text-lg font-bold text-primary">{formatCurrency(product.pricing?.[0]?.price ?? 0)}</p>
-                        <Badge variant="outline" className={getStatusVariant(product.status)}>{t(`productStatus.${product.status}`)}</Badge>
-                    </div>
-                </CardContent>
-                <CardFooter className="p-3 pt-0 text-xs text-muted-foreground">
-                {t('productsPage.stockLabel')}: {typeof product.availableStock === 'number' ? product.availableStock : 'Ilimitado'}
-                </CardFooter>
-            </Card>
-        ))}
+        {data.map((product) => {
+            const defaultPriceTier = product.pricing?.[0];
+            const commission = defaultPriceTier?.commission;
+
+            return (
+                <Card key={product.id} className="overflow-hidden flex flex-col cursor-pointer" onClick={() => handleViewDetails(product)}>
+                    <CardHeader className="p-0 relative aspect-square">
+                        <Image
+                            src={product.images?.mainImage || "https://placehold.co/400x400.png"}
+                            alt={product.name}
+                            layout="fill"
+                            objectFit="cover"
+                            className="w-full h-full"
+                        />
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="secondary" size="icon" className="absolute top-2 right-2 h-8 w-8 rounded-full" onClick={(e) => e.stopPropagation()}>
+                                <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                <DropdownMenuLabel>{t('productsPage.actionsLabel')}</DropdownMenuLabel>
+                                <DropdownMenuItem onSelect={() => router.push(`/dashboard/products/${product.id}/edit`)}>
+                                {t('productsPage.edit')}
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                    onSelect={(e) => {
+                                        e.preventDefault();
+                                        setProductToDelete(product);
+                                    }} 
+                                    className="text-red-600"
+                                >
+                                    {t('productsPage.delete')}
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </CardHeader>
+                    <CardContent className="p-3 flex-grow">
+                        <CardTitle className="text-base font-semibold truncate" title={product.name}>{product.name}</CardTitle>
+                        <div className="flex items-center justify-between mt-2">
+                            <p className="text-lg font-bold text-primary">{formatCurrency(defaultPriceTier?.price ?? 0)}</p>
+                            <Badge variant="outline" className={getStatusVariant(product.status)}>{t(`productStatus.${product.status}`)}</Badge>
+                        </div>
+                        {commission && commission.value > 0 && (
+                            <div className="flex items-center text-xs text-muted-foreground mt-1">
+                                <Percent className="h-3 w-3 mr-1" />
+                                <span>Comissão: {commission.type === 'fixed' ? formatCurrency(commission.value) : `${commission.value}%`}</span>
+                            </div>
+                        )}
+                    </CardContent>
+                    <CardFooter className="p-3 pt-0 text-xs text-muted-foreground">
+                    {t('productsPage.stockLabel')}: {typeof product.availableStock === 'number' ? product.availableStock : 'Ilimitado'}
+                    </CardFooter>
+                </Card>
+            )
+        })}
         </div>
 
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
@@ -202,5 +213,3 @@ export function ProductsGrid({ data, onProductDeleted }: ProductsGridProps) {
     </>
   )
 }
-
-    
