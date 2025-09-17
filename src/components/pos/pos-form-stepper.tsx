@@ -601,7 +601,8 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
         </main>
         
         <footer className="fixed bottom-0 z-10 border-t bg-background/80 backdrop-blur-sm p-4 left-0 md:left-[var(--sidebar-width)] w-full peer-data-[state=collapsed]:md:left-[var(--sidebar-width-icon)] transition-[left] ease-linear">
-            <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4">
+             <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4">
+                {/* Stepper */}
                 <div className="flex items-center gap-1 sm:gap-2">
                     {steps.map((step, index) => (
                     <React.Fragment key={step.id}>
@@ -638,7 +639,8 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                     ))}
                 </div>
 
-                 <div className="flex items-center justify-end gap-2 sm:gap-4">
+                {/* Actions */}
+                <div className="flex items-center justify-end gap-2 sm:gap-4">
                     <span className="text-md sm:text-lg font-bold">{formatCurrency(total)}</span>
                     {currentStep < steps.length ? (
                         <Button type="button" onClick={handleNextStep}>
