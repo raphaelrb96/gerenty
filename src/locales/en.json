@@ -351,7 +351,9 @@
         "cancelled": "Cancelled",
         "refunded": "Refunded",
         "out_for_delivery": "Out for Delivery",
-        "returned": "Returned"
+        "returned": "Returned",
+        "exchange": "Exchange",
+        "return": "Return"
     },
     "orderDetails": {
         "orderId": "Order #{id}",
@@ -542,5 +544,7 @@
         "online": "Online"
     }
 }
+
+    
 
     

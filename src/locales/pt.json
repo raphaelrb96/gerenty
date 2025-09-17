@@ -351,7 +351,9 @@
         "cancelled": "Cancelado",
         "refunded": "Reembolsado",
         "out_for_delivery": "Em Trânsito",
-        "returned": "Devolvido"
+        "returned": "Devolvido",
+        "exchange": "Troca",
+        "return": "Devolução"
     },
     "orderDetails": {
         "orderId": "Pedido #{id}",
@@ -542,5 +544,7 @@
         "online": "Online"
     }
 }
+
+    
 
     
