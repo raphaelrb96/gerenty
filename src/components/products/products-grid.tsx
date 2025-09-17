@@ -3,7 +3,7 @@
 "use client"
 
 import * as React from "react"
-import { MoreHorizontal, Percent } from "lucide-react"
+import { MoreHorizontal, Percent, Package } from "lucide-react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 
@@ -154,15 +154,18 @@ export function ProductsGrid({ data, onProductDeleted }: ProductsGridProps) {
                             <p className="text-lg font-bold text-primary">{formatCurrency(defaultPriceTier?.price ?? 0)}</p>
                             <Badge variant="outline" className={getStatusVariant(product.status)}>{t(`productStatus.${product.status}`)}</Badge>
                         </div>
+                    </CardContent>
+                    <CardFooter className="p-3 pt-0 text-xs text-muted-foreground flex justify-between items-center">
+                        <div className="flex items-center gap-1">
+                            <Package className="h-3 w-3" />
+                           <span>{typeof product.availableStock === 'number' ? product.availableStock : '∞'}</span>
+                        </div>
                         {commission && commission.value > 0 && (
-                            <div className="flex items-center text-xs text-muted-foreground mt-1">
-                                <Percent className="h-3 w-3 mr-1" />
+                            <div className="flex items-center gap-1">
+                                <Percent className="h-3 w-3" />
                                 <span>{commission.type === 'fixed' ? formatCurrency(commission.value) : `${commission.value}%`}</span>
                             </div>
                         )}
-                    </CardContent>
-                    <CardFooter className="p-3 pt-0 text-xs text-muted-foreground">
-                    {t('productsPage.stockLabel')}: {typeof product.availableStock === 'number' ? product.availableStock : 'Ilimitado'}
                     </CardFooter>
                 </Card>
             )
