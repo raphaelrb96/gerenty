@@ -271,7 +271,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
 
   const handlePrevStep = () => {
     if (currentStep > 1) {
-        setCurrentStep(currentStep + 1);
+        setCurrentStep(currentStep - 1);
     }
   };
   
@@ -603,7 +603,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
         <footer className="fixed bottom-0 z-10 w-full border-t bg-background/80 p-4 backdrop-blur-sm right-0 md:w-[calc(100%-var(--sidebar-width))] peer-data-[state=collapsed]:md:w-[calc(100%-var(--sidebar-width-icon))]">
              <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4">
                 {/* Stepper */}
-                <div className="mr-auto flex items-center gap-1 sm:gap-2">
+                <div className="flex flex-1 items-center gap-1 sm:gap-2">
                     {steps.map((step, index) => (
                     <React.Fragment key={step.id}>
                         <div className="flex flex-col items-center text-center">
@@ -629,8 +629,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                         {index < steps.length - 1 && (
                             <div
                                 className={cn(
-                                    'mt-[-1.5rem] h-0.5 w-4 flex-1 sm:w-12 transition-colors',
-                                    'hidden sm:block',
+                                    'mt-[-1.5rem] h-0.5 flex-1 transition-colors',
                                     currentStep > index + 1 ? 'bg-primary' : 'bg-muted-foreground/30'
                                 )}
                             />
