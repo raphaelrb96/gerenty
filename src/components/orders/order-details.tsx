@@ -17,7 +17,7 @@ import { useCurrency } from "@/context/currency-context";
 import { ScrollArea } from "../ui/scroll-area";
 import { SheetFooter, SheetHeader, SheetTitle } from "../ui/sheet";
 import { useState, useEffect } from "react";
-import { Loader2, User, Truck, Handshake } from "lucide-react";
+import { Loader2, User, Truck, Handshake, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { ALL_ORDER_STATUSES } from "@/lib/order-statuses";
@@ -78,6 +78,17 @@ export function OrderDetails({ order, onFinished, onStatusChange }: OrderDetails
     onFinished();
     router.push(path);
   }
+  
+  const deliveryMethodMap: Record<string, string> = {
+    retirada_loja: 'pickup',
+    entrega_padrao: 'standard',
+    correios: 'correios',
+    logistica_propria: 'own',
+    digital: 'digital'
+  };
+  
+  const deliveryMethod = order.shipping?.method ? t(`deliveryMethods.${deliveryMethodMap[order.shipping.method]}`) : 'N/A';
+  const showAddress = order.shipping?.method !== 'retirada_loja' && order.shipping?.method !== 'digital' && order.shipping?.address;
 
   return (
     <>
@@ -128,6 +139,30 @@ export function OrderDetails({ order, onFinished, onStatusChange }: OrderDetails
                         <dt className="text-muted-foreground">{t('orderDetails.phone')}</dt>
                         <dd>{order.customer.phone || 'N/A'}</dd>
                     </div>
+                </dl>
+            </div>
+
+             <Separator />
+
+            <div className="grid gap-4">
+                <div className="font-semibold">Entrega</div>
+                <dl className="grid gap-2 text-sm">
+                    <div className="flex items-center justify-between">
+                        <dt className="text-muted-foreground">Método</dt>
+                        <dd>{deliveryMethod}</dd>
+                    </div>
+                    {showAddress && (
+                         <div className="flex items-start justify-between">
+                            <dt className="text-muted-foreground pt-0.5">Endereço</dt>
+                            <dd className="text-right">
+                                <address className="not-italic">
+                                    {order.shipping?.address?.street}, {order.shipping?.address?.number}<br />
+                                    {order.shipping?.address?.neighborhood}, {order.shipping?.address?.city} - {order.shipping?.address?.state}<br />
+                                    {order.shipping?.address?.zipCode}
+                                </address>
+                            </dd>
+                        </div>
+                    )}
                 </dl>
             </div>
             
@@ -190,3 +225,4 @@ export function OrderDetails({ order, onFinished, onStatusChange }: OrderDetails
     </>
   );
 }
+
