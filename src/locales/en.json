@@ -237,7 +237,11 @@
             "itemsSold": "Items Sold",
             "cancelledRevenue": "Cancelled Revenue",
             "refundedRevenue": "Refunded Revenue",
-            "cancellations": "Cancellations"
+            "cancellations": "Cancellations",
+            "cashReceived": "Cash Received",
+            "accountReceived": "Account Received",
+            "totalCommissions": "Total Commissions",
+            "averageProfitPerOrder": "Avg. Profit/Order"
         },
         "charts": {
             "revenueOverview": "Revenue Overview",
@@ -547,5 +551,8 @@
 }
 
     
+
+    
+
 
     

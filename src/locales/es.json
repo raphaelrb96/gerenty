@@ -237,7 +237,11 @@
             "itemsSold": "Artículos Vendidos",
             "cancelledRevenue": "Ingresos Cancelados",
             "refundedRevenue": "Ingresos Reembolsados",
-            "cancellations": "Cancelaciones"
+            "cancellations": "Cancelaciones",
+            "cashReceived": "Efectivo Recibido",
+            "accountReceived": "Recibido en Cuenta",
+            "totalCommissions": "Comisiones Totales",
+            "averageProfitPerOrder": "Beneficio Prom./Pedido"
         },
         "charts": {
             "revenueOverview": "Resumen de Ingresos",
@@ -547,5 +551,8 @@
 }
 
     
+
+    
+
 
     

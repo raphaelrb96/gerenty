@@ -18,7 +18,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { DollarSign, Package, ShoppingCart, ArrowRight, TrendingUp, BarChart, FileText, ChevronsUpDown, Building, Calendar, Users, History, AlertCircle, XCircle, RotateCcw, Hourglass } from "lucide-react";
+import { DollarSign, Package, ShoppingCart, ArrowRight, TrendingUp, BarChart, FileText, ChevronsUpDown, Building, Calendar, Users, History, AlertCircle, XCircle, RotateCcw, Hourglass, Percent, HandCoins } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
 import { useEffect, useState, useMemo } from "react";
@@ -203,29 +203,49 @@ export default function DashboardPage() {
     });
 
     const completedOrders = ordersInDateRange.filter(o => o.status === 'completed');
-    const cancelledOrders = ordersInDateRange.filter(o => o.status === 'cancelled');
+    const cancelledOrders = ordersInDateRange.filter(o => o.status === 'cancelled' || o.status === 'returned');
     const refundedOrders = ordersInDateRange.filter(o => o.status === 'refunded');
-    const pendingOrders = ordersInDateRange.filter(o => !['completed', 'cancelled', 'refunded'].includes(o.status));
-
+    const pendingOrders = ordersInDateRange.filter(o => !['completed', 'cancelled', 'returned', 'refunded'].includes(o.status));
+    const exchangeReturnOrders = ordersInDateRange.filter(o => o.status === 'exchange' || o.status === 'return');
+    
+    // Revenue & Profit
     const totalRevenue = completedOrders.reduce((acc, order) => acc + order.total, 0);
     const totalCost = completedOrders.reduce((acc, order) => acc + (order.items.reduce((itemAcc, item) => itemAcc + (item.costPrice || 0) * item.quantity, 0)), 0);
-    const totalProfit = totalRevenue - totalCost;
+    const totalCommissions = completedOrders.reduce((acc, order) => acc + (order.commission || 0), 0);
+    const totalShippingCost = completedOrders.reduce((acc, order) => acc + (order.shippingCost || 0), 0);
+    const totalProfit = totalRevenue - totalCost - totalCommissions - totalShippingCost;
+    
+    // Order Counts
     const paidOrdersCount = completedOrders.length;
-    const averageTicket = paidOrdersCount > 0 ? totalRevenue / paidOrdersCount : 0;
-    const itemsSoldCount = completedOrders.reduce((acc, order) => acc + order.items.reduce((itemAcc, item) => itemAcc + item.quantity, 0), 0);
-
-    const cancelledRevenue = cancelledOrders.reduce((acc, order) => acc + order.total, 0);
     const cancelledOrdersCount = cancelledOrders.length;
     
-    const refundedRevenue = refundedOrders.reduce((acc, order) => acc + order.total, 0);
+    // Averages
+    const averageTicket = paidOrdersCount > 0 ? totalRevenue / paidOrdersCount : 0;
+    const averageProfitPerOrder = paidOrdersCount > 0 ? totalProfit / paidOrdersCount : 0;
+    
+    // Items
+    const itemsSoldCount = completedOrders.reduce((acc, order) => acc + order.items.reduce((itemAcc, item) => itemAcc + item.quantity, 0), 0);
+    const averageProfitPerItem = itemsSoldCount > 0 ? totalProfit / itemsSoldCount : 0;
 
+    // Costs
+    const averageCostPerSale = paidOrdersCount > 0 ? (totalCost + totalCommissions + totalShippingCost) / paidOrdersCount : 0;
+
+    // Cancelled & Refunded
+    const cancelledRevenue = cancelledOrders.reduce((acc, order) => acc + order.total, 0);
+    const refundedRevenue = refundedOrders.reduce((acc, order) => acc + order.total, 0);
+    
+    // Pending
     const pendingRevenue = pendingOrders.reduce((acc, order) => acc + order.total, 0);
-    const pendingCost = pendingOrders.reduce((acc, order) => acc + (order.items.reduce((itemAcc, item) => itemAcc + (item.costPrice || 0) * item.quantity, 0)), 0);
-    const pendingProfit = pendingRevenue - pendingCost;
-    const pendingOrdersCount = pendingOrders.length;
+    
+    // Payments
+    const cashReceived = completedOrders.filter(o => o.payment.method === 'dinheiro').reduce((sum, o) => sum + o.total, 0);
+    const cashToReceive = pendingOrders.filter(o => o.payment.method === 'dinheiro').reduce((sum, o) => sum + o.total, 0);
+    const accountReceived = completedOrders.filter(o => o.payment.method !== 'dinheiro').reduce((sum, o) => sum + o.total, 0);
+    const accountToReceive = pendingOrders.filter(o => o.payment.method !== 'dinheiro').reduce((sum, o) => sum + o.total, 0);
+
 
     const topProducts = ordersInDateRange
-        .filter(o => !['cancelled', 'refunded'].includes(o.status))
+        .filter(o => !['cancelled', 'refunded', 'returned'].includes(o.status))
         .flatMap(o => o.items)
         .reduce((acc, item) => {
             const existing = acc.find(p => p.productId === item.productId);
@@ -253,7 +273,7 @@ export default function DashboardPage() {
                 revenueByHour[format(hour, 'HH:00')] = 0;
             });
             
-            ordersInDateRange.forEach(order => {
+            completedOrders.forEach(order => {
                 const hourStr = format(new Date(order.createdAt as string), 'HH:00');
                 if (revenueByHour.hasOwnProperty(hourStr)) {
                     revenueByHour[hourStr] += order.total;
@@ -264,6 +284,7 @@ export default function DashboardPage() {
         } else { // 7 days, 30 days, or custom range
             const revenueByDay: { [key: string]: number } = {};
             let intervalStart = dateRange.from;
+            // Pad to at least 7 days for better visualization if range is small
             if (diff < 6) {
                  const daysToAdd = 6 - diff;
                  intervalStart = subDays(dateRange.from, daysToAdd);
@@ -273,7 +294,7 @@ export default function DashboardPage() {
                 revenueByDay[format(day, 'yyyy-MM-dd')] = 0;
             });
     
-            ordersInDateRange.forEach(order => {
+            completedOrders.forEach(order => {
                 const dateStr = format(new Date(order.createdAt as string), 'yyyy-MM-dd');
                 if (revenueByDay.hasOwnProperty(dateStr)) {
                     revenueByDay[dateStr] += order.total;
@@ -286,9 +307,11 @@ export default function DashboardPage() {
                     Total: total
                 }))
                 .sort((a,b) => {
-                    const dateA = new Date(a.name.split('/').reverse().join('-') + `-${new Date().getFullYear()}`);
-                    const dateB = new Date(b.name.split('/').reverse().join('-') + `-${new Date().getFullYear()}`);
-                    return dateA.getTime() - dateB.getTime();
+                    // Correctly sort dates like '28/07', '29/07'
+                    const [dayA, monthA] = a.name.split('/').map(Number);
+                    const [dayB, monthB] = b.name.split('/').map(Number);
+                    if (monthA !== monthB) return monthA - monthB;
+                    return dayA - dayB;
                 });
         }
     }
@@ -303,13 +326,21 @@ export default function DashboardPage() {
         cancelledRevenue,
         cancelledOrdersCount,
         refundedRevenue,
-        totalSales: ordersInDateRange.length,
         pendingRevenue,
-        pendingProfit,
-        pendingOrdersCount,
+        pendingOrdersCount: pendingOrders.length,
         topProducts,
         totalRegisteredProducts: allProducts.length,
         revenueChartData,
+        exchangeReturnOrdersCount: exchangeReturnOrders.length,
+        totalCommissions,
+        totalShippingCost, // delivery payment
+        averageProfitPerOrder,
+        averageProfitPerItem,
+        averageCostPerSale,
+        cashReceived,
+        cashToReceive,
+        accountReceived,
+        accountToReceive,
     };
 }, [allOrders, allProducts, dateRange]);
 
@@ -337,20 +368,22 @@ export default function DashboardPage() {
     ? differenceInCalendarDays(parseISO(userData.validityDate as string), new Date())
     : null;
 
-  const stats = [
-    { title: t('dashboard.stats.totalRevenue'), value: formatCurrency(filteredData.totalRevenue), icon: <DollarSign /> },
-    { title: t('dashboard.stats.totalProfit'), value: formatCurrency(filteredData.totalProfit), icon: <TrendingUp /> },
-    { title: t('dashboard.stats.paidOrders'), value: `+${filteredData.paidOrdersCount}`, icon: <ShoppingCart /> },
-    { title: "Receita Pendente", value: formatCurrency(filteredData.pendingRevenue), icon: <Hourglass /> },
-    { title: "Lucro Pendente", value: formatCurrency(filteredData.pendingProfit), icon: <Hourglass /> },
-    { title: "Pedidos Pendentes", value: `${filteredData.pendingOrdersCount}`, icon: <Hourglass /> },
-    { title: t('dashboard.stats.averageTicket'), value: formatCurrency(filteredData.averageTicket), icon: <FileText /> },
-    { title: t('dashboard.stats.totalCost'), value: formatCurrency(filteredData.totalCost), icon: <DollarSign /> },
-    { title: t('dashboard.stats.itemsSold'), value: `${filteredData.itemsSoldCount}`, icon: <Package /> },
-    { title: t('dashboard.stats.cancelledRevenue'), value: formatCurrency(filteredData.cancelledRevenue), icon: <XCircle /> },
-    { title: t('dashboard.stats.refundedRevenue'), value: formatCurrency(filteredData.refundedRevenue), icon: <RotateCcw /> },
-    { title: t('dashboard.stats.cancellations'), value: `${filteredData.cancelledOrdersCount}`, icon: <AlertCircle /> },
-  ];
+    const stats = [
+        { title: t('dashboard.stats.totalRevenue'), value: formatCurrency(filteredData.totalRevenue), icon: <DollarSign /> },
+        { title: t('dashboard.stats.totalProfit'), value: formatCurrency(filteredData.totalProfit), icon: <TrendingUp /> },
+        { title: t('dashboard.stats.paidOrders'), value: `${filteredData.paidOrdersCount}`, icon: <ShoppingCart /> },
+        { title: t('dashboard.stats.averageTicket'), value: formatCurrency(filteredData.averageTicket), icon: <FileText /> },
+        { title: t('dashboard.stats.itemsSold'), value: `${filteredData.itemsSoldCount}`, icon: <Package /> },
+        { title: t('dashboard.stats.averageProfitPerOrder'), value: formatCurrency(filteredData.averageProfitPerOrder), icon: <TrendingUp /> },
+        
+        { title: t('dashboard.stats.cashReceived'), value: formatCurrency(filteredData.cashReceived), icon: <HandCoins /> },
+        { title: t('dashboard.stats.accountReceived'), value: formatCurrency(filteredData.accountReceived), icon: <CreditCard /> },
+        { title: t('dashboard.stats.totalCommissions'), value: formatCurrency(filteredData.totalCommissions), icon: <Percent /> },
+        
+        { title: t('dashboard.stats.cancellations'), value: `${filteredData.cancelledOrdersCount}`, icon: <XCircle /> },
+        { title: t('dashboard.stats.cancelledRevenue'), value: formatCurrency(filteredData.cancelledRevenue), icon: <AlertCircle /> },
+        { title: t('dashboard.stats.refundedRevenue'), value: formatCurrency(filteredData.refundedRevenue), icon: <RotateCcw /> },
+    ];
   
   if (loading) {
     return <div className="flex h-full items-center justify-center"><LoadingSpinner /></div>;
@@ -410,7 +443,7 @@ export default function DashboardPage() {
 
             {(activeCompany || companies.length > 0) && (
               <>
-                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                   {stats.map(stat => (
                     <Card key={stat.title}>
                       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -480,3 +513,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
