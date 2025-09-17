@@ -268,7 +268,7 @@ export default function OrdersPage() {
                        <div className="flex flex-col items-center">
                             <span className="text-muted-foreground text-xs">Data</span>
                             <span className="font-medium mt-1">
-                                {order.createdAt ? new Date(order.createdAt as string).toLocaleDateString() : 'N/A'}
+                                {order.createdAt ? new Date(order.createdAt as string).toLocaleString() : 'N/A'}
                             </span>
                        </div>
                        <div className="flex flex-col items-center">
