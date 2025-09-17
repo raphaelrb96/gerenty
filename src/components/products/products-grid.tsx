@@ -157,7 +157,7 @@ export function ProductsGrid({ data, onProductDeleted }: ProductsGridProps) {
                         {commission && commission.value > 0 && (
                             <div className="flex items-center text-xs text-muted-foreground mt-1">
                                 <Percent className="h-3 w-3 mr-1" />
-                                <span>Comissão: {commission.type === 'fixed' ? formatCurrency(commission.value) : `${commission.value}%`}</span>
+                                <span>{commission.type === 'fixed' ? formatCurrency(commission.value) : `${commission.value}%`}</span>
                             </div>
                         )}
                     </CardContent>
