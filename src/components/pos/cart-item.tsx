@@ -28,10 +28,10 @@ export function CartItem({ item, onUpdateQuantity, onUpdatePrice, onRemove }: Ca
                 height={48}
                 className="rounded-md aspect-square object-cover"
             />
-            <div className="flex-grow flex flex-col">
+            <div className="flex-grow flex flex-col gap-2">
                 <p className="font-semibold text-sm leading-tight line-clamp-2">{item.productName}</p>
                 
-                <div className="mt-2 flex items-center gap-2">
+                <div className="flex items-center gap-2">
                     <Button
                         type="button"
                         variant="outline"
@@ -57,8 +57,8 @@ export function CartItem({ item, onUpdateQuantity, onUpdatePrice, onRemove }: Ca
                         <Plus className="h-3 w-3" />
                     </Button>
                 </div>
-                 <div className="mt-2 flex items-center justify-between gap-2">
-                    <div className="relative w-28">
+                 <div className="flex flex-col items-stretch gap-2">
+                    <div className="relative">
                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">R$</span>
                        <Input
                             type="number"
@@ -68,7 +68,7 @@ export function CartItem({ item, onUpdateQuantity, onUpdatePrice, onRemove }: Ca
                             onChange={(e) => onUpdatePrice(item.productId, parseFloat(e.target.value) || 0)}
                         />
                     </div>
-                    <div className="flex flex-col items-end">
+                    <div className="flex items-center justify-between">
                         <p className="font-bold text-sm">{formatCurrency(item.totalPrice)}</p>
                         <Button
                             type="button"
@@ -85,3 +85,4 @@ export function CartItem({ item, onUpdateQuantity, onUpdatePrice, onRemove }: Ca
         </div>
     );
 }
+
