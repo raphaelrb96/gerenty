@@ -209,6 +209,14 @@ export default function DashboardPage() {
         }
         return true;
     });
+    
+    // Map order IDs to their routes for efficient lookup
+    const orderToRouteMap = new Map<string, Route>();
+    allRoutes.forEach(route => {
+        route.orderIds?.forEach(orderId => {
+            orderToRouteMap.set(orderId, route);
+        });
+    });
 
     const completedOrders = ordersInDateRange.filter(o => o.status === 'completed');
     const cancelledOrders = ordersInDateRange.filter(o => o.status === 'cancelled' || o.status === 'returned');
@@ -220,7 +228,18 @@ export default function DashboardPage() {
     const totalRevenue = completedOrders.reduce((acc, order) => acc + order.total, 0);
     const totalCost = completedOrders.reduce((acc, order) => acc + (order.items.reduce((itemAcc, item) => itemAcc + (item.costPrice || 0) * item.quantity, 0)), 0);
     const totalCommissions = completedOrders.reduce((acc, order) => acc + (order.commission || 0), 0);
-    const totalShippingCost = routesInDateRange.reduce((acc, route) => acc + (route.finalizationDetails?.driverFinalPayment || 0), 0);
+    
+    // Calculate shipping cost only for the orders that generated revenue in the period
+    const totalShippingCost = completedOrders.reduce((acc, order) => {
+        const route = orderToRouteMap.get(order.id);
+        if (route && route.status === 'finalizada' && route.finalizationDetails && (route.orderIds?.length || 0) > 0) {
+            // Prorate the driver payment for this specific order
+            const proratedCost = route.finalizationDetails.driverFinalPayment / (route.orderIds?.length || 1);
+            return acc + proratedCost;
+        }
+        return acc;
+    }, 0);
+
     const totalProfit = totalRevenue - totalCost - totalCommissions - totalShippingCost;
     
     // Order Counts
