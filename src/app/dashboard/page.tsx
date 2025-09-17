@@ -214,7 +214,7 @@ export default function DashboardPage() {
     const cancelledOrders = ordersInDateRange.filter(o => o.status === 'cancelled' || o.status === 'returned');
     const refundedOrders = ordersInDateRange.filter(o => o.status === 'refunded');
     const pendingOrders = ordersInDateRange.filter(o => !['completed', 'cancelled', 'returned', 'refunded'].includes(o.status));
-    const exchangeReturnOrders = ordersInDateRange.filter(o => o.status === 'exchange' || o.status === 'return');
+    const exchangeReturnOrders = ordersInDateRange.filter(o => o.type === 'exchange' || o.type === 'return');
     
     // Revenue & Profit
     const totalRevenue = completedOrders.reduce((acc, order) => acc + order.total, 0);
@@ -526,3 +526,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

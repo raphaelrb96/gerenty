@@ -115,6 +115,7 @@ function LogisticsPageComponent() {
         const allActiveOrders = activeRoutes.flatMap(r => r.orders.map(o => ({...o, routeId: r.id})));
         
         const deliveriesInProgress = allActiveOrders.filter(o => o.status === 'out_for_delivery').length;
+        const deliveriesDeliveredInRoute = allActiveOrders.filter(o => o.status === 'delivered').length;
         
         const finishedRoutesToday = routes.filter(r => r.status === 'finalizada' && r.finishedAt && new Date(r.finishedAt as string) >= today).length;
         
@@ -161,6 +162,7 @@ function LogisticsPageComponent() {
             driversInRoute,
             deliveriesToProcess,
             deliveriesInProgress,
+            deliveriesDeliveredInRoute,
             cashReceivedInRoute,
             cashInProgress,
             otherPaymentsReceivedInRoute,
@@ -252,7 +254,7 @@ function LogisticsPageComponent() {
                             </div>
                         </div>
                     </div>
-
+                    
                     <Card>
                         <CardHeader>
                             <CardTitle>{t('logistics.routesInProgress')}</CardTitle>
@@ -357,3 +359,6 @@ export default function LogisticsPage() {
 
 
 
+
+
+    

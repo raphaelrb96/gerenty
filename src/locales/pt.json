@@ -389,7 +389,7 @@
             "email": "Email",
             "phone": "Telefone",
             "document": "Documento",
-            "documentPlaceholder": "CPF/CNPJ"
+            "documentPlaceholder": "CPF ou CNPJ"
         },
         "products": {
             "title": "Produtos",
@@ -530,6 +530,7 @@
             "routesFinishedToday": "Rotas Finalizadas (Hoje)",
             "inTheWeek": "na semana",
             "deliveredDeliveries": "Entregas Realizadas",
+            "deliveredDeliveriesInRoute": "Entregas Realizadas (em rota)",
             "cancelledDeliveries": "Entregas Canceladas",
             "itemsToReturn": "Itens para Devolução",
             "returnedDeliveries": "entregas retornaram"
@@ -555,3 +556,5 @@
         "online": "Online"
     }
 }
+
+    

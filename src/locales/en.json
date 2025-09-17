@@ -530,6 +530,7 @@
             "routesFinishedToday": "Routes Finished (Today)",
             "inTheWeek": "in the week",
             "deliveredDeliveries": "Deliveries Made",
+            "deliveredDeliveriesInRoute": "Deliveries Made (in route)",
             "cancelledDeliveries": "Cancelled Deliveries",
             "itemsToReturn": "Items to Return",
             "returnedDeliveries": "returned deliveries"
@@ -555,3 +556,5 @@
         "online": "Online"
     }
 }
+
+    
