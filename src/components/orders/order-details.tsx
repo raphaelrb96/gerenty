@@ -16,7 +16,7 @@ import { useTranslation } from "@/context/i18n-context";
 import { useCurrency } from "@/context/currency-context";
 import { ScrollArea } from "../ui/scroll-area";
 import { SheetFooter, SheetHeader, SheetTitle } from "../ui/sheet";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Loader2, User, Truck, Handshake, MapPin, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
@@ -66,10 +66,7 @@ const paymentStatusTranslationMap: Record<Order['payment']['status'], string> = 
     parcial: 'parcial'
 };
 
-const availableOrderStatuses = ALL_ORDER_STATUSES.filter(
-  status => status !== 'exchange' && status !== 'return'
-);
-
+const LOCKED_STATUSES: OrderStatus[] = ['cancelled', 'refunded', 'returned', 'exchange', 'return'];
 
 export function OrderDetails({ order, onFinished, onStatusChange }: OrderDetailsProps) {
   const { t } = useTranslation();
@@ -86,7 +83,17 @@ export function OrderDetails({ order, onFinished, onStatusChange }: OrderDetails
 
   if (!order) return null;
 
-  const isStatusLocked = order.status === 'completed' || order.status === 'returned' || order.status === 'cancelled';
+  const isStatusLocked = LOCKED_STATUSES.includes(order.status);
+  
+  const availableOrderStatuses = useMemo(() => {
+    if (order.status === 'completed' || order.status === 'delivered') {
+      return ['cancelled', 'returned'];
+    }
+    return ALL_ORDER_STATUSES.filter(
+      status => !LOCKED_STATUSES.includes(status) && status !== 'exchange' && status !== 'return'
+    );
+  }, [order.status]);
+
 
   const handleSave = async () => {
     if (currentStatus && currentStatus !== order.status && !isStatusLocked) {
