@@ -32,19 +32,19 @@ const getStatusVariant = (status: Order['status']) => {
     switch (status) {
         case 'completed':
         case 'delivered':
-            return 'bg-green-600/20 text-green-700 hover:bg-green-600/30 border-green-600/30';
+            return 'text-green-700 border-green-600/30';
         case 'processing':
         case 'out_for_delivery':
         case 'confirmed':
-            return 'bg-blue-600/20 text-blue-700 hover:bg-blue-600/30 border-blue-600/30';
+            return 'text-blue-700 border-blue-600/30';
         case 'pending':
-            return 'bg-yellow-600/20 text-yellow-700 hover:bg-yellow-600/30 border-yellow-600/30';
+            return 'text-yellow-700 border-yellow-600/30';
         case 'cancelled':
         case 'refunded':
         case 'returned':
-            return 'bg-red-600/20 text-red-700 hover:bg-red-600/30 border-red-600/30';
+            return 'text-red-700 border-red-600/30';
         default:
-            return 'bg-gray-600/20 text-gray-700 hover:bg-gray-600/30 border-gray-600/30';
+            return 'text-gray-700 border-gray-600/30';
     }
 }
 
@@ -272,3 +272,6 @@ export function OrderDetails({ order, onFinished, onStatusChange }: OrderDetails
 
 
 
+
+
+    
