@@ -213,8 +213,20 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
     form.setValue("customerName", customer.name);
     form.setValue("customerEmail", customer.email || "");
     form.setValue("customerPhone", customer.phone || "");
+    form.setValue("customerDocument", customer.document || "");
     setSelectedCustomerId(customer.id);
-  }
+  
+    // Preenche o endereço se existir
+    if (customer.address) {
+      form.setValue("address.street", customer.address.street || "");
+      form.setValue("address.number", customer.address.number || "");
+      form.setValue("address.complement", customer.address.complement || "");
+      form.setValue("address.neighborhood", customer.address.neighborhood || "");
+      form.setValue("address.city", customer.address.city || "");
+      form.setValue("address.state", customer.address.state || "");
+      form.setValue("address.zipCode", customer.address.zipCode || "");
+    }
+  };
 
   const watchedDiscount = form.watch('discount', 0);
   const watchedShippingCost = form.watch('shippingCost', 0);
@@ -411,7 +423,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                 <form onSubmit={(e) => { e.preventDefault(); if (currentStep === 4) form.handleSubmit(onSubmit)(); }}>
                     {/* The rest of the form steps go inside this form tag */}
                     <div style={{ display: currentStep === 2 ? 'block' : 'none' }}>
-                        <div className="p-1 space-y-6 w-full max-w-4xl mx-auto">
+                        <div className="w-full max-w-4xl mx-auto space-y-6">
                            <div className="space-y-6">
                                 {renderStepHeader("Informações do Cliente")}
                                 <Card>
@@ -607,7 +619,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
         
         <footer className="fixed bottom-0 z-10 w-full border-t bg-background/80 p-4 backdrop-blur-sm right-0 md:w-[calc(100%-var(--sidebar-width))] peer-data-[state=collapsed]:md:w-[calc(100%-var(--sidebar-width-icon))]">
              <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4">
-                <div className="flex flex-1 items-center gap-1 sm:gap-2 max-w-[500px]">
+                <div className="flex flex-1 mr-auto items-center gap-1 sm:gap-2 max-w-[500px]">
                     {steps.map((step, index) => (
                     <React.Fragment key={step.id}>
                         <div className="flex flex-col items-center text-center">
