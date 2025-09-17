@@ -16,7 +16,7 @@ import { useTranslation } from "@/context/i18n-context";
 import { useCurrency } from "@/context/currency-context";
 import { ScrollArea } from "../ui/scroll-area";
 import { SheetFooter, SheetHeader, SheetTitle } from "../ui/sheet";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2, User, Truck, Handshake } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
@@ -55,6 +55,12 @@ export function OrderDetails({ order, onFinished, onStatusChange }: OrderDetails
   const [currentStatus, setCurrentStatus] = useState(order?.status);
   const [isSaving, setIsSaving] = useState(false);
   
+  useEffect(() => {
+    if (order) {
+        setCurrentStatus(order.status);
+    }
+  }, [order]);
+
   if (!order) return null;
 
   const isStatusLocked = order.status === 'completed' || order.status === 'returned' || order.status === 'cancelled';
