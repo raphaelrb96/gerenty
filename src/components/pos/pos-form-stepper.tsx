@@ -328,7 +328,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
         companyId: activeCompany.id,
         employeeId: values.employeeId === 'direct_sale' ? undefined : values.employeeId,
         customer: { id: customerId, name: values.customerName, email: values.customerEmail || '', phone: values.customerPhone, document: values.customerDocument },
-        items: cart.map(({imageUrl, ...item}) => item),
+        items: cart.map(({...item}) => item),
         status: orderStatus,
         payment: { 
             method: values.paymentMethod as PaymentMethod, 
@@ -411,8 +411,8 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                 <form onSubmit={(e) => { e.preventDefault(); if (currentStep === 4) form.handleSubmit(onSubmit)(); }}>
                     {/* The rest of the form steps go inside this form tag */}
                     <div style={{ display: currentStep === 2 ? 'block' : 'none' }}>
-                        <div className="p-1 space-y-6 lg:grid lg:grid-cols-3 lg:gap-6">
-                            <div className="lg:col-span-2 space-y-6">
+                        <div className="p-1 space-y-6 w-full max-w-4xl mx-auto">
+                           <div className="space-y-6">
                                 {renderStepHeader("Informações do Cliente")}
                                 <Card>
                                     <CardHeader><CardTitle>Buscar Cliente</CardTitle></CardHeader>
