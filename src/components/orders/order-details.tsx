@@ -11,13 +11,13 @@ import {
 } from "@/components/ui/select";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
-import type { Order, OrderStatus } from "@/lib/types";
+import type { Order, OrderStatus, PaymentMethod } from "@/lib/types";
 import { useTranslation } from "@/context/i18n-context";
 import { useCurrency } from "@/context/currency-context";
 import { ScrollArea } from "../ui/scroll-area";
 import { SheetFooter, SheetHeader, SheetTitle } from "../ui/sheet";
 import { useState, useEffect } from "react";
-import { Loader2, User, Truck, Handshake, MapPin } from "lucide-react";
+import { Loader2, User, Truck, Handshake, MapPin, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { ALL_ORDER_STATUSES } from "@/lib/order-statuses";
@@ -47,6 +47,25 @@ const getStatusVariant = (status: Order['status']) => {
             return 'bg-gray-600/20 text-gray-700 hover:bg-gray-600/30 border-gray-600/30';
     }
 }
+
+const paymentMethodTranslationMap: Record<PaymentMethod, string> = {
+    credito: 'credit',
+    debito: 'debit',
+    pix: 'pix',
+    dinheiro: 'cash',
+    boleto: 'billet',
+    link: 'link',
+    outros: 'other'
+};
+
+const paymentStatusTranslationMap: Record<Order['payment']['status'], string> = {
+    aguardando: 'pending',
+    aprovado: 'approved',
+    recusado: 'refused',
+    estornado: 'refunded',
+    parcial: 'parcial' // Assuming 'parcial' translates to 'partial'
+};
+
 
 export function OrderDetails({ order, onFinished, onStatusChange }: OrderDetailsProps) {
   const { t } = useTranslation();
@@ -89,6 +108,10 @@ export function OrderDetails({ order, onFinished, onStatusChange }: OrderDetails
   
   const deliveryMethod = order.shipping?.method ? t(`deliveryMethods.${deliveryMethodMap[order.shipping.method]}`) : 'N/A';
   const showAddress = order.shipping?.method !== 'retirada_loja' && order.shipping?.method !== 'digital' && order.shipping?.address;
+  
+  const paymentMethodKey = paymentMethodTranslationMap[order.payment.method] || 'other';
+  const paymentStatusKey = paymentStatusTranslationMap[order.payment.status] || 'pending';
+
 
   return (
     <>
@@ -165,6 +188,22 @@ export function OrderDetails({ order, onFinished, onStatusChange }: OrderDetails
                     )}
                 </dl>
             </div>
+
+            <Separator />
+            
+             <div className="grid gap-4">
+                <div className="font-semibold">Pagamento</div>
+                <dl className="grid gap-2 text-sm">
+                    <div className="flex items-center justify-between">
+                        <dt className="text-muted-foreground">Método</dt>
+                        <dd className="capitalize">{t(`paymentMethods.${paymentMethodKey}`)}</dd>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <dt className="text-muted-foreground">Status</dt>
+                        <dd className="capitalize">{t(`paymentStatus.${paymentStatusKey}`)}</dd>
+                    </div>
+                </dl>
+            </div>
             
             <Separator />
             
@@ -186,6 +225,11 @@ export function OrderDetails({ order, onFinished, onStatusChange }: OrderDetails
                         <dt className="text-muted-foreground">{t('orderDetails.shipping')}</dt>
                         <dd>{formatCurrency(order.shippingCost || 0)}</dd>
                     </div>
+                     <div className="flex items-center justify-between text-destructive">
+                        <dt>{t('pos.summary.discount')}</dt>
+                        <dd>- {formatCurrency(order.discount || 0)}</dd>
+                    </div>
+                    <Separator className="my-2" />
                     <div className="flex items-center justify-between font-semibold">
                         <dt>{t('orderDetails.total')}</dt>
                         <dd>{formatCurrency(order.total)}</dd>
@@ -225,4 +269,5 @@ export function OrderDetails({ order, onFinished, onStatusChange }: OrderDetails
     </>
   );
 }
+
 
