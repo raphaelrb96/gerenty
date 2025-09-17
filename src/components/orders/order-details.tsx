@@ -86,13 +86,18 @@ export function OrderDetails({ order, onFinished, onStatusChange }: OrderDetails
   const isStatusLocked = LOCKED_STATUSES.includes(order.status);
   
   const availableOrderStatuses = useMemo(() => {
-    if (order.status === 'completed' || order.status === 'delivered') {
-      return ['cancelled', 'returned'];
+    if (isStatusLocked) {
+      return [order.status]; // Only show the current locked status
     }
+    if (order.status === 'completed' || order.status === 'delivered') {
+      // Allow changing to cancellable statuses, but keep the current one
+      return [order.status, 'cancelled', 'returned'];
+    }
+    // Default case: show all non-locked statuses
     return ALL_ORDER_STATUSES.filter(
       status => !LOCKED_STATUSES.includes(status) && status !== 'exchange' && status !== 'return'
     );
-  }, [order.status]);
+  }, [order.status, isStatusLocked]);
 
 
   const handleSave = async () => {
@@ -271,7 +276,7 @@ export function OrderDetails({ order, onFinished, onStatusChange }: OrderDetails
       <SheetFooter className="border-t pt-4 p-6 flex-shrink-0">
         <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={onFinished}>{t('orderDetails.close')}</Button>
-            <Button type="button" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} onClick={handleSave} disabled={isSaving || isStatusLocked}>
+            <Button type="button" style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} onClick={handleSave} disabled={isSaving || order.status === currentStatus}>
                 {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {t('orderDetails.updateOrder')}
             </Button>
