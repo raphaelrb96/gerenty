@@ -118,17 +118,14 @@ function LogisticsPageComponent() {
         
         const finishedRoutesToday = routes.filter(r => r.status === 'finalizada' && r.finishedAt && new Date(r.finishedAt as string) >= today).length;
         const finishedRoutesThisWeek = routes.filter(r => r.status === 'finalizada' && r.finishedAt && new Date(r.finishedAt as string) >= startOfThisWeek).length;
-
-        const allOrdersInSystem = routes.flatMap(r => r.orders);
         
-        const deliveriesCancelledInRoute = allActiveOrders.filter(o => o.status === 'cancelled').length;
-        const totalCancelledValueInRoute = allActiveOrders
-            .filter(o => o.status === 'cancelled')
-            .reduce((sum, o) => sum + o.total, 0);
+        const cancelledOrdersInRoute = allActiveOrders.filter(o => o.status === 'cancelled');
+        const deliveriesCancelledInRoute = cancelledOrdersInRoute.length;
+        const totalCancelledValueInRoute = cancelledOrdersInRoute.reduce((sum, o) => sum + o.total, 0);
 
-        const returnedOrders = allOrdersInSystem.filter(o => o.status === 'returned');
-        const deliveriesReturnedInRoute = returnedOrders.length;
-        const itemsToReturn = returnedOrders.flatMap(o => o.items).reduce((sum, item) => sum + item.quantity, 0);
+        const itemsToReturnFromCancelled = cancelledOrdersInRoute
+            .flatMap(o => o.items)
+            .reduce((sum, item) => sum + item.quantity, 0);
         
         const deliveriesToProcess = deliverableOrders.filter(o => o.status === 'processing').length;
         
@@ -165,8 +162,8 @@ function LogisticsPageComponent() {
             totalReceived,
             finishedRoutesToday,
             finishedRoutesThisWeek,
-            itemsToReturn,
-            deliveriesReturnedInRoute
+            itemsToReturnFromCancelled,
+            deliveriesReturnedInRoute: cancelledOrdersInRoute.length // Changed logic
         };
     }, [activeRoutes, routes, deliverableOrders]);
 
@@ -241,7 +238,7 @@ function LogisticsPageComponent() {
                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                                 <StatCard title={t('logistics.results.routesFinishedToday')} value={metrics.finishedRoutesToday} icon={<PackageCheck className="text-muted-foreground" />} description={`${metrics.finishedRoutesThisWeek} ${t('logistics.results.inTheWeek')}`}/>
                                 <StatCard title={t('logistics.results.cancelledDeliveries')} value={metrics.deliveriesCancelledInRoute} icon={<Ban className="text-red-500" />} description={formatCurrency(metrics.totalCancelledValueInRoute)}/>
-                                <StatCard title={t('logistics.results.itemsToReturn')} value={metrics.itemsToReturn} icon={<Package className="text-orange-500" />} description={`${metrics.deliveriesReturnedInRoute} ${t('logistics.results.returnedDeliveries')}`}/>
+                                <StatCard title={t('logistics.results.itemsToReturn')} value={metrics.itemsToReturnFromCancelled} icon={<Package className="text-orange-500" />} description={`${metrics.deliveriesReturnedInRoute} ${t('logistics.results.returnedDeliveries')}`}/>
                             </div>
                         </div>
                     </div>
@@ -346,4 +343,5 @@ export default function LogisticsPage() {
 
 
     
+
 
