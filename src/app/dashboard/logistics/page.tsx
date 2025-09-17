@@ -121,6 +121,7 @@ function LogisticsPageComponent() {
         
         const cancelledOrdersInRoute = allActiveOrders.filter(o => o.status === 'cancelled');
         const deliveriesCancelledInRoute = cancelledOrdersInRoute.length;
+        const deliveriesDeliveredInRoute = allActiveOrders.filter(o => o.status === 'delivered').length;
         const totalCancelledValueInRoute = cancelledOrdersInRoute.reduce((sum, o) => sum + o.total, 0);
 
         const itemsToReturnFromCancelled = cancelledOrdersInRoute
@@ -163,7 +164,8 @@ function LogisticsPageComponent() {
             finishedRoutesToday,
             finishedRoutesThisWeek,
             itemsToReturnFromCancelled,
-            deliveriesReturnedInRoute: cancelledOrdersInRoute.length // Changed logic
+            deliveriesReturnedInRoute: cancelledOrdersInRoute.length, // Changed logic
+            deliveriesDeliveredInRoute,
         };
     }, [activeRoutes, routes, deliverableOrders]);
 
@@ -229,14 +231,15 @@ function LogisticsPageComponent() {
                                 <StatCard title={t('logistics.financial.onlineToReceive')} value={formatCurrency(metrics.otherPaymentsInProgress)} icon={<ArrowLeftRight className="text-yellow-500" />} />
                                 <StatCard title={t('logistics.financial.totalReceived')} value={formatCurrency(metrics.totalReceived)} icon={<Wallet className="text-green-500" />} />
                                 <StatCard title={t('logistics.financial.cashReceived')} value={formatCurrency(metrics.cashReceivedInRoute)} icon={<DollarSign className="text-green-500" />} />
-                                <StatCard title={t('logistics.financial.onlineReceived')} value={formatCurrency(metrics.otherPaymentsReceivedInRoute)} icon={<ArrowLeftRight className="text-green-500" />} />
+                                <StatCard title={t('logistics.financial.onlineReceived')} value={t('logistics.financial.onlineReceived')} icon={<ArrowLeftRight className="text-green-500" />} />
                             </div>
                         </div>
 
                         <div>
                             <h3 className="text-lg font-medium mb-2">{t('logistics.results.title')}</h3>
-                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                                 <StatCard title={t('logistics.results.routesFinishedToday')} value={metrics.finishedRoutesToday} icon={<PackageCheck className="text-muted-foreground" />} description={`${metrics.finishedRoutesThisWeek} ${t('logistics.results.inTheWeek')}`}/>
+                                <StatCard title={t('logistics.results.deliveredDeliveries')} value={metrics.deliveriesDeliveredInRoute} icon={<PackageCheck className="text-green-500" />} />
                                 <StatCard title={t('logistics.results.cancelledDeliveries')} value={metrics.deliveriesCancelledInRoute} icon={<Ban className="text-red-500" />} description={formatCurrency(metrics.totalCancelledValueInRoute)}/>
                                 <StatCard title={t('logistics.results.itemsToReturn')} value={metrics.itemsToReturnFromCancelled} icon={<Package className="text-orange-500" />} description={`${metrics.deliveriesReturnedInRoute} ${t('logistics.results.returnedDeliveries')}`}/>
                             </div>
@@ -343,5 +346,6 @@ export default function LogisticsPage() {
 
 
     
+
 
 
