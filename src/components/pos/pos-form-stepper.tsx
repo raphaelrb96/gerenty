@@ -627,12 +627,14 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                             </p>
                         </div>
                         {index < steps.length - 1 && (
-                            <div
-                                className={cn(
-                                    'mt-[-1.5rem] h-0.5 flex-1 transition-colors',
-                                    currentStep > index + 1 ? 'bg-primary' : 'bg-muted-foreground/30'
-                                )}
-                            />
+                            <div className="flex items-center flex-1">
+                                <div
+                                    className={cn(
+                                        'h-0.5 w-full transition-colors',
+                                        currentStep > index + 1 ? 'bg-primary' : 'bg-muted-foreground/30'
+                                    )}
+                                />
+                            </div>
                         )}
                     </React.Fragment>
                     ))}
