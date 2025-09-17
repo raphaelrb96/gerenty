@@ -239,9 +239,15 @@
             "refundedRevenue": "Refunded Revenue",
             "cancellations": "Cancellations",
             "cashReceived": "Cash Received",
+            "cashToReceive": "Cash to Receive",
             "accountReceived": "Account Received",
+            "accountToReceive": "Account to Receive",
             "totalCommissions": "Total Commissions",
-            "averageProfitPerOrder": "Avg. Profit/Order"
+            "totalShippingCost": "Driver Payments",
+            "exchangesAndReturns": "Exchanges/Returns",
+            "averageProfitPerOrder": "Avg. Profit/Order",
+            "averageProfitPerItem": "Avg. Profit/Item",
+            "averageCostPerSale": "Avg. Cost/Sale"
         },
         "charts": {
             "revenueOverview": "Revenue Overview",
@@ -549,10 +555,3 @@
         "online": "Online"
     }
 }
-
-    
-
-    
-
-
-    

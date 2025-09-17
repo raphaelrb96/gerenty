@@ -239,9 +239,15 @@
             "refundedRevenue": "Reembolso",
             "cancellations": "Cancelamentos",
             "cashReceived": "Dinheiro Recebido",
+            "cashToReceive": "Dinheiro a Receber",
             "accountReceived": "Recebido na Conta",
+            "accountToReceive": "A Receber na Conta",
             "totalCommissions": "Total em Comissões",
-            "averageProfitPerOrder": "Lucro Médio/Pedido"
+            "totalShippingCost": "Pagamento Entregador",
+            "exchangesAndReturns": "Trocas/Devoluções",
+            "averageProfitPerOrder": "Lucro Médio/Pedido",
+            "averageProfitPerItem": "Lucro Médio/Item",
+            "averageCostPerSale": "Custo Médio/Venda"
         },
         "charts": {
             "revenueOverview": "Visão Geral da Receita",
@@ -549,10 +555,3 @@
         "online": "Online"
     }
 }
-
-    
-
-    
-
-
-    

@@ -239,9 +239,15 @@
             "refundedRevenue": "Ingresos Reembolsados",
             "cancellations": "Cancelaciones",
             "cashReceived": "Efectivo Recibido",
+            "cashToReceive": "Efectivo a Recibir",
             "accountReceived": "Recibido en Cuenta",
+            "accountToReceive": "A Recibir en Cuenta",
             "totalCommissions": "Comisiones Totales",
-            "averageProfitPerOrder": "Beneficio Prom./Pedido"
+            "totalShippingCost": "Pagos a Conductores",
+            "exchangesAndReturns": "Cambios/Devoluciones",
+            "averageProfitPerOrder": "Beneficio Prom./Pedido",
+            "averageProfitPerItem": "Beneficio Prom./Artículo",
+            "averageCostPerSale": "Costo Prom./Venta"
         },
         "charts": {
             "revenueOverview": "Resumen de Ingresos",
@@ -549,10 +555,3 @@
         "online": "En línea"
     }
 }
-
-    
-
-    
-
-
-    

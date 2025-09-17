@@ -18,13 +18,14 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { DollarSign, Package, ShoppingCart, ArrowRight, TrendingUp, BarChart, FileText, ChevronsUpDown, Building, Calendar, Users, History, AlertCircle, XCircle, RotateCcw, Hourglass, Percent, HandCoins, CreditCard } from "lucide-react";
+import { DollarSign, Package, ShoppingCart, ArrowRight, TrendingUp, BarChart, FileText, ChevronsUpDown, Building, Calendar, Users, History, AlertCircle, XCircle, RotateCcw, Hourglass, Percent, HandCoins, CreditCard, Truck, Repeat, TrendingDown } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
 import { useEffect, useState, useMemo } from "react";
 import { getOrders, getOrdersForCompanies } from "@/services/order-service";
 import { getProductsByUser } from "@/services/product-service";
-import type { Order, Product, OrderItem } from "@/lib/types";
+import { getRoutes } from "@/services/logistics-service";
+import type { Order, Product, OrderItem, Route } from "@/lib/types";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { useTranslation } from "@/context/i18n-context";
 import { useCurrency } from "@/context/currency-context";
@@ -153,6 +154,7 @@ export default function DashboardPage() {
   
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [allRoutes, setAllRoutes] = useState<Route[]>([]);
   const [loading, setLoading] = useState(true);
 
   const defaultDateRange = { from: subDays(new Date(), 29), to: new Date() };
@@ -168,18 +170,14 @@ export default function DashboardPage() {
 
         setLoading(true);
         try {
-            const userProducts = await getProductsByUser(effectiveOwnerId);
+            const [userProducts, userOrders, userRoutes] = await Promise.all([
+                getProductsByUser(effectiveOwnerId),
+                getOrdersForCompanies(activeCompany ? [activeCompany.id] : companies.map(c => c.id)),
+                getRoutes(effectiveOwnerId)
+            ]);
             setAllProducts(userProducts);
-
-            const companyIds = activeCompany ? [activeCompany.id] : companies.map(c => c.id);
-            if (companyIds.length === 0 && !activeCompany) {
-                setAllOrders([]);
-                setLoading(false);
-                return;
-            };
-
-            const ordersResults = await getOrdersForCompanies(companyIds);
-            setAllOrders(ordersResults);
+            setAllOrders(userOrders);
+            setAllRoutes(userRoutes);
 
         } catch (error) {
             console.error("Failed to fetch dashboard data", error);
@@ -202,6 +200,15 @@ export default function DashboardPage() {
         return true;
     });
 
+    const routesInDateRange = allRoutes.filter(route => {
+        if (!route.finishedAt) return false;
+        const finishedDate = new Date(route.finishedAt as string);
+         if (dateRange?.from && dateRange?.to) {
+            return finishedDate >= startOfDay(dateRange.from) && finishedDate <= endOfDay(dateRange.to);
+        }
+        return true;
+    });
+
     const completedOrders = ordersInDateRange.filter(o => o.status === 'completed');
     const cancelledOrders = ordersInDateRange.filter(o => o.status === 'cancelled' || o.status === 'returned');
     const refundedOrders = ordersInDateRange.filter(o => o.status === 'refunded');
@@ -212,7 +219,7 @@ export default function DashboardPage() {
     const totalRevenue = completedOrders.reduce((acc, order) => acc + order.total, 0);
     const totalCost = completedOrders.reduce((acc, order) => acc + (order.items.reduce((itemAcc, item) => itemAcc + (item.costPrice || 0) * item.quantity, 0)), 0);
     const totalCommissions = completedOrders.reduce((acc, order) => acc + (order.commission || 0), 0);
-    const totalShippingCost = completedOrders.reduce((acc, order) => acc + (order.shippingCost || 0), 0);
+    const totalShippingCost = routesInDateRange.reduce((acc, route) => acc + (route.finalizationDetails?.driverFinalPayment || 0), 0);
     const totalProfit = totalRevenue - totalCost - totalCommissions - totalShippingCost;
     
     // Order Counts
@@ -342,7 +349,7 @@ export default function DashboardPage() {
         accountReceived,
         accountToReceive,
     };
-}, [allOrders, allProducts, dateRange]);
+}, [allOrders, allProducts, allRoutes, dateRange]);
 
     const handleDateFilterClick = (filter: string) => {
         setActiveFilter(filter);
@@ -373,16 +380,21 @@ export default function DashboardPage() {
         { title: t('dashboard.stats.totalProfit'), value: formatCurrency(filteredData.totalProfit), icon: <TrendingUp /> },
         { title: t('dashboard.stats.paidOrders'), value: `${filteredData.paidOrdersCount}`, icon: <ShoppingCart /> },
         { title: t('dashboard.stats.averageTicket'), value: formatCurrency(filteredData.averageTicket), icon: <FileText /> },
+        
         { title: t('dashboard.stats.itemsSold'), value: `${filteredData.itemsSoldCount}`, icon: <Package /> },
         { title: t('dashboard.stats.averageProfitPerOrder'), value: formatCurrency(filteredData.averageProfitPerOrder), icon: <TrendingUp /> },
-        
+        { title: t('dashboard.stats.averageProfitPerItem'), value: formatCurrency(filteredData.averageProfitPerItem), icon: <TrendingUp /> },
+        { title: t('dashboard.stats.averageCostPerSale'), value: formatCurrency(filteredData.averageCostPerSale), icon: <TrendingDown /> },
+
         { title: t('dashboard.stats.cashReceived'), value: formatCurrency(filteredData.cashReceived), icon: <HandCoins /> },
+        { title: t('dashboard.stats.cashToReceive'), value: formatCurrency(filteredData.cashToReceive), icon: <Hourglass /> },
         { title: t('dashboard.stats.accountReceived'), value: formatCurrency(filteredData.accountReceived), icon: <CreditCard /> },
+        { title: t('dashboard.stats.accountToReceive'), value: formatCurrency(filteredData.accountToReceive), icon: <Hourglass /> },
+
         { title: t('dashboard.stats.totalCommissions'), value: formatCurrency(filteredData.totalCommissions), icon: <Percent /> },
-        
+        { title: t('dashboard.stats.totalShippingCost'), value: formatCurrency(filteredData.totalShippingCost), icon: <Truck /> },
+        { title: t('dashboard.stats.exchangesAndReturns'), value: `${filteredData.exchangeReturnOrdersCount}`, icon: <Repeat /> },
         { title: t('dashboard.stats.cancellations'), value: `${filteredData.cancelledOrdersCount}`, icon: <XCircle /> },
-        { title: t('dashboard.stats.cancelledRevenue'), value: formatCurrency(filteredData.cancelledRevenue), icon: <AlertCircle /> },
-        { title: t('dashboard.stats.refundedRevenue'), value: formatCurrency(filteredData.refundedRevenue), icon: <RotateCcw /> },
     ];
   
   if (loading) {
@@ -513,5 +525,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
