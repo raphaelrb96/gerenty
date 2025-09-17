@@ -63,8 +63,12 @@ const paymentStatusTranslationMap: Record<Order['payment']['status'], string> = 
     aprovado: 'approved',
     recusado: 'refused',
     estornado: 'refunded',
-    parcial: 'parcial' // Assuming 'parcial' translates to 'partial'
+    parcial: 'parcial'
 };
+
+const availableOrderStatuses = ALL_ORDER_STATUSES.filter(
+  status => status !== 'exchange' && status !== 'return'
+);
 
 
 export function OrderDetails({ order, onFinished, onStatusChange }: OrderDetailsProps) {
@@ -128,7 +132,7 @@ export function OrderDetails({ order, onFinished, onStatusChange }: OrderDetails
                     </Button>
                 )}
                  {order.shipping?.routeId && (
-                    <Button variant="outline" size="sm" onClick={() => handleNavigation(`/dashboard/logistics`)}>
+                    <Button variant="outline" size="sm" onClick={() => handleNavigation(`/dashboard/logistics?routeId=${order.shipping.routeId}`)}>
                         <Truck className="mr-2 h-4 w-4" /> Ver Logística
                     </Button>
                 )}
@@ -246,7 +250,7 @@ export function OrderDetails({ order, onFinished, onStatusChange }: OrderDetails
                         <SelectValue placeholder={t('orderDetails.selectStatus')} />
                     </SelectTrigger>
                     <SelectContent>
-                        {ALL_ORDER_STATUSES.map(status => (
+                        {availableOrderStatuses.map(status => (
                             <SelectItem key={status} value={status}>{t(`orderStatus.${status}`)}</SelectItem>
                         ))}
                     </SelectContent>
@@ -269,9 +273,3 @@ export function OrderDetails({ order, onFinished, onStatusChange }: OrderDetails
     </>
   );
 }
-
-
-
-
-
-    

@@ -2,7 +2,8 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/common/page-header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,7 +12,6 @@ import { useAuth } from "@/context/auth-context";
 import { useCompany } from "@/context/company-context";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
 import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { useCurrency } from "@/context/currency-context";
@@ -24,6 +24,7 @@ import { useTranslation } from "@/context/i18n-context";
 import { Order, Route } from "@/lib/types";
 import { getRoutes } from "@/services/logistics-service";
 import { getOrdersForCompanies } from "@/services/order-service";
+import { RouteDetailsModal } from "@/components/logistics/route-details-modal";
 
 const StatCard = ({ title, value, icon, description }: { title: string, value: string | number, icon: React.ReactNode, description?: string }) => (
     <Card>
@@ -38,15 +39,18 @@ const StatCard = ({ title, value, icon, description }: { title: string, value: s
     </Card>
 );
 
-export default function LogisticsPage() {
+function LogisticsPageComponent() {
     const { effectiveOwnerId } = useAuth();
     const { companies } = useCompany();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { t } = useTranslation();
     const { formatCurrency } = useCurrency();
     const [routes, setRoutes] = useState<Route[]>([]);
     const [allOrders, setAllOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
+    
+    const [modalRoute, setModalRoute] = useState<Route | null>(null);
 
     const fetchLogisticsData = async () => {
         if (!effectiveOwnerId) return;
@@ -65,7 +69,7 @@ export default function LogisticsPage() {
             setLoading(false);
         }
     };
-
+    
     useEffect(() => {
         if (effectiveOwnerId && companies.length > 0) {
             fetchLogisticsData();
@@ -73,6 +77,16 @@ export default function LogisticsPage() {
             setLoading(false);
         }
     }, [effectiveOwnerId, companies]);
+
+    useEffect(() => {
+        const routeIdFromUrl = searchParams.get('routeId');
+        if (routeIdFromUrl && routes.length > 0) {
+            const routeToShow = routes.find(r => r.id === routeIdFromUrl);
+            if (routeToShow) {
+                setModalRoute(routeToShow);
+            }
+        }
+    }, [routes, searchParams]);
 
     const activeRoutes = useMemo(() => routes.filter(r => r.status === 'em_andamento'), [routes]);
     
@@ -118,7 +132,6 @@ export default function LogisticsPage() {
         
         const deliveriesToProcess = deliverableOrders.filter(o => o.status === 'processing').length;
         
-        // Financial Metrics
         const cashReceivedInRoute = allActiveOrders
             .filter(o => o.payment?.status === 'aprovado' && o.payment.method === 'dinheiro')
             .reduce((sum, o) => sum + o.total, 0);
@@ -266,7 +279,7 @@ export default function LogisticsPage() {
                                    {activeRoutes.map(route => {
                                         const onlineTotal = (route.cardTotal || 0) + (route.pixTotal || 0) + (route.onlineTotal || 0);
                                         return (
-                                            <Card key={route.id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => router.push('/dashboard/logistics')}>
+                                            <Card key={route.id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setModalRoute(route)}>
                                                <CardHeader className="flex flex-row items-center gap-4">
                                                     <Avatar>
                                                         <AvatarFallback>{getInitials(route.driverName)}</AvatarFallback>
@@ -305,7 +318,25 @@ export default function LogisticsPage() {
                 </TabsContent>
 
             </Tabs>
+            
+            {modalRoute && (
+                <RouteDetailsModal
+                    isOpen={!!modalRoute}
+                    onClose={() => setModalRoute(null)}
+                    route={modalRoute}
+                    onRouteFinalized={fetchLogisticsData}
+                />
+            )}
         </div>
+    );
+}
+
+
+export default function LogisticsPage() {
+    return (
+        <Suspense fallback={<LoadingSpinner />}>
+            <LogisticsPageComponent />
+        </Suspense>
     );
 }
 
@@ -315,3 +346,4 @@ export default function LogisticsPage() {
 
 
     
+
