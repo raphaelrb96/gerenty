@@ -603,42 +603,40 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
         
         <footer className="fixed bottom-0 z-10 border-t bg-background/80 backdrop-blur-sm p-4 left-0 md:left-[var(--sidebar-width)] w-full peer-data-[state=collapsed]:md:left-[var(--sidebar-width-icon)] transition-[left] ease-linear">
              <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4">
-                <div className="hidden sm:flex items-center gap-1 sm:gap-2">
-                    <div className="flex items-center gap-1 sm:gap-2">
+                <div className="flex items-center gap-1 sm:gap-2">
                     {steps.map((step, index) => (
-                        <React.Fragment key={step.id}>
-                            <div className="flex flex-col items-center text-center">
-                                <div
-                                    className={cn(
-                                        'flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all',
-                                        currentStep > step.id
-                                            ? 'border-primary bg-primary text-primary-foreground'
-                                            : currentStep === step.id
-                                            ? 'border-primary'
-                                            : 'border-muted-foreground/30 bg-muted-foreground/20 text-muted-foreground'
-                                    )}
-                                >
-                                    <step.icon className="h-4 w-4" />
-                                </div>
-                                <p className={cn(
-                                    'mt-1 w-16 truncate text-xs transition-colors hidden sm:block', 
-                                    currentStep >= step.id ? 'font-semibold text-foreground' : 'text-muted-foreground'
-                                )}>
-                                    {step.name}
-                                </p>
+                    <React.Fragment key={step.id}>
+                        <div className="flex flex-col items-center text-center">
+                            <div
+                                className={cn(
+                                    'flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all',
+                                    currentStep > step.id
+                                        ? 'border-primary bg-primary text-primary-foreground'
+                                        : currentStep === step.id
+                                        ? 'border-primary'
+                                        : 'border-muted-foreground/30 bg-muted-foreground/20 text-muted-foreground'
+                                )}
+                            >
+                                <step.icon className="h-4 w-4" />
                             </div>
-                            {index < steps.length - 1 && (
-                                <div
-                                    className={cn(
-                                        'mt-[-1.5rem] h-0.5 w-4 flex-1 sm:w-12 transition-colors',
-                                        'hidden sm:block',
-                                        currentStep > index + 1 ? 'bg-primary' : 'bg-muted-foreground/30'
-                                    )}
-                                />
-                            )}
-                        </React.Fragment>
+                            <p className={cn(
+                                'mt-1 w-16 truncate text-xs transition-colors hidden sm:block', 
+                                currentStep >= step.id ? 'font-semibold text-foreground' : 'text-muted-foreground'
+                            )}>
+                                {step.name}
+                            </p>
+                        </div>
+                        {index < steps.length - 1 && (
+                            <div
+                                className={cn(
+                                    'mt-[-1.5rem] h-0.5 w-4 flex-1 sm:w-12 transition-colors',
+                                    'hidden sm:block',
+                                    currentStep > index + 1 ? 'bg-primary' : 'bg-muted-foreground/30'
+                                )}
+                            />
+                        )}
+                    </React.Fragment>
                     ))}
-                    </div>
                 </div>
 
                  <div className="flex items-center justify-end gap-2 sm:gap-4">
