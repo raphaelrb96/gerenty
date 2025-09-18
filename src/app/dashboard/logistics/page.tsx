@@ -118,20 +118,17 @@ function LogisticsPageComponent() {
         const deliveriesDeliveredInRoute = allActiveOrders.filter(o => o.status === 'delivered').length;
         
         const finishedRoutesToday = routes.filter(r => r.status === 'finalizada' && r.finishedAt && new Date(r.finishedAt as string) >= today).length;
-        
-        // This is now based on the last 7 days
         const finishedRoutesThisWeek = routes.filter(r => r.status === 'finalizada' && r.finishedAt && new Date(r.finishedAt as string) >= startOfThisWeek).length;
 
         const cancelledOrdersInActiveRoutes = activeRoutes.flatMap(r => r.orders).filter(o => o.status === 'cancelled');
 
-        const deliveriesCancelledThisWeek = routes.filter(r => r.finishedAt && new Date(r.finishedAt as string) >= startOfThisWeek)
-            .flatMap(r => r.orders)
-            .filter(o => o.status === 'cancelled' || o.status === 'returned').length;
-
-        const deliveredOrdersThisWeek = routes.filter(r => r.finishedAt && new Date(r.finishedAt as string) >= startOfThisWeek)
-            .flatMap(r => r.orders)
-            .filter(o => o.status === 'delivered').length;
-
+        const allFinishedOrders = routes.filter(r => r.status === 'finalizada' && r.finishedAt).flatMap(r => r.orders.map(o => ({ ...o, finishedAt: r.finishedAt })));
+        
+        const deliveredOrdersToday = allFinishedOrders.filter(o => o.finishedAt && new Date(o.finishedAt as string) >= today && o.status === 'delivered').length;
+        const deliveredOrdersThisWeek = allFinishedOrders.filter(o => o.finishedAt && new Date(o.finishedAt as string) >= startOfThisWeek && o.status === 'delivered').length;
+        
+        const cancelledOrdersToday = allFinishedOrders.filter(o => o.finishedAt && new Date(o.finishedAt as string) >= today && (o.status === 'cancelled' || o.status === 'returned')).length;
+        const cancelledOrdersThisWeek = allFinishedOrders.filter(o => o.finishedAt && new Date(o.finishedAt as string) >= startOfThisWeek && (o.status === 'cancelled' || o.status === 'returned')).length;
         
         const itemsToReturnFromCancelled = cancelledOrdersInActiveRoutes
             .flatMap(o => o.items)
@@ -173,8 +170,10 @@ function LogisticsPageComponent() {
             finishedRoutesThisWeek,
             itemsToReturnFromCancelled,
             deliveriesReturnedInRoute: cancelledOrdersInActiveRoutes.length,
-            deliveriesCancelledThisWeek,
+            deliveredOrdersToday,
             deliveredOrdersThisWeek,
+            cancelledOrdersToday,
+            cancelledOrdersThisWeek,
         };
     }, [activeRoutes, routes, deliverableOrders]);
 
@@ -248,8 +247,8 @@ function LogisticsPageComponent() {
                             <h3 className="text-lg font-medium mb-2">{t('logistics.results.title')}</h3>
                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                                 <StatCard title={t('logistics.results.routesFinishedToday')} value={metrics.finishedRoutesToday} icon={<PackageCheck className="text-muted-foreground" />} description={`${metrics.finishedRoutesThisWeek} ${t('logistics.results.inTheWeek')}`}/>
-                                <StatCard title={t('logistics.results.deliveredDeliveries')} value={metrics.deliveredOrdersThisWeek} icon={<PackageCheck className="text-green-500" />} description={t('logistics.results.inTheWeek')} />
-                                <StatCard title={t('logistics.results.cancelledDeliveries')} value={metrics.deliveriesCancelledThisWeek} icon={<Ban className="text-red-500" />} description={t('logistics.results.inTheWeek')}/>
+                                <StatCard title={t('logistics.results.deliveredDeliveries')} value={metrics.deliveredOrdersToday} icon={<PackageCheck className="text-green-500" />} description={`${metrics.deliveredOrdersThisWeek} ${t('logistics.results.inTheWeek')}`} />
+                                <StatCard title={t('logistics.results.cancelledDeliveries')} value={metrics.cancelledOrdersToday} icon={<Ban className="text-red-500" />} description={`${metrics.cancelledOrdersThisWeek} ${t('logistics.results.inTheWeek')}`}/>
                                 <StatCard title={t('logistics.results.itemsToReturn')} value={metrics.itemsToReturnFromCancelled} icon={<Package className="text-orange-500" />} description={`${metrics.deliveriesReturnedInRoute} ${t('logistics.results.returnedDeliveries')}`}/>
                             </div>
                         </div>
