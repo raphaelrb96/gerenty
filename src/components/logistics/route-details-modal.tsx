@@ -465,9 +465,15 @@ function OrderUpdateCard({ order, onUpdate, isFinalized }: { order: Order; onUpd
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <FormField control={form.control} name="status" render={({ field }) => (
-                                    <FormItem><FormLabel>Status da Entrega</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isFinalized}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>
-                                        {deliveryUpdateStatuses.map(s => <SelectItem key={s} value={s}>{t(`orderStatus.${s}`)}</SelectItem>)}
-                                    </SelectContent></Select><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>Status da Entrega</FormLabel>
+                                    {isFinalized ? (
+                                        <Input value={t(`orderStatus.${field.value}`)} disabled />
+                                    ) : (
+                                        <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>
+                                            {deliveryUpdateStatuses.map(s => <SelectItem key={s} value={s}>{t(`orderStatus.${s}`)}</SelectItem>)}
+                                        </SelectContent></Select>
+                                    )}
+                                    <FormMessage /></FormItem>
                                 )}/>
                                  <FormField control={form.control} name="paymentMethod" render={({ field }) => (
                                     <FormItem><FormLabel>Forma de Pagamento</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isFinalized}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>
