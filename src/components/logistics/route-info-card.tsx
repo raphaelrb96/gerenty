@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useCurrency } from "@/context/currency-context";
-import { Truck, CheckCircle, Package, DollarSign, TrendingUp } from "lucide-react";
+import { Truck, CheckCircle, Package, DollarSign, TrendingUp, Wallet } from "lucide-react";
 import { RouteDetailsModal } from "./route-details-modal";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +34,7 @@ export function RouteInfoCard({ route, onRouteFinalized }: RouteInfoCardProps) {
     }
 
     const deliveriesDone = route.orders.filter(o => o.status === 'delivered').length;
+    const isFinalized = route.status === 'finalizada';
 
     return (
         <>
@@ -50,8 +51,8 @@ export function RouteInfoCard({ route, onRouteFinalized }: RouteInfoCardProps) {
                             </div>
                         </div>
                         <Badge variant="outline" className={getStatusVariant(route.status)}>
-                            {route.status === 'finalizada' ? <CheckCircle className="mr-1 h-3 w-3" /> : <Truck className="mr-1 h-3 w-3" />}
-                            {route.status}
+                            {isFinalized ? <CheckCircle className="mr-1 h-3 w-3" /> : <Truck className="mr-1 h-3 w-3" />}
+                            {isFinalized ? 'Finalizada' : 'Em Andamento'}
                         </Badge>
                     </div>
                 </CardHeader>
@@ -64,32 +65,44 @@ export function RouteInfoCard({ route, onRouteFinalized }: RouteInfoCardProps) {
                                 <p className="text-xs text-muted-foreground">Entregas</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <DollarSign className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                                <p className="font-semibold">{formatCurrency(route.cashTotal || 0)}</p>
-                                <p className="text-xs text-muted-foreground">Em Dinheiro</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2">
+                         <div className="flex items-center gap-2">
                             <TrendingUp className="h-4 w-4 text-muted-foreground" />
                              <div>
                                 <p className="font-semibold">{formatCurrency(route.totalValue || 0)}</p>
                                 <p className="text-xs text-muted-foreground">Valor Total</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                             <DollarSign className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                                <p className="font-semibold">{formatCurrency(route.cashAccounted || 0)}</p>
-                                <p className="text-xs text-muted-foreground">Prestado Contas</p>
+                        {isFinalized && route.finalizationDetails ? (
+                             <>
+                                <div className="flex items-center gap-2">
+                                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                                    <div>
+                                        <p className="font-semibold">{formatCurrency(route.finalizationDetails.driverFinalPayment)}</p>
+                                        <p className="text-xs text-muted-foreground">Pgto. Motorista</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Wallet className="h-4 w-4 text-muted-foreground" />
+                                    <div>
+                                        <p className="font-semibold">{formatCurrency(route.finalizationDetails.settlementAmount)}</p>
+                                        <p className="text-xs text-muted-foreground">Prestado Contas</p>
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="flex items-center gap-2">
+                                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                                <div>
+                                    <p className="font-semibold">{formatCurrency(route.cashTotal || 0)}</p>
+                                    <p className="text-xs text-muted-foreground">Em Dinheiro</p>
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                 </CardContent>
                 <CardFooter className="flex justify-end gap-2">
                     <Button variant="outline" onClick={() => setIsDetailsOpen(true)}>Ver Detalhes</Button>
-                    {route.status === 'em_andamento' && (
+                    {!isFinalized && (
                          <Button onClick={() => setIsDetailsOpen(true)}>Finalizar</Button>
                     )}
                 </CardFooter>
@@ -105,6 +118,3 @@ export function RouteInfoCard({ route, onRouteFinalized }: RouteInfoCardProps) {
         </>
     );
 }
-
-
-    
