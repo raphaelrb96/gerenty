@@ -290,7 +290,7 @@ function LogisticsPageComponent() {
                     </Card>
 
                      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                        <Card className="lg:col-span-5">
+                        <Card className="lg:col-span-5 hidden">
                             <CardHeader>
                                 <CardTitle>{t('logistics.charts.performance.title')}</CardTitle>
                                 <CardDescription>{t('logistics.charts.performance.description')}</CardDescription>
@@ -361,3 +361,4 @@ export default function LogisticsPage() {
 
 
     
+
