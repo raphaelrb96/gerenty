@@ -87,13 +87,14 @@ export function OrderDetails({ order, onFinished, onStatusChange }: OrderDetails
   
   const availableOrderStatuses = useMemo(() => {
     if (isStatusLocked) {
-      return [order.status]; // Only show the current locked status
+      return [order.status];
     }
-    if (order.status === 'completed' || order.status === 'delivered') {
-      // Allow changing to cancellable statuses, but keep the current one
+    if (order.status === 'delivered') {
+      return [order.status, 'completed', 'cancelled', 'returned'];
+    }
+    if (order.status === 'completed') {
       return [order.status, 'cancelled', 'returned'];
     }
-    // Default case: show all non-locked statuses
     return ALL_ORDER_STATUSES.filter(
       status => !LOCKED_STATUSES.includes(status) && status !== 'exchange' && status !== 'return'
     );
