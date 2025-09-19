@@ -1,5 +1,4 @@
 
-
 import type { FieldValue, Timestamp } from "firebase/firestore";
 
 export type User = {
@@ -707,5 +706,10 @@ export type Webhook = {
   createdAt: string | Date | Timestamp | FieldValue;
 }
 
-    
-
+export type FinancialData = {
+    netRevenue: number;
+    grossProfit: number;
+    totalExpenses: number;
+    netProfit: number;
+    performanceByPeriod: { period: string; Receita: number; Custos: number; Lucro: number }[];
+};

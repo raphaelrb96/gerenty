@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useCompany } from "@/context/company-context";
 import { getFinancialData, FinancialData } from "@/services/financial-service";
@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { useCurrency } from "@/context/currency-context";
-import { DollarSign, TrendingUp, TrendingDown, Percent, PlusCircle, Shield, BarChart3, Receipt } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, Receipt, PlusCircle, Shield } from "lucide-react";
 import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { usePermissions } from "@/context/permissions-context";

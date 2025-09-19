@@ -8,7 +8,6 @@ import { eachDayOfInterval, format, startOfDay, endOfDay, differenceInDays } fro
 
 export interface FinancialData {
     netRevenue: number;
-    totalCosts: number;
     grossProfit: number;
     totalExpenses: number;
     netProfit: number;
@@ -93,7 +92,6 @@ export async function getFinancialData(companyIds: string[], from: Date, to: Dat
 
     return {
         netRevenue,
-        totalCosts: totalProductCosts,
         grossProfit,
         totalExpenses,
         netProfit,
