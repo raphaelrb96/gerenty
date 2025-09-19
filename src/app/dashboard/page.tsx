@@ -229,13 +229,19 @@ export default function DashboardPage() {
     const totalCost = completedOrders.reduce((acc, order) => acc + (order.items.reduce((itemAcc, item) => itemAcc + (item.costPrice || 0) * item.quantity, 0)), 0);
     const totalCommissions = completedOrders.reduce((acc, order) => acc + (order.commission || 0), 0);
     
-    // Calculate shipping cost only for the orders that generated revenue in the period
-    const totalShippingCost = completedOrders.reduce((acc, order) => {
+    // Calculate shipping cost from the routes of the orders that generated revenue
+    const relevantRouteIds = new Set<string>();
+    completedOrders.forEach(order => {
         const route = orderToRouteMap.get(order.id);
-        if (route && route.status === 'finalizada' && route.finalizationDetails && (route.orderIds?.length || 0) > 0) {
-            // Prorate the driver payment for this specific order
-            const proratedCost = route.finalizationDetails.driverFinalPayment / (route.orderIds?.length || 1);
-            return acc + proratedCost;
+        if (route) {
+            relevantRouteIds.add(route.id);
+        }
+    });
+
+    const totalShippingCost = Array.from(relevantRouteIds).reduce((acc, routeId) => {
+        const route = allRoutes.find(r => r.id === routeId);
+        if (route && route.earnings) {
+            return acc + (route.earnings.value || 0);
         }
         return acc;
     }, 0);
