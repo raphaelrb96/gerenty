@@ -710,11 +710,15 @@ export type Webhook = {
 }
 
 export type FinancialData = {
-    netRevenue: number;
+    revenue: number;
     grossProfit: number;
     totalExpenses: number;
     netProfit: number;
+    profitMargin: number;
+    averageTicket: number;
     performanceByPeriod: { period: string; Receita: number; Custos: number; Lucro: number }[];
+    expenseDistribution: { name: string; value: number }[];
+    topProductsByProfit: { name: string; profit: number }[];
 };
 
     

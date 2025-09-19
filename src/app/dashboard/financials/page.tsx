@@ -10,18 +10,18 @@ import { subDays, startOfDay, endOfDay } from "date-fns";
 
 import { PageHeader } from "@/components/common/page-header";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { useCurrency } from "@/context/currency-context";
-import { DollarSign, TrendingUp, TrendingDown, Receipt, PlusCircle, Shield, LayoutGrid, ListChecks, FilePieChart } from "lucide-react";
-import { Bar, BarChart as RechartsBarChart, XAxis, YAxis } from "recharts";
+import { DollarSign, TrendingUp, TrendingDown, Receipt, PlusCircle, Shield, LayoutGrid, ListChecks, FilePieChart, Percent, Activity } from "lucide-react";
+import { Bar, BarChart as RechartsBarChart, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { usePermissions } from "@/context/permissions-context";
 import { EmptyState } from "@/components/common/empty-state";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const StatCard = ({ title, value, icon }: { title: string, value: string, icon: React.ReactNode }) => (
+const StatCard = ({ title, value, icon, description }: { title: string, value: string, icon: React.ReactNode, description?: string }) => (
     <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{title}</CardTitle>
@@ -29,10 +29,12 @@ const StatCard = ({ title, value, icon }: { title: string, value: string, icon: 
         </CardHeader>
         <CardContent>
             <div className="text-2xl font-bold">{value}</div>
+            {description && <p className="text-xs text-muted-foreground">{description}</p>}
         </CardContent>
     </Card>
 );
 
+const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
 
 function FinancialsDashboardTab() {
     const { effectiveOwnerId } = useAuth();
@@ -57,11 +59,11 @@ function FinancialsDashboardTab() {
                     const data = await getFinancialData(effectiveOwnerId, companyIds, dateRange.from, dateRange.to);
                     setFinancialData(data);
                 } else {
-                    setFinancialData(null);
+                    setFinancialData(null); // No companies to fetch data for
                 }
             } catch (error) {
                 console.error("Failed to fetch financial data:", error);
-                setFinancialData(null);
+                setFinancialData(null); // Reset data on error
             } finally {
                 setLoading(false);
             }
@@ -92,6 +94,11 @@ function FinancialsDashboardTab() {
         return <LoadingSpinner />;
     }
 
+    if (!financialData) {
+         return <EmptyState icon={<DollarSign />} title="Sem Dados Financeiros" description="Não há dados financeiros para o período ou empresa selecionada."/>;
+    }
+
+
     return (
         <div className="space-y-6">
              <Card>
@@ -106,10 +113,15 @@ function FinancialsDashboardTab() {
             </Card>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <StatCard title="Faturamento" value={formatCurrency(financialData?.netRevenue || 0)} icon={<Receipt className="h-4 w-4 text-muted-foreground" />} />
-                <StatCard title="Lucro Bruto" value={formatCurrency(financialData?.grossProfit || 0)} icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />} />
-                <StatCard title="Despesas" value={formatCurrency(financialData?.totalExpenses || 0)} icon={<TrendingDown className="h-4 w-4 text-muted-foreground" />} />
-                <StatCard title="Lucro Líquido" value={formatCurrency(financialData?.netProfit || 0)} icon={<DollarSign className="h-4 w-4 text-muted-foreground" />} />
+                <StatCard title="Faturamento" value={formatCurrency(financialData.revenue)} icon={<Receipt className="h-4 w-4 text-muted-foreground" />} />
+                <StatCard title="Lucro Bruto" value={formatCurrency(financialData.grossProfit)} icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />} />
+                <StatCard title="Despesas" value={formatCurrency(financialData.totalExpenses)} icon={<TrendingDown className="h-4 w-4 text-muted-foreground" />} />
+                <StatCard title="Lucro Líquido" value={formatCurrency(financialData.netProfit)} icon={<DollarSign className="h-4 w-4 text-muted-foreground" />} />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <StatCard title="Margem de Lucro" value={`${financialData.profitMargin.toFixed(2)}%`} icon={<Percent className="h-4 w-4 text-muted-foreground" />} />
+                <StatCard title="Ticket Médio" value={formatCurrency(financialData.averageTicket)} icon={<Activity className="h-4 w-4 text-muted-foreground" />} />
             </div>
 
             <Card>
@@ -118,7 +130,8 @@ function FinancialsDashboardTab() {
                 </CardHeader>
                 <CardContent className="pl-2">
                      <ChartContainer config={{}} className="h-[350px] w-full">
-                        <RechartsBarChart data={financialData?.performanceByPeriod || []}>
+                        <RechartsBarChart data={financialData.performanceByPeriod}>
+                             <CartesianGrid vertical={false} />
                             <XAxis dataKey="period" tickLine={false} tickMargin={10} axisLine={false} />
                             <YAxis tickLine={false} axisLine={false} tickMargin={10} tickFormatter={(value) => formatCurrency(Number(value))} />
                             <ChartTooltip 
@@ -135,6 +148,46 @@ function FinancialsDashboardTab() {
                     </ChartContainer>
                 </CardContent>
             </Card>
+
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                <Card className="lg:col-span-2">
+                    <CardHeader>
+                        <CardTitle>Distribuição de Despesas</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                         <ChartContainer config={{}} className="h-[300px] w-full">
+                            <ResponsiveContainer width="100%" height={300}>
+                                <PieChart>
+                                    <Pie data={financialData.expenseDistribution} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+                                         {financialData.expenseDistribution.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip content={<ChartTooltipContent formatter={(value, name) => `${name}: ${formatCurrency(Number(value))}`} />} />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </ChartContainer>
+                    </CardContent>
+                </Card>
+                <Card className="lg:col-span-3">
+                     <CardHeader>
+                        <CardTitle>Top 5 Produtos por Lucro</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                         <ChartContainer config={{}} className="h-[300px] w-full">
+                            <ResponsiveContainer width="100%" height={300}>
+                                <RechartsBarChart layout="vertical" data={financialData.topProductsByProfit} margin={{ left: 20 }}>
+                                    <CartesianGrid horizontal={false} />
+                                    <XAxis type="number" hide />
+                                    <YAxis dataKey="name" type="category" tickLine={false} axisLine={false} tickMargin={10} width={120} />
+                                    <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent formatter={(value) => formatCurrency(Number(value))} />} />
+                                    <Bar dataKey="profit" fill="hsl(var(--chart-1))" radius={4} name="Lucro" />
+                                </RechartsBarChart>
+                            </ResponsiveContainer>
+                        </ChartContainer>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     );
 }
@@ -206,7 +259,3 @@ export default function FinancialsPage() {
         </div>
     );
 }
-
-    
-
-    
