@@ -10,12 +10,12 @@ import { subDays, startOfDay, endOfDay } from "date-fns";
 
 import { PageHeader } from "@/components/common/page-header";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { useCurrency } from "@/context/currency-context";
 import { DollarSign, TrendingUp, TrendingDown, Receipt, PlusCircle, Shield } from "lucide-react";
-import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { usePermissions } from "@/context/permissions-context";
 import { EmptyState } from "@/components/common/empty-state";
@@ -65,7 +65,7 @@ export default function FinancialsPage() {
             try {
                 const companyIds = activeCompany ? [activeCompany.id] : companies.map(c => c.id);
                 if (companyIds.length > 0) {
-                    const data = await getFinancialData(companyIds, dateRange.from, dateRange.to);
+                    const data = await getFinancialData(effectiveOwnerId, companyIds, dateRange.from, dateRange.to);
                     setFinancialData(data);
                 } else {
                     setFinancialData(null);
@@ -137,12 +137,10 @@ export default function FinancialsPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Desempenho Financeiro</CardTitle>
-                    <CardDescription>Evolução de Receita, Custos e Lucro no período.</CardDescription>
                 </CardHeader>
                 <CardContent className="pl-2">
                      <ChartContainer config={{}} className="h-[350px] w-full">
                         <RechartsBarChart data={financialData?.performanceByPeriod || []}>
-                            <CartesianGrid vertical={false} />
                             <XAxis dataKey="period" tickLine={false} tickMargin={10} axisLine={false} />
                             <YAxis tickLine={false} axisLine={false} tickMargin={10} tickFormatter={(value) => formatCurrency(Number(value))} />
                             <ChartTooltip 
@@ -162,5 +160,7 @@ export default function FinancialsPage() {
         </div>
     );
 }
+
+    
 
     

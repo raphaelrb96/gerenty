@@ -3,21 +3,11 @@
 
 import { getOrdersForCompanies } from './order-service';
 import { getRoutes } from './logistics-service';
-import type { Order, Route } from '@/lib/types';
+import type { FinancialData } from '@/lib/types';
 import { eachDayOfInterval, format, startOfDay, endOfDay, differenceInDays } from 'date-fns';
 
-export interface FinancialData {
-    netRevenue: number;
-    grossProfit: number;
-    totalExpenses: number;
-    netProfit: number;
-    performanceByPeriod: { period: string, Receita: number, Custos: number, Lucro: number }[];
-}
-
-export async function getFinancialData(companyIds: string[], from: Date, to: Date): Promise<FinancialData> {
+export async function getFinancialData(ownerId: string, companyIds: string[], from: Date, to: Date): Promise<FinancialData> {
     const orders = await getOrdersForCompanies(companyIds);
-    // This assumes ownerId is the first companyId, which is not robust. Needs refactor if multi-owner logic changes.
-    const ownerId = companyIds[0] || ''; 
     const routes = await getRoutes(ownerId);
 
     const completedOrdersInDateRange = orders.filter(order => {
@@ -28,13 +18,11 @@ export async function getFinancialData(companyIds: string[], from: Date, to: Dat
 
     const netRevenue = completedOrdersInDateRange.reduce((sum, order) => sum + order.total, 0);
     
-    // Total product cost (CMV)
     const totalProductCosts = completedOrdersInDateRange.reduce((sum, order) => {
         const orderCost = order.items.reduce((itemSum, item) => itemSum + (item.costPrice || 0) * item.quantity, 0);
         return sum + orderCost;
     }, 0);
     
-    // Total expenses (commissions + delivery payments)
     const totalCommissions = completedOrdersInDateRange.reduce((sum, order) => sum + (order.commission || 0), 0);
 
     const relevantRouteIds = new Set<string>();
@@ -57,7 +45,6 @@ export async function getFinancialData(companyIds: string[], from: Date, to: Dat
     const grossProfit = netRevenue - totalProductCosts;
     const netProfit = grossProfit - totalExpenses;
 
-    // Group performance by period for charting
     const performanceByPeriod: { [key: string]: { Receita: number, Custos: number, Lucro: number } } = {};
     const days = eachDayOfInterval({ start: from, end: to });
     
@@ -101,5 +88,7 @@ export async function getFinancialData(companyIds: string[], from: Date, to: Dat
         performanceByPeriod: performanceChartData,
     };
 }
+
+export type { FinancialData };
 
     
