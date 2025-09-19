@@ -38,7 +38,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { Route, Order, PaymentMethod, OrderStatus, PaymentDetails } from "@/lib/types";
 import { useCurrency } from "@/context/currency-context";
-import { User, Calendar, Truck, DollarSign, Clock, Box, Info, Pencil, AlertTriangle, PackageCheck, PackageX, Loader2, MapPin, Hourglass, Package, Save, CheckCircle, Ban, ArrowDown, ArrowUp, Wallet } from "lucide-react";
+import { User, Calendar, Truck, DollarSign, Clock, Box, Info, Pencil, AlertTriangle, PackageCheck, PackageX, Loader2, MapPin, Hourglass, Package, Save, CheckCircle, Ban, ArrowDown, ArrowUp, Wallet, HandCoins } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -208,6 +208,14 @@ export function RouteDetailsModal({
                     <div className="space-y-1">
                         <h4 className="font-semibold text-sm flex items-center gap-2"><User className="h-4 w-4"/> Entregador</h4>
                         <p className="text-muted-foreground">{route.driverName}</p>
+                    </div>
+                     <div className="space-y-1">
+                        <h4 className="font-semibold text-sm flex items-center gap-2"><HandCoins className="h-4 w-4"/> Remuneração Configurada</h4>
+                        <p className="text-muted-foreground">
+                            {route.earnings?.type === 'fixed' 
+                                ? formatCurrency(route.earnings.value) 
+                                : `${formatCurrency(route.earnings?.value || 0)} por entrega`}
+                        </p>
                     </div>
                     <div className="space-y-1">
                         <h4 className="font-semibold text-sm flex items-center gap-2"><Calendar className="h-4 w-4"/> Data de Criação</h4>
