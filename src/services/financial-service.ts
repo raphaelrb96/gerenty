@@ -16,7 +16,9 @@ export interface FinancialData {
 
 export async function getFinancialData(companyIds: string[], from: Date, to: Date): Promise<FinancialData> {
     const orders = await getOrdersForCompanies(companyIds);
-    const routes = await getRoutes(companyIds[0]); // Assuming ownerId is the first companyId, which is not robust. Needs refactor if multi-owner logic changes.
+    // This assumes ownerId is the first companyId, which is not robust. Needs refactor if multi-owner logic changes.
+    const ownerId = companyIds[0] || ''; 
+    const routes = await getRoutes(ownerId);
 
     const completedOrdersInDateRange = orders.filter(order => {
         const orderDate = new Date(order.createdAt as string);
@@ -70,9 +72,10 @@ export async function getFinancialData(companyIds: string[], from: Date, to: Dat
         if (performanceByPeriod.hasOwnProperty(dateStr)) {
             const orderCost = order.items.reduce((itemSum, item) => itemSum + (item.costPrice || 0) * item.quantity, 0);
             const orderCommission = order.commission || 0;
+            
             const orderRoute = routes.find(r => r.id === order.shipping?.routeId);
-            const orderDeliveryPayment = orderRoute?.finalizationDetails?.driverFinalPayment 
-                ? orderRoute.finalizationDetails.driverFinalPayment / (orderRoute.orders.length || 1) // Prorated
+            const orderDeliveryPayment = (orderRoute && orderRoute.finalizationDetails?.driverFinalPayment && orderRoute.orders.length > 0)
+                ? orderRoute.finalizationDetails.driverFinalPayment / orderRoute.orders.length // Prorated
                 : 0;
 
             const orderTotalCost = orderCost + orderCommission + orderDeliveryPayment;

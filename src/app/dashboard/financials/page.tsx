@@ -78,7 +78,7 @@ export default function FinancialsPage() {
             }
         };
 
-        if (effectiveOwnerId && companies) {
+        if (effectiveOwnerId && companies !== undefined) {
            fetchFinancials();
         }
     }, [effectiveOwnerId, activeCompany, companies, dateRange]);
