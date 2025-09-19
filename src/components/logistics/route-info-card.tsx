@@ -118,7 +118,7 @@ export function RouteInfoCard({ route, onRouteFinalized }: RouteInfoCardProps) {
                          <div className="flex items-start gap-2">
                            <TrendingUp className="h-4 w-4 text-muted-foreground mt-0.5" />
                            <div>
-                                <p className="font-semibold">{formatCurrency(totalCancelledValue)}</p>
+                                <p className="font-semibold">{formatCurrency(metrics.totalCancelledValue)}</p>
                                 <p className="text-xs text-muted-foreground">Valor Cancelado</p>
                            </div>
                         </div>
