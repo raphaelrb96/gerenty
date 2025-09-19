@@ -14,11 +14,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { useCurrency } from "@/context/currency-context";
-import { DollarSign, TrendingUp, TrendingDown, Receipt, PlusCircle, Shield } from "lucide-react";
-import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
+import { DollarSign, TrendingUp, TrendingDown, Receipt, PlusCircle, Shield, LayoutGrid, ListChecks, FilePieChart } from "lucide-react";
+import { Bar, BarChart as RechartsBarChart } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { usePermissions } from "@/context/permissions-context";
 import { EmptyState } from "@/components/common/empty-state";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const StatCard = ({ title, value, icon }: { title: string, value: string, icon: React.ReactNode }) => (
     <Card>
@@ -32,33 +33,21 @@ const StatCard = ({ title, value, icon }: { title: string, value: string, icon: 
     </Card>
 );
 
-export default function FinancialsPage() {
+
+function FinancialsDashboardTab() {
     const { effectiveOwnerId } = useAuth();
     const { activeCompany, companies } = useCompany();
     const { formatCurrency } = useCurrency();
     const [financialData, setFinancialData] = useState<FinancialData | null>(null);
     const [loading, setLoading] = useState(true);
-    const { hasAccess } = usePermissions();
 
     const [dateRange, setDateRange] = useState<DateRange | undefined>({
         from: subDays(new Date(), 29),
         to: new Date(),
     });
     const [activeFilter, setActiveFilter] = useState<string>('30d');
-
-    if (!hasAccess('financials')) {
-        return (
-            <div className="flex items-center justify-center h-full">
-                <EmptyState
-                    icon={<Shield className="h-16 w-16" />}
-                    title="Acesso Negado"
-                    description="Você não tem permissão para acessar o módulo financeiro."
-                />
-            </div>
-        );
-    }
-
-    useEffect(() => {
+    
+     useEffect(() => {
         const fetchFinancials = async () => {
             if (!effectiveOwnerId || !dateRange?.from || !dateRange?.to) return;
             setLoading(true);
@@ -98,25 +87,14 @@ export default function FinancialsPage() {
                 break;
         }
     };
-
+    
     if (loading) {
         return <LoadingSpinner />;
     }
 
     return (
-        <div className="space-y-8">
-            <PageHeader
-                title="Painel Financeiro"
-                description="Uma visão 360 graus da saúde financeira do seu negócio."
-                action={
-                    <Button onClick={() => {}} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Adicionar Transação
-                    </Button>
-                }
-            />
-
-            <Card>
+        <div className="space-y-6">
+             <Card>
                 <CardContent className="p-4 flex flex-col md:flex-row items-center gap-4">
                      <DateRangePicker date={dateRange} onDateChange={(range) => { setDateRange(range); setActiveFilter(''); }} />
                      <div className="flex items-center gap-2">
@@ -157,6 +135,74 @@ export default function FinancialsPage() {
                     </ChartContainer>
                 </CardContent>
             </Card>
+        </div>
+    );
+}
+
+
+export default function FinancialsPage() {
+    const { hasAccess } = usePermissions();
+
+    if (!hasAccess('financials')) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <EmptyState
+                    icon={<Shield className="h-16 w-16" />}
+                    title="Acesso Negado"
+                    description="Você não tem permissão para acessar o módulo financeiro."
+                />
+            </div>
+        );
+    }
+    
+    return (
+        <div className="space-y-8">
+            <PageHeader
+                title="Módulo Financeiro"
+                description="Uma visão 360 graus da saúde financeira do seu negócio."
+            />
+             <Tabs defaultValue="dashboard">
+                <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="dashboard"><LayoutGrid className="mr-2 h-4 w-4" />Dashboard</TabsTrigger>
+                    <TabsTrigger value="transactions"><ListChecks className="mr-2 h-4 w-4" />Transações</TabsTrigger>
+                    <TabsTrigger value="reports"><FilePieChart className="mr-2 h-4 w-4" />Relatórios</TabsTrigger>
+                </TabsList>
+                <TabsContent value="dashboard" className="mt-6">
+                    <FinancialsDashboardTab />
+                </TabsContent>
+                <TabsContent value="transactions" className="mt-6">
+                     <PageHeader
+                        title="Gestão de Contas e Transações"
+                        description="Gerencie suas contas a pagar e a receber."
+                        action={
+                            <Button onClick={() => {}} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                Adicionar Transação
+                            </Button>
+                        }
+                    />
+                    <div className="mt-8">
+                        <Card>
+                            <CardContent className="p-16 text-center text-muted-foreground">
+                                Funcionalidade em breve.
+                            </CardContent>
+                        </Card>
+                    </div>
+                </TabsContent>
+                <TabsContent value="reports" className="mt-6">
+                     <PageHeader
+                        title="Relatórios Detalhados e Análises"
+                        description="Gere relatórios complexos para obter insights sobre o negócio."
+                    />
+                     <div className="mt-8">
+                        <Card>
+                            <CardContent className="p-16 text-center text-muted-foreground">
+                                Funcionalidade em breve.
+                            </CardContent>
+                        </Card>
+                    </div>
+                </TabsContent>
+            </Tabs>
         </div>
     );
 }
