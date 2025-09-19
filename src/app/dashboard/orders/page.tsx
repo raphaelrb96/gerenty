@@ -259,6 +259,15 @@ export default function OrdersPage() {
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                        <ul className="text-sm text-muted-foreground space-y-1">
+                            {order.items.map(item => (
+                                <li key={item.productId}>
+                                    <span className="font-semibold text-foreground">{item.quantity}x</span> {item.productName}
+                                </li>
+                            ))}
+                        </ul>
+                    </CardContent>
                     <CardFooter className="p-4 pt-0 border-t flex justify-between text-sm">
                        <div className="flex flex-col items-center">
                             <span className="text-muted-foreground text-xs">Status</span>
