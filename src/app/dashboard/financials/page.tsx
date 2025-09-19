@@ -224,17 +224,17 @@ export default function FinancialsPage() {
                     <FinancialsDashboardTab />
                 </TabsContent>
                 <TabsContent value="transactions" className="mt-6">
-                     <PageHeader
-                        title="Gestão de Contas e Transações"
-                        description="Gerencie suas contas a pagar e a receber."
-                        action={
-                            <Button onClick={() => {}} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
-                                <PlusCircle className="mr-2 h-4 w-4" />
-                                Adicionar Transação
-                            </Button>
-                        }
-                    />
-                    <div className="mt-8">
+                    <div className="space-y-4">
+                        <PageHeader
+                            title="Gestão de Contas e Transações"
+                            description="Gerencie suas contas a pagar e a receber."
+                            action={
+                                <Button onClick={() => {}}>
+                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                    Adicionar Transação
+                                </Button>
+                            }
+                        />
                         <Card>
                             <CardContent className="p-16 text-center text-muted-foreground">
                                 Funcionalidade em breve.
