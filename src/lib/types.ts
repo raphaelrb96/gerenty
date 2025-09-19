@@ -594,6 +594,9 @@ export type EmployeePermissions = {
         reports?: boolean;
         team?: boolean;
         settings?: boolean;
+        integrations?: boolean;
+        companies?: boolean;
+        billing?: boolean;
     };
     companies: Record<string, boolean>; // key is companyId
 }
@@ -713,3 +716,5 @@ export type FinancialData = {
     netProfit: number;
     performanceByPeriod: { period: string; Receita: number; Custos: number; Lucro: number }[];
 };
+
+    
