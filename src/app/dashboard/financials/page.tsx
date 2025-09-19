@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { useCurrency } from "@/context/currency-context";
 import { DollarSign, TrendingUp, TrendingDown, Receipt, PlusCircle, Shield, LayoutGrid, ListChecks, FilePieChart } from "lucide-react";
-import { Bar, BarChart as RechartsBarChart } from "recharts";
+import { Bar, BarChart as RechartsBarChart, XAxis, YAxis } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { usePermissions } from "@/context/permissions-context";
 import { EmptyState } from "@/components/common/empty-state";
