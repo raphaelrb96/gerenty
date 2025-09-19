@@ -86,7 +86,7 @@ export function MainSidebar() {
         }
         return hasAccess(item.module);
     });
-  }, [userData, hasAccess, allMenuItems]);
+  }, [userData, hasAccess, t]);
 
   return (
     <Sidebar>

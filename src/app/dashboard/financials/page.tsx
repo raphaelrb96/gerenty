@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -11,11 +10,11 @@ import { subDays, startOfDay, endOfDay } from "date-fns";
 
 import { PageHeader } from "@/components/common/page-header";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { useCurrency } from "@/context/currency-context";
-import { DollarSign, ShoppingCart, TrendingUp, BarChart, TrendingDown, PlusCircle, Shield, Percent } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, Percent, PlusCircle, Shield, BarChart3, Receipt } from "lucide-react";
 import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { usePermissions } from "@/context/permissions-context";
@@ -34,7 +33,7 @@ const StatCard = ({ title, value, icon }: { title: string, value: string, icon: 
 );
 
 export default function FinancialsPage() {
-    const { user, effectiveOwnerId } = useAuth();
+    const { effectiveOwnerId } = useAuth();
     const { activeCompany, companies } = useCompany();
     const { formatCurrency } = useCurrency();
     const [financialData, setFinancialData] = useState<FinancialData | null>(null);
@@ -47,7 +46,6 @@ export default function FinancialsPage() {
     });
     const [activeFilter, setActiveFilter] = useState<string>('30d');
 
-    // Security Check
     if (!hasAccess('financials')) {
         return (
             <div className="flex items-center justify-center h-full">
@@ -104,19 +102,16 @@ export default function FinancialsPage() {
     if (loading) {
         return <LoadingSpinner />;
     }
-    
-    const revenueChartData = financialData?.revenueByPeriod.map(d => ({ name: d.period, Receita: d.total })) || [];
-    const netProfit = (financialData?.grossProfit || 0) - (financialData?.totalExpenses || 0) - (financialData?.totalCommissions || 0);
 
     return (
         <div className="space-y-8">
             <PageHeader
                 title="Painel Financeiro"
-                description="Uma visão completa da saúde financeira do seu negócio."
+                description="Uma visão 360 graus da saúde financeira do seu negócio."
                 action={
                     <Button onClick={() => {}} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
                         <PlusCircle className="mr-2 h-4 w-4" />
-                        Adicionar Despesa
+                        Adicionar Transação
                     </Button>
                 }
             />
@@ -132,32 +127,34 @@ export default function FinancialsPage() {
                 </CardContent>
             </Card>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-                <StatCard title="Receita Bruta" value={formatCurrency(financialData?.netRevenue || 0)} icon={<DollarSign className="h-4 w-4 text-muted-foreground" />} />
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <StatCard title="Faturamento" value={formatCurrency(financialData?.netRevenue || 0)} icon={<Receipt className="h-4 w-4 text-muted-foreground" />} />
                 <StatCard title="Lucro Bruto" value={formatCurrency(financialData?.grossProfit || 0)} icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />} />
-                <StatCard title="Comissões" value={formatCurrency(financialData?.totalCommissions || 0)} icon={<Percent className="h-4 w-4 text-muted-foreground" />} />
                 <StatCard title="Despesas" value={formatCurrency(financialData?.totalExpenses || 0)} icon={<TrendingDown className="h-4 w-4 text-muted-foreground" />} />
-                <StatCard title="Lucro Líquido" value={formatCurrency(netProfit)} icon={<BarChart className="h-4 w-4 text-muted-foreground" />} />
+                <StatCard title="Lucro Líquido" value={formatCurrency(financialData?.netProfit || 0)} icon={<DollarSign className="h-4 w-4 text-muted-foreground" />} />
             </div>
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Visão Geral de Receita</CardTitle>
+                    <CardTitle>Desempenho Financeiro</CardTitle>
+                    <CardDescription>Evolução de Receita, Custos e Lucro no período.</CardDescription>
                 </CardHeader>
                 <CardContent className="pl-2">
                      <ChartContainer config={{}} className="h-[350px] w-full">
-                        <RechartsBarChart data={revenueChartData}>
+                        <RechartsBarChart data={financialData?.performanceByPeriod || []}>
                             <CartesianGrid vertical={false} />
-                            <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} />
+                            <XAxis dataKey="period" tickLine={false} tickMargin={10} axisLine={false} />
                             <YAxis tickLine={false} axisLine={false} tickMargin={10} tickFormatter={(value) => formatCurrency(Number(value))} />
                             <ChartTooltip 
                                 cursor={false} 
                                 content={<ChartTooltipContent 
-                                    formatter={(value) => formatCurrency(Number(value))}
+                                    formatter={(value, name) => `${name}: ${formatCurrency(Number(value))}`}
                                     labelClassName="text-sm font-bold"
                                 />}
                             />
-                            <Bar dataKey="Receita" fill="hsl(var(--primary))" radius={4} />
+                            <Bar dataKey="Receita" fill="hsl(var(--chart-2))" radius={4} name="Receita"/>
+                            <Bar dataKey="Custos" fill="hsl(var(--chart-4))" radius={4} name="Custos" />
+                            <Bar dataKey="Lucro" fill="hsl(var(--chart-1))" radius={4} name="Lucro" />
                         </RechartsBarChart>
                     </ChartContainer>
                 </CardContent>
