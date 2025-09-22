@@ -110,6 +110,16 @@ function LogisticsPageComponent() {
         const today = startOfToday();
         const startOfThisWeek = subDays(today, 6);
 
+        const finishedRoutes = routes.filter(r => r.status === 'finalizada' && r.finishedAt);
+        const finishedRoutesToday = finishedRoutes.filter(r => new Date(r.finishedAt as string) >= today);
+        const finishedRoutesThisWeek = finishedRoutes.filter(r => new Date(r.finishedAt as string) >= startOfThisWeek);
+        
+        const deliveredOrdersToday = finishedRoutesToday.reduce((sum, route) => sum + (route.finalizationDetails?.deliveredCount || 0), 0);
+        const deliveredOrdersThisWeek = finishedRoutesThisWeek.reduce((sum, route) => sum + (route.finalizationDetails?.deliveredCount || 0), 0);
+        
+        const cancelledOrdersToday = finishedRoutesToday.reduce((sum, route) => sum + (route.finalizationDetails?.returnedCount || 0), 0);
+        const cancelledOrdersThisWeek = finishedRoutesThisWeek.reduce((sum, route) => sum + (route.finalizationDetails?.returnedCount || 0), 0);
+
         const driversInRoute = new Set(activeRoutes.map(r => r.driverId)).size;
         
         const allActiveOrders = activeRoutes.flatMap(r => r.orders.map(o => ({...o, routeId: r.id})));
@@ -117,18 +127,7 @@ function LogisticsPageComponent() {
         const deliveriesInProgress = allActiveOrders.filter(o => o.status === 'out_for_delivery').length;
         const deliveriesDeliveredInRoute = allActiveOrders.filter(o => o.status === 'delivered').length;
         
-        const finishedRoutesToday = routes.filter(r => r.status === 'finalizada' && r.finishedAt && new Date(r.finishedAt as string) >= today).length;
-        const finishedRoutesThisWeek = routes.filter(r => r.status === 'finalizada' && r.finishedAt && new Date(r.finishedAt as string) >= startOfThisWeek).length;
-
-        const cancelledOrdersInActiveRoutes = activeRoutes.flatMap(r => r.orders).filter(o => o.status === 'cancelled');
-
-        const allFinishedOrders = routes.filter(r => r.status === 'finalizada' && r.finishedAt).flatMap(r => r.orders.map(o => ({ ...o, finishedAt: r.finishedAt })));
-        
-        const deliveredOrdersToday = allFinishedOrders.filter(o => o.finishedAt && new Date(o.finishedAt as string) >= today && o.status === 'delivered').length;
-        const deliveredOrdersThisWeek = allFinishedOrders.filter(o => o.finishedAt && new Date(o.finishedAt as string) >= startOfThisWeek && o.status === 'delivered').length;
-        
-        const cancelledOrdersToday = allFinishedOrders.filter(o => o.finishedAt && new Date(o.finishedAt as string) >= today && (o.status === 'cancelled' || o.status === 'returned')).length;
-        const cancelledOrdersThisWeek = allFinishedOrders.filter(o => o.finishedAt && new Date(o.finishedAt as string) >= startOfThisWeek && (o.status === 'cancelled' || o.status === 'returned')).length;
+        const cancelledOrdersInActiveRoutes = activeRoutes.flatMap(r => r.orders).filter(o => o.status === 'cancelled' || o.status === 'returned');
         
         const itemsToReturnFromCancelled = cancelledOrdersInActiveRoutes
             .flatMap(o => o.items)
@@ -166,8 +165,8 @@ function LogisticsPageComponent() {
             otherPaymentsInProgress,
             totalToReceive,
             totalReceived,
-            finishedRoutesToday,
-            finishedRoutesThisWeek,
+            finishedRoutesToday: finishedRoutesToday.length,
+            finishedRoutesThisWeek: finishedRoutesThisWeek.length,
             itemsToReturnFromCancelled,
             deliveriesReturnedInRoute: cancelledOrdersInActiveRoutes.length,
             deliveredOrdersToday,
@@ -176,6 +175,7 @@ function LogisticsPageComponent() {
             cancelledOrdersThisWeek,
         };
     }, [activeRoutes, routes, deliverableOrders]);
+
 
     const chartData = useMemo(() => {
         const days = eachDayOfInterval({ start: subDays(new Date(), 6), end: new Date() });
@@ -361,4 +361,5 @@ export default function LogisticsPage() {
 
 
     
+
 
