@@ -43,7 +43,7 @@ export function FlowBuilder({ nodes, edges, onNodesChange, onEdgesChange }: Flow
         fitView
       >
         <Controls />
-        <MiniMap />
+        <MiniMap style={{ height: 80, width: 120 }} />
         <Background variant="dots" gap={12} size={1} />
       </ReactFlow>
     </div>
