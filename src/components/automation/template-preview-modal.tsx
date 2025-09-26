@@ -5,7 +5,8 @@ import type { MessageTemplate } from "@/lib/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Phone } from "lucide-react";
+import { Phone, Link, MessageSquare } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type TemplatePreviewModalProps = {
     template: MessageTemplate | null;
@@ -21,8 +22,7 @@ export function TemplatePreviewModal({ template, isOpen, onClose }: TemplatePrev
     const footer = template.components.find(c => c.type === 'FOOTER');
     const buttons = template.components.find(c => c.type === 'BUTTONS');
     
-    // Replace placeholders like {{1}} with styled spans
-    const formatText = (text: string) => {
+    const formatText = (text: string = "") => {
         const parts = text.split(/(\{\{\d+\}\})/g);
         return parts.map((part, index) => {
             if (part.match(/(\{\{\d+\}\})/)) {
@@ -31,6 +31,17 @@ export function TemplatePreviewModal({ template, isOpen, onClose }: TemplatePrev
             return part;
         });
     };
+
+    const getButtonIcon = (type: string) => {
+        switch(type) {
+            case 'URL': return <Link className="mr-2 h-4 w-4" />;
+            case 'PHONE_NUMBER': return <Phone className="mr-2 h-4 w-4" />;
+            case 'QUICK_REPLY':
+            default:
+                return <MessageSquare className="mr-2 h-4 w-4" />;
+        }
+    }
+
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -45,23 +56,26 @@ export function TemplatePreviewModal({ template, isOpen, onClose }: TemplatePrev
                 <div className="bg-muted/50 p-4 rounded-lg flex justify-center">
                     <div className="w-full max-w-sm bg-background rounded-2xl border shadow-lg p-3 space-y-2">
                         {/* Header */}
-                        {header?.format === 'IMAGE' && <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center text-muted-foreground text-sm"><span>[Imagem]</span></div>}
-                        {header?.format === 'VIDEO' && <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center text-muted-foreground text-sm"><span>[Vídeo]</span></div>}
-                        {header?.format === 'DOCUMENT' && <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center text-muted-foreground text-sm"><span>[Documento]</span></div>}
-                        {header?.format === 'TEXT' && header.text && <p className="font-bold text-lg">{formatText(header.text)}</p>}
+                        {header?.format === 'IMAGE' && <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-t-lg flex items-center justify-center text-muted-foreground text-sm"><span>[Imagem]</span></div>}
+                        {header?.format === 'VIDEO' && <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-t-lg flex items-center justify-center text-muted-foreground text-sm"><span>[Vídeo]</span></div>}
+                        {header?.format === 'DOCUMENT' && <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded-t-lg flex items-center justify-center text-muted-foreground text-sm"><span>[Documento]</span></div>}
+                        
+                        <div className={cn("p-2", header?.format !== 'TEXT' && '-mt-2')}>
+                            {header?.format === 'TEXT' && header.text && <p className="font-bold">{formatText(header.text)}</p>}
 
-                        {/* Body */}
-                        {body?.text && <p className="text-sm whitespace-pre-wrap">{formatText(body.text)}</p>}
+                            {/* Body */}
+                            {body?.text && <p className="text-sm whitespace-pre-wrap">{formatText(body.text)}</p>}
 
-                        {/* Footer */}
-                        {footer?.text && <p className="text-xs text-muted-foreground pt-1">{formatText(footer.text)}</p>}
+                            {/* Footer */}
+                            {footer?.text && <p className="text-xs text-muted-foreground pt-1">{formatText(footer.text)}</p>}
+                        </div>
                         
                          {/* Buttons */}
-                        {buttons && buttons.buttons && (
-                            <div className="pt-2 border-t mt-2">
+                        {buttons && buttons.buttons && buttons.buttons.length > 0 && (
+                            <div className="pt-2 border-t mt-2 space-y-1">
                                 {buttons.buttons.map((button, index) => (
-                                    <Button key={index} variant="outline" size="sm" className="w-full justify-center mt-2 text-blue-600 border-blue-200 hover:bg-blue-50 dark:border-blue-800 dark:hover:bg-blue-900/50">
-                                        {button.type === 'PHONE_NUMBER' && <Phone className="mr-2 h-4 w-4" />}
+                                    <Button key={index} variant="outline" size="sm" className="w-full justify-center text-blue-600 border-blue-200 hover:bg-blue-50 dark:border-blue-800 dark:hover:bg-blue-900/50">
+                                        {getButtonIcon(button.type)}
                                         {button.text}
                                     </Button>
                                 ))}
