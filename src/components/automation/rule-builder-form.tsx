@@ -38,14 +38,30 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const triggers = [
+    // Pedidos
     { value: "order.created", label: "Pedido Criado" },
-    { value: "order.paid", label: "Pedido Pago" },
+    { value: "order.paid", label: "Pedido Pago (Pagamento Aprovado)" },
+    { value: "order.status.updated", label: "Status do Pedido Atualizado" },
     { value: "order.shipped", label: "Pedido Enviado" },
+    { value: "order.cancelled", label: "Pedido Cancelado" },
+    // CRM
     { value: "customer.created", label: "Novo Cliente Cadastrado" },
+    { value: "customer.tag.added", label: "Tag Adicionada ao Cliente" },
+    { value: "customer.tag.removed", label: "Tag Removida do Cliente" },
+    { value: "cart.abandoned", label: "Carrinho Abandonado" },
+    // Financeiro
+    { value: "payment.received", label: "Pagamento Recebido" },
 ];
 
 const actions = [
-    { value: "sendMessage", label: "Enviar Template de Mensagem" },
+    // Comunicação
+    { value: "sendMessage", label: "Enviar Mensagem (WhatsApp)" },
+    // CRM
+    { value: "addTag", label: "Adicionar Tag ao Cliente" },
+    { value: "removeTag", label: "Remover Tag do Cliente" },
+    { value: "moveCustomerToStage", label: "Mover Cliente para Etapa do CRM" },
+    // Interno
+    { value: "updateOrderStatus", label: "Atualizar Status do Pedido" },
 ];
 
 export function RuleBuilderForm() {
@@ -116,18 +132,17 @@ export function RuleBuilderForm() {
         <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>Identificação</CardTitle>
-                    <CardDescription>Dê um nome para sua nova regra de automação para identificá-la facilmente.</CardDescription>
+                    <CardTitle>Configuração da Regra</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Nome da Regra</FormLabel><FormControl><Input placeholder="Ex: Boas-vindas para novos clientes" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                    <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Nome da Regra</FormLabel><FormControl><Input placeholder="Ex: Enviar pesquisa de satisfação após entrega" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                 </CardContent>
             </Card>
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Zap className="h-5 w-5 text-yellow-500" /> Gatilho (SE...)</CardTitle>
-                    <CardDescription>Escolha o evento principal que irá iniciar esta automação.</CardDescription>
+                    <CardTitle className="flex items-center gap-2"><Zap className="h-5 w-5 text-yellow-500" /> SE (Gatilho)</CardTitle>
+                    <CardDescription>Escolha o evento que irá iniciar esta automação.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                      <FormField control={form.control} name="trigger" render={({ field }) => (<FormItem><FormLabel>Quando isto acontecer...</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione um evento..." /></SelectTrigger></FormControl><SelectContent>{triggers.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)}/>
@@ -136,7 +151,7 @@ export function RuleBuilderForm() {
 
                      <div>
                         <div className="flex items-center justify-between mb-2">
-                           <h4 className="font-medium flex items-center gap-2"><Filter className="h-4 w-4"/> E somente se... (Filtros Opcionais)</h4>
+                           <h4 className="font-medium flex items-center gap-2"><Filter className="h-4 w-4"/> E se... (Condições Opcionais)</h4>
                            <Button type="button" size="sm" variant="outline" onClick={() => append({ field: '', operator: '==', value: '' })}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Filtro</Button>
                         </div>
                          <CardDescription className="mb-4">Adicione filtros para tornar sua automação mais específica. A ação só será executada se todas as condições forem verdadeiras.</CardDescription>
@@ -156,8 +171,8 @@ export function RuleBuilderForm() {
             
             <Card>
                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><MessageSquare className="h-5 w-5 text-blue-500" /> Ação (ENTÃO...)</CardTitle>
-                    <CardDescription>Escolha o que deve acontecer quando as condições do gatilho forem atendidas.</CardDescription>
+                    <CardTitle className="flex items-center gap-2"><MessageSquare className="h-5 w-5 text-blue-500" /> ENTÃO (Ação)</CardTitle>
+                    <CardDescription>Escolha o que deve acontecer quando o gatilho for disparado.</CardDescription>
                 </CardHeader>
                  <CardContent className="space-y-4">
                      <FormField control={form.control} name="action" render={({ field }) => (<FormItem><FormLabel>Execute esta ação</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione uma ação..." /></SelectTrigger></FormControl><SelectContent>{actions.map(a => <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)}/>
