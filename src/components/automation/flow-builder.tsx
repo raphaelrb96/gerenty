@@ -41,6 +41,7 @@ export function FlowBuilder({ nodes, edges, onNodesChange, onEdgesChange }: Flow
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         fitView
+        fitViewOptions={{ padding: 0.4 }}
       >
         <Controls />
         <MiniMap style={{ height: 80, width: 120 }} />
