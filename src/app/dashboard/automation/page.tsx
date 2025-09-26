@@ -30,8 +30,6 @@ import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResponseLibraryForm } from "@/components/automation/response-library-form";
 import { ResponseCard } from "@/components/automation/response-card";
-import { FlowBuilder } from "@/components/automation/flow-builder";
-
 
 function AutomationRulesTab() {
     const [rules, setRules] = useState<AutomationRule[]>([]);
@@ -70,12 +68,25 @@ function FlowBuilderTab() {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Construtor de Fluxos de Conversa</CardTitle>
-                <CardDescription>Desenhe fluxos de conversa interativos para o WhatsApp.</CardDescription>
+                <CardTitle>Fluxos de Conversa</CardTitle>
+                <CardDescription>Crie e gerencie fluxos de conversa interativos para o WhatsApp.</CardDescription>
             </CardHeader>
-            <CardContent className="h-[600px] p-0">
-                <FlowBuilder />
+            <CardContent>
+                 <EmptyState
+                    icon={<Workflow className="h-16 w-16" />}
+                    title="Nenhum fluxo de conversa criado"
+                    description="Automatize o atendimento ao cliente criando fluxos de conversa baseados em palavras-chave."
+                    action={<Button asChild><Link href="/dashboard/automation/flows/new"><PlusCircle className="mr-2 h-4 w-4" />Criar Primeiro Fluxo</Link></Button>}
+                />
             </CardContent>
+            <CardFooter>
+                <Button asChild>
+                    <Link href="/dashboard/automation/flows/new">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Novo Fluxo de Conversa
+                    </Link>
+                </Button>
+            </CardFooter>
         </Card>
     );
 }
@@ -358,3 +369,5 @@ export default function AutomationPage() {
     </div>
   );
 }
+
+    
