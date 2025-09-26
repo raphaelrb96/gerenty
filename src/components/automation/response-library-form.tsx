@@ -151,7 +151,7 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
             <ScrollArea className="flex-1 px-6 py-4">
               <div className="space-y-6">
                 <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Nome da Resposta</FormLabel><FormControl><Input placeholder="Ex: Boas-vindas, Suporte" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="type" render={({ field }) => (<FormItem><FormLabel>Tipo de Conteúdo</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="text">Texto</SelectItem><SelectItem value="image">Imagem</SelectItem><SelectItem value="video">Vídeo</SelectItem><SelectItem value="audio">Áudio</SelectItem><SelectItem value="file">Arquivo</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="type" render={({ field }) => (<FormItem><FormLabel>Tipo de Conteúdo</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="text">Texto</SelectItem><SelectItem value="image">Imagem</SelectItem><SelectItem value="video">Vídeo</SelectItem><SelectItem value="audio">Áudio</SelectItem><SelectItem value="file">Arquivo</SelectItem><SelectItem value="location" disabled>Localização</SelectItem><SelectItem value="interactive" disabled>Interativo (Botões)</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
 
                 {watchedType === 'text' ? (
                      <FormField control={form.control} name="content" render={({ field }) => (<FormItem><FormLabel>Texto da Mensagem</FormLabel><FormControl><Textarea className="min-h-[150px]" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>)} />
@@ -192,5 +192,7 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
     </Sheet>
   );
 }
+
+    
 
     
