@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/common/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Bot, PlusCircle, LayoutGrid, Building, Library } from "lucide-react";
+import { Bot, PlusCircle, LayoutGrid, Building, Library, Workflow } from "lucide-react";
 import type { MessageTemplate, LibraryMessage, AutomationRule } from "@/lib/types";
 import { getTemplatesByCompany, deleteTemplate } from "@/services/template-service";
 import { getLibraryMessagesByCompany, deleteLibraryMessage } from "@/services/library-message-service";
@@ -30,6 +30,8 @@ import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResponseLibraryForm } from "@/components/automation/response-library-form";
 import { ResponseCard } from "@/components/automation/response-card";
+import { FlowBuilder } from "@/components/automation/flow-builder";
+
 
 function AutomationRulesTab() {
     const [rules, setRules] = useState<AutomationRule[]>([]);
@@ -63,6 +65,21 @@ function AutomationRulesTab() {
         </Card>
     );
 }
+
+function FlowBuilderTab() {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Construtor de Fluxos de Conversa</CardTitle>
+                <CardDescription>Desenhe fluxos de conversa interativos para o WhatsApp.</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[600px] p-0">
+                <FlowBuilder />
+            </CardContent>
+        </Card>
+    );
+}
+
 
 function TemplatesTab() {
   const { activeCompany } = useCompany();
@@ -318,13 +335,19 @@ export default function AutomationPage() {
         description="Crie fluxos de trabalho, gerencie modelos de mensagem e respostas rápidas."
       />
       
-      <AutomationRulesTab />
-
-      <Tabs defaultValue="templates">
-        <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="templates">Modelos de Mensagem (Templates)</TabsTrigger>
-            <TabsTrigger value="library">Biblioteca de Respostas</TabsTrigger>
+      <Tabs defaultValue="rules">
+        <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="rules"><Bot className="mr-2 h-4 w-4" />Regras</TabsTrigger>
+            <TabsTrigger value="flows"><Workflow className="mr-2 h-4 w-4" />Fluxos de Conversa</TabsTrigger>
+            <TabsTrigger value="templates"><LayoutGrid className="mr-2 h-4 w-4" />Templates</TabsTrigger>
+            <TabsTrigger value="library"><Library className="mr-2 h-4 w-4" />Respostas</TabsTrigger>
         </TabsList>
+        <TabsContent value="rules">
+             <AutomationRulesTab />
+        </TabsContent>
+        <TabsContent value="flows">
+            <FlowBuilderTab />
+        </TabsContent>
         <TabsContent value="templates">
             <TemplatesTab />
         </TabsContent>
