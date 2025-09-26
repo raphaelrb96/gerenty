@@ -3,7 +3,7 @@
 "use client";
 
 import * as React from "react";
-import { useForm, useFieldArray, useFormContext, Control } from "react-hook-form";
+import { useForm, useFieldArray, useFormContext, Control, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
@@ -70,7 +70,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-function InteractiveListSection({ sectionIndex, removeSection }: { sectionIndex: number; removeSection: (index: number) => void; }) {
+function InteractiveListSection({ sectionIndex, removeSection, isAddRowDisabled }: { sectionIndex: number; removeSection: (index: number) => void; isAddRowDisabled: boolean; }) {
     const { control } = useFormContext<FormValues>();
     const { fields: rowFields, append: appendRow, remove: removeRow } = useFieldArray({
         control: control,
@@ -121,7 +121,7 @@ function InteractiveListSection({ sectionIndex, removeSection }: { sectionIndex:
                     <Button type="button" variant="destructive" size="icon" onClick={() => removeRow(rowIndex)}><Trash2 className="h-4 w-4"/></Button>
                 </div>
             ))}
-            <Button type="button" variant="outline" size="sm" onClick={() => appendRow({ id: `row_${Date.now()}`, title: '', description: '' })} className="mt-2"><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Item</Button>
+            <Button type="button" variant="outline" size="sm" onClick={() => appendRow({ id: `row_${Date.now()}`, title: '', description: '' })} className="mt-2" disabled={isAddRowDisabled}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Item</Button>
         </Card>
     );
 }
@@ -146,6 +146,18 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
     resolver: zodResolver(formSchema),
     defaultValues: { name: "", type: "text", interactive_buttons: [], interactive_list_sections: [] },
   });
+  
+  const watchedListSections = useWatch({
+    control: form.control,
+    name: "interactive_list_sections",
+  });
+
+  const totalListItems = React.useMemo(() => {
+    return watchedListSections?.reduce((acc, section) => acc + (section.rows?.length || 0), 0) || 0;
+  }, [watchedListSections]);
+
+  const isListLimitReached = totalListItems >= 10;
+
 
   const { fields: buttonFields, append: appendButton, remove: removeButton } = useFieldArray({
     control: form.control,
@@ -335,11 +347,11 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
                                 {watchedInteractiveType === 'list' && (
                                     <div className="space-y-4">
                                         <FormField control={form.control} name="interactive_list_button_text" render={({ field }) => (<FormItem><FormLabel>Texto do Botão da Lista</FormLabel><FormControl><Input placeholder="Ex: Ver Opções" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                        <Label>Seções e Itens da Lista</Label>
+                                        <Label>Seções e Itens da Lista (Total Máx. 10 Itens)</Label>
                                          {sectionFields.map((section, sectionIndex) => (
-                                             <InteractiveListSection key={section.id} sectionIndex={sectionIndex} removeSection={removeSection} />
+                                             <InteractiveListSection key={section.id} sectionIndex={sectionIndex} removeSection={removeSection} isAddRowDisabled={isListLimitReached} />
                                          ))}
-                                        <Button type="button" variant="outline" onClick={() => appendSection({ title: '', rows: [{ id: `row_init_${Date.now()}`, title: '', description: '' }] })} className="mt-2"><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Seção</Button>
+                                        <Button type="button" variant="outline" onClick={() => appendSection({ title: '', rows: [{ id: `row_init_${Date.now()}`, title: '', description: '' }] })} className="mt-2" disabled={isListLimitReached}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Seção</Button>
                                     </div>
                                 )}
 
@@ -366,5 +378,6 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
     
 
     
+
 
 
