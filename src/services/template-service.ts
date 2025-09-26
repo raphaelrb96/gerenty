@@ -5,7 +5,7 @@ import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where, addDoc, serverTimestamp, doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import type { MessageTemplate } from "@/lib/types";
 
-const templatesCollection = collection(db, "messageTemplates");
+const getTemplatesCollection = (companyId: string) => collection(db, `companies/${companyId}/messageTemplates`);
 
 const convertTemplateTimestamps = (data: any): MessageTemplate => {
     const template = { id: data.id, ...data };
@@ -17,9 +17,9 @@ const convertTemplateTimestamps = (data: any): MessageTemplate => {
     return template as MessageTemplate;
 };
 
-export async function getTemplatesByUser(ownerId: string): Promise<MessageTemplate[]> {
+export async function getTemplatesByCompany(companyId: string): Promise<MessageTemplate[]> {
     try {
-        // This is a simplification. In a real multi-tenant app, you would filter by ownerId.
+        const templatesCollection = getTemplatesCollection(companyId);
         const q = query(templatesCollection); 
         const querySnapshot = await getDocs(q);
         const templates: MessageTemplate[] = [];
@@ -33,8 +33,9 @@ export async function getTemplatesByUser(ownerId: string): Promise<MessageTempla
     }
 }
 
-export async function addTemplate(templateData: Omit<MessageTemplate, 'id' | 'createdAt' | 'updatedAt'>): Promise<MessageTemplate> {
+export async function addTemplate(companyId: string, templateData: Omit<MessageTemplate, 'id' | 'createdAt' | 'updatedAt'>): Promise<MessageTemplate> {
     try {
+        const templatesCollection = getTemplatesCollection(companyId);
         const docRef = await addDoc(templatesCollection, {
             ...templateData,
             status: 'pending', // Default status for new templates
@@ -49,9 +50,9 @@ export async function addTemplate(templateData: Omit<MessageTemplate, 'id' | 'cr
     }
 }
 
-export async function updateTemplate(templateId: string, templateData: Partial<Omit<MessageTemplate, 'id'>>): Promise<void> {
+export async function updateTemplate(companyId: string, templateId: string, templateData: Partial<Omit<MessageTemplate, 'id'>>): Promise<void> {
     try {
-        const templateDoc = doc(db, "messageTemplates", templateId);
+        const templateDoc = doc(db, `companies/${companyId}/messageTemplates`, templateId);
         await updateDoc(templateDoc, {
             ...templateData,
             updatedAt: serverTimestamp(),
@@ -62,9 +63,9 @@ export async function updateTemplate(templateId: string, templateData: Partial<O
     }
 }
 
-export async function deleteTemplate(templateId: string): Promise<void> {
+export async function deleteTemplate(companyId: string, templateId: string): Promise<void> {
     try {
-        const templateDoc = doc(db, "messageTemplates", templateId);
+        const templateDoc = doc(db, `companies/${companyId}/messageTemplates`, templateId);
         await deleteDoc(templateDoc);
     } catch (error) {
         console.error("Error deleting template: ", error);

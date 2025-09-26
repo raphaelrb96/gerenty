@@ -5,10 +5,10 @@ import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/common/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Bot, PlusCircle, LayoutGrid } from "lucide-react";
+import { Bot, PlusCircle, LayoutGrid, Building } from "lucide-react";
 import type { MessageTemplate } from "@/lib/types";
-import { getTemplatesByUser, deleteTemplate } from "@/services/template-service";
-import { useAuth } from "@/context/auth-context";
+import { getTemplatesByCompany, deleteTemplate } from "@/services/template-service";
+import { useCompany } from "@/context/company-context";
 import { useToast } from "@/hooks/use-toast";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { TemplateCard } from "@/components/automation/template-card";
@@ -25,9 +25,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import Link from "next/link";
 
 export default function AutomationPage() {
-  const { effectiveOwnerId } = useAuth();
+  const { activeCompany } = useCompany();
   const { toast } = useToast();
   const [templates, setTemplates] = useState<MessageTemplate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,22 +38,25 @@ export default function AutomationPage() {
   const [templateToDelete, setTemplateToDelete] = useState<MessageTemplate | null>(null);
 
   const fetchTemplates = async () => {
-    if (effectiveOwnerId) {
+    if (activeCompany) {
       setLoading(true);
       try {
-        const userTemplates = await getTemplatesByUser(effectiveOwnerId);
-        setTemplates(userTemplates);
+        const companyTemplates = await getTemplatesByCompany(activeCompany.id);
+        setTemplates(companyTemplates);
       } catch (error) {
         toast({ variant: "destructive", title: "Erro ao buscar templates" });
       } finally {
         setLoading(false);
       }
+    } else {
+      setTemplates([]);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchTemplates();
-  }, [effectiveOwnerId, toast]);
+  }, [activeCompany]);
 
   const handleOpenForm = (template: MessageTemplate | null = null) => {
     setTemplateToEdit(template);
@@ -60,9 +64,9 @@ export default function AutomationPage() {
   }
 
   const handleDelete = async () => {
-    if (!templateToDelete) return;
+    if (!templateToDelete || !activeCompany) return;
     try {
-        await deleteTemplate(templateToDelete.id);
+        await deleteTemplate(activeCompany.id, templateToDelete.id);
         toast({ title: "Template excluído com sucesso!" });
         fetchTemplates();
     } catch (error) {
@@ -70,6 +74,19 @@ export default function AutomationPage() {
     } finally {
         setTemplateToDelete(null);
     }
+  }
+
+  if (!activeCompany && !loading) {
+    return (
+        <div className="flex items-center justify-center h-full">
+            <EmptyState
+                icon={<Building className="h-16 w-16" />}
+                title="Nenhuma empresa selecionada"
+                description="Por favor, selecione uma empresa para gerenciar os templates de automação."
+                action={<Button asChild><Link href="/dashboard/companies">Gerenciar Empresas</Link></Button>}
+            />
+        </div>
+    );
   }
 
   return (

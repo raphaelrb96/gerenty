@@ -19,6 +19,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, PlusCircle, Trash2, Link, Phone, MessageSquare } from "lucide-react";
 import { Separator } from "../ui/separator";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/card";
+import { useCompany } from "@/context/company-context";
 
 type TemplateFormProps = {
   isOpen: boolean;
@@ -42,7 +43,7 @@ const componentSchema = z.object({
 });
 
 const formSchema = z.object({
-  name: z.string().min(2, "Nome do template é obrigatório."),
+  name: z.string().min(2, "Nome do template é obrigatório.").regex(/^[a-z0-9_]+$/, "Apenas letras minúsculas, números e underscores."),
   language: z.string().min(2, "Idioma é obrigatório (ex: pt_BR)."),
   category: z.enum(['marketing', 'utility', 'authentication']),
   components: z.array(componentSchema).min(1, "O template deve ter pelo menos um corpo (BODY)."),
@@ -52,6 +53,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 export function TemplateForm({ isOpen, onClose, onFinished, template }: TemplateFormProps) {
   const { toast } = useToast();
+  const { activeCompany } = useCompany();
   const [isSaving, setIsSaving] = React.useState(false);
 
   const form = useForm<FormValues>({
@@ -64,14 +66,16 @@ export function TemplateForm({ isOpen, onClose, onFinished, template }: Template
     },
   });
 
-  const { fields, append, remove, update } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "components",
   });
   
+  const buttonsComponentIndex = fields.findIndex(f => f.type === 'BUTTONS');
+
   const { fields: buttonFields, append: appendButton, remove: removeButton } = useFieldArray({
       control: form.control,
-      name: `components.${fields.findIndex(f => f.type === 'BUTTONS')}.buttons` as any,
+      name: `components.${buttonsComponentIndex}.buttons` as any
   });
 
   React.useEffect(() => {
@@ -93,13 +97,17 @@ export function TemplateForm({ isOpen, onClose, onFinished, template }: Template
   }, [template, isOpen, form]);
 
   const onSubmit = async (values: FormValues) => {
+    if (!activeCompany) {
+        toast({ variant: 'destructive', title: 'Nenhuma empresa selecionada.' });
+        return;
+    }
     setIsSaving(true);
     try {
       if (template) {
-        await updateTemplate(template.id, values);
+        await updateTemplate(activeCompany.id, template.id, values);
         toast({ title: "Template atualizado com sucesso!" });
       } else {
-        await addTemplate(values as any);
+        await addTemplate(activeCompany.id, values as any);
         toast({ title: "Template criado com sucesso!" });
       }
       onFinished();
@@ -121,8 +129,6 @@ export function TemplateForm({ isOpen, onClose, onFinished, template }: Template
            append({ type, format: type === 'HEADER' ? 'TEXT' : undefined, text: '' });
       }
   }
-
-  const buttonsComponentIndex = fields.findIndex(f => f.type === 'BUTTONS');
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
