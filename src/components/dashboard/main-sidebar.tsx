@@ -28,6 +28,8 @@ import {
   DollarSign,
   Puzzle,
   TrendingUp,
+  MessageSquare,
+  Bot
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -58,6 +60,8 @@ export function MainSidebar() {
 
   const allMenuItems = [
     { href: "/dashboard", label: t("Dashboard"), icon: LayoutDashboard, module: 'dashboard' as const },
+    { href: "/dashboard/inbox", label: "Inbox", icon: MessageSquare, module: 'inbox' as const },
+    { href: "/dashboard/automation", label: "Automação", icon: Bot, module: 'automation' as const },
     { href: "/dashboard/products", label: t("Products"), icon: Package, module: 'products' as const },
     { href: "/dashboard/orders", label: t("Orders"), icon: ShoppingCart, module: 'orders' as const },
     { href: "/dashboard/crm", label: "CRM", icon: HeartHandshake, module: 'crm' as const },
@@ -81,12 +85,12 @@ export function MainSidebar() {
     // Sub-accounts see only what they have access to.
     return allMenuItems.filter(item => {
         // The main dashboard page is always visible for any logged-in user.
-        if (item.module === 'dashboard') {
+        if (item.module === 'dashboard' || item.module === 'inbox' || item.module === 'automation') { // Allow new pages for all for now
             return true;
         }
         return hasAccess(item.module);
     });
-  }, [userData, hasAccess, t]);
+  }, [userData, hasAccess, t, allMenuItems]);
 
   return (
     <Sidebar>
@@ -125,5 +129,3 @@ export function MainSidebar() {
     </Sidebar>
   );
 }
-
-    

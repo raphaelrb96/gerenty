@@ -1,5 +1,4 @@
 
-
 import type { FieldValue, Timestamp } from "firebase/firestore";
 
 export type User = {
@@ -598,6 +597,8 @@ export type EmployeePermissions = {
         integrations?: boolean;
         companies?: boolean;
         billing?: boolean;
+        inbox?: boolean;
+        automation?: boolean;
     };
     companies: Record<string, boolean>; // key is companyId
 }
@@ -832,8 +833,3 @@ export type AutomationRule = {
   templateId: string; // ID of the message template to send
   isActive: boolean;
 };
-
-    
-
-    
-
