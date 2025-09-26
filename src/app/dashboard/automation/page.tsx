@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/common/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Bot, PlusCircle, LayoutGrid, Building, Library } from "lucide-react";
-import type { MessageTemplate, LibraryMessage } from "@/lib/types";
+import type { MessageTemplate, LibraryMessage, AutomationRule } from "@/lib/types";
 import { getTemplatesByCompany, deleteTemplate } from "@/services/template-service";
 import { getLibraryMessagesByCompany, deleteLibraryMessage } from "@/services/library-message-service";
 import { useCompany } from "@/context/company-context";
@@ -31,6 +31,42 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResponseLibraryForm } from "@/components/automation/response-library-form";
 import { ResponseCard } from "@/components/automation/response-card";
 
+function AutomationRulesTab() {
+    const [rules, setRules] = useState<AutomationRule[]>([]);
+    const [isRuleFormOpen, setIsRuleFormOpen] = useState(false);
+
+    const handleOpenRuleForm = () => {
+        // This will open the form modal in the next step
+        // setIsRuleFormOpen(true);
+    };
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Construtor de Regras de Automação</CardTitle>
+                <CardDescription>Crie regras no formato "Se (gatilho), então (ação)" para automatizar tarefas.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {rules.length === 0 ? (
+                    <EmptyState
+                        icon={<Bot className="h-16 w-16" />}
+                        title="Nenhuma regra de automação criada"
+                        description="Comece a automatizar suas tarefas criando sua primeira regra."
+                        action={<Button onClick={handleOpenRuleForm}><PlusCircle className="mr-2 h-4 w-4" />Criar Primeira Regra</Button>}
+                    />
+                ) : (
+                    <div>{/* Placeholder for rules list */}</div>
+                )}
+            </CardContent>
+             <CardFooter>
+                <Button onClick={handleOpenRuleForm}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Nova Regra de Automação
+                </Button>
+            </CardFooter>
+        </Card>
+    );
+}
 
 function TemplatesTab() {
   const { activeCompany } = useCompany();
@@ -205,7 +241,7 @@ function LibraryTab() {
         <div className="mt-6">
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold font-headline">Biblioteca de Respostas</h2>
-                <Button variant="outline" onClick={() => handleOpenForm()}>
+                <Button variant="outline" onClick={() => handleOpenForm(null)}>
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Nova Resposta
                 </Button>
@@ -285,22 +321,8 @@ export default function AutomationPage() {
         title="Automação e Modelos"
         description="Crie fluxos de trabalho, gerencie modelos de mensagem e respostas rápidas."
       />
-
-       <Card>
-        <CardHeader>
-          <CardTitle>Construtor de Regras de Automação</CardTitle>
-          <CardDescription>Crie regras no formato "Se (gatilho), então (ação)" para automatizar tarefas.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-center text-muted-foreground py-8">Funcionalidade do construtor de regras em breve.</p>
-        </CardContent>
-        <CardFooter>
-          <Button disabled>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Nova Regra de Automação
-          </Button>
-        </CardFooter>
-      </Card>
+      
+      <AutomationRulesTab />
 
       <Tabs defaultValue="templates">
         <TabsList className="grid w-full grid-cols-2">
