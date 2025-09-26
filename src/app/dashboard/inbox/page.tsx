@@ -23,7 +23,7 @@ export default function InboxPage() {
          <h1 className="text-xl font-semibold">Inbox</h1>
          {/* Adicionar filtros e ações aqui se necessário */}
        </header>
-       <main className="flex-1 grid grid-cols-1 lg:grid-cols-[350px_1fr] xl:grid-cols-[350px_1fr_300px] gap-0 overflow-hidden">
+       <main className="flex-1 grid grid-cols-1 md:grid-cols-[350px_1fr] gap-0 overflow-hidden">
         
         {/* Coluna 1: Lista de Conversas */}
         <div className="flex flex-col h-full bg-background border-r">
@@ -73,21 +73,6 @@ export default function InboxPage() {
                         </div>
                     </div>
                 </div>
-        </div>
-
-        {/* Coluna 3: Perfil do Contato */}
-        <div className="hidden xl:flex flex-col h-full bg-background border-l">
-             <div className="p-4 border-b text-center">
-                <Avatar className="h-20 w-20 mx-auto border-2 border-primary">
-                    <AvatarFallback className="text-2xl">?</AvatarFallback>
-                </Avatar>
-                <h2 className="text-lg font-bold mt-2">Perfil do Contato</h2>
-             </div>
-             <div className="p-4 flex-1 overflow-y-auto">
-                 <div className="text-center text-sm text-muted-foreground py-8">
-                    Selecione uma conversa para ver os detalhes do contato e o histórico de compras.
-                 </div>
-             </div>
         </div>
       </main>
     </div>
