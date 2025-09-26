@@ -20,7 +20,7 @@ export default function DashboardLayout({
               <MainSidebar />
               <SidebarInset>
                 <Header />
-                <main className="flex-1">
+                <main className="flex-1 overflow-y-auto">
                   <div className="w-full p-6 md:p-8">
                     {children}
                   </div>

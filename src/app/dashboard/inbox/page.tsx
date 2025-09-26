@@ -1,13 +1,11 @@
 
 "use client";
 
-import { PageHeader } from "@/components/common/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, Paperclip, Send, UserCircle, ShoppingCart, MessageSquare } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
 
 export default function InboxPage() {
 
@@ -20,25 +18,22 @@ export default function InboxPage() {
     ];
 
   return (
-    <div className="flex flex-col h-[calc(100vh-5rem)]">
-      <div className="p-6 pb-2">
-        <PageHeader
-            title="Inbox"
-            description="Centralize a comunicação com seus clientes e leads via WhatsApp."
-        />
-      </div>
-
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[350px_1fr] xl:grid-cols-[350px_1fr_300px] gap-4 p-6 overflow-hidden">
+    <div className="h-screen w-full flex flex-col">
+       <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:px-6 flex-shrink-0">
+         <h1 className="text-xl font-semibold">Inbox</h1>
+         {/* Adicionar filtros e ações aqui se necessário */}
+       </header>
+       <main className="flex-1 grid grid-cols-1 lg:grid-cols-[350px_1fr] xl:grid-cols-[350px_1fr_300px] gap-0 overflow-hidden">
         
         {/* Coluna 1: Lista de Conversas */}
-        <Card className="flex flex-col h-full">
-            <CardHeader className="p-4 border-b">
+        <div className="flex flex-col h-full bg-background border-r">
+            <div className="p-4 border-b">
                 <div className="relative">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input placeholder="Buscar conversas..." className="pl-9" />
                 </div>
-            </CardHeader>
-            <CardContent className="p-0 flex-1 overflow-y-auto">
+            </div>
+            <div className="flex-1 overflow-y-auto">
                 <div className="space-y-0">
                     {conversations.map(convo => (
                          <div key={convo.id} className="flex items-start gap-3 p-3 cursor-pointer hover:bg-muted border-b">
@@ -59,11 +54,11 @@ export default function InboxPage() {
                         </div>
                     ))}
                 </div>
-            </CardContent>
-        </Card>
+            </div>
+        </div>
 
         {/* Coluna 2: Chat Ativo */}
-        <Card className="flex flex-col h-full">
+        <div className="flex flex-col h-full bg-muted/30">
                 <div className="flex-1 flex flex-col items-center justify-center text-center p-6 text-muted-foreground">
                     <MessageSquare className="h-12 w-12 mb-4" />
                     <h3 className="text-lg font-medium">Selecione uma conversa</h3>
@@ -78,23 +73,23 @@ export default function InboxPage() {
                         </div>
                     </div>
                 </div>
-        </Card>
+        </div>
 
         {/* Coluna 3: Perfil do Contato */}
-        <Card className="hidden xl:flex flex-col h-full">
-             <CardHeader className="p-4 border-b text-center">
+        <div className="hidden xl:flex flex-col h-full bg-background border-l">
+             <div className="p-4 border-b text-center">
                 <Avatar className="h-20 w-20 mx-auto border-2 border-primary">
                     <AvatarFallback className="text-2xl">?</AvatarFallback>
                 </Avatar>
-                <CardTitle className="text-lg mt-2">Perfil do Contato</CardTitle>
-             </CardHeader>
-             <CardContent className="p-4 flex-1 overflow-y-auto">
+                <h2 className="text-lg font-bold mt-2">Perfil do Contato</h2>
+             </div>
+             <div className="p-4 flex-1 overflow-y-auto">
                  <div className="text-center text-sm text-muted-foreground py-8">
                     Selecione uma conversa para ver os detalhes do contato e o histórico de compras.
                  </div>
-             </CardContent>
-        </Card>
-      </div>
+             </div>
+        </div>
+      </main>
     </div>
   );
 }
