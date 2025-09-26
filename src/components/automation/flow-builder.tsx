@@ -11,18 +11,32 @@ import ReactFlow, {
   addEdge,
   Connection,
   Edge,
+  Node,
 } from 'reactflow';
 
 import 'reactflow/dist/style.css';
 
-const initialNodes = [
-  { id: '1', type: 'input', data: { label: 'Gatilho: Palavra-Chave' }, position: { x: 250, y: 5 } },
-  { id: '2', data: { label: 'Enviar Mensagem de Boas-Vindas' }, position: { x: 250, y: 125 } },
+const initialNodes: Node[] = [
+  { 
+    id: '1', 
+    type: 'input', 
+    data: { label: 'Gatilho: Palavra-Chave', type: 'keywordTrigger' }, 
+    position: { x: 250, y: 5 } 
+  },
+  { 
+    id: '2', 
+    data: { label: 'Enviar Mensagem de Boas-Vindas', type: 'message' }, 
+    position: { x: 250, y: 125 } 
+  },
 ];
 
-const initialEdges = [{ id: 'e1-2', source: '1', target: '2', animated: true }];
+const initialEdges: Edge[] = [{ id: 'e1-2', source: '1', target: '2', animated: true }];
 
-export function FlowBuilder() {
+type FlowBuilderProps = {
+    onNodeClick: (node: Node) => void;
+};
+
+export function FlowBuilder({ onNodeClick }: FlowBuilderProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
@@ -30,6 +44,10 @@ export function FlowBuilder() {
     (params: Edge | Connection) => setEdges((eds) => addEdge(params, eds)),
     [setEdges],
   );
+
+  const handleNodeClick = (_: React.MouseEvent, node: Node) => {
+    onNodeClick(node);
+  };
 
   return (
     <div style={{ width: '100%', height: '100%' }}>
@@ -39,6 +57,7 @@ export function FlowBuilder() {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onNodeClick={handleNodeClick}
         fitView
       >
         <Controls />
