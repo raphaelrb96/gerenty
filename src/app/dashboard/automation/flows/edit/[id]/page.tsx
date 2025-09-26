@@ -19,6 +19,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { Card } from "@/components/ui/card";
+import { Bot, MessageCircle } from "lucide-react";
 
 // Debounce function
 const debounce = <F extends (...args: any[]) => any>(func: F, waitFor: number) => {
@@ -33,6 +34,24 @@ const debounce = <F extends (...args: any[]) => any>(func: F, waitFor: number) =
     };
 
     return debounced;
+};
+
+const nodeTypeConfig = {
+    keywordTrigger: { icon: <Bot size={20} />, color: 'bg-yellow-500/20 border-yellow-500' },
+    message: { icon: <MessageCircle size={20} />, color: 'bg-green-500/20 border-green-500' },
+    // Adicione outros tipos de nó aqui
+};
+
+const enrichNodeData = (node: Node): Node => {
+    const config = nodeTypeConfig[node.data.type as keyof typeof nodeTypeConfig] || {};
+    return {
+        ...node,
+        data: {
+            ...node.data,
+            icon: config.icon,
+            color: config.color,
+        },
+    };
 };
 
 
@@ -57,7 +76,7 @@ export default function EditConversationFlowPage() {
                 const fetchedFlow = await getFlowById(flowId);
                 if (fetchedFlow) {
                     setFlow(fetchedFlow);
-                    setNodes(fetchedFlow.nodes || []);
+                    setNodes((fetchedFlow.nodes || []).map(enrichNodeData));
                     setEdges(fetchedFlow.edges || []);
                 } else {
                     toast({ variant: 'destructive', title: "Fluxo não encontrado" });
@@ -76,8 +95,19 @@ export default function EditConversationFlowPage() {
     const saveFlow = useCallback(async (nodesToSave: Node[], edgesToSave: Edge[]) => {
         if (!flow) return;
         try {
-            await updateFlow(flow.id, { nodes: nodesToSave, edges: edgesToSave });
-            // Optional: show a subtle saving indicator
+            const nodesToPersist = nodesToSave.map(n => ({
+                id: n.id,
+                type: n.type,
+                position: n.position,
+                data: {
+                    label: n.data.label,
+                    type: n.data.type,
+                    triggerKeyword: n.data.triggerKeyword,
+                    triggerMatchType: n.data.triggerMatchType,
+                    messageId: n.data.messageId,
+                }
+            }));
+            await updateFlow(flow.id, { nodes: nodesToPersist, edges: edgesToSave });
         } catch (error) {
             toast({ variant: 'destructive', title: "Erro ao salvar", description: "Não foi possível salvar as alterações." });
         }
