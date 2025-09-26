@@ -50,7 +50,6 @@ const formSchema = z.object({
 
   // interactive
   interactive_type: z.enum(['button', 'list', 'product', 'product_list']).optional(),
-  interactive_header_type: z.enum(['text', 'image', 'video', 'document']).optional(),
   interactive_header_text: z.string().optional(),
   interactive_body_text: z.string().optional(),
   interactive_footer_text: z.string().optional(),
@@ -58,7 +57,15 @@ const formSchema = z.object({
     id: z.string().min(1, "ID do botão é obrigatório"),
     title: z.string().min(1, "Texto do botão é obrigatório"),
   })).optional(),
-
+   interactive_list_button_text: z.string().optional(),
+  interactive_list_sections: z.array(z.object({
+    title: z.string().min(1, "Título da seção é obrigatório."),
+    rows: z.array(z.object({
+      id: z.string().min(1, "ID do item é obrigatório."),
+      title: z.string().min(1, "Título do item é obrigatório."),
+      description: z.string().optional(),
+    })).min(1, "A seção deve ter pelo menos um item."),
+  })).min(1, "A lista deve ter pelo menos uma seção.").optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -80,15 +87,21 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { name: "", type: "text", interactive_buttons: [] },
+    defaultValues: { name: "", type: "text", interactive_buttons: [], interactive_list_sections: [] },
   });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "interactive_buttons",
   });
+  
+  const { fields: sectionFields, append: appendSection, remove: removeSection } = useFieldArray({
+    control: form.control,
+    name: "interactive_list_sections",
+  });
 
   const watchedType = form.watch('type');
+  const watchedInteractiveType = form.watch('interactive_type');
   const isMediaType = ['image', 'video', 'audio', 'file'].includes(watchedType);
 
   React.useEffect(() => {
@@ -139,10 +152,25 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
                     action: {
                         buttons: values.interactive_buttons?.map(b => ({ type: 'reply', reply: { id: b.id, title: b.title } })) || []
                     },
+                    header: values.interactive_header_text ? { type: 'text', text: values.interactive_header_text } : undefined,
                     footer: values.interactive_footer_text ? { text: values.interactive_footer_text } : undefined,
                 }
+            } else if (values.interactive_type === 'list') {
+                 messageContent.interactive = {
+                    type: 'list',
+                    header: values.interactive_header_text ? { type: 'text', text: values.interactive_header_text } : undefined,
+                    body: { text: values.interactive_body_text || ' ' },
+                    footer: values.interactive_footer_text ? { text: values.interactive_footer_text } : undefined,
+                    action: {
+                        button: values.interactive_list_button_text,
+                        sections: values.interactive_list_sections?.map(s => ({
+                            title: s.title,
+                            rows: s.rows.map(r => ({ id: r.id, title: r.title, description: r.description }))
+                        }))
+                    }
+                 }
             } else {
-                 toast({ variant: 'destructive', title: 'Tipo interativo não suportado', description: 'Atualmente, apenas o tipo "botão" é suportado.' });
+                 toast({ variant: 'destructive', title: 'Tipo interativo não suportado', description: 'Atualmente, apenas os tipos "botão" e "lista" são suportados.' });
                  setIsSaving(false);
                  return;
             }
@@ -187,7 +215,7 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
                 <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Nome da Resposta</FormLabel><FormControl><Input placeholder="Ex: Boas-vindas, Suporte" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="type" render={({ field }) => (<FormItem><FormLabel>Tipo de Conteúdo</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>
                     <SelectItem value="text">Texto</SelectItem>
-                    <SelectItem value="interactive">Interativo (Botões)</SelectItem>
+                    <SelectItem value="interactive">Interativo</SelectItem>
                     <SelectItem value="product">Produto</SelectItem>
                     <SelectItem value="image">Imagem</SelectItem>
                     <SelectItem value="video">Vídeo</SelectItem>
@@ -220,21 +248,68 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
                 )}
                 
                 {watchedType === 'interactive' && (
-                    <Card>
-                        <CardContent className="pt-6 space-y-4">
-                            <FormField control={form.control} name="interactive_body_text" render={({ field }) => (<FormItem><FormLabel>Corpo da Mensagem</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
-                             <FormField control={form.control} name="interactive_footer_text" render={({ field }) => (<FormItem><FormLabel>Rodapé (Opcional)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                             <Separator />
-                             <Label>Botões de Resposta (Máx. 3)</Label>
-                             {fields.map((field, index) => (
-                                 <div key={field.id} className="flex items-end gap-2">
-                                    <FormField control={form.control} name={`interactive_buttons.${index}.title`} render={({ field }) => (<FormItem className="flex-1"><FormLabel>Texto Botão {index + 1}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                                    <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}><Trash2 className="h-4 w-4" /></Button>
-                                 </div>
-                             ))}
-                             {fields.length < 3 && <Button type="button" variant="outline" size="sm" onClick={() => append({ id: `btn_${Date.now()}`, title: '' })}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Botão</Button>}
-                        </CardContent>
-                    </Card>
+                    <div className="space-y-4">
+                        <FormField control={form.control} name="interactive_type" render={({ field }) => (<FormItem><FormLabel>Tipo Interativo</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>
+                            <SelectItem value="button">Botões</SelectItem>
+                            <SelectItem value="list">Lista</SelectItem>
+                        </SelectContent></Select><FormMessage /></FormItem>)} />
+                        
+                        <Card>
+                            <CardContent className="pt-6 space-y-4">
+                                <FormField control={form.control} name="interactive_header_text" render={({ field }) => (<FormItem><FormLabel>Cabeçalho (Opcional)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="interactive_body_text" render={({ field }) => (<FormItem><FormLabel>Corpo da Mensagem</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="interactive_footer_text" render={({ field }) => (<FormItem><FormLabel>Rodapé (Opcional)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                
+                                <Separator />
+                                
+                                {watchedInteractiveType === 'button' && (
+                                    <div>
+                                        <Label>Botões de Resposta (Máx. 3)</Label>
+                                        {fields.map((field, index) => (
+                                            <div key={field.id} className="flex items-end gap-2 mt-2">
+                                                <FormField control={form.control} name={`interactive_buttons.${index}.title`} render={({ field }) => (<FormItem className="flex-1"><FormLabel className="text-xs">Texto Botão {index + 1}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                                <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}><Trash2 className="h-4 w-4" /></Button>
+                                            </div>
+                                        ))}
+                                        {fields.length < 3 && <Button type="button" variant="outline" size="sm" onClick={() => append({ id: `btn_${Date.now()}`, title: '' })} className="mt-2"><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Botão</Button>}
+                                    </div>
+                                )}
+                                
+                                {watchedInteractiveType === 'list' && (
+                                    <div className="space-y-4">
+                                        <FormField control={form.control} name="interactive_list_button_text" render={({ field }) => (<FormItem><FormLabel>Texto do Botão da Lista</FormLabel><FormControl><Input placeholder="Ex: Ver Opções" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                        <Label>Seções e Itens da Lista</Label>
+                                         {sectionFields.map((section, sectionIndex) => {
+                                            const { fields: rowFields, append: appendRow, remove: removeRow } = useFieldArray({
+                                                control: form.control,
+                                                name: `interactive_list_sections.${sectionIndex}.rows`
+                                            });
+                                            return (
+                                                 <Card key={section.id} className="p-4 bg-muted/50">
+                                                    <div className="flex justify-between items-center mb-2">
+                                                        <FormField control={form.control} name={`interactive_list_sections.${sectionIndex}.title`} render={({ field }) => (<FormItem className="flex-1 mr-2"><FormLabel>Título da Seção {sectionIndex + 1}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                                        <Button type="button" variant="destructive" size="icon" onClick={() => removeSection(sectionIndex)}><Trash2 className="h-4 w-4"/></Button>
+                                                    </div>
+                                                    {rowFields.map((row, rowIndex) => (
+                                                        <div key={row.id} className="flex items-end gap-2 border-t pt-2 mt-2">
+                                                            <div className="flex-1 space-y-2">
+                                                                <FormField control={form.control} name={`interactive_list_sections.${sectionIndex}.rows.${rowIndex}.title`} render={({ field }) => (<FormItem><FormLabel className="text-xs">Item {rowIndex + 1}</FormLabel><FormControl><Input placeholder="Título do item" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                                                <FormField control={form.control} name={`interactive_list_sections.${sectionIndex}.rows.${rowIndex}.description`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Descrição (opcional)" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                                            </div>
+                                                            <Button type="button" variant="destructive" size="icon" onClick={() => removeRow(rowIndex)}><Trash2 className="h-4 w-4"/></Button>
+                                                        </div>
+                                                    ))}
+                                                    <Button type="button" variant="outline" size="sm" onClick={() => appendRow({ id: `row_${Date.now()}`, title: '', description: '' })} className="mt-2"><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Item</Button>
+                                                </Card>
+                                            )
+                                         })}
+                                        <Button type="button" variant="outline" onClick={() => appendSection({ title: '', rows: [{ id: `row_init_${Date.now()}`, title: '', description: '' }] })} className="mt-2"><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Seção</Button>
+                                    </div>
+                                )}
+
+                            </CardContent>
+                        </Card>
+                    </div>
                 )}
               </div>
             </ScrollArea>
@@ -255,3 +330,4 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
     
 
     
+
