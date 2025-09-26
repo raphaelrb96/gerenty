@@ -761,8 +761,21 @@ export type TextMessage = { body: string; preview_url?: boolean };
 export type MediaMessage = { id: string; mime_type: string; url?: string; caption?: string };
 export type LocationMessage = { latitude: number; longitude: number; name?: string; address?: string };
 export type ContactMessage = { contacts: Array<{ name: { first_name: string }; phones: Array<{ phone: string; type: string }> }> };
-export type ProductMessage = { body?: string; products: Array<{ product_retailer_id: string; name: string; price: number }> };
-export type InteractiveMessage = { type: 'button_reply' | 'list_reply' | 'flow' | 'cta_url' | 'location_request' | 'quick_reply'; body: string; button_text?: string; list_items?: Array<{ title: string; description: string; id: string }>; url_button?: { text: string; url: string } };
+export type ProductMessage = { body?: string; catalog_id?: string; section_id?: string; product_retailer_id: string };
+export type InteractiveMessage = {
+  type: 'button' | 'list' | 'product' | 'product_list';
+  header?: { type: 'text' | 'video' | 'image' | 'document'; text?: string, media_id?: string };
+  body: { text: string };
+  footer?: { text: string };
+  action: {
+    buttons?: Array<{ type: 'reply'; reply: { id: string; title: string; } }>;
+    catalog_id?: string;
+    sections?: Array<{
+      title?: string;
+      product_items?: Array<{ product_retailer_id: string }>;
+    }>;
+  };
+};
 export type TemplateMessage = { name: string; language: string; components: Array<{ type: 'body' | 'header'; parameters: Array<{ type: string; text?: string }> }> };
 export type ReactionMessage = { message_id: string; emoji: string };
 export type SystemMessage = { body: string; wa_id: string };
@@ -821,7 +834,7 @@ export type MessageTemplate = {
   updatedAt: Timestamp;
 };
 
-export type LibraryMessageType = 'text' | 'image' | 'video' | 'audio' | 'file' | 'location' | 'interactive';
+export type LibraryMessageType = 'text' | 'image' | 'video' | 'audio' | 'file' | 'location' | 'interactive' | 'product';
 
 export type LibraryMessage = {
   id: string;
