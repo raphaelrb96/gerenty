@@ -133,6 +133,7 @@ export function RuleBuilderForm() {
             <Card>
                 <CardHeader>
                     <CardTitle>Configuração da Regra</CardTitle>
+                     <CardDescription>Dê um nome para sua regra para facilitar a identificação.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Nome da Regra</FormLabel><FormControl><Input placeholder="Ex: Enviar pesquisa de satisfação após entrega" {...field} /></FormControl><FormMessage /></FormItem>)}/>
