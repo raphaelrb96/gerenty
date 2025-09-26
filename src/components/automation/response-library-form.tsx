@@ -3,7 +3,7 @@
 "use client";
 
 import * as React from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, useFormContext, Control } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
@@ -70,6 +70,63 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+function InteractiveListSection({ sectionIndex, removeSection }: { sectionIndex: number; removeSection: (index: number) => void; }) {
+    const { control } = useFormContext<FormValues>();
+    const { fields: rowFields, append: appendRow, remove: removeRow } = useFieldArray({
+        control: control,
+        name: `interactive_list_sections.${sectionIndex}.rows`
+    });
+
+    return (
+        <Card key={sectionIndex} className="p-4 bg-muted/50">
+            <div className="flex justify-between items-center mb-2">
+                <FormField
+                    control={control}
+                    name={`interactive_list_sections.${sectionIndex}.title`}
+                    render={({ field }) => (
+                        <FormItem className="flex-1 mr-2">
+                            <FormLabel>Título da Seção {sectionIndex + 1}</FormLabel>
+                            <FormControl><Input {...field} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <Button type="button" variant="destructive" size="icon" onClick={() => removeSection(sectionIndex)}><Trash2 className="h-4 w-4"/></Button>
+            </div>
+            {rowFields.map((row, rowIndex) => (
+                <div key={row.id} className="flex items-end gap-2 border-t pt-2 mt-2">
+                    <div className="flex-1 space-y-2">
+                        <FormField
+                            control={control}
+                            name={`interactive_list_sections.${sectionIndex}.rows.${rowIndex}.title`}
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="text-xs">Item {rowIndex + 1}</FormLabel>
+                                    <FormControl><Input placeholder="Título do item" {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={control}
+                            name={`interactive_list_sections.${sectionIndex}.rows.${rowIndex}.description`}
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormControl><Input placeholder="Descrição (opcional)" {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+                    <Button type="button" variant="destructive" size="icon" onClick={() => removeRow(rowIndex)}><Trash2 className="h-4 w-4"/></Button>
+                </div>
+            ))}
+            <Button type="button" variant="outline" size="sm" onClick={() => appendRow({ id: `row_${Date.now()}`, title: '', description: '' })} className="mt-2"><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Item</Button>
+        </Card>
+    );
+}
+
+
 export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: ResponseLibraryFormProps) {
   const { toast } = useToast();
   const { activeCompany } = useCompany();
@@ -90,7 +147,7 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
     defaultValues: { name: "", type: "text", interactive_buttons: [], interactive_list_sections: [] },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields: buttonFields, append: appendButton, remove: removeButton } = useFieldArray({
     control: form.control,
     name: "interactive_buttons",
   });
@@ -265,13 +322,13 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
                                 {watchedInteractiveType === 'button' && (
                                     <div>
                                         <Label>Botões de Resposta (Máx. 3)</Label>
-                                        {fields.map((field, index) => (
+                                        {buttonFields.map((field, index) => (
                                             <div key={field.id} className="flex items-end gap-2 mt-2">
                                                 <FormField control={form.control} name={`interactive_buttons.${index}.title`} render={({ field }) => (<FormItem className="flex-1"><FormLabel className="text-xs">Texto Botão {index + 1}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                                                <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}><Trash2 className="h-4 w-4" /></Button>
+                                                <Button type="button" variant="destructive" size="icon" onClick={() => removeButton(index)}><Trash2 className="h-4 w-4" /></Button>
                                             </div>
                                         ))}
-                                        {fields.length < 3 && <Button type="button" variant="outline" size="sm" onClick={() => append({ id: `btn_${Date.now()}`, title: '' })} className="mt-2"><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Botão</Button>}
+                                        {buttonFields.length < 3 && <Button type="button" variant="outline" size="sm" onClick={() => appendButton({ id: `btn_${Date.now()}`, title: '' })} className="mt-2"><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Botão</Button>}
                                     </div>
                                 )}
                                 
@@ -279,30 +336,9 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
                                     <div className="space-y-4">
                                         <FormField control={form.control} name="interactive_list_button_text" render={({ field }) => (<FormItem><FormLabel>Texto do Botão da Lista</FormLabel><FormControl><Input placeholder="Ex: Ver Opções" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                         <Label>Seções e Itens da Lista</Label>
-                                         {sectionFields.map((section, sectionIndex) => {
-                                            const { fields: rowFields, append: appendRow, remove: removeRow } = useFieldArray({
-                                                control: form.control,
-                                                name: `interactive_list_sections.${sectionIndex}.rows`
-                                            });
-                                            return (
-                                                 <Card key={section.id} className="p-4 bg-muted/50">
-                                                    <div className="flex justify-between items-center mb-2">
-                                                        <FormField control={form.control} name={`interactive_list_sections.${sectionIndex}.title`} render={({ field }) => (<FormItem className="flex-1 mr-2"><FormLabel>Título da Seção {sectionIndex + 1}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                                        <Button type="button" variant="destructive" size="icon" onClick={() => removeSection(sectionIndex)}><Trash2 className="h-4 w-4"/></Button>
-                                                    </div>
-                                                    {rowFields.map((row, rowIndex) => (
-                                                        <div key={row.id} className="flex items-end gap-2 border-t pt-2 mt-2">
-                                                            <div className="flex-1 space-y-2">
-                                                                <FormField control={form.control} name={`interactive_list_sections.${sectionIndex}.rows.${rowIndex}.title`} render={({ field }) => (<FormItem><FormLabel className="text-xs">Item {rowIndex + 1}</FormLabel><FormControl><Input placeholder="Título do item" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                                                <FormField control={form.control} name={`interactive_list_sections.${sectionIndex}.rows.${rowIndex}.description`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Descrição (opcional)" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                                            </div>
-                                                            <Button type="button" variant="destructive" size="icon" onClick={() => removeRow(rowIndex)}><Trash2 className="h-4 w-4"/></Button>
-                                                        </div>
-                                                    ))}
-                                                    <Button type="button" variant="outline" size="sm" onClick={() => appendRow({ id: `row_${Date.now()}`, title: '', description: '' })} className="mt-2"><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Item</Button>
-                                                </Card>
-                                            )
-                                         })}
+                                         {sectionFields.map((section, sectionIndex) => (
+                                             <InteractiveListSection key={section.id} sectionIndex={sectionIndex} removeSection={removeSection} />
+                                         ))}
                                         <Button type="button" variant="outline" onClick={() => appendSection({ title: '', rows: [{ id: `row_init_${Date.now()}`, title: '', description: '' }] })} className="mt-2"><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Seção</Button>
                                     </div>
                                 )}
@@ -330,4 +366,5 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
     
 
     
+
 
