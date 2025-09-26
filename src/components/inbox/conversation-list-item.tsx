@@ -1,0 +1,59 @@
+
+"use client";
+
+import type { Conversation, Consumer } from "@/lib/types";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+
+type ConversationListItemProps = {
+    conversation: Conversation;
+    consumer?: Consumer;
+    isSelected: boolean;
+    onSelect: () => void;
+}
+
+export function ConversationListItem({ conversation, consumer, isSelected, onSelect }: ConversationListItemProps) {
+    const getInitials = (name: string) => {
+        const names = name.split(' ');
+        if (names.length > 1) {
+            return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
+        }
+        return name.substring(0, 2).toUpperCase();
+    }
+    
+    const lastMessageDate = conversation.lastMessageTimestamp ? new Date(conversation.lastMessageTimestamp as string) : new Date();
+
+    return (
+        <button 
+            className={cn(
+                "w-full text-left p-3 rounded-lg hover:bg-muted transition-colors",
+                isSelected && "bg-background shadow-sm"
+            )}
+            onClick={onSelect}
+        >
+            <div className="flex items-start gap-3">
+                <Avatar className="h-10 w-10 border">
+                    <AvatarFallback>{consumer ? getInitials(consumer.name) : '?'}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 overflow-hidden">
+                    <div className="flex justify-between items-center">
+                        <p className="font-semibold text-sm truncate">{consumer?.name || "Desconhecido"}</p>
+                        <p className="text-xs text-muted-foreground whitespace-nowrap">
+                            {formatDistanceToNow(lastMessageDate, { addSuffix: true, locale: ptBR })}
+                        </p>
+                    </div>
+                    <div className="flex justify-between items-start mt-1">
+                        <p className="text-xs text-muted-foreground truncate pr-2">{/* Placeholder for last message */}</p>
+                        {conversation.unreadMessagesCount > 0 && 
+                            <span className="bg-primary text-primary-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                                {conversation.unreadMessagesCount}
+                            </span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </button>
+    );
+}
