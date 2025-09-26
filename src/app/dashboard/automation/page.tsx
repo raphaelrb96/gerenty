@@ -318,6 +318,16 @@ function LibraryTab() {
     );
 }
 
+function FlowsManagementTab() {
+  return (
+    <div className="space-y-6 mt-6">
+      <FlowBuilderTab />
+      <AutomationRulesTab />
+      <LibraryTab />
+    </div>
+  );
+}
+
 
 export default function AutomationPage() {
   const { activeCompany, loading } = useCompany();
@@ -346,28 +356,18 @@ export default function AutomationPage() {
         description="Crie fluxos de trabalho, gerencie modelos de mensagem e respostas rápidas."
       />
       
-      <Tabs defaultValue="rules">
-        <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="rules"><Bot className="mr-2 h-4 w-4" />Regras</TabsTrigger>
+      <Tabs defaultValue="flows">
+        <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="flows"><Workflow className="mr-2 h-4 w-4" />Fluxos de Conversa</TabsTrigger>
-            <TabsTrigger value="templates"><LayoutGrid className="mr-2 h-4 w-4" />Templates</TabsTrigger>
-            <TabsTrigger value="library"><Library className="mr-2 h-4 w-4" />Respostas</TabsTrigger>
+            <TabsTrigger value="templates"><LayoutGrid className="mr-2 h-4 w-4" />Modelos de Mensagem</TabsTrigger>
         </TabsList>
-        <TabsContent value="rules">
-             <AutomationRulesTab />
-        </TabsContent>
         <TabsContent value="flows">
-            <FlowBuilderTab />
+             <FlowsManagementTab />
         </TabsContent>
         <TabsContent value="templates">
             <TemplatesTab />
-        </TabsContent>
-        <TabsContent value="library">
-            <LibraryTab />
         </TabsContent>
       </Tabs>
     </div>
   );
 }
-
-    
