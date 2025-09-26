@@ -1,4 +1,5 @@
 
+
 import type { FieldValue, Timestamp } from "firebase/firestore";
 
 export type User = {
@@ -721,6 +722,118 @@ export type FinancialData = {
     topProductsByProfit: { name: string; profit: number }[];
 };
 
+// V4 - Communication & Leads
+export type Consumer = {
+  id: string; // Document ID, same as whatsappId
+  whatsappId: string; // e.g., 5511999999999@c.us
+  name: string;
+  phone: string;
+  email?: string;
+  type: 'lead' | 'buyer' | 'contact' | 'other';
+  isCustomer: boolean;
+  source: string; // e.g., 'WhatsApp', 'Website Form'
+  totalSpent: number;
+  ordersCount: number;
+  lastPurchaseAt?: Timestamp;
+  createdAt: Timestamp;
+};
+
+export type Conversation = {
+  id: string; // Document ID
+  consumerId: string; // Reference to the consumer
+  lastMessageTimestamp: Timestamp;
+  status: 'open' | 'closed';
+  unreadMessagesCount: number;
+};
+
+export type MessageType = 
+  | 'text' | 'image' | 'video' | 'audio' | 'document' | 'sticker' 
+  | 'location' | 'contact' | 'interactive' | 'template' | 'reaction' 
+  | 'system' | 'product_message' | 'address_message' | 'flow_interactive' 
+  | 'list_interactive' | 'cta_interactive' | 'location_interactive' 
+  | 'reply_buttons_interactive';
+
+export type MessageStatus = 'sent' | 'delivered' | 'read' | 'failed';
+
+export type TextMessage = { body: string; preview_url?: boolean };
+export type MediaMessage = { id: string; mime_type: string; url?: string; caption?: string };
+export type LocationMessage = { latitude: number; longitude: number; name?: string; address?: string };
+export type ContactMessage = { contacts: Array<{ name: { first_name: string }; phones: Array<{ phone: string; type: string }> }> };
+export type ProductMessage = { body?: string; products: Array<{ product_retailer_id: string; name: string; price: number }> };
+export type InteractiveMessage = { type: 'button_reply' | 'list_reply' | 'flow' | 'cta_url' | 'location_request' | 'quick_reply'; body: string; button_text?: string; list_items?: Array<{ title: string; description: string; id: string }>; url_button?: { text: string; url: string } };
+export type TemplateMessage = { name: string; language: string; components: Array<{ type: 'body' | 'header'; parameters: Array<{ type: string; text?: string }> }> };
+export type ReactionMessage = { message_id: string; emoji: string };
+export type SystemMessage = { body: string; wa_id: string };
+
+export type Message = {
+  id: string; // WhatsApp Message ID
+  direction: 'inbound' | 'outbound';
+  type: MessageType;
+  from: string;
+  to: string;
+  timestamp: Timestamp;
+  status: MessageStatus;
+  content: {
+    text?: TextMessage;
+    media?: MediaMessage;
+    location?: LocationMessage;
+    contact?: ContactMessage;
+    product_message?: ProductMessage;
+    interactive?: InteractiveMessage;
+    template?: TemplateMessage;
+    reaction?: ReactionMessage;
+    system?: SystemMessage;
+  };
+  context?: Record<string, any>;
+  error?: Record<string, any>;
+  payload: Record<string, any>; // Full API payload
+};
+
+export type MessageTemplate = {
+  id: string;
+  name: string;
+  category: 'marketing' | 'utility' | 'authentication';
+  language: string;
+  status: 'approved' | 'pending' | 'rejected' | 'disabled';
+  components: Array<{
+    type: 'HEADER' | 'BODY' | 'BUTTONS' | 'FOOTER';
+    format?: 'TEXT' | 'IMAGE' | 'VIDEO' | 'DOCUMENT' | 'LOCATION';
+    text?: string;
+    buttons?: Array<{
+      type: 'PHONE_NUMBER' | 'URL' | 'QUICK_REPLY';
+      text: string;
+      url?: string;
+      phone_number?: string;
+    }>;
+    parameters?: Array<{
+      type: 'text' | 'image' | 'video' | 'document' | 'currency' | 'datetime' | 'product';
+      text?: string;
+      image?: { link: string };
+      video?: { link: string };
+      document?: { link: string, filename: string };
+      currency?: { fallback_value: string, code: string, amount_1000: number };
+      datetime?: { fallback_value: string };
+    }>;
+  }>;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+};
+
+export type AutomationRule = {
+  id: string;
+  name: string;
+  trigger: string; // e.g., 'order.created', 'contact.abandonedCart'
+  conditions: {
+    field: string;
+    operator: '==' | '!=' | '>' | '<';
+    value: any;
+  };
+  action: 'sendMessage' | 'updateContact';
+  templateId: string; // ID of the message template to send
+  isActive: boolean;
+};
+
     
 
     
+
