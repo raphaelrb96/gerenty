@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -109,6 +110,23 @@ export default function EditConversationFlowPage() {
         });
     }, [setEdges, nodes, debouncedSave]);
 
+    const onNodeDataChange = (nodeId: string, data: any) => {
+        setNodes((nds) => {
+            const newNodes = nds.map((node) => {
+                if (node.id === nodeId) {
+                    return { ...node, data: { ...node.data, ...data } };
+                }
+                return node;
+            });
+            // Also update the selected node's view
+            if (selectedNode?.id === nodeId) {
+                 setSelectedNode(newNodes.find(n => n.id === nodeId) || null);
+            }
+            debouncedSave(newNodes, edges);
+            return newNodes;
+        });
+    };
+
     if (loading) {
         return <LoadingSpinner />;
     }
@@ -131,7 +149,7 @@ export default function EditConversationFlowPage() {
                     </ResizablePanel>
                     <ResizableHandle withHandle />
                     <ResizablePanel defaultSize={25} minSize={20} maxSize={30}>
-                        <NodeConfigPanel selectedNode={selectedNode} />
+                        <NodeConfigPanel selectedNode={selectedNode} onNodeDataChange={onNodeDataChange} />
                     </ResizablePanel>
                 </ResizablePanelGroup>
             </Card>

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import type { Node } from "reactflow";
@@ -8,12 +9,28 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Separator } from "../ui/separator";
+import type { LibraryMessage } from "@/lib/types";
+import { useState, useEffect } from "react";
+import { getLibraryMessagesByCompany } from "@/services/library-message-service";
+import { useCompany } from "@/context/company-context";
+import { useToast } from "@/hooks/use-toast";
+
 
 type NodeConfigPanelProps = {
     selectedNode: Node | null;
+    onNodeDataChange: (nodeId: string, data: any) => void;
 }
 
-function KeywordTriggerPanel() {
+function KeywordTriggerPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'] }) {
+    
+    const handleKeywordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        onNodeDataChange(node.id, { triggerKeyword: e.target.value });
+    };
+
+    const handleMatchTypeChange = (value: string) => {
+        onNodeDataChange(node.id, { triggerMatchType: value });
+    };
+    
     return (
         <div className="space-y-4">
              <p className="text-sm text-muted-foreground">
@@ -22,11 +39,19 @@ function KeywordTriggerPanel() {
             <Separator />
             <div className="space-y-2">
                 <Label htmlFor="keyword-input">Palavra-Chave</Label>
-                <Input id="keyword-input" placeholder="Ex: olá, preço, suporte" />
+                <Input 
+                    id="keyword-input" 
+                    placeholder="Ex: olá, preço, suporte" 
+                    value={node.data.triggerKeyword || ""}
+                    onChange={handleKeywordChange}
+                />
             </div>
              <div className="space-y-2">
                 <Label htmlFor="match-type-select">Tipo de Correspondência</Label>
-                <Select defaultValue="exact">
+                <Select 
+                    defaultValue={node.data.triggerMatchType || "exact"}
+                    onValueChange={handleMatchTypeChange}
+                >
                     <SelectTrigger id="match-type-select">
                         <SelectValue />
                     </SelectTrigger>
@@ -34,6 +59,7 @@ function KeywordTriggerPanel() {
                         <SelectItem value="exact">Correspondência Exata</SelectItem>
                         <SelectItem value="contains">Contém</SelectItem>
                         <SelectItem value="starts_with">Começa com</SelectItem>
+                        <SelectItem value="regex">Regex (Avançado)</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
@@ -41,7 +67,23 @@ function KeywordTriggerPanel() {
     );
 }
 
-function MessagePanel() {
+function MessagePanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'] }) {
+    const [messages, setMessages] = useState<LibraryMessage[]>([]);
+    const { activeCompany } = useCompany();
+    const { toast } = useToast();
+
+    useEffect(() => {
+        if(activeCompany) {
+            getLibraryMessagesByCompany(activeCompany.id).then(setMessages).catch(() => {
+                toast({ variant: 'destructive', title: 'Erro ao carregar mensagens' });
+            });
+        }
+    }, [activeCompany, toast]);
+
+    const handleMessageChange = (value: string) => {
+        onNodeDataChange(node.id, { messageId: value });
+    };
+
     return (
         <div className="space-y-4">
              <p className="text-sm text-muted-foreground">
@@ -50,15 +92,17 @@ function MessagePanel() {
             <Separator />
              <div className="space-y-2">
                 <Label htmlFor="library-message-select">Mensagem da Biblioteca</Label>
-                <Select>
+                <Select
+                    value={node.data.messageId || ""}
+                    onValueChange={handleMessageChange}
+                >
                     <SelectTrigger id="library-message-select">
                         <SelectValue placeholder="Selecione uma mensagem..." />
                     </SelectTrigger>
                     <SelectContent>
-                        {/* Placeholder - será preenchido com dados reais */}
-                        <SelectItem value="welcome">Boas-vindas</SelectItem>
-                        <SelectItem value="support_options">Opções de Suporte</SelectItem>
-                        <SelectItem value="pricing_info">Informações de Preço</SelectItem>
+                        {messages.map(msg => (
+                            <SelectItem key={msg.id} value={msg.id}>{msg.name}</SelectItem>
+                        ))}
                     </SelectContent>
                 </Select>
             </div>
@@ -67,7 +111,7 @@ function MessagePanel() {
 }
 
 
-export function NodeConfigPanel({ selectedNode }: NodeConfigPanelProps) {
+export function NodeConfigPanel({ selectedNode, onNodeDataChange }: NodeConfigPanelProps) {
 
     if (!selectedNode) {
         return (
@@ -83,9 +127,9 @@ export function NodeConfigPanel({ selectedNode }: NodeConfigPanelProps) {
         const nodeType = selectedNode.data.type;
         switch(nodeType) {
             case 'keywordTrigger':
-                return <KeywordTriggerPanel />;
+                return <KeywordTriggerPanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
             case 'message':
-                 return <MessagePanel />;
+                 return <MessagePanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
             default:
                  return (
                     <div className="flex flex-col items-center justify-center text-center text-muted-foreground p-4">
