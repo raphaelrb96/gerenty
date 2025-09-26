@@ -773,7 +773,9 @@ export type InteractiveMessage = {
     sections?: Array<{
       title?: string;
       product_items?: Array<{ product_retailer_id: string }>;
+      rows?: Array<{ id: string, title: string, description?: string }>;
     }>;
+    button?: string;
   };
 };
 export type TemplateMessage = { name: string; language: string; components: Array<{ type: 'body' | 'header'; parameters: Array<{ type: string; text?: string }> }> };
@@ -859,15 +861,17 @@ export type LibraryMessage = {
 
 export type AutomationRule = {
   id: string;
+  companyId: string;
+  ownerId: string;
   name: string;
-  trigger: string; // e.g., 'order.created', 'contact.abandonedCart'
+  trigger: string;
   conditions: {
     field: string;
-    operator: '==' | '!=' | '>' | '<';
+    operator: '==' | '!=' | '>' | '<' | 'contains' | 'not-contains';
     value: any;
-  };
+  }[];
   action: 'sendMessage' | 'updateContact';
-  templateId: string; // ID of the message template to send
+  templateId?: string; // ID of the message template to send
   isActive: boolean;
 };
 

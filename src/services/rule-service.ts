@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { db } from "@/lib/firebase";
@@ -7,7 +8,7 @@ import type { AutomationRule } from "@/lib/types";
 
 const rulesCollection = collection(db, "automationRules");
 
-export async function addRule(ruleData: Omit<AutomationRule, 'id' | 'createdAt' | 'updatedAt'>): Promise<void> {
+export async function addRule(ruleData: Omit<AutomationRule, 'id'>): Promise<void> {
     try {
         await addDoc(rulesCollection, {
             ...ruleData,

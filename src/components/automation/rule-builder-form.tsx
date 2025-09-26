@@ -1,8 +1,9 @@
 
+
 "use client";
 
 import * as React from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
@@ -18,11 +19,19 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Loader2, Zap, MessageSquare } from "lucide-react";
+import { Loader2, Zap, MessageSquare, PlusCircle, Trash2, Filter } from "lucide-react";
+import { Separator } from "../ui/separator";
+
+const conditionSchema = z.object({
+    field: z.string().min(1),
+    operator: z.enum(['==', '!=', '>', '<', 'contains', 'not-contains']),
+    value: z.string().min(1),
+});
 
 const formSchema = z.object({
   name: z.string().min(2, "O nome da regra é obrigatório."),
   trigger: z.string().min(1, "É obrigatório selecionar um gatilho."),
+  conditions: z.array(conditionSchema).optional(),
   action: z.string().min(1, "É obrigatório selecionar uma ação."),
   templateId: z.string().optional(),
 });
@@ -40,7 +49,6 @@ const actions = [
     { value: "sendMessage", label: "Enviar Template de Mensagem" },
 ];
 
-
 export function RuleBuilderForm() {
   const { toast } = useToast();
   const { activeCompany } = useCompany();
@@ -51,7 +59,12 @@ export function RuleBuilderForm() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { name: "", trigger: "", action: "", templateId: "" },
+    defaultValues: { name: "", trigger: "", action: "", templateId: "", conditions: [] },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "conditions",
   });
 
   const watchedAction = form.watch("action");
@@ -80,12 +93,13 @@ export function RuleBuilderForm() {
             ownerId: effectiveOwnerId,
             name: values.name,
             trigger: values.trigger,
+            conditions: values.conditions || [],
             action: values.action,
             templateId: values.templateId,
             isActive: true,
         };
 
-        await addRule(ruleData);
+        await addRule(ruleData as any); // Cast because of the complex type from server
         toast({ title: "Regra de automação criada com sucesso!" });
         router.push("/dashboard/automation");
       
@@ -106,19 +120,7 @@ export function RuleBuilderForm() {
                     <CardTitle>Configuração da Regra</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Nome da Regra</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="Ex: Boas-vindas para novos clientes" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                    <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Nome da Regra</FormLabel><FormControl><Input placeholder="Ex: Boas-vindas para novos clientes" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                 </CardContent>
             </Card>
 
@@ -127,23 +129,27 @@ export function RuleBuilderForm() {
                     <CardTitle className="flex items-center gap-2"><Zap className="h-5 w-5 text-yellow-500" /> SE (Gatilho)</CardTitle>
                     <CardDescription>Escolha o evento que irá iniciar esta automação.</CardDescription>
                 </CardHeader>
-                <CardContent>
-                     <FormField
-                        control={form.control}
-                        name="trigger"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Quando isto acontecer...</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder="Selecione um gatilho..." /></SelectTrigger></FormControl>
-                                    <SelectContent>
-                                        {triggers.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                <CardContent className="space-y-4">
+                     <FormField control={form.control} name="trigger" render={({ field }) => (<FormItem><FormLabel>Quando isto acontecer...</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione um gatilho..." /></SelectTrigger></FormControl><SelectContent>{triggers.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)}/>
+                     
+                     <Separator />
+
+                     <div>
+                        <div className="flex items-center justify-between mb-2">
+                           <h4 className="font-medium flex items-center gap-2"><Filter className="h-4 w-4"/> E se... (Condições Opcionais)</h4>
+                           <Button type="button" size="sm" variant="outline" onClick={() => append({ field: '', operator: '==', value: '' })}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Filtro</Button>
+                        </div>
+                        <div className="space-y-4">
+                           {fields.map((item, index) => (
+                             <div key={item.id} className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end p-2 border rounded-md">
+                               <FormField control={form.control} name={`conditions.${index}.field`} render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>Campo</FormLabel><FormControl><Input placeholder="ex: total" {...field} /></FormControl></FormItem>)}/>
+                               <FormField control={form.control} name={`conditions.${index}.operator`} render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>Operador</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="==">Igual a</SelectItem><SelectItem value="!=">Diferente de</SelectItem><SelectItem value=">">Maior que</SelectItem><SelectItem value="<">Menor que</SelectItem><SelectItem value="contains">Contém</SelectItem></SelectContent></Select></FormItem>)}/>
+                               <FormField control={form.control} name={`conditions.${index}.value`} render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>Valor</FormLabel><FormControl><Input placeholder="ex: 500" {...field} /></FormControl></FormItem>)}/>
+                               <Button type="button" variant="ghost" size="icon" className="text-destructive md:col-span-1" onClick={() => remove(index)}><Trash2 className="h-4 w-4" /></Button>
+                             </div>
+                           ))}
+                        </div>
+                     </div>
                 </CardContent>
             </Card>
             
@@ -153,39 +159,10 @@ export function RuleBuilderForm() {
                     <CardDescription>Escolha o que deve acontecer quando o gatilho for disparado.</CardDescription>
                 </CardHeader>
                  <CardContent className="space-y-4">
-                     <FormField
-                        control={form.control}
-                        name="action"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Execute esta ação...</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder="Selecione uma ação..." /></SelectTrigger></FormControl>
-                                    <SelectContent>
-                                        {actions.map(a => <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                     <FormField control={form.control} name="action" render={({ field }) => (<FormItem><FormLabel>Execute esta ação...</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione uma ação..." /></SelectTrigger></FormControl><SelectContent>{actions.map(a => <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)}/>
                     
                     {watchedAction === 'sendMessage' && (
-                        <FormField
-                            control={form.control}
-                            name="templateId"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Selecione o Template</FormLabel>
-                                    <Select onValueChange={field.onChange} value={field.value}>
-                                        <FormControl><SelectTrigger><SelectValue placeholder="Escolha um template de mensagem..." /></SelectTrigger></FormControl>
-                                        <SelectContent>
-                                            {templates.map(t => <SelectItem key={t.id} value={t.id}>{t.name} ({t.language.toUpperCase()})</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
+                        <FormField control={form.control} name="templateId" render={({ field }) => (<FormItem><FormLabel>Selecione o Template</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Escolha um template de mensagem..." /></SelectTrigger></FormControl><SelectContent>{templates.map(t => <SelectItem key={t.id} value={t.id}>{t.name} ({t.language.toUpperCase()})</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)}
                         />
                     )}
                  </CardContent>
