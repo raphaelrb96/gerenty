@@ -64,7 +64,7 @@ export function MainSidebar() {
     { href: "/dashboard/automation", label: "Automação", icon: Bot, module: 'automation' as const },
     { href: "/dashboard/products", label: t("Products"), icon: Package, module: 'products' as const },
     { href: "/dashboard/orders", label: t("Orders"), icon: ShoppingCart, module: 'orders' as const },
-    { href: "/dashboard/crm", label: "CRM", icon: HeartHandshake, module: 'crm' as const },
+    { href: "/dashboard/crm", label: "Clientes", icon: HeartHandshake, module: 'crm' as const },
     { href: "/dashboard/financials", label: "Financeiro", icon: TrendingUp, module: 'financials' as const },
     { href: "/dashboard/logistics", label: "Logística", icon: Truck, module: 'logistics' as const },
     { href: "/dashboard/reports", label: "Relatórios", icon: BarChart, module: 'reports' as const },

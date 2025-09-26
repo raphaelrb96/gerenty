@@ -104,19 +104,19 @@ const steps = [
 ];
 
 function CustomerSearch({ onCustomerSelect }: { onCustomerSelect: (customer: Customer) => void }) {
-    const { user } = useAuth();
+    const { user, effectiveOwnerId } = useAuth();
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [open, setOpen] = useState(false);
     
     useEffect(() => {
         const fetchCustomers = async () => {
-            if (user) {
-                const userCustomers = await getCustomersByUser(user.uid);
+            if (effectiveOwnerId) {
+                const userCustomers = await getCustomersByUser(effectiveOwnerId);
                 setCustomers(userCustomers);
             }
         };
         fetchCustomers();
-    }, [user]);
+    }, [effectiveOwnerId]);
 
     const handleSelect = (customer: Customer) => {
         onCustomerSelect(customer);
