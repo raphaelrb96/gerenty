@@ -6,8 +6,9 @@ import { PageHeader } from "@/components/common/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Bot, PlusCircle, LayoutGrid, Building, Library } from "lucide-react";
-import type { MessageTemplate } from "@/lib/types";
+import type { MessageTemplate, LibraryMessage } from "@/lib/types";
 import { getTemplatesByCompany, deleteTemplate } from "@/services/template-service";
+import { getLibraryMessagesByCompany, deleteLibraryMessage } from "@/services/library-message-service";
 import { useCompany } from "@/context/company-context";
 import { useToast } from "@/hooks/use-toast";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
@@ -27,6 +28,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ResponseLibraryForm } from "@/components/automation/response-library-form";
+import { ResponseCard } from "@/components/automation/response-card";
 
 
 function TemplatesTab() {
@@ -147,20 +150,110 @@ function TemplatesTab() {
 }
 
 function LibraryTab() {
+    const { activeCompany } = useCompany();
+    const { toast } = useToast();
+    const [messages, setMessages] = useState<LibraryMessage[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [isFormOpen, setIsFormOpen] = useState(false);
+    const [messageToEdit, setMessageToEdit] = useState<LibraryMessage | null>(null);
+    const [messageToDelete, setMessageToDelete] = useState<LibraryMessage | null>(null);
+
+    const fetchMessages = async () => {
+        if (activeCompany) {
+            setLoading(true);
+            try {
+                const companyMessages = await getLibraryMessagesByCompany(activeCompany.id);
+                setMessages(companyMessages);
+            } catch (error) {
+                toast({ variant: "destructive", title: "Erro ao buscar respostas" });
+            } finally {
+                setLoading(false);
+            }
+        } else {
+            setMessages([]);
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchMessages();
+    }, [activeCompany]);
+
+    const handleOpenForm = (message: LibraryMessage | null = null) => {
+        setMessageToEdit(message);
+        setIsFormOpen(true);
+    };
+
+    const handleDelete = async () => {
+        if (!messageToDelete || !activeCompany) return;
+        try {
+            await deleteLibraryMessage(activeCompany.id, messageToDelete.id);
+            toast({ title: "Resposta excluída com sucesso!" });
+            fetchMessages();
+        } catch (error) {
+            toast({ variant: "destructive", title: "Erro ao excluir resposta" });
+        } finally {
+            setMessageToDelete(null);
+        }
+    };
+
+    if (loading) {
+        return <LoadingSpinner />;
+    }
+
     return (
         <div className="mt-6">
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold font-headline">Biblioteca de Respostas</h2>
-                <Button variant="outline" disabled>
+                <Button variant="outline" onClick={() => handleOpenForm()}>
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Nova Resposta
                 </Button>
             </div>
-            <EmptyState
-                icon={<Library className="h-16 w-16" />}
-                title="Biblioteca em Construção"
-                description="Em breve você poderá criar, salvar e gerenciar respostas rápidas com texto, imagens, vídeos e arquivos para usar em suas automações."
+            
+             {messages.length === 0 ? (
+                <EmptyState
+                    icon={<Library className="h-16 w-16" />}
+                    title="Nenhuma resposta encontrada"
+                    description="Crie respostas rápidas com texto, imagens, vídeos e arquivos para usar em suas automações."
+                    action={<Button onClick={() => handleOpenForm()}>Criar primeira resposta</Button>}
+                />
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {messages.map(message => (
+                        <ResponseCard
+                            key={message.id}
+                            message={message}
+                            onEdit={() => handleOpenForm(message)}
+                            onDelete={() => setMessageToDelete(message)}
+                        />
+                    ))}
+                </div>
+            )}
+
+            <ResponseLibraryForm
+                isOpen={isFormOpen}
+                onClose={() => setIsFormOpen(false)}
+                onFinished={fetchMessages}
+                message={messageToEdit}
             />
+            
+            <AlertDialog open={!!messageToDelete} onOpenChange={(isOpen) => !isOpen && setMessageToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Esta ação não pode ser desfeita. Isso excluirá permanentemente a resposta "{messageToDelete?.name}".
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                            Confirmar Exclusão
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
