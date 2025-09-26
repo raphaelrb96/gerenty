@@ -5,14 +5,17 @@ import type { MessageTemplate } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Bot, Eye } from "lucide-react";
+import { Bot, Eye, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
 
 type TemplateCardProps = {
     template: MessageTemplate;
     onViewDetails: () => void;
+    onEdit: () => void;
+    onDelete: () => void;
 };
 
-export function TemplateCard({ template, onViewDetails }: TemplateCardProps) {
+export function TemplateCard({ template, onViewDetails, onEdit, onDelete }: TemplateCardProps) {
     const getStatusVariant = (status: string) => {
         switch (status) {
             case 'approved': return 'bg-green-600/20 text-green-700';
@@ -41,8 +44,20 @@ export function TemplateCard({ template, onViewDetails }: TemplateCardProps) {
                         <Bot className="h-5 w-5 text-primary" />
                         {template.name}
                     </CardTitle>
-                    <Badge variant="secondary" className={getStatusVariant(template.status)}>{template.status}</Badge>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-6 w-6">
+                                <MoreVertical className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            <DropdownMenuItem onSelect={onViewDetails}><Eye className="mr-2 h-4 w-4" />Ver Prévia</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={onEdit}><Pencil className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={onDelete} className="text-destructive focus:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Excluir</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
+                 <Badge variant="secondary" className={`mt-2 w-fit ${getStatusVariant(template.status)}`}>{template.status}</Badge>
                 <CardDescription className="flex items-center gap-2 pt-2">
                     <Badge variant="secondary" className={getCategoryVariant(template.category)}>{template.category}</Badge>
                     <Badge variant="outline">{template.language.toUpperCase()}</Badge>
@@ -56,7 +71,7 @@ export function TemplateCard({ template, onViewDetails }: TemplateCardProps) {
             <CardFooter>
                  <Button variant="outline" className="w-full" onClick={onViewDetails}>
                    <Eye className="mr-2 h-4 w-4" />
-                   Ver Detalhes
+                   Ver Prévia Completa
                 </Button>
             </CardFooter>
         </Card>
