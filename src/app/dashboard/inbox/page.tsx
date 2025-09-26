@@ -39,7 +39,7 @@ export default function InboxPage() {
          )}
          <h1 className="text-xl font-semibold">{selectedConversation ? selectedConversation.name : "Inbox"}</h1>
        </header>
-       <main className="flex-1 grid grid-cols-1 md:grid-cols-[300px_1fr] gap-0 overflow-hidden">
+       <main className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-0 overflow-hidden">
         
         {/* Coluna 1: Lista de Conversas */}
         <div className={cn("flex flex-col h-full bg-background border-r", selectedConversation && "hidden md:flex")}>
