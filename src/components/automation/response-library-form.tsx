@@ -64,7 +64,7 @@ const formSchema = z.object({
       id: z.string().min(1, "ID do item é obrigatório."),
       title: z.string().min(1, "Título do item é obrigatório."),
       description: z.string().optional(),
-    })).min(1, "A seção deve ter pelo menos um item."),
+    })).min(1, "A seção deve ter pelo menos um item.").max(10, "Uma seção não pode ter mais de 10 itens."),
   })).min(1, "A lista deve ter pelo menos uma seção.").optional(),
 });
 
@@ -378,6 +378,7 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
     
 
     
+
 
 
 
