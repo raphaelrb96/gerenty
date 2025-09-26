@@ -4,7 +4,7 @@
 import type { LibraryMessage } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Image, Video, Audio, File, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { FileText, Image, Video, AudioLines, File, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
 
 type ResponseCardProps = {
@@ -19,7 +19,7 @@ export function ResponseCard({ message, onEdit, onDelete }: ResponseCardProps) {
             case 'text': return <FileText className="h-8 w-8 text-primary" />;
             case 'image': return <Image className="h-8 w-8 text-primary" />;
             case 'video': return <Video className="h-8 w-8 text-primary" />;
-            case 'audio': return <Audio className="h-8 w-8 text-primary" />;
+            case 'audio': return <AudioLines className="h-8 w-8 text-primary" />;
             case 'file': return <File className="h-8 w-8 text-primary" />;
             default: return <FileText className="h-8 w-8 text-primary" />;
         }
