@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from 'next/navigation';
 import { useAuth } from "@/context/auth-context";
 import { useCompany } from "@/context/company-context";
@@ -15,11 +15,14 @@ export default function NewConversationFlowPage() {
     const { activeCompany } = useCompany();
     const { toast } = useToast();
     const router = useRouter();
+    const isCreating = useRef(false);
 
     useEffect(() => {
         const initializeFlow = async () => {
-            if (!effectiveOwnerId || !activeCompany) return;
+            if (!effectiveOwnerId || !activeCompany || isCreating.current) return;
             
+            isCreating.current = true;
+
             try {
                 const newFlow = await createFlow(effectiveOwnerId, activeCompany.id);
                 // Redirect to the new edit page
