@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/common/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Bot, PlusCircle, LayoutGrid, Building } from "lucide-react";
+import { Bot, PlusCircle, LayoutGrid, Building, Library } from "lucide-react";
 import type { MessageTemplate } from "@/lib/types";
 import { getTemplatesByCompany, deleteTemplate } from "@/services/template-service";
 import { useCompany } from "@/context/company-context";
@@ -26,8 +26,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import Link from "next/link";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-export default function AutomationPage() {
+
+function TemplatesTab() {
   const { activeCompany } = useCompany();
   const { toast } = useToast();
   const [templates, setTemplates] = useState<MessageTemplate[]>([]);
@@ -75,14 +77,109 @@ export default function AutomationPage() {
         setTemplateToDelete(null);
     }
   }
+  
+    if (loading) {
+        return <LoadingSpinner />;
+    }
 
-  if (!activeCompany && !loading) {
+    return (
+        <div className="mt-6">
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold font-headline">Biblioteca de Templates</h2>
+                <Button variant="outline" onClick={() => handleOpenForm()}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Criar Template
+                </Button>
+            </div>
+            
+            {templates.length === 0 ? (
+                <EmptyState
+                    icon={<LayoutGrid className="h-16 w-16" />}
+                    title="Nenhum template encontrado"
+                    description="Comece criando seus modelos de mensagem para iniciar conversas com clientes."
+                    action={<Button onClick={() => handleOpenForm()}>Criar primeiro template</Button>}
+                />
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {templates.map(template => (
+                        <TemplateCard 
+                            key={template.id} 
+                            template={template} 
+                            onViewDetails={() => setSelectedTemplate(template)}
+                            onEdit={() => handleOpenForm(template)}
+                            onDelete={() => setTemplateToDelete(template)}
+                        />
+                    ))}
+                </div>
+            )}
+        
+            <TemplatePreviewModal 
+                template={selectedTemplate}
+                isOpen={!!selectedTemplate}
+                onClose={() => setSelectedTemplate(null)}
+            />
+
+            <TemplateForm
+                isOpen={isFormOpen}
+                onClose={() => setIsFormOpen(false)}
+                onFinished={fetchTemplates}
+                template={templateToEdit}
+            />
+            
+            <AlertDialog open={!!templateToDelete} onOpenChange={(isOpen) => !isOpen && setTemplateToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Esta ação não pode ser desfeita. Isso excluirá permanentemente o template "{templateToDelete?.name}".
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                            Confirmar Exclusão
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </div>
+    )
+}
+
+function LibraryTab() {
+    return (
+        <div className="mt-6">
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold font-headline">Biblioteca de Respostas</h2>
+                <Button variant="outline" disabled>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Nova Resposta
+                </Button>
+            </div>
+            <EmptyState
+                icon={<Library className="h-16 w-16" />}
+                title="Biblioteca em Construção"
+                description="Em breve você poderá criar, salvar e gerenciar respostas rápidas com texto, imagens, vídeos e arquivos para usar em suas automações."
+            />
+        </div>
+    );
+}
+
+
+export default function AutomationPage() {
+  const { activeCompany, loading } = useCompany();
+
+  if (loading) {
+      return <LoadingSpinner />;
+  }
+
+  if (!activeCompany) {
     return (
         <div className="flex items-center justify-center h-full">
             <EmptyState
                 icon={<Building className="h-16 w-16" />}
                 title="Nenhuma empresa selecionada"
-                description="Por favor, selecione uma empresa para gerenciar os templates de automação."
+                description="Por favor, selecione uma empresa para gerenciar as automações e templates."
                 action={<Button asChild><Link href="/dashboard/companies">Gerenciar Empresas</Link></Button>}
             />
         </div>
@@ -93,12 +190,12 @@ export default function AutomationPage() {
     <div className="space-y-8">
       <PageHeader
         title="Automação e Modelos"
-        description="Crie fluxos de trabalho e gerencie seus modelos de mensagem do WhatsApp."
+        description="Crie fluxos de trabalho, gerencie modelos de mensagem e respostas rápidas."
       />
 
-      <Card>
+       <Card>
         <CardHeader>
-          <CardTitle>Construtor de Regras</CardTitle>
+          <CardTitle>Construtor de Regras de Automação</CardTitle>
           <CardDescription>Crie regras no formato "Se (gatilho), então (ação)" para automatizar tarefas.</CardDescription>
         </CardHeader>
         <CardContent>
@@ -112,69 +209,18 @@ export default function AutomationPage() {
         </CardFooter>
       </Card>
 
-      <div>
-        <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold font-headline">Biblioteca de Templates</h2>
-            <Button variant="outline" onClick={() => handleOpenForm()}>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Criar Template
-            </Button>
-        </div>
-        
-        {loading ? (
-            <LoadingSpinner />
-        ) : templates.length === 0 ? (
-            <EmptyState
-                icon={<LayoutGrid className="h-16 w-16" />}
-                title="Nenhum template encontrado"
-                description="Comece criando seus modelos de mensagem para automatizar a comunicação."
-                action={<Button onClick={() => handleOpenForm()}>Criar primeiro template</Button>}
-            />
-        ) : (
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {templates.map(template => (
-                    <TemplateCard 
-                        key={template.id} 
-                        template={template} 
-                        onViewDetails={() => setSelectedTemplate(template)}
-                        onEdit={() => handleOpenForm(template)}
-                        onDelete={() => setTemplateToDelete(template)}
-                    />
-                ))}
-            </div>
-        )}
-       
-      </div>
-      
-      <TemplatePreviewModal 
-        template={selectedTemplate}
-        isOpen={!!selectedTemplate}
-        onClose={() => setSelectedTemplate(null)}
-      />
-
-      <TemplateForm
-        isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        onFinished={fetchTemplates}
-        template={templateToEdit}
-      />
-      
-      <AlertDialog open={!!templateToDelete} onOpenChange={(isOpen) => !isOpen && setTemplateToDelete(null)}>
-          <AlertDialogContent>
-              <AlertDialogHeader>
-                  <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                      Esta ação não pode ser desfeita. Isso excluirá permanentemente o template "{templateToDelete?.name}".
-                  </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                      Confirmar Exclusão
-                  </AlertDialogAction>
-              </AlertDialogFooter>
-          </AlertDialogContent>
-      </AlertDialog>
+      <Tabs defaultValue="templates">
+        <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="templates">Modelos de Mensagem (Templates)</TabsTrigger>
+            <TabsTrigger value="library">Biblioteca de Respostas</TabsTrigger>
+        </TabsList>
+        <TabsContent value="templates">
+            <TemplatesTab />
+        </TabsContent>
+        <TabsContent value="library">
+            <LibraryTab />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

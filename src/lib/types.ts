@@ -820,6 +820,17 @@ export type MessageTemplate = {
   updatedAt: Timestamp;
 };
 
+export type LibraryMessage = {
+  id: string;
+  ownerId: string;
+  companyId: string;
+  name: string;
+  type: 'text' | 'image' | 'video' | 'audio' | 'file';
+  content: string; // Text content or URL for media
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+};
+
 export type AutomationRule = {
   id: string;
   name: string;
