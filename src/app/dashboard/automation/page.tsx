@@ -33,12 +33,6 @@ import { ResponseCard } from "@/components/automation/response-card";
 
 function AutomationRulesTab() {
     const [rules, setRules] = useState<AutomationRule[]>([]);
-    const [isRuleFormOpen, setIsRuleFormOpen] = useState(false);
-
-    const handleOpenRuleForm = () => {
-        // This will open the form modal in the next step
-        // setIsRuleFormOpen(true);
-    };
 
     return (
         <Card>
@@ -52,16 +46,18 @@ function AutomationRulesTab() {
                         icon={<Bot className="h-16 w-16" />}
                         title="Nenhuma regra de automação criada"
                         description="Comece a automatizar suas tarefas criando sua primeira regra."
-                        action={<Button onClick={handleOpenRuleForm}><PlusCircle className="mr-2 h-4 w-4" />Criar Primeira Regra</Button>}
+                        action={<Button asChild><Link href="/dashboard/automation/rules/new"><PlusCircle className="mr-2 h-4 w-4" />Criar Primeira Regra</Link></Button>}
                     />
                 ) : (
                     <div>{/* Placeholder for rules list */}</div>
                 )}
             </CardContent>
              <CardFooter>
-                <Button onClick={handleOpenRuleForm}>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Nova Regra de Automação
+                <Button asChild>
+                    <Link href="/dashboard/automation/rules/new">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Nova Regra de Automação
+                    </Link>
                 </Button>
             </CardFooter>
         </Card>
@@ -252,7 +248,7 @@ function LibraryTab() {
                     icon={<Library className="h-16 w-16" />}
                     title="Nenhuma resposta encontrada"
                     description="Crie respostas rápidas com texto, imagens, vídeos e arquivos para usar em suas automações."
-                    action={<Button onClick={() => handleOpenForm()}>Criar primeira resposta</Button>}
+                    action={<Button onClick={() => handleOpenForm(null)}>Criar primeira resposta</Button>}
                 />
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
