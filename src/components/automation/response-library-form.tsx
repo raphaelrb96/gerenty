@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -8,7 +9,7 @@ import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { addLibraryMessage, updateLibraryMessage } from "@/services/library-message-service";
 import { uploadFile } from "@/services/storage-service";
-import type { LibraryMessage } from "@/lib/types";
+import type { LibraryMessage, LibraryMessageType } from "@/lib/types";
 import { useCompany } from "@/context/company-context";
 import { useAuth } from "@/context/auth-context";
 
@@ -31,7 +32,7 @@ type ResponseLibraryFormProps = {
 
 const formSchema = z.object({
   name: z.string().min(2, "O nome da resposta é obrigatório."),
-  type: z.enum(['text', 'image', 'video', 'audio', 'file']),
+  type: z.enum(['text', 'image', 'video', 'audio', 'file', 'location', 'interactive']),
   content: z.string().optional(),
 });
 
@@ -55,6 +56,7 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
   });
 
   const watchedType = form.watch('type');
+  const isMediaType = ['image', 'video', 'audio', 'file'].includes(watchedType);
 
   React.useEffect(() => {
     setFileToUpload(null);
@@ -63,10 +65,10 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
       form.reset({
         name: message.name,
         type: message.type,
-        content: message.type === 'text' ? message.content : '',
+        content: message.type === 'text' ? message.content.text?.body : '',
       });
-      if (message.type !== 'text') {
-        setFileName(message.content.split('/').pop()?.split('?')[0] || 'Arquivo existente');
+      if (message.type !== 'text' && message.content.media?.url) {
+        setFileName(message.content.media.url.split('/').pop()?.split('?')[0] || 'Arquivo existente');
       }
     } else {
       form.reset({
@@ -91,27 +93,31 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
       return;
     }
     
-    if (values.type !== 'text' && !fileToUpload && !message) {
+    if (isMediaType && !fileToUpload && !message) {
         toast({ variant: 'destructive', title: 'Arquivo necessário', description: 'Por favor, selecione um arquivo para enviar.' });
         return;
     }
 
     setIsSaving(true);
     try {
-      let finalContent = values.content || '';
+        let messageContent: LibraryMessage['content'] = {};
 
-      if (values.type !== 'text' && fileToUpload) {
-        const path = `libraryMessages/${activeCompany.id}/${Date.now()}-${fileToUpload.name}`;
-        finalContent = await uploadFile(fileToUpload, path);
-      } else if (message && message.type !== 'text') {
-          // If not uploading a new file, keep the old content URL
-          finalContent = message.content;
-      }
+        if (values.type === 'text') {
+            messageContent.text = { body: values.content || '' };
+        } else if (isMediaType) {
+             let mediaUrl = message?.content.media?.url || '';
+             if(fileToUpload) {
+                const path = `libraryMessages/${activeCompany.id}/${Date.now()}-${fileToUpload.name}`;
+                mediaUrl = await uploadFile(fileToUpload, path);
+             }
+             messageContent.media = { id: '', mime_type: fileToUpload?.type || '', url: mediaUrl };
+        }
+        // TODO: Handle other types like location, interactive etc.
 
       const messageData = {
           name: values.name,
-          type: values.type,
-          content: finalContent,
+          type: values.type as LibraryMessageType,
+          content: messageContent,
           companyId: activeCompany.id,
           ownerId: effectiveOwnerId,
       };
@@ -149,7 +155,7 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
 
                 {watchedType === 'text' ? (
                      <FormField control={form.control} name="content" render={({ field }) => (<FormItem><FormLabel>Texto da Mensagem</FormLabel><FormControl><Textarea className="min-h-[150px]" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>)} />
-                ) : (
+                ) : isMediaType ? (
                     <div className="space-y-2">
                         <Label>Arquivo de Mídia</Label>
                         <Label htmlFor="file-upload" className="cursor-pointer block">
@@ -166,6 +172,10 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
                         </Label>
                         <Input id="file-upload" type="file" className="hidden" onChange={handleFileChange} />
                     </div>
+                ): (
+                  <div className="text-sm p-4 bg-muted rounded-md text-center text-muted-foreground">
+                    Configuração para este tipo de conteúdo em breve.
+                  </div>
                 )}
               </div>
             </ScrollArea>
@@ -182,3 +192,5 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
     </Sheet>
   );
 }
+
+    

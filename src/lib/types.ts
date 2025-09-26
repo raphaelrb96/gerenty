@@ -1,4 +1,5 @@
 
+
 import type { FieldValue, Timestamp } from "firebase/firestore";
 
 export type User = {
@@ -820,13 +821,25 @@ export type MessageTemplate = {
   updatedAt: Timestamp;
 };
 
+export type LibraryMessageType = 'text' | 'image' | 'video' | 'audio' | 'file' | 'location' | 'interactive';
+
 export type LibraryMessage = {
   id: string;
   ownerId: string;
   companyId: string;
   name: string;
-  type: 'text' | 'image' | 'video' | 'audio' | 'file';
-  content: string; // Text content or URL for media
+  type: LibraryMessageType;
+  content: {
+    text?: TextMessage;
+    media?: MediaMessage;
+    location?: LocationMessage;
+    contact?: ContactMessage;
+    product_message?: ProductMessage;
+    interactive?: InteractiveMessage;
+    template?: TemplateMessage;
+    reaction?: ReactionMessage;
+    system?: SystemMessage;
+  };
   createdAt: Timestamp;
   updatedAt: Timestamp;
 };
@@ -844,3 +857,5 @@ export type AutomationRule = {
   templateId: string; // ID of the message template to send
   isActive: boolean;
 };
+
+    

@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { db, storage } from "@/lib/firebase";
@@ -27,7 +28,7 @@ export async function getLibraryMessagesByCompany(companyId: string): Promise<Li
         querySnapshot.forEach((doc) => {
             messages.push(convertMessageTimestamps({ id: doc.id, ...doc.data() }));
         });
-        return messages.sort((a, b) => new Date(b.createdAt as string).getTime() - new Date(a.createdAt as string).getTime());
+        return messages.sort((a, b) => new Date(b.createdAt as any).getTime() - new Date(a.createdAt as any).getTime());
     } catch (error) {
         console.error("Error getting library messages: ", error);
         throw new Error("Failed to fetch library messages.");
@@ -71,9 +72,9 @@ export async function deleteLibraryMessage(companyId: string, messageId: string)
         if (messageDoc.exists()) {
             const message = messageDoc.data() as LibraryMessage;
             // If it's a media file stored in Firebase Storage, delete it
-            if (message.type !== 'text' && message.content.includes('firebasestorage.googleapis.com')) {
+            if (message.content.media?.url && message.content.media.url.includes('firebasestorage.googleapis.com')) {
                 try {
-                    const fileRef = ref(storage, message.content);
+                    const fileRef = ref(storage, message.content.media.url);
                     await deleteObject(fileRef);
                 } catch (storageError: any) {
                     // Log error but don't block deletion if file doesn't exist
@@ -87,3 +88,5 @@ export async function deleteLibraryMessage(companyId: string, messageId: string)
         throw new Error("Failed to delete library message.");
     }
 }
+
+    

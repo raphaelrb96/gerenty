@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import type { LibraryMessage } from "@/lib/types";
@@ -26,10 +27,13 @@ export function ResponseCard({ message, onEdit, onDelete }: ResponseCardProps) {
     };
 
     const contentPreview = () => {
-        if (message.type === 'text') {
-            return message.content.substring(0, 100) + (message.content.length > 100 ? '...' : '');
+        if (message.type === 'text' && message.content.text) {
+            return message.content.text.body.substring(0, 100) + (message.content.text.body.length > 100 ? '...' : '');
         }
-        return message.content.split('/').pop()?.split('?')[0] || 'Arquivo de mídia';
+        if (message.content.media?.url) {
+            return message.content.media.url.split('/').pop()?.split('?')[0] || 'Arquivo de mídia';
+        }
+        return 'Conteúdo multimídia';
     };
 
     return (
@@ -63,3 +67,5 @@ export function ResponseCard({ message, onEdit, onDelete }: ResponseCardProps) {
         </Card>
     );
 }
+
+    
