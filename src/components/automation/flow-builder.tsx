@@ -6,48 +6,31 @@ import ReactFlow, {
   MiniMap,
   Controls,
   Background,
-  useNodesState,
-  useEdgesState,
   addEdge,
   Connection,
   Edge,
   Node,
+  OnNodesChange,
+  OnEdgesChange,
 } from 'reactflow';
 
 import 'reactflow/dist/style.css';
 
-const initialNodes: Node[] = [
-  { 
-    id: '1', 
-    type: 'input', 
-    data: { label: 'Gatilho: Palavra-Chave', type: 'keywordTrigger' }, 
-    position: { x: 250, y: 5 } 
-  },
-  { 
-    id: '2', 
-    data: { label: 'Enviar Mensagem de Boas-Vindas', type: 'message' }, 
-    position: { x: 250, y: 125 } 
-  },
-];
-
-const initialEdges: Edge[] = [{ id: 'e1-2', source: '1', target: '2', animated: true }];
-
 type FlowBuilderProps = {
-    onNodeClick: (node: Node) => void;
+    nodes: Node[];
+    edges: Edge[];
+    onNodesChange: OnNodesChange;
+    onEdgesChange: OnEdgesChange;
 };
 
-export function FlowBuilder({ onNodeClick }: FlowBuilderProps) {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+export function FlowBuilder({ nodes, edges, onNodesChange, onEdgesChange }: FlowBuilderProps) {
 
   const onConnect = useCallback(
-    (params: Edge | Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges],
+    (params: Edge | Connection) => {
+        // This logic will be handled by the parent component's onEdgesChange
+    },
+    [],
   );
-
-  const handleNodeClick = (_: React.MouseEvent, node: Node) => {
-    onNodeClick(node);
-  };
 
   return (
     <div style={{ width: '100%', height: '100%' }}>
@@ -57,7 +40,6 @@ export function FlowBuilder({ onNodeClick }: FlowBuilderProps) {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
-        onNodeClick={handleNodeClick}
         fitView
       >
         <Controls />

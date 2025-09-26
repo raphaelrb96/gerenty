@@ -875,4 +875,21 @@ export type AutomationRule = {
   isActive: boolean;
 };
 
+export type Flow = {
+    id: string;
+    ownerId: string;
+    companyId: string;
+    name: string;
+    trigger: {
+        type: 'keyword';
+        value: string;
+        matchType: 'exact' | 'contains' | 'regex';
+    };
+    nodes: any[]; // React Flow nodes
+    edges: any[]; // React Flow edges
+    status: 'draft' | 'published';
+    createdAt: Timestamp;
+    updatedAt: Timestamp;
+};
     
+
