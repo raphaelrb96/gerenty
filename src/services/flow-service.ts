@@ -2,10 +2,32 @@
 'use server';
 
 import { db } from "@/lib/firebase";
-import { collection, doc, addDoc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { collection, doc, addDoc, getDoc, updateDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
 import type { Flow } from "@/lib/types";
 
 const flowsCollection = collection(db, "flows");
+
+export async function getFlowsByCompany(companyId: string): Promise<Flow[]> {
+    try {
+        const q = query(flowsCollection, where("companyId", "==", companyId));
+        const querySnapshot = await getDocs(q);
+        const flows: Flow[] = [];
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            flows.push({
+                id: doc.id,
+                ...data,
+                createdAt: data.createdAt?.toDate(),
+                updatedAt: data.updatedAt?.toDate(),
+            } as Flow);
+        });
+        flows.sort((a, b) => new Date(b.updatedAt as any).getTime() - new Date(a.updatedAt as any).getTime());
+        return flows;
+    } catch (error) {
+        console.error("Error getting flows:", error);
+        throw new Error("Failed to fetch flows.");
+    }
+}
 
 export async function createFlow(ownerId: string, companyId: string): Promise<Flow> {
     const initialNodes = [
@@ -86,3 +108,5 @@ export async function updateFlow(flowId: string, flowData: Partial<Omit<Flow, 'i
         throw new Error("Failed to update flow.");
     }
 }
+
+    

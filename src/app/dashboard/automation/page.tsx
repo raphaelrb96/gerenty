@@ -5,10 +5,11 @@ import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/common/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Bot, PlusCircle, LayoutGrid, Building, Library, Workflow } from "lucide-react";
-import type { MessageTemplate, LibraryMessage, AutomationRule } from "@/lib/types";
+import { Bot, PlusCircle, LayoutGrid, Building, Library, Workflow, Pencil } from "lucide-react";
+import type { MessageTemplate, LibraryMessage, AutomationRule, Flow } from "@/lib/types";
 import { getTemplatesByCompany, deleteTemplate } from "@/services/template-service";
 import { getLibraryMessagesByCompany, deleteLibraryMessage } from "@/services/library-message-service";
+import { getFlowsByCompany } from "@/services/flow-service";
 import { useCompany } from "@/context/company-context";
 import { useToast } from "@/hooks/use-toast";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
@@ -65,6 +66,23 @@ function AutomationRulesTab() {
 }
 
 function FlowBuilderTab() {
+    const [flows, setFlows] = useState<Flow[]>([]);
+    const [loading, setLoading] = useState(true);
+    const { activeCompany } = useCompany();
+    const { toast } = useToast();
+
+    useEffect(() => {
+        if (activeCompany) {
+            setLoading(true);
+            getFlowsByCompany(activeCompany.id)
+                .then(setFlows)
+                .catch(() => toast({ variant: "destructive", title: "Erro ao buscar fluxos" }))
+                .finally(() => setLoading(false));
+        }
+    }, [activeCompany, toast]);
+    
+    if (loading) return <LoadingSpinner />;
+
     return (
         <Card>
             <CardHeader>
@@ -72,12 +90,38 @@ function FlowBuilderTab() {
                 <CardDescription>Crie e gerencie fluxos de conversa interativos para o WhatsApp.</CardDescription>
             </CardHeader>
             <CardContent>
-                 <EmptyState
-                    icon={<Workflow className="h-16 w-16" />}
-                    title="Nenhum fluxo de conversa criado"
-                    description="Automatize o atendimento ao cliente criando fluxos de conversa baseados em palavras-chave."
-                    action={<Button asChild><Link href="/dashboard/automation/flows/new"><PlusCircle className="mr-2 h-4 w-4" />Criar Primeiro Fluxo</Link></Button>}
-                />
+                 {flows.length === 0 ? (
+                    <EmptyState
+                        icon={<Workflow className="h-16 w-16" />}
+                        title="Nenhum fluxo de conversa criado"
+                        description="Automatize o atendimento ao cliente criando fluxos de conversa baseados em palavras-chave."
+                        action={<Button asChild><Link href="/dashboard/automation/flows/new"><PlusCircle className="mr-2 h-4 w-4" />Criar Primeiro Fluxo</Link></Button>}
+                    />
+                 ) : (
+                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {flows.map(flow => (
+                            <Card key={flow.id} className="flex flex-col">
+                                <CardHeader>
+                                    <CardTitle className="text-lg">{flow.name}</CardTitle>
+                                    <CardDescription>Status: {flow.status}</CardDescription>
+                                </CardHeader>
+                                <CardContent className="flex-1">
+                                    <p className="text-sm text-muted-foreground">
+                                        Última atualização: {flow.updatedAt ? new Date(flow.updatedAt as any).toLocaleDateString() : 'N/A'}
+                                    </p>
+                                </CardContent>
+                                <CardFooter>
+                                    <Button asChild className="w-full" variant="outline">
+                                        <Link href={`/dashboard/automation/flows/edit/${flow.id}`}>
+                                            <Pencil className="mr-2 h-4 w-4" />
+                                            Editar Fluxo
+                                        </Link>
+                                    </Button>
+                                </CardFooter>
+                            </Card>
+                        ))}
+                     </div>
+                 )}
             </CardContent>
             <CardFooter>
                 <Button asChild>
@@ -371,3 +415,5 @@ export default function AutomationPage() {
     </div>
   );
 }
+
+    
