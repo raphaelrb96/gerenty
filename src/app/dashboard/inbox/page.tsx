@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Paperclip, Send, UserCircle, ShoppingCart } from "lucide-react";
+import { Search, Paperclip, Send, UserCircle, ShoppingCart, MessageSquare } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 export default function InboxPage() {
