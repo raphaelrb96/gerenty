@@ -51,6 +51,23 @@ type NodeConfigPanelProps = {
     onCreateAndConnect: (type: keyof typeof nodeTypeConfig, sourceHandle?: string) => Node | undefined;
 }
 
+function CustomLabelInput({ node, onNodeDataChange }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'] }) {
+    if (!node || node.data.isMainTrigger) {
+        return null;
+    }
+    return (
+        <div className="space-y-2 mb-4">
+            <Label htmlFor="custom-label">Rótulo Personalizado</Label>
+            <Input
+                id="custom-label"
+                placeholder="Dê um nome a esta tarefa"
+                value={node.data.customLabel || ''}
+                onChange={(e) => onNodeDataChange(node.id, { customLabel: e.target.value })}
+            />
+        </div>
+    )
+}
+
 function TriggerPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'] }) {
     
     const triggerType = node.data.triggerType || 'keyword';
@@ -583,34 +600,51 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, onClos
         }
 
         const nodeType = selectedNode.data.type;
+
+        let panelComponent;
         switch(nodeType) {
             case 'keywordTrigger':
-                return <TriggerPanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
+                panelComponent = <TriggerPanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
+                break;
             case 'message':
-                 return <MessagePanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
+                 panelComponent = <MessagePanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
+                 break;
             case 'captureData':
-                return <CaptureDataPanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
+                panelComponent = <CaptureDataPanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
+                break;
             case 'internalAction':
-                return <InternalActionPanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
+                panelComponent = <InternalActionPanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
+                break;
             case 'conditional':
-                return <ConditionalPanel node={selectedNode} onNodeDataChange={onNodeDataChange} allNodes={allNodes} allEdges={allEdges} onConnect={onConnect} onCreateAndConnect={onCreateAndConnect}/>;
+                panelComponent = <ConditionalPanel node={selectedNode} onNodeDataChange={onNodeDataChange} allNodes={allNodes} allEdges={allEdges} onConnect={onConnect} onCreateAndConnect={onCreateAndConnect}/>;
+                break;
             case 'transfer':
-                return <TransferPanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
+                panelComponent = <TransferPanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
+                break;
             case 'delay':
-                return (
+                panelComponent = (
                     <div className="space-y-2">
                         <Label htmlFor="delay-seconds">Aguardar (em segundos)</Label>
                         <Input id="delay-seconds" type="number" value={selectedNode.data.delaySeconds || ''} onChange={(e) => onNodeDataChange(selectedNode.id, { delaySeconds: Number(e.target.value) })} />
                     </div>
-                )
+                );
+                break;
             default:
-                 return (
+                 panelComponent = (
                     <div className="flex flex-col items-center justify-center text-center text-muted-foreground p-4 h-full">
                         <HelpCircle className="h-8 w-8 mb-2" />
                         <p>Nenhuma configuração disponível para este tipo de tarefa ainda.</p>
                     </div>
-                )
+                );
+                break;
         }
+
+        return (
+            <div>
+                <CustomLabelInput node={selectedNode} onNodeDataChange={onNodeDataChange} />
+                {panelComponent}
+            </div>
+        );
     }
 
     return (
