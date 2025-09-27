@@ -102,15 +102,13 @@ export function CustomNode({ data, selected }: NodeProps<{
       )}
       
       <Card className={cn(
-        "border-2 hover:shadow-lg transition-shadow",
-        isMainTrigger ? 'w-[320px]' : 'w-[280px]', // Increased size for main trigger
-        selected ? 'ring-2 ring-primary ring-offset-2 border-primary' : 'border-transparent',
+        "border-t-4 bg-card/80 backdrop-blur-sm transition-all duration-200 hover:shadow-xl",
+        isMainTrigger ? 'w-[320px]' : 'w-[280px]',
+        selected ? 'ring-2 ring-primary ring-offset-2' : '',
+        data.color
       )}>
-        <CardHeader className={cn(
-            "flex flex-row items-center gap-3 p-3 text-primary-foreground rounded-t-md",
-            data.color, // This is now the background color class
-        )}>
-           <div className="p-1 rounded-md bg-white/20">
+        <CardHeader className="flex flex-row items-center gap-3 p-3 text-card-foreground rounded-t-md">
+           <div className="p-1 rounded-md">
             {data.icon}
           </div>
           <CardTitle className="text-sm font-semibold">{data.label}</CardTitle>
@@ -134,7 +132,7 @@ export function CustomNode({ data, selected }: NodeProps<{
             </CardContent>
         )}
         
-        <CardFooter className="p-2 border-t bg-muted/50 flex justify-end gap-1">
+        <CardFooter className="p-2 border-t bg-muted/30 flex justify-end gap-1">
              <Button 
                 variant="ghost" 
                 size="icon" 
