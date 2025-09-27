@@ -102,7 +102,8 @@ export function CustomNode({ data, selected }: NodeProps<{
       )}
       
       <Card className={cn(
-        "border-2 hover:shadow-lg transition-shadow w-[250px]",
+        "border-2 hover:shadow-lg transition-shadow",
+        isMainTrigger ? 'w-[320px]' : 'w-[280px]', // Increased size for main trigger
         selected ? 'ring-2 ring-primary ring-offset-2 border-primary' : 'border-transparent',
       )}>
         <CardHeader className={cn(
