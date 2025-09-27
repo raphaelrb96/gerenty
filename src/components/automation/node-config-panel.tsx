@@ -40,6 +40,10 @@ function TriggerPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange
     const handleMediaTypeChange = (value: string) => {
         onNodeDataChange(node.id, { triggerMediaType: value });
     }
+
+    const handleInteractionIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        onNodeDataChange(node.id, { triggerInteractionId: e.target.value });
+    }
     
     return (
         <div className="space-y-4">
@@ -57,6 +61,7 @@ function TriggerPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange
                     <SelectContent>
                         <SelectItem value="keyword">Palavra-Chave</SelectItem>
                         <SelectItem value="media">Tipo de Mensagem</SelectItem>
+                        <SelectItem value="interaction">Interação (Clique)</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
@@ -113,6 +118,23 @@ function TriggerPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange
                                 <SelectItem value="document">Documento</SelectItem>
                             </SelectContent>
                         </Select>
+                    </div>
+                </div>
+            )}
+
+            {triggerType === 'interaction' && (
+                <div className="space-y-4 pt-4 border-t">
+                    <div className="space-y-2">
+                        <Label htmlFor="interaction-id-input">ID da Interação</Label>
+                        <Input 
+                            id="interaction-id-input" 
+                            placeholder="Ex: btn_comprar_agora" 
+                            value={node.data.triggerInteractionId || ""}
+                            onChange={handleInteractionIdChange}
+                        />
+                         <p className="text-xs text-muted-foreground">
+                            Insira o ID único do botão ou item de lista que acionará este fluxo.
+                        </p>
                     </div>
                 </div>
             )}
