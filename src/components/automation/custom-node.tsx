@@ -14,9 +14,8 @@ export function CustomNode({ data, selected }: NodeProps<{
   label: string, 
   icon: React.ReactNode, 
   color: string, 
-  triggerKeywords?: string[],
+  triggerKeywords?: { value: string; matchType: string }[],
   triggerType?: string,
-  triggerMatchType?: string,
   messageId?: string,
   isDeletable?: boolean,
   isMainTrigger?: boolean,
@@ -35,11 +34,6 @@ export function CustomNode({ data, selected }: NodeProps<{
   }
 
   const contentPreview = () => {
-    if (data.type === 'keywordTrigger') {
-      return data.triggerKeywords && data.triggerKeywords.length > 0
-        ? `"${data.triggerKeywords[0]}"...` 
-        : <span className="italic">Nenhuma palavra-chave</span>;
-    }
     if (data.type === 'message') {
       return data.messageId ? `ID: ...${data.messageId.slice(-4)}` : <span className="italic">Nenhuma mensagem</span>;
     }
@@ -66,17 +60,18 @@ export function CustomNode({ data, selected }: NodeProps<{
             <CardTitle className="text-sm font-semibold">{data.label}</CardTitle>
           </CardHeader>
           <CardContent className="px-3 pb-3 pt-0 text-xs text-muted-foreground space-y-2">
-              <div className="flex flex-wrap gap-1">
+              <div className="space-y-1">
                   <span className="font-medium mr-2">Gatilhos:</span>
                   {(data.triggerKeywords && data.triggerKeywords.length > 0) ? (
-                    data.triggerKeywords.map(kw => <Badge key={kw} variant="secondary">{kw}</Badge>)
+                    data.triggerKeywords.map((kw, index) => 
+                        <div key={index} className="flex justify-between items-center text-xs">
+                            <Badge variant="secondary">{kw.value}</Badge>
+                            <Badge variant="outline">{getMatchTypeLabel(kw.matchType)}</Badge>
+                        </div>
+                    )
                   ) : (
-                    <Badge variant="outline">Nenhum</Badge>
+                    <Badge variant="outline" className="w-full justify-center">Nenhum gatilho definido</Badge>
                   )}
-              </div>
-              <div className="flex justify-between items-center">
-                  <span className="font-medium">Correspondência:</span>
-                  <Badge variant="outline">{getMatchTypeLabel(data.triggerMatchType)}</Badge>
               </div>
           </CardContent>
           <CardFooter className="p-2 border-t bg-muted/50 flex justify-end gap-1">

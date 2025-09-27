@@ -42,7 +42,7 @@ type NodeConfigPanelProps = {
 function TriggerPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'] }) {
     
     const triggerType = node.data.triggerType || 'keyword';
-    const [keywords, setKeywords] = useState<string[]>(node.data.triggerKeywords || []);
+    const [keywords, setKeywords] = useState<{ value: string; matchType: string }[]>(node.data.triggerKeywords || []);
     const [newKeyword, setNewKeyword] = useState("");
     const [editingKeyword, setEditingKeyword] = useState<{ index: number; value: string } | null>(null);
 
@@ -52,8 +52,8 @@ function TriggerPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange
 
 
     const handleAddKeyword = () => {
-        if (newKeyword && !keywords.includes(newKeyword)) {
-            const updatedKeywords = [...keywords, newKeyword];
+        if (newKeyword && !keywords.some(kw => kw.value === newKeyword)) {
+            const updatedKeywords = [...keywords, { value: newKeyword, matchType: 'exact' }];
             setKeywords(updatedKeywords);
             onNodeDataChange(node.id, { triggerKeywords: updatedKeywords });
             setNewKeyword("");
@@ -76,20 +76,23 @@ function TriggerPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange
     const handleUpdateKeyword = () => {
         if (editingKeyword) {
             const updatedKeywords = [...keywords];
-            updatedKeywords[editingKeyword.index] = editingKeyword.value;
+            updatedKeywords[editingKeyword.index].value = editingKeyword.value;
             setKeywords(updatedKeywords);
             onNodeDataChange(node.id, { triggerKeywords: updatedKeywords });
             setEditingKeyword(null);
         }
     };
+    
+    const handleKeywordMatchTypeChange = (index: number, newMatchType: string) => {
+        const updatedKeywords = [...keywords];
+        updatedKeywords[index].matchType = newMatchType;
+        setKeywords(updatedKeywords);
+        onNodeDataChange(node.id, { triggerKeywords: updatedKeywords });
+    };
 
 
     const handleTriggerTypeChange = (value: string) => {
         onNodeDataChange(node.id, { triggerType: value });
-    };
-
-    const handleMatchTypeChange = (value: string) => {
-        onNodeDataChange(node.id, { triggerMatchType: value });
     };
 
     const handleMediaTypeChange = (value: string) => {
@@ -135,39 +138,33 @@ function TriggerPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange
                             />
                             <Button type="button" onClick={handleAddKeyword}><PlusCircle className="h-4 w-4" /></Button>
                         </div>
-                        <div className="flex flex-wrap gap-2 mt-2">
+                        <div className="space-y-2 mt-2">
                             {keywords.map((kw, index) => (
-                                <Badge key={index} variant="secondary" className="text-base py-1 pl-3 pr-1">
-                                    {kw}
+                                <div key={index} className="flex items-center gap-2 p-2 border rounded-md bg-muted/50">
+                                    <span className="font-mono text-sm flex-1">{kw.value}</span>
+                                    <Select value={kw.matchType} onValueChange={(value) => handleKeywordMatchTypeChange(index, value)}>
+                                        <SelectTrigger className="w-[120px] h-8 text-xs">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="exact">Exata</SelectItem>
+                                            <SelectItem value="contains">Contém</SelectItem>
+                                            <SelectItem value="starts_with">Começa com</SelectItem>
+                                            <SelectItem value="regex">Regex</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-5 w-5 ml-1"><MoreHorizontal className="h-4 w-4" /></Button>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent>
-                                            <DropdownMenuItem onSelect={() => setEditingKeyword({ index, value: kw })}><Pencil className="mr-2 h-4 w-4"/>Editar</DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => setEditingKeyword({ index, value: kw.value })}><Pencil className="mr-2 h-4 w-4"/>Editar</DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => handleDeleteKeyword(index)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4"/>Excluir</DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
-                                </Badge>
+                                </div>
                             ))}
                         </div>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="match-type-select">Tipo de Correspondência</Label>
-                        <Select 
-                            defaultValue={node.data.triggerMatchType || "exact"}
-                            onValueChange={handleMatchTypeChange}
-                        >
-                            <SelectTrigger id="match-type-select">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="exact">Correspondência Exata</SelectItem>
-                                <SelectItem value="contains">Contém</SelectItem>
-                                <SelectItem value="starts_with">Começa com</SelectItem>
-                                <SelectItem value="regex">Regex (Avançado)</SelectItem>
-                            </SelectContent>
-                        </Select>
                     </div>
                      <AlertDialog open={!!editingKeyword} onOpenChange={() => setEditingKeyword(null)}>
                         <AlertDialogContent>
