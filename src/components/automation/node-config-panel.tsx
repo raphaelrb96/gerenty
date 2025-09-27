@@ -510,7 +510,11 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
                                                 <SelectItem value="message">Enviar Mensagem</SelectItem>
                                                 <SelectItem value="captureData">Capturar Dados</SelectItem>
                                                 <SelectItem value="internalAction">Ação Interna</SelectItem>
-                                                {/* Add other node types here */}
+                                                <SelectItem value="conditional">Dividir Fluxo</SelectItem>
+                                                <SelectItem value="externalApi">API Externa</SelectItem>
+                                                <SelectItem value="delay">Aguardar</SelectItem>
+                                                <SelectItem value="transfer">Transferir Atendente</SelectItem>
+                                                <SelectItem value="endFlow">Finalizar Fluxo</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     )}
@@ -621,5 +625,7 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, hasUns
         </SheetContent>
     );
 }
+
+    
 
     
