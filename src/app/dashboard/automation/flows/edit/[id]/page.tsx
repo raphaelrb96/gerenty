@@ -13,7 +13,7 @@ import type { Node, Edge, OnNodesChange, OnEdgesChange, Connection } from "react
 import { applyNodeChanges, applyEdgeChanges, addEdge } from 'reactflow';
 import { NodeConfigPanel } from "@/components/automation/node-config-panel";
 import { NodesPalette } from "@/components/automation/nodes-palette";
-import { Bot, MessageCircle, Settings, Plus, Pencil, Trash2, Save, MoreVertical, Clock, Calendar, Repeat } from "lucide-react";
+import { Bot, MessageCircle, Settings, Plus, Pencil, Trash2, Save, MoreVertical, Clock, Calendar, Repeat, MessageSquareX, Forward, Send } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -86,7 +86,7 @@ export default function EditConversationFlowPage() {
         name: "",
         status: 'draft' as Flow['status'],
         sessionTimeout: 30,
-        timeoutAction: 'restart' as Flow['sessionConfig']['timeoutAction'],
+        timeoutAction: 'end_flow' as Flow['sessionConfig']['timeoutAction'],
         timezone: 'America/Sao_Paulo',
         activationTime: '00:00',
         deactivationTime: '23:59',
@@ -134,7 +134,7 @@ export default function EditConversationFlowPage() {
                         name: fetchedFlow.name,
                         status: fetchedFlow.status,
                         sessionTimeout: fetchedFlow.sessionConfig?.timeoutMinutes || 30,
-                        timeoutAction: fetchedFlow.sessionConfig?.timeoutAction || 'restart',
+                        timeoutAction: fetchedFlow.sessionConfig?.timeoutAction || 'end_flow',
                         timezone: fetchedFlow.schedule?.timezone || 'America/Sao_Paulo',
                         activationTime: fetchedFlow.schedule?.activationTime || '00:00',
                         deactivationTime: fetchedFlow.schedule?.deactivationTime || '23:59',
@@ -351,8 +351,10 @@ export default function EditConversationFlowPage() {
                                     <Select value={flowSettings.timeoutAction} onValueChange={(value) => setFlowSettings(prev => ({...prev, timeoutAction: value as any}))}>
                                         <SelectTrigger id="timeout-action"><SelectValue /></SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="restart"><Repeat className="mr-2 h-4 w-4"/>Reiniciar Fluxo</SelectItem>
+                                            <SelectItem value="end_flow"><MessageSquareX className="mr-2 h-4 w-4"/>Encerrar Fluxo</SelectItem>
+                                            <SelectItem value="send_message"><Send className="mr-2 h-4 w-4"/>Enviar Mensagem Automática</SelectItem>
                                             <SelectItem value="transfer"><Bot className="mr-2 h-4 w-4"/>Transferir para Atendente</SelectItem>
+                                            <SelectItem value="forward_flow"><Forward className="mr-2 h-4 w-4"/>Encaminhar para Outro Fluxo</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <p className="text-xs text-muted-foreground pt-1">

@@ -890,7 +890,7 @@ export type Flow = {
     status: 'draft' | 'published';
     sessionConfig: {
         timeoutMinutes: number;
-        timeoutAction: 'restart' | 'transfer';
+        timeoutAction: 'end_flow' | 'send_message' | 'transfer' | 'forward_flow';
     };
     schedule: {
         timezone: string;
