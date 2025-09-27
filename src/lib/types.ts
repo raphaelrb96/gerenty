@@ -888,8 +888,17 @@ export type Flow = {
     nodes: any[]; // React Flow nodes
     edges: any[]; // React Flow edges
     status: 'draft' | 'published';
+    sessionConfig: {
+        timeoutMinutes: number;
+        timeoutAction: 'restart' | 'transfer';
+    };
+    schedule: {
+        timezone: string;
+        activationTime: string; // HH:mm format
+        deactivationTime: string; // HH:mm format
+        activeDays: ('sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat')[];
+    };
     createdAt: Timestamp;
     updatedAt: Timestamp;
 };
     
-

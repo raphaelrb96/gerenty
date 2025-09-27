@@ -13,7 +13,7 @@ import type { Node, Edge, OnNodesChange, OnEdgesChange, Connection } from "react
 import { applyNodeChanges, applyEdgeChanges, addEdge } from 'reactflow';
 import { NodeConfigPanel } from "@/components/automation/node-config-panel";
 import { NodesPalette } from "@/components/automation/nodes-palette";
-import { Bot, MessageCircle, Settings, Plus, Pencil, Trash2, Save, MoreVertical } from "lucide-react";
+import { Bot, MessageCircle, Settings, Plus, Pencil, Trash2, Save, MoreVertical, Clock, Calendar, Repeat } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -35,6 +35,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 
 const nodeTypeConfig = {
@@ -80,8 +82,16 @@ export default function EditConversationFlowPage() {
     const [isConfigOpen, setIsConfigOpen] = useState(false);
     const [isFlowSettingsOpen, setIsFlowSettingsOpen] = useState(false);
     
-    const [flowName, setFlowName] = useState("");
-    const [flowStatus, setFlowStatus] = useState<Flow['status']>('draft');
+    const [flowSettings, setFlowSettings] = useState({
+        name: "",
+        status: 'draft' as Flow['status'],
+        sessionTimeout: 30,
+        timeoutAction: 'restart' as Flow['sessionConfig']['timeoutAction'],
+        timezone: 'America/Sao_Paulo',
+        activationTime: '00:00',
+        deactivationTime: '23:59',
+        activeDays: ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as Flow['schedule']['activeDays'],
+    });
     
     const [nodeToDelete, setNodeToDelete] = useState<Node | null>(null);
     
@@ -120,8 +130,16 @@ export default function EditConversationFlowPage() {
                     setFlow(fetchedFlow);
                     setNodes((fetchedFlow.nodes || []).map(n => enrichNodeData(n, handleConfigureNode, handleDeleteNode)));
                     setEdges(fetchedFlow.edges || []);
-                    setFlowName(fetchedFlow.name);
-                    setFlowStatus(fetchedFlow.status);
+                    setFlowSettings({
+                        name: fetchedFlow.name,
+                        status: fetchedFlow.status,
+                        sessionTimeout: fetchedFlow.sessionConfig?.timeoutMinutes || 30,
+                        timeoutAction: fetchedFlow.sessionConfig?.timeoutAction || 'restart',
+                        timezone: fetchedFlow.schedule?.timezone || 'America/Sao_Paulo',
+                        activationTime: fetchedFlow.schedule?.activationTime || '00:00',
+                        deactivationTime: fetchedFlow.schedule?.deactivationTime || '23:59',
+                        activeDays: fetchedFlow.schedule?.activeDays || ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'],
+                    });
                 } else {
                     toast({ variant: 'destructive', title: "Fluxo não encontrado" });
                     router.push('/dashboard/automation');
@@ -138,9 +156,24 @@ export default function EditConversationFlowPage() {
     
     const handleFlowSettingsSave = async () => {
         if (!flow) return;
+        const dataToUpdate: Partial<Flow> = {
+            name: flowSettings.name,
+            status: flowSettings.status,
+            sessionConfig: {
+                timeoutMinutes: flowSettings.sessionTimeout,
+                timeoutAction: flowSettings.timeoutAction,
+            },
+            schedule: {
+                timezone: flowSettings.timezone,
+                activationTime: flowSettings.activationTime,
+                deactivationTime: flowSettings.deactivationTime,
+                activeDays: flowSettings.activeDays,
+            },
+        };
+
         try {
-            await updateFlow(flow.id, { name: flowName, status: flowStatus });
-            setFlow(prev => prev ? { ...prev, name: flowName, status: flowStatus } : null);
+            await updateFlow(flow.id, dataToUpdate);
+            setFlow(prev => prev ? { ...prev, ...dataToUpdate } as Flow : null);
             toast({ title: "Configurações do fluxo salvas com sucesso!" });
             setIsFlowSettingsOpen(false);
         } catch (error) {
@@ -275,34 +308,97 @@ export default function EditConversationFlowPage() {
             </Dialog>
             
             <Dialog open={isFlowSettingsOpen} onOpenChange={setIsFlowSettingsOpen}>
-                <DialogContent>
+                <DialogContent className="sm:max-w-2xl">
                     <DialogHeader>
-                        <DialogTitle>Configurações do Fluxo</DialogTitle>
+                        <DialogTitle>Configurações Avançadas do Fluxo</DialogTitle>
                         <DialogDescription>
-                            Altere o nome e o status do seu fluxo de conversa.
+                            Ajuste detalhes de funcionamento, agendamento e comportamento do seu fluxo de conversa.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="py-4 space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="flow-name">Nome do Fluxo</Label>
-                            <Input id="flow-name" value={flowName} onChange={(e) => setFlowName(e.target.value)} />
+                    <div className="py-4 space-y-6">
+                        <div className="space-y-4 p-4 border rounded-lg">
+                             <h4 className="font-semibold">Geral</h4>
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="flow-name">Nome do Fluxo</Label>
+                                    <Input id="flow-name" value={flowSettings.name} onChange={(e) => setFlowSettings(prev => ({...prev, name: e.target.value}))} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="flow-status">Status</Label>
+                                    <Select value={flowSettings.status} onValueChange={(value) => setFlowSettings(prev => ({...prev, status: value as Flow['status']}))}>
+                                        <SelectTrigger id="flow-status">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="draft">Rascunho</SelectItem>
+                                            <SelectItem value="published">Publicado</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                             </div>
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="flow-status">Status</Label>
-                            <Select value={flowStatus} onValueChange={(value) => setFlowStatus(value as Flow['status'])}>
-                                <SelectTrigger id="flow-status">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="draft">Rascunho</SelectItem>
-                                    <SelectItem value="published">Publicado</SelectItem>
-                                </SelectContent>
-                            </Select>
+
+                        <div className="space-y-4 p-4 border rounded-lg">
+                            <h4 className="font-semibold flex items-center gap-2"><Clock className="h-4 w-4"/> Configurações de Sessão</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="session-timeout">Timeout de Inatividade (minutos)</Label>
+                                    <Input id="session-timeout" type="number" value={flowSettings.sessionTimeout} onChange={(e) => setFlowSettings(prev => ({...prev, sessionTimeout: Number(e.target.value)}))} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="timeout-action">Ação Pós-Timeout</Label>
+                                    <Select value={flowSettings.timeoutAction} onValueChange={(value) => setFlowSettings(prev => ({...prev, timeoutAction: value as any}))}>
+                                        <SelectTrigger id="timeout-action"><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="restart"><Repeat className="mr-2 h-4 w-4"/>Reiniciar Fluxo</SelectItem>
+                                            <SelectItem value="transfer"><Bot className="mr-2 h-4 w-4"/>Transferir para Atendente</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
                         </div>
+
+                        <div className="space-y-4 p-4 border rounded-lg">
+                            <h4 className="font-semibold flex items-center gap-2"><Calendar className="h-4 w-4"/> Horário de Ativação</h4>
+                             <div className="space-y-2">
+                                <Label htmlFor="flow-timezone">Fuso Horário</Label>
+                                <Select value={flowSettings.timezone} onValueChange={(value) => setFlowSettings(prev => ({...prev, timezone: value}))}>
+                                    <SelectTrigger id="flow-timezone"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="America/Sao_Paulo">Brasil (São Paulo)</SelectItem>
+                                        <SelectItem value="America/New_York">EUA (Nova York)</SelectItem>
+                                        <SelectItem value="Europe/Lisbon">Portugal (Lisboa)</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="activation-time">Ativar às</Label>
+                                    <Input id="activation-time" type="time" value={flowSettings.activationTime} onChange={(e) => setFlowSettings(prev => ({...prev, activationTime: e.target.value}))}/>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="deactivation-time">Desativar às</Label>
+                                    <Input id="deactivation-time" type="time" value={flowSettings.deactivationTime} onChange={(e) => setFlowSettings(prev => ({...prev, deactivationTime: e.target.value}))}/>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Dias Ativos</Label>
+                                <ToggleGroup type="multiple" value={flowSettings.activeDays} onValueChange={(value) => setFlowSettings(prev => ({...prev, activeDays: value as any[]}))} className="flex-wrap justify-start">
+                                    <ToggleGroupItem value="sun">Dom</ToggleGroupItem>
+                                    <ToggleGroupItem value="mon">Seg</ToggleGroupItem>
+                                    <ToggleGroupItem value="tue">Ter</ToggleGroupItem>
+                                    <ToggleGroupItem value="wed">Qua</ToggleGroupItem>
+                                    <ToggleGroupItem value="thu">Qui</ToggleGroupItem>
+                                    <ToggleGroupItem value="fri">Sex</ToggleGroupItem>
+                                    <ToggleGroupItem value="sat">Sáb</ToggleGroupItem>
+                                </ToggleGroup>
+                            </div>
+                        </div>
+
                     </div>
                      <DialogFooter>
                         <Button variant="outline" onClick={() => setIsFlowSettingsOpen(false)}>Cancelar</Button>
-                        <Button onClick={handleFlowSettingsSave}>Salvar</Button>
+                        <Button onClick={handleFlowSettingsSave}>Salvar Configurações</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
