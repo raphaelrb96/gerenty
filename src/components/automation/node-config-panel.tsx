@@ -397,6 +397,7 @@ function InternalActionPanel({ node, onNodeDataChange }: { node: Node, onNodeDat
 
 function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnect, onCreateAndConnect }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'], allNodes: Node[], allEdges: Edge[], onConnect: NodeConfigPanelProps['onConnect'], onCreateAndConnect: NodeConfigPanelProps['onCreateAndConnect'] }) {
     const conditions = node.data.conditions || [];
+    const [nodeToCreateForHandle, setNodeToCreateForHandle] = useState<string | null>(null);
 
     const handleAddCondition = () => {
         const newConditions = [...conditions, { id: `handle_${Date.now()}`, variable: '', operator: '==', value: '', label: '' }];
@@ -415,7 +416,12 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
     };
 
     const handleTargetNodeChange = (sourceHandle: string, target: string) => {
-        onConnect(node.id, sourceHandle, target);
+        if (target === 'create_new_node') {
+            setNodeToCreateForHandle(sourceHandle);
+        } else {
+            setNodeToCreateForHandle(null);
+            onConnect(node.id, sourceHandle, target);
+        }
     }
     
     const availableNodes = allNodes.filter(n => {
@@ -424,8 +430,11 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
         return !hasConnection;
     });
 
-    const handleCreateNewNode = (handleId: string, nodeType: keyof typeof nodeTypeConfig) => {
-        onCreateAndConnect(nodeType, handleId);
+    const handleCreateNewNode = (type: keyof typeof nodeTypeConfig) => {
+        if (nodeToCreateForHandle) {
+            onCreateAndConnect(type, nodeToCreateForHandle);
+            setNodeToCreateForHandle(null); // Reset after creation
+        }
     }
 
 
@@ -457,19 +466,27 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
                      <div className="space-y-2">
                         <Label>ENTÃO</Label>
                          <Select onValueChange={(value) => handleTargetNodeChange(cond.id, value)}>
-                            <SelectTrigger><SelectValue placeholder="Conectar a um nó existente..." /></SelectTrigger>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Conectar a um nó..." />
+                            </SelectTrigger>
                             <SelectContent>
                                 {availableNodes.map(n => <SelectItem key={n.id} value={n.id}>{n.data.label}</SelectItem>)}
+                                <SelectItem value="create_new_node">
+                                    <span className="font-semibold text-primary">Criar nova tarefa...</span>
+                                </SelectItem>
                             </SelectContent>
                         </Select>
-                        <Select onValueChange={(type) => handleCreateNewNode(cond.id, type as any)}>
-                            <SelectTrigger><SelectValue placeholder="Criar e conectar nova tarefa..." /></SelectTrigger>
-                            <SelectContent>
-                                {Object.entries(nodeTypeConfig).filter(([key]) => key !== 'keywordTrigger').map(([key, config]) => (
-                                    <SelectItem key={key} value={key}><div className="flex items-center gap-2">{config.icon} {config.defaultData.label}</div></SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+
+                        {nodeToCreateForHandle === cond.id && (
+                             <Select onValueChange={(type) => handleCreateNewNode(type as any)}>
+                                <SelectTrigger><SelectValue placeholder="Selecione o tipo de tarefa..." /></SelectTrigger>
+                                <SelectContent>
+                                    {Object.entries(nodeTypeConfig).filter(([key]) => key !== 'keywordTrigger').map(([key, config]) => (
+                                        <SelectItem key={key} value={key}><div className="flex items-center gap-2">{config.icon} {config.defaultData.label}</div></SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        )}
                      </div>
                       <div className="space-y-2">
                          <Label>Rótulo da Conexão</Label>
@@ -575,5 +592,7 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, hasUns
         </SheetContent>
     );
 }
+
+    
 
     
