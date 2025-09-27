@@ -280,7 +280,7 @@ export default function EditConversationFlowPage() {
     };
 
      const addNode = (type: keyof typeof nodeTypeConfig, sourceHandle?: string) => {
-        if (quickAddSourceNode) {
+         if (quickAddSourceNode) {
             const sourceNodeIsConditional = quickAddSourceNode.data.type === 'conditional';
             // Only check for existing connections if the source is not a conditional node
             if (!sourceNodeIsConditional) {
@@ -361,34 +361,25 @@ export default function EditConversationFlowPage() {
                 return eds;
             }
 
-            // Rule 2: Source handle can only have one connection, unless it's a conditional node.
             const sourceNode = nodes.find((node) => node.id === params.source);
             const isConditional = sourceNode?.data.type === 'conditional';
+            
+            // Rule 2: Source handle can only have one connection, unless it's a conditional node.
+            const sourceHandleHasConnection = eds.some(
+                (edge) => edge.source === params.source && edge.sourceHandle === params.sourceHandle
+            );
 
-            if (!isConditional) {
-                // For non-conditional nodes, there's only one output handle (null or a specific string).
-                const sourceHasConnection = eds.some(
-                    (edge) => edge.source === params.source && edge.sourceHandle === params.sourceHandle
-                );
-                if (sourceHasConnection) {
+            if (sourceHandleHasConnection) {
+                if (isConditional) {
+                    toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Este ponto de condição já possui uma conexão de saída.' });
+                } else {
                     toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Esta tarefa já possui uma conexão de saída. Use o nó "Dividir Fluxo" para criar ramificações.' });
-                    return eds;
                 }
-            } else {
-                // For conditional nodes, each source handle (each condition) can only have one connection.
-                const sourceHandleHasConnection = eds.some(
-                     (edge) => edge.source === params.source && edge.sourceHandle === params.sourceHandle
-                );
-                 if (sourceHandleHasConnection) {
-                     toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Este ponto de condição já possui uma conexão de saída.' });
-                     return eds;
-                 }
+                return eds;
             }
             
-            // If the connection is valid, add the new edge.
             setHasUnsavedChanges(true);
             
-            // If a new connection is made from a conditional node, create a new condition for it
             if (isConditional && params.source && params.sourceHandle) {
                  setNodes(nds => {
                      const sourceNodeToUpdate = nds.find(n => n.id === params.source);
