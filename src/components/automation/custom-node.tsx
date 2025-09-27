@@ -98,7 +98,7 @@ export function CustomNode({ data, selected }: NodeProps<{
         </>
       )}
       
-      {!isMainTrigger && data.type !== 'conditional' && (
+      {data.type !== 'conditional' && (
           <Handle type="source" position={Position.Bottom} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10 }} />
       )}
       
@@ -131,7 +131,7 @@ export function CustomNode({ data, selected }: NodeProps<{
             <CardContent className="px-4 pb-4 pt-2 text-center text-muted-foreground min-h-[80px] flex flex-col items-center justify-center">
                 <Zap className="h-6 w-6 mb-2 text-yellow-500"/>
                 <p className="text-sm font-semibold text-foreground">Gatilhos do Fluxo</p>
-                <p className="text-xs">Configure as palavras-chave que iniciam esta conversa clicando no ícone de configurações.</p>
+                <p className="text-xs text-muted-foreground">Configure as palavras-chave que iniciam esta conversa clicando no ícone de configurações.</p>
             </CardContent>
         ) : !isMainTrigger && data.type !== 'conditional' ? (
              <CardContent className="px-3 pb-3 pt-2 text-xs text-muted-foreground min-h-[40px]">
@@ -148,7 +148,7 @@ export function CustomNode({ data, selected }: NodeProps<{
                  <div className="text-xs p-2 bg-muted rounded-md flex justify-between items-center relative">
                     <div>
                       <span className="font-semibold">Fluxo Padrão</span>
-                      <p className="text-muted-foreground text-[10px]">(Se nenhuma condição for válida)</p>
+                      <p className="text-xs text-muted-foreground">(Se nenhuma condição for válida)</p>
                     </div>
                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => data.onQuickAdd('else')}><PlusCircle className="h-4 w-4" /></Button>
                 </div>
@@ -165,7 +165,7 @@ export function CustomNode({ data, selected }: NodeProps<{
                 <Settings className="h-4 w-4"/>
                 <span className="sr-only">Configurar Tarefa</span>
             </Button>
-            {data.type !== 'conditional' && !isMainTrigger && (
+            {data.type !== 'conditional' && (
              <Button 
                 variant="ghost" 
                 size="icon" 
