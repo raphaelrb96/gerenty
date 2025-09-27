@@ -66,6 +66,7 @@ const enrichNodeData = (node: Node, onConfigure: (node: Node) => void, onDelete:
             onConfigure: () => onConfigure(node),
             onDelete: () => onDelete(node),
             isDeletable: isDeletable,
+            isMainTrigger: node.id === '1',
         },
     };
 };
@@ -183,7 +184,7 @@ export default function EditConversationFlowPage() {
 
     const handleFlowSettingsSave = async () => {
         if (!flow) return;
-        
+
         const dataToUpdate: Partial<Flow> = {
             name: flowSettings.name,
             status: flowSettings.status,
@@ -203,11 +204,13 @@ export default function EditConversationFlowPage() {
         };
 
         try {
-            await updateFlow(flow.id, dataToUpdate);
+            // Remove functions before saving
+            const { onConfigure, onDelete, ...restData } = dataToUpdate as any;
+            await updateFlow(flow.id, restData);
             setFlow(prev => prev ? { ...prev, ...dataToUpdate } as Flow : null);
             toast({ title: "Configurações do fluxo salvas com sucesso!" });
             setIsFlowSettingsOpen(false);
-            setHasUnsavedChanges(true);
+            setHasUnsavedChanges(true); // Technically, this will be saved with the main button, but good to keep state consistent
         } catch (error) {
             toast({ variant: 'destructive', title: "Erro ao salvar configurações" });
         }
@@ -220,7 +223,7 @@ export default function EditConversationFlowPage() {
         try {
             // Remove the circular 'on*' functions before saving
             const nodesToSave = nodes.map(node => {
-                const { onConfigure, onDelete, isDeletable, icon, color, ...restData } = node.data;
+                const { onConfigure, onDelete, isDeletable, icon, color, isMainTrigger, ...restData } = node.data;
                 return { ...node, data: restData };
             });
             await updateFlow(flow.id, { nodes: nodesToSave, edges });
@@ -384,10 +387,10 @@ export default function EditConversationFlowPage() {
                                             <Select value={flowSettings.timeoutAction} onValueChange={(value) => setFlowSettings(prev => ({...prev, timeoutAction: value as any}))}>
                                                 <SelectTrigger id="timeout-action"><SelectValue /></SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="end_flow"><MessageSquareX className="h-4 w-4"/>Encerrar Fluxo</SelectItem>
-                                                    <SelectItem value="send_message"><Send className="h-4 w-4"/>Enviar Mensagem Automática</SelectItem>
-                                                    <SelectItem value="transfer"><Bot className="h-4 w-4"/>Transferir para Atendente</SelectItem>
-                                                    <SelectItem value="forward_flow"><Forward className="h-4 w-4"/>Encaminhar para Outro Fluxo</SelectItem>
+                                                    <SelectItem value="end_flow"><MessageSquareX className="mr-2 h-4 w-4"/>Encerrar Fluxo</SelectItem>
+                                                    <SelectItem value="send_message"><Send className="mr-2 h-4 w-4"/>Enviar Mensagem Automática</SelectItem>
+                                                    <SelectItem value="transfer"><Bot className="mr-2 h-4 w-4"/>Transferir para Atendente</SelectItem>
+                                                    <SelectItem value="forward_flow"><Forward className="mr-2 h-4 w-4"/>Encaminhar para Outro Fluxo</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <p className="text-xs text-muted-foreground pt-1">
