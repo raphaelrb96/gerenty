@@ -11,7 +11,19 @@ type MessageBubbleProps = {
 
 export function MessageBubble({ message }: MessageBubbleProps) {
     const isOutbound = message.direction === 'outbound';
-    const timestamp = new Date(message.timestamp as any);
+    
+    // Safely handle different timestamp formats
+    const getTimestamp = () => {
+        if (!message.timestamp) return new Date();
+        if (typeof message.timestamp === 'string') return new Date(message.timestamp);
+        // Assumes it's a Firebase Timestamp-like object if not a string
+        if ('toDate' in (message.timestamp as any)) {
+            return (message.timestamp as any).toDate();
+        }
+        return new Date(message.timestamp as any);
+    };
+
+    const timestamp = getTimestamp();
     const timeFormatted = format(timestamp, "HH:mm");
 
     return (
