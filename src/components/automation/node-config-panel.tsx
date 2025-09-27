@@ -465,7 +465,7 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
                 return (
                     <div key={index} className="p-3 border rounded-lg space-y-3 relative bg-muted/50">
                         <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6 text-destructive" onClick={() => handleRemoveCondition(cond.id)}><Trash2 className="h-4 w-4"/></Button>
-                        <p className="text-sm font-semibold">Caminho {index + 1}</p>
+                        <p className="text-sm font-semibold">Condição {index + 1}</p>
                         <div className="space-y-2">
                             <Label>SE</Label>
                             <div className="grid grid-cols-2 gap-2">
@@ -490,7 +490,7 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
                     </div>
                 );
             })}
-            <Button type="button" variant="outline" size="sm" onClick={handleAddCondition}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Caminho</Button>
+            <Button type="button" variant="outline" size="sm" onClick={handleAddCondition}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Condição</Button>
             
             <Separator />
 
@@ -614,4 +614,5 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, hasUns
     
 
     
+
 
