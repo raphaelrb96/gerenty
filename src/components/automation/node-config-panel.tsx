@@ -1,8 +1,9 @@
 
+
 "use client";
 
 import type { Node } from "reactflow";
-import { Settings, HelpCircle, PlusCircle, MoreHorizontal, Pencil, Trash2, Save, TextCursorInput } from "lucide-react";
+import { Settings, HelpCircle, PlusCircle, MoreHorizontal, Pencil, Trash2, Save, TextCursorInput, Link } from "lucide-react";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
@@ -41,6 +42,8 @@ type NodeConfigPanelProps = {
     onNodeDataChange: (nodeId: string, data: any) => void;
     onSave: () => Promise<void>;
     hasUnsavedChanges: boolean;
+    allNodes: Node[]; // Pass all nodes for selection
+    onConnect: (source: string, sourceHandle: string, target: string) => void;
 }
 
 function TriggerPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'] }) {
@@ -297,7 +300,7 @@ function CaptureDataPanel({ node, onNodeDataChange }: { node: Node, onNodeDataCh
                     <TextCursorInput className="h-5 w-5 text-muted-foreground" />
                     <Input id="capture-variable" placeholder="cpf_cliente" value={node.data.captureVariable || ''} onChange={handleFieldChange('captureVariable')} />
                 </div>
-                <p className="text-xs text-muted-foreground">Use este nome para referenciar o dado em outros nós (ex: {'{{cpf_cliente}}'}).</p>
+                 <p className="text-xs text-muted-foreground">Use este nome para referenciar o dado em outros nós (ex: {'{{cpf_cliente}}'}).</p>
             </div>
             <div className="space-y-2">
                 <Label htmlFor="capture-validation">Validação</Label>
@@ -389,11 +392,11 @@ function InternalActionPanel({ node, onNodeDataChange }: { node: Node, onNodeDat
     );
 }
 
-function ConditionalPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'] }) {
+function ConditionalPanel({ node, onNodeDataChange, allNodes, onConnect }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'], allNodes: Node[], onConnect: NodeConfigPanelProps['onConnect'] }) {
     const conditions = node.data.conditions || [];
 
     const handleAddCondition = () => {
-        const newConditions = [...conditions, { variable: '', operator: '==', value: '' }];
+        const newConditions = [...conditions, { id: `handle_${Date.now()}`, variable: '', operator: '==', value: '', label: '' }];
         onNodeDataChange(node.id, { conditions: newConditions });
     };
 
@@ -408,31 +411,54 @@ function ConditionalPanel({ node, onNodeDataChange }: { node: Node, onNodeDataCh
         onNodeDataChange(node.id, { conditions: newConditions });
     };
 
+    const handleTargetNodeChange = (sourceHandle: string, target: string) => {
+        onConnect(node.id, sourceHandle, target);
+    }
+    
+    const availableNodes = allNodes.filter(n => n.id !== node.id);
+
+
     return (
         <div className="space-y-4">
-             <p className="text-sm text-muted-foreground">Crie um caminho "Se" para o fluxo. A condição "Senão" (saída padrão) será usada se nenhuma das regras for atendida.</p>
+             <p className="text-sm text-muted-foreground">Crie caminhos "Se" para o fluxo. A saída padrão "Senão" será usada se nenhuma das regras for atendida.</p>
              <Separator />
             {conditions.map((cond: any, index: number) => (
                 <div key={index} className="p-3 border rounded-lg space-y-2 relative bg-muted/50">
                      <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6 text-destructive" onClick={() => handleRemoveCondition(index)}><Trash2 className="h-4 w-4"/></Button>
-                     <p className="text-xs font-semibold">Condição {index + 1}</p>
-                    <div className="grid grid-cols-2 gap-2">
-                        <Input placeholder="Variável (ex: cpf)" value={cond.variable} onChange={(e) => handleConditionChange(index, 'variable', e.target.value)} />
-                        <Select value={cond.operator} onValueChange={(val) => handleConditionChange(index, 'operator', val)}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
+                     <p className="text-sm font-semibold">Caminho {index + 1}</p>
+                    <div className="space-y-2">
+                        <Label>SE</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                            <Input placeholder="Variável (ex: {{cpf}})" value={cond.variable} onChange={(e) => handleConditionChange(index, 'variable', e.target.value)} />
+                            <Select value={cond.operator} onValueChange={(val) => handleConditionChange(index, 'operator', val)}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="==">É igual a</SelectItem>
+                                    <SelectItem value="!=">É diferente de</SelectItem>
+                                    <SelectItem value=">">É maior que</SelectItem>
+                                    <SelectItem value="<">É menor que</SelectItem>
+                                    <SelectItem value="contains">Contém</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <Input placeholder="Valor a comparar" value={cond.value} onChange={(e) => handleConditionChange(index, 'value', e.target.value)} />
+                    </div>
+                     <div className="space-y-2">
+                        <Label>ENTÃO</Label>
+                        <Select onValueChange={(targetNodeId) => handleTargetNodeChange(cond.id, targetNodeId)}>
+                            <SelectTrigger><SelectValue placeholder="Conectar ao nó..." /></SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="==">É igual a</SelectItem>
-                                <SelectItem value="!=">É diferente de</SelectItem>
-                                <SelectItem value=">">É maior que</SelectItem>
-                                <SelectItem value="<">É menor que</SelectItem>
-                                <SelectItem value="contains">Contém</SelectItem>
+                                {availableNodes.map(n => <SelectItem key={n.id} value={n.id}>{n.data.label} (ID: {n.id})</SelectItem>)}
                             </SelectContent>
                         </Select>
-                    </div>
-                    <Input placeholder="Valor a comparar" value={cond.value} onChange={(e) => handleConditionChange(index, 'value', e.target.value)} />
+                     </div>
+                      <div className="space-y-2">
+                         <Label>Rótulo da Conexão</Label>
+                         <Input placeholder="Ex: Cliente VIP" value={cond.label} onChange={(e) => handleConditionChange(index, 'label', e.target.value)} />
+                     </div>
                 </div>
             ))}
-            <Button type="button" variant="outline" size="sm" onClick={handleAddCondition}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Condição</Button>
+            <Button type="button" variant="outline" size="sm" onClick={handleAddCondition}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Caminho</Button>
         </div>
     );
 }
@@ -467,7 +493,7 @@ function TransferPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChang
     )
 }
 
-export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, hasUnsavedChanges }: NodeConfigPanelProps) {
+export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, hasUnsavedChanges, allNodes, onConnect }: NodeConfigPanelProps) {
 
     const renderPanelContent = () => {
         if (!selectedNode) {
@@ -490,7 +516,7 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, hasUns
             case 'internalAction':
                 return <InternalActionPanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
             case 'conditional':
-                return <ConditionalPanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
+                return <ConditionalPanel node={selectedNode} onNodeDataChange={onNodeDataChange} allNodes={allNodes} onConnect={onConnect} />;
             case 'transfer':
                 return <TransferPanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
             case 'delay':

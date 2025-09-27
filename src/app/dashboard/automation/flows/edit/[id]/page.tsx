@@ -51,7 +51,7 @@ const nodeTypeConfig = {
     message: { icon: <MessageCircle size={20} />, color: 'border-green-500', defaultData: { label: 'Enviar Mensagem', type: 'message' } },
     captureData: { icon: <HelpCircle size={20} />, color: 'border-blue-500', defaultData: { label: 'Capturar Dados', type: 'captureData' } },
     internalAction: { icon: <Settings size={20} />, color: 'border-purple-500', defaultData: { label: 'Ação Interna', type: 'internalAction' } },
-    conditional: { icon: <GitBranch size={20} />, color: 'border-cyan-500', defaultData: { label: 'Dividir Fluxo', type: 'conditional' } },
+    conditional: { icon: <GitBranch size={20} />, color: 'border-cyan-500', defaultData: { label: 'Dividir Fluxo', type: 'conditional', conditions: [] } },
     externalApi: { icon: <Share2 size={20} />, color: 'border-indigo-500', defaultData: { label: 'API Externa', type: 'externalApi' } },
     delay: { icon: <Timer size={20} />, color: 'border-orange-500', defaultData: { label: 'Aguardar', type: 'delay' } },
     transfer: { icon: <UserCheck size={20} />, color: 'border-rose-500', defaultData: { label: 'Transferir Atendente', type: 'transfer' } },
@@ -284,10 +284,11 @@ export default function EditConversationFlowPage() {
         const newNodeId = `${Date.now()}`;
         
         if (quickAddSourceNode) {
-            const isConditional = quickAddSourceNode.data.type === 'conditional';
-            const sourceHasConnection = edges.some(edge => edge.source === quickAddSourceNode.id);
+            const sourceNode = nodes.find(n => n.id === quickAddSourceNode.id);
+            const isConditional = sourceNode?.data.type === 'conditional';
+            const sourceHasConnection = edges.some(edge => edge.source === quickAddSourceNode.id && !isConditional);
 
-            if (!isConditional && sourceHasConnection) {
+            if (sourceHasConnection) {
                  toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Esta tarefa já possui uma conexão de saída. Use o nó "Dividir Fluxo" para criar ramificações.' });
                  setQuickAddSourceNode(null);
                  setIsPaletteOpen(false);
@@ -356,11 +357,23 @@ export default function EditConversationFlowPage() {
                 }
 
                 setHasUnsavedChanges(true);
-                return addEdge(params, currentEdges);
+                return addEdge({ ...params, type: 'smoothstep' }, currentEdges);
             });
         },
         [setEdges, nodes, toast]
     );
+
+    const onConnectFromPanel = (source: string, sourceHandle: string, target: string) => {
+        const newEdge: Edge = {
+            id: `e${source}-${target}-${sourceHandle}`,
+            source,
+            sourceHandle,
+            target,
+            type: 'smoothstep'
+        };
+        onConnect(newEdge);
+    }
+
 
     if (loading) {
         return <LoadingSpinner />;
@@ -419,6 +432,8 @@ export default function EditConversationFlowPage() {
                     onNodeDataChange={onNodeDataChange}
                     onSave={handleSaveFlow}
                     hasUnsavedChanges={hasUnsavedChanges}
+                    allNodes={nodes}
+                    onConnect={onConnectFromPanel}
                 />
             </Sheet>
             
