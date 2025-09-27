@@ -303,13 +303,20 @@ export default function EditConversationFlowPage() {
         setNodes((nds) => nds.concat(enriched));
 
         if (quickAddSourceNode) {
-            const newEdge: Edge = {
-                id: `e${quickAddSourceNode.id}-${newNodeId}`,
-                source: quickAddSourceNode.id,
-                target: newNodeId,
-                type: 'smoothstep'
-            };
-            setEdges((eds) => addEdge(newEdge, eds));
+            const isConditional = quickAddSourceNode.data.type === 'conditional';
+            const sourceHasConnection = edges.some(edge => edge.source === quickAddSourceNode.id);
+
+            if (!isConditional && sourceHasConnection) {
+                 toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Esta tarefa já possui uma conexão de saída. Use o nó "Dividir Fluxo" para criar ramificações.' });
+            } else {
+                const newEdge: Edge = {
+                    id: `e${quickAddSourceNode.id}-${newNodeId}`,
+                    source: quickAddSourceNode.id,
+                    target: newNodeId,
+                    type: 'smoothstep'
+                };
+                setEdges((eds) => addEdge(newEdge, eds));
+            }
             setQuickAddSourceNode(null); // Reset after adding
         }
         
@@ -572,4 +579,3 @@ export default function EditConversationFlowPage() {
         </div>
     );
 }
-
