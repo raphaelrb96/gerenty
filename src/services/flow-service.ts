@@ -3,7 +3,7 @@
 'use server';
 
 import { db } from "@/lib/firebase";
-import { collection, doc, addDoc, getDoc, updateDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
+import { collection, doc, addDoc, getDoc, updateDoc, serverTimestamp, query, where, getDocs, deleteDoc } from "firebase/firestore";
 import type { Flow } from "@/lib/types";
 
 const flowsCollection = collection(db, "flows");
@@ -119,4 +119,13 @@ export async function updateFlow(flowId: string, flowData: Partial<Omit<Flow, 'i
     }
 }
 
+export async function deleteFlow(flowId: string): Promise<void> {
+    try {
+        const flowDoc = doc(db, "flows", flowId);
+        await deleteDoc(flowDoc);
+    } catch (error) {
+        console.error("Error deleting flow: ", error);
+        throw new Error("Failed to delete flow.");
+    }
+}
     

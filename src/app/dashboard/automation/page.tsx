@@ -1,15 +1,16 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/common/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Bot, PlusCircle, LayoutGrid, Building, Library, Workflow, Pencil } from "lucide-react";
+import { Bot, PlusCircle, LayoutGrid, Building, Library, Workflow, Pencil, MoreVertical, Trash2 } from "lucide-react";
 import type { MessageTemplate, LibraryMessage, AutomationRule, Flow } from "@/lib/types";
 import { getTemplatesByCompany, deleteTemplate } from "@/services/template-service";
 import { getLibraryMessagesByCompany, deleteLibraryMessage } from "@/services/library-message-service";
-import { getFlowsByCompany } from "@/services/flow-service";
+import { getFlowsByCompany, deleteFlow } from "@/services/flow-service";
 import { useCompany } from "@/context/company-context";
 import { useToast } from "@/hooks/use-toast";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
@@ -31,6 +32,7 @@ import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResponseLibraryForm } from "@/components/automation/response-library-form";
 import { ResponseCard } from "@/components/automation/response-card";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 function AutomationRulesTab() {
     const [rules, setRules] = useState<AutomationRule[]>([]);
@@ -70,8 +72,9 @@ function FlowBuilderTab() {
     const [loading, setLoading] = useState(true);
     const { activeCompany } = useCompany();
     const { toast } = useToast();
+    const [flowToDelete, setFlowToDelete] = useState<Flow | null>(null);
 
-    useEffect(() => {
+    const fetchFlows = () => {
         if (activeCompany) {
             setLoading(true);
             getFlowsByCompany(activeCompany.id)
@@ -79,7 +82,24 @@ function FlowBuilderTab() {
                 .catch(() => toast({ variant: "destructive", title: "Erro ao buscar fluxos" }))
                 .finally(() => setLoading(false));
         }
+    }
+    
+    useEffect(() => {
+        fetchFlows();
     }, [activeCompany, toast]);
+
+    const handleDeleteFlow = async () => {
+        if (!flowToDelete) return;
+        try {
+            await deleteFlow(flowToDelete.id);
+            toast({ title: "Fluxo excluído com sucesso!" });
+            fetchFlows(); // Refresh list
+        } catch (error) {
+            toast({ variant: "destructive", title: "Erro ao excluir fluxo." });
+        } finally {
+            setFlowToDelete(null);
+        }
+    };
     
     if (loading) return <LoadingSpinner />;
 
@@ -102,7 +122,20 @@ function FlowBuilderTab() {
                         {flows.map(flow => (
                             <Card key={flow.id} className="flex flex-col">
                                 <CardHeader>
-                                    <CardTitle className="text-lg">{flow.name}</CardTitle>
+                                    <div className="flex justify-between items-start">
+                                        <CardTitle className="text-lg">{flow.name}</CardTitle>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-6 w-6 -mr-2">
+                                                    <MoreVertical className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent>
+                                                <DropdownMenuItem asChild><Link href={`/dashboard/automation/flows/edit/${flow.id}`}><Pencil className="mr-2 h-4 w-4" />Editar</Link></DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => setFlowToDelete(flow)} className="text-destructive focus:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Excluir</DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
                                     <CardDescription>Status: {flow.status}</CardDescription>
                                 </CardHeader>
                                 <CardContent className="flex-1">
@@ -131,6 +164,23 @@ function FlowBuilderTab() {
                     </Link>
                 </Button>
             </CardFooter>
+
+            <AlertDialog open={!!flowToDelete} onOpenChange={() => setFlowToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Excluir Fluxo?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                           Tem certeza de que deseja excluir o fluxo "{flowToDelete?.name}"? Esta ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteFlow} className="bg-destructive hover:bg-destructive/90">
+                           Excluir
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </Card>
     );
 }
