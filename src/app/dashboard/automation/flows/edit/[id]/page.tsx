@@ -314,7 +314,7 @@ export default function EditConversationFlowPage() {
         setHasUnsavedChanges(true);
     };
 
-     const addNode = (type: keyof typeof nodeTypeConfig, sourceHandle?: string) => {
+    const addNode = (type: keyof typeof nodeTypeConfig, sourceHandle?: string) => {
         const sourceNodeIsConditional = quickAddSourceNode?.data.type === 'conditional';
         const handleFromQuickAdd = quickAddSourceNode?.data.sourceHandleForQuickAdd;
 
@@ -333,21 +333,50 @@ export default function EditConversationFlowPage() {
         }
         
         const config = nodeTypeConfig[type];
-        let position = { x: Math.random() * 400, y: Math.random() * 400 };
 
-        if (quickAddSourceNode) {
+        // Unique name logic
+        const sameTypeNodes = nodes.filter(n => n.data.type === type);
+        const newLabel = `${config.defaultData.label} - ${sameTypeNodes.length + 1}`;
+        
+        // --- Positioning Logic ---
+        let position = { x: 250, y: 150 }; // Default position
+        const nodeWidth = 320;
+        const nodeHeight = 150;
+        const spacingX = 50;
+        const spacingY = 75;
+
+        const referenceNode = quickAddSourceNode || nodes.find(n => n.id === '1');
+        
+        if (referenceNode) {
             position = {
-                x: quickAddSourceNode.position.x,
-                y: quickAddSourceNode.position.y + (quickAddSourceNode.height || 100) + 75
+                x: referenceNode.position.x,
+                y: referenceNode.position.y + (referenceNode.height || 100) + spacingY
             };
         }
+
+        // --- Overlap Avoidance ---
+        let isOverlapping = true;
+        while(isOverlapping) {
+            isOverlapping = false;
+            for (const existingNode of nodes) {
+                const xOverlap = Math.abs(position.x - existingNode.position.x) * 2 < (nodeWidth + spacingX);
+                const yOverlap = Math.abs(position.y - existingNode.position.y) * 2 < (nodeHeight + spacingY);
+
+                if (xOverlap && yOverlap) {
+                    isOverlapping = true;
+                    position.x += nodeWidth + spacingX; // Move to the right
+                    break;
+                }
+            }
+        }
+        // --- End Positioning Logic ---
         
         const newNodeId = `${Date.now()}`;
         const newNode: Node = {
             id: newNodeId,
             type: 'custom',
             position,
-            data: config.defaultData,
+            data: { ...config.defaultData, customLabel: newLabel },
         };
 
         const enriched = enrichNodeData(newNode, handleConfigureNode, handleDeleteNode, (node, sh) => handleQuickAdd(node, sh));
@@ -524,7 +553,7 @@ export default function EditConversationFlowPage() {
                     selectedNode={selectedNode} 
                     onNodeDataChange={onNodeDataChange}
                     onSave={handleSaveFlow}
-                    hasUnsavedChanges={hasUnsavedChanges}
+                    onClose={() => setIsConfigOpen(false)}
                     allNodes={nodes}
                     allEdges={edges}
                     onConnect={onConnectFromPanel}

@@ -3,7 +3,7 @@
 "use client";
 
 import type { Node, Edge } from "reactflow";
-import { Settings, HelpCircle, PlusCircle, MoreHorizontal, Pencil, Trash2, Save, TextCursorInput, Link, Bot, MessageCircle } from "lucide-react";
+import { Settings, HelpCircle, PlusCircle, MoreHorizontal, Pencil, Trash2, Save, TextCursorInput, Link, Bot, MessageCircle, Loader2 } from "lucide-react";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
@@ -44,7 +44,7 @@ type NodeConfigPanelProps = {
     selectedNode: Node | null;
     onNodeDataChange: (nodeId: string, data: any) => void;
     onSave: () => Promise<void>;
-    hasUnsavedChanges: boolean;
+    onClose: () => void;
     allNodes: Node[]; // Pass all nodes for selection
     allEdges: Edge[];
     onConnect: (source: string, sourceHandle: string, target: string) => void;
@@ -468,7 +468,7 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
                     onChange={(e) => onNodeDataChange(node.id, { customLabel: e.target.value })}
                 />
             </div>
-            <p className="text-sm text-muted-foreground">Crie caminhos "Se" para o fluxo. A saída padrão "Senão" será usada se nenhuma das regras for atendida.</p>
+            <p className="text-sm text-muted-foreground">Crie condições para o fluxo. A saída padrão "Senão" será usada se nenhuma das regras for atendida.</p>
             <Separator />
             {conditions.map((cond: any, index: number) => {
                 return (
@@ -556,7 +556,21 @@ function TransferPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChang
     )
 }
 
-export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, hasUnsavedChanges, allNodes, allEdges, onConnect, onCreateAndConnect }: NodeConfigPanelProps) {
+export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, onClose, allNodes, allEdges, onConnect, onCreateAndConnect }: NodeConfigPanelProps) {
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleSaveClick = async () => {
+        setIsSaving(true);
+        try {
+            await onSave();
+            onClose(); // Close sheet on successful save
+        } catch (error) {
+            // Toast is handled in the parent component
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
 
     const renderPanelContent = () => {
         if (!selectedNode) {
@@ -611,7 +625,8 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, hasUns
                 {renderPanelContent()}
             </ScrollArea>
              <SheetFooter className="p-6 border-t">
-                 <Button variant="outline" onClick={onSave} disabled={!hasUnsavedChanges}>
+                 <Button variant="outline" onClick={handleSaveClick} disabled={isSaving}>
+                    {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     <Save className="mr-2 h-4 w-4" />
                     Salvar Alterações
                 </Button>
