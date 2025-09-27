@@ -60,7 +60,7 @@ export function FlowBuilder({ nodes, edges, onNodesChange, onEdgesChange, onConn
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         fitView
-        fitViewOptions={{ padding: 0.4 }}
+        fitViewOptions={{ padding: 0.8 }}
         defaultEdgeOptions={{ type: 'smoothstep', style: { strokeWidth: 2, stroke: '#9ca3af' } }}
         deleteKeyCode={['Backspace', 'Delete']}
         proOptions={proOptions}
