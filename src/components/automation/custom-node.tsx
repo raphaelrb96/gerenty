@@ -73,7 +73,7 @@ export function CustomNode({ data, selected }: NodeProps<{
     <div className="relative group">
       {!isMainTrigger && <Handle type="target" position={Position.Top} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10 }} />}
       
-      {data.type === 'conditional' ? (
+      {data.type === 'conditional' && (
         <>
             {(data.conditions || []).map((cond: any, index: number) => (
                 <Handle
@@ -94,8 +94,10 @@ export function CustomNode({ data, selected }: NodeProps<{
                 className="!bg-gray-500 !w-3 !h-3"
             />
         </>
-      ) : (
-        <Handle type="source" position={Position.Bottom} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10 }} />
+      )}
+      
+      {!isMainTrigger && data.type !== 'conditional' && (
+          <Handle type="source" position={Position.Bottom} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10 }} />
       )}
       
       <Card className={cn(
@@ -136,7 +138,10 @@ export function CustomNode({ data, selected }: NodeProps<{
                     </div>
                 ))}
                  <div className="text-xs p-2 bg-muted rounded-md flex justify-between items-center relative">
-                    <span>Senão (Padrão)</span>
+                    <div>
+                      <span className="font-semibold">Fluxo Padrão</span>
+                      <p className="text-muted-foreground text-[10px]">(Se nenhuma condição for válida)</p>
+                    </div>
                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => data.onQuickAdd('else')}><PlusCircle className="h-4 w-4" /></Button>
                 </div>
             </CardContent>
