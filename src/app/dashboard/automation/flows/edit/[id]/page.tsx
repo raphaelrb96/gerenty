@@ -155,7 +155,7 @@ export default function EditConversationFlowPage() {
         try {
             // Remove the circular 'on*' functions before saving
             const nodesToSave = nodes.map(node => {
-                const { onConfigure, onDelete, ...restData } = node.data;
+                const { onConfigure, onDelete, isDeletable, ...restData } = node.data;
                 return { ...node, data: restData };
             });
             await updateFlow(flow.id, { nodes: nodesToSave, edges });
@@ -242,10 +242,6 @@ export default function EditConversationFlowPage() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuItem onSelect={() => setIsPaletteOpen(true)}>
-                                <Plus className="mr-2 h-4 w-4" />
-                                Adicionar Tarefa
-                            </DropdownMenuItem>
                             <DropdownMenuItem onSelect={() => setIsFlowSettingsOpen(true)}>
                                 <Pencil className="mr-2 h-4 w-4" />
                                 Editar Fluxo
@@ -255,7 +251,7 @@ export default function EditConversationFlowPage() {
                 </div>
             </header>
             
-            <main className="flex-1 h-full w-full border rounded-lg overflow-hidden bg-background">
+            <main className="flex-1 h-full w-full border rounded-lg overflow-hidden bg-background relative">
                 <FlowBuilder 
                     nodes={nodes}
                     edges={edges}
@@ -264,6 +260,13 @@ export default function EditConversationFlowPage() {
                     onConnect={onConnect}
                     onEdgesDelete={handleEdgesDelete}
                 />
+                 <Button 
+                    className="absolute bottom-6 right-6 rounded-full w-14 h-14"
+                    onClick={() => setIsPaletteOpen(true)}
+                >
+                    <Plus className="h-6 w-6" />
+                    <span className="sr-only">Adicionar Tarefa</span>
+                </Button>
             </main>
 
              <Dialog open={isPaletteOpen} onOpenChange={setIsPaletteOpen}>
