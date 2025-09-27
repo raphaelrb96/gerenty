@@ -37,7 +37,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { NodesPalette } from "./nodes-palette";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { nodeTypeConfig } from "@/app/dashboard/automation/flows/edit/[id]/page";
 
 type NodeConfigPanelProps = {
@@ -400,14 +400,21 @@ function InternalActionPanel({ node, onNodeDataChange }: { node: Node, onNodeDat
 
 function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnect, onCreateAndConnect }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'], allNodes: Node[], allEdges: Edge[], onConnect: NodeConfigPanelProps['onConnect'], onCreateAndConnect: NodeConfigPanelProps['onCreateAndConnect'] }) {
     const conditions = node.data.conditions || [];
-    const [paletteOpen, setPaletteOpen] = useState(false);
+    const [isPaletteOpen, setPaletteOpen] = useState(false);
     const [currentHandle, setCurrentHandle] = useState<string | null>(null);
 
 
     const availableNodes = allNodes.filter(n => {
         if (n.id === '1' || n.id === node.id) return false;
-        const hasIncomingConnection = allEdges.some(edge => edge.target === n.id);
-        return !hasIncomingConnection;
+        // A node can be a target if it has no incoming edge, OR if the incoming edge is from the current conditional node
+        const incomingEdges = allEdges.filter(edge => edge.target === n.id);
+        if (incomingEdges.length === 0) return true;
+        
+        // Allow selection if the node is ALREADY connected to one of THIS conditional's handles
+        const isConnectedToThisNode = incomingEdges.some(edge => edge.source === node.id);
+        if (isConnectedToThisNode) return true;
+
+        return false;
     });
 
     const handleAddCondition = () => {
@@ -415,11 +422,20 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
         onNodeDataChange(node.id, { conditions: newConditions });
     };
 
-    const handleRemoveCondition = (index: number) => {
-        const handleIdToRemove = conditions[index].id;
-        const newConditions = conditions.filter((_: any, i: number) => i !== index);
+    const handleRemoveCondition = (handleIdToRemove: string) => {
+        // Remove the condition from the node data
+        const newConditions = conditions.filter((cond: any) => cond.id !== handleIdToRemove);
         onNodeDataChange(node.id, { conditions: newConditions });
+
+        // Also remove any edge connected to this handle
+        const edgeToRemove = allEdges.find(e => e.source === node.id && e.sourceHandle === handleIdToRemove);
+        if (edgeToRemove) {
+            // This needs to be handled in the parent component, as this panel doesn't have setEdges
+            // We can perhaps call a new prop function onEdgesDelete or similar
+            console.warn("Edge deletion from panel not implemented yet.");
+        }
     };
+
 
     const handleConditionChange = (index: number, field: string, value: string) => {
         const newConditions = [...conditions];
@@ -452,10 +468,11 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
             <Separator />
             {conditions.map((cond: any, index: number) => {
                 const connectedNodeName = getConnectedNodeName(cond.id);
+                const currentTargetId = allEdges.find(e => e.source === node.id && e.sourceHandle === cond.id)?.target;
 
                 return (
                     <div key={index} className="p-3 border rounded-lg space-y-3 relative bg-muted/50">
-                        <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6 text-destructive" onClick={() => handleRemoveCondition(index)}><Trash2 className="h-4 w-4"/></Button>
+                        <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6 text-destructive" onClick={() => handleRemoveCondition(cond.id)}><Trash2 className="h-4 w-4"/></Button>
                         <p className="text-sm font-semibold">Caminho {index + 1}</p>
                         <div className="space-y-2">
                             <Label>SE</Label>
@@ -477,7 +494,7 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
                         <div className="space-y-2">
                             <Label>ENTÃO</Label>
                             <div className="grid grid-cols-2 gap-2">
-                                <Select onValueChange={(nodeId) => handleConnect(cond.id, nodeId)} value={allEdges.find(e => e.source === node.id && e.sourceHandle === cond.id)?.target || ""}>
+                                <Select onValueChange={(nodeId) => handleConnect(cond.id, nodeId)} value={currentTargetId || ""}>
                                     <SelectTrigger><SelectValue placeholder="Conectar tarefa..." /></SelectTrigger>
                                     <SelectContent>
                                         {availableNodes.map(n => <SelectItem key={n.id} value={n.id}>{n.data.label}</SelectItem>)}
@@ -491,7 +508,7 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
             })}
             <Button type="button" variant="outline" size="sm" onClick={handleAddCondition}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Caminho</Button>
 
-            <Dialog open={paletteOpen} onOpenChange={setPaletteOpen}>
+            <Dialog open={isPaletteOpen} onOpenChange={setPaletteOpen}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Selecione a Tarefa para Criar</DialogTitle>
