@@ -61,9 +61,9 @@ export function CustomNode({ data, selected }: NodeProps<{
   const isMainTrigger = data.isMainTrigger === true;
 
   const getVerticalHandlePosition = (index: number) => {
-    const headerHeight = 44; // p-3
+    const headerHeight = 44; // p-3 -> 12px padding, title h is 20px approx.
     const contentPaddingTop = 8; // pt-2
-    const itemHeight = 36; // p-2 div (approximate)
+    const itemHeight = 44; // p-2 div + content = 8 + 36 approx
     const itemSpacing = 8; // space-y-2
     const topOffset = headerHeight + contentPaddingTop + (index * (itemHeight + itemSpacing)) + (itemHeight / 2);
     return `${topOffset}px`;
@@ -81,7 +81,7 @@ export function CustomNode({ data, selected }: NodeProps<{
                     type="source"
                     position={Position.Right}
                     id={cond.id}
-                    style={{ top: getVerticalHandlePosition(index), right: '-0.5rem', zIndex: 10 }}
+                    style={{ top: getVerticalHandlePosition(index), right: '-0.75rem', zIndex: 10 }}
                     className="!bg-cyan-500 !w-3 !h-3"
                 />
             ))}
