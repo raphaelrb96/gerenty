@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { PageHeader } from "@/components/common/page-header";
 import { FlowBuilder } from "@/components/automation/flow-builder";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { getFlowById, updateFlow } from "@/services/flow-service";
@@ -12,8 +11,9 @@ import type { Node, Edge, OnNodesChange, OnEdgesChange, Connection } from "react
 import { applyNodeChanges, applyEdgeChanges, addEdge } from 'reactflow';
 import { NodeConfigPanel } from "@/components/automation/node-config-panel";
 import { NodesPalette } from "@/components/automation/nodes-palette";
-import { Bot, MessageCircle } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { Bot, MessageCircle, Settings, Plus } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 
 // Debounce function
@@ -60,6 +60,9 @@ export default function EditConversationFlowPage() {
     const [edges, setEdges] = useState<Edge[]>([]);
     const [selectedNode, setSelectedNode] = useState<Node | null>(null);
     const [loading, setLoading] = useState(true);
+
+    const [isPaletteOpen, setIsPaletteOpen] = useState(false);
+    const [isConfigOpen, setIsConfigOpen] = useState(false);
 
     useEffect(() => {
         if (typeof flowId !== 'string') return;
@@ -109,10 +112,10 @@ export default function EditConversationFlowPage() {
     const onNodesChange: OnNodesChange = useCallback((changes) => {
         setNodes((nds) => {
             const newNodes = applyNodeChanges(changes, nds);
-            // Find which node was selected
             const selectedChange = changes.find(c => c.type === 'select' && c.selected);
             if (selectedChange) {
-                setSelectedNode(newNodes.find(n => n.id === selectedChange.id) || null);
+                const node = newNodes.find(n => n.id === selectedChange.id);
+                setSelectedNode(node || null);
             } else if (changes.some(c => c.type === 'select' && !c.selected)) {
                  const selectedNodeExists = changes.some(c => c.type === 'select' && c.selected);
                  if(!selectedNodeExists) setSelectedNode(null);
@@ -140,7 +143,6 @@ export default function EditConversationFlowPage() {
                 }
                 return node;
             });
-            // Also update the selected node's view
             if (selectedNode?.id === nodeId) {
                  setSelectedNode(newNodes.find(n => n.id === nodeId) || null);
             }
@@ -159,6 +161,7 @@ export default function EditConversationFlowPage() {
         };
         const enriched = enrichNodeData(newNode);
         setNodes((nds) => nds.concat(enriched));
+        setIsPaletteOpen(false); // Close modal on add
     };
 
      const onConnect = useCallback(
@@ -171,20 +174,19 @@ export default function EditConversationFlowPage() {
     }
 
     return (
-        <div className="h-[calc(100vh-8rem)] flex flex-col gap-4">
-            <header>
-                <PageHeader
-                    title={flow?.name || "Editando Fluxo"}
-                    description="Crie e gerencie fluxos de conversa interativos para automatizar o atendimento."
-                />
-            </header>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                 <NodesPalette onNodeAdd={addNode} />
-                 <NodeConfigPanel selectedNode={selectedNode} onNodeDataChange={onNodeDataChange} />
+        <div className="h-[calc(100vh-8rem)] w-full relative">
+            <div className="absolute top-4 left-4 z-10 space-x-2">
+                <Button onClick={() => setIsPaletteOpen(true)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Adicionar Tarefa
+                </Button>
+                <Button variant="outline" onClick={() => setIsConfigOpen(true)} disabled={!selectedNode}>
+                     <Settings className="mr-2 h-4 w-4" />
+                    Configurar Tarefa
+                </Button>
             </div>
-
-            <main className="flex-1 border rounded-lg overflow-hidden bg-background">
+            
+            <main className="h-full w-full border rounded-lg overflow-hidden bg-background">
                 <FlowBuilder 
                     nodes={nodes}
                     edges={edges}
@@ -193,6 +195,21 @@ export default function EditConversationFlowPage() {
                     onConnect={onConnect}
                 />
             </main>
+
+             <Dialog open={isPaletteOpen} onOpenChange={setIsPaletteOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Paleta de Tarefas</DialogTitle>
+                    </DialogHeader>
+                    <NodesPalette onNodeAdd={addNode} />
+                </DialogContent>
+            </Dialog>
+            
+            <Dialog open={isConfigOpen} onOpenChange={setIsConfigOpen}>
+                <DialogContent>
+                     <NodeConfigPanel selectedNode={selectedNode} onNodeDataChange={onNodeDataChange} />
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

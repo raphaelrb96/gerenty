@@ -27,10 +27,9 @@ type NodePaletteProps = {
 export function NodesPalette({ onNodeAdd }: NodePaletteProps) {
 
     return (
-        <Card>
+        <Card className="border-0 shadow-none">
             <CardHeader>
-                <CardTitle>Paleta de Nós</CardTitle>
-                <CardDescription>Clique em um nó para adicioná-lo ao fluxo.</CardDescription>
+                <CardDescription>Clique em uma tarefa para adicioná-la ao fluxo.</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="grid grid-cols-2 gap-4">

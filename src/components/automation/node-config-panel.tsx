@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import type { Node } from "reactflow";
@@ -14,6 +12,7 @@ import { useState, useEffect } from "react";
 import { getLibraryMessagesByCompany } from "@/services/library-message-service";
 import { useCompany } from "@/context/company-context";
 import { useToast } from "@/hooks/use-toast";
+import { DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog";
 
 
 type NodeConfigPanelProps = {
@@ -115,11 +114,16 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange }: NodeConfigPa
 
     if (!selectedNode) {
         return (
-            <div className="h-full flex flex-col items-center justify-center text-center p-6 text-muted-foreground bg-card border-l">
-                <Settings className="h-12 w-12 mb-4" />
-                <h3 className="text-lg font-medium">Configurações do Nó</h3>
-                <p className="text-sm">Selecione um nó no fluxograma para ver e editar suas propriedades aqui.</p>
+            <>
+            <DialogHeader>
+                <DialogTitle>Configuração da Tarefa</DialogTitle>
+                <DialogDescription>Selecione uma tarefa no fluxograma para ver e editar suas propriedades aqui.</DialogDescription>
+            </DialogHeader>
+            <div className="h-32 flex flex-col items-center justify-center text-center p-6 text-muted-foreground">
+                <Settings className="h-8 w-8 mb-2" />
+                <p className="text-sm">Nenhuma tarefa selecionada.</p>
             </div>
+            </>
         );
     }
     
@@ -134,7 +138,7 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange }: NodeConfigPa
                  return (
                     <div className="flex flex-col items-center justify-center text-center text-muted-foreground p-4">
                         <HelpCircle className="h-8 w-8 mb-2" />
-                        <p>Nó de tipo desconhecido. Não há configurações disponíveis.</p>
+                        <p>Tarefa de tipo desconhecido. Não há configurações disponíveis.</p>
                     </div>
                 )
         }
@@ -142,18 +146,16 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange }: NodeConfigPa
 
 
     return (
-        <div className="h-full bg-card border-l p-4">
-            <Card className="h-full border-0 shadow-none">
-                <CardHeader>
-                    <CardTitle>Configurar: {selectedNode.data.label}</CardTitle>
-                    <CardDescription>
-                        ID do Nó: <span className="font-mono text-xs">{selectedNode.id}</span>
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {renderPanelContent()}
-                </CardContent>
-            </Card>
+        <div className="h-full bg-card">
+            <DialogHeader>
+                <DialogTitle>Configurar: {selectedNode.data.label}</DialogTitle>
+                 <DialogDescription>
+                    ID da Tarefa: <span className="font-mono text-xs">{selectedNode.id}</span>
+                </DialogDescription>
+            </DialogHeader>
+            <div className="p-4">
+                {renderPanelContent()}
+            </div>
         </div>
     );
 }
