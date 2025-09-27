@@ -1,21 +1,38 @@
 
+
 "use client";
 
 import type { Node } from "reactflow";
-import { Settings, HelpCircle } from "lucide-react";
+import { Settings, HelpCircle, PlusCircle, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Separator } from "../ui/separator";
 import type { LibraryMessage } from "@/lib/types";
-import { useState, useEffect } from "react";
+import { useState, useEffect, KeyboardEvent } from "react";
 import { getLibraryMessagesByCompany } from "@/services/library-message-service";
 import { useCompany } from "@/context/company-context";
 import { useToast } from "@/hooks/use-toast";
 import { SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetFooter } from "../ui/sheet";
 import { ScrollArea } from "../ui/scroll-area";
 import { Button } from "../ui/button";
-
+import { Badge } from "../ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 type NodeConfigPanelProps = {
     selectedNode: Node | null;
@@ -25,13 +42,50 @@ type NodeConfigPanelProps = {
 function TriggerPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'] }) {
     
     const triggerType = node.data.triggerType || 'keyword';
+    const [keywords, setKeywords] = useState<string[]>(node.data.triggerKeywords || []);
+    const [newKeyword, setNewKeyword] = useState("");
+    const [editingKeyword, setEditingKeyword] = useState<{ index: number; value: string } | null>(null);
+
+    useEffect(() => {
+        setKeywords(node.data.triggerKeywords || []);
+    }, [node.data.triggerKeywords]);
+
+
+    const handleAddKeyword = () => {
+        if (newKeyword && !keywords.includes(newKeyword)) {
+            const updatedKeywords = [...keywords, newKeyword];
+            setKeywords(updatedKeywords);
+            onNodeDataChange(node.id, { triggerKeywords: updatedKeywords });
+            setNewKeyword("");
+        }
+    };
+    
+    const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleAddKeyword();
+        }
+    }
+
+    const handleDeleteKeyword = (index: number) => {
+        const updatedKeywords = keywords.filter((_, i) => i !== index);
+        setKeywords(updatedKeywords);
+        onNodeDataChange(node.id, { triggerKeywords: updatedKeywords });
+    };
+
+    const handleUpdateKeyword = () => {
+        if (editingKeyword) {
+            const updatedKeywords = [...keywords];
+            updatedKeywords[editingKeyword.index] = editingKeyword.value;
+            setKeywords(updatedKeywords);
+            onNodeDataChange(node.id, { triggerKeywords: updatedKeywords });
+            setEditingKeyword(null);
+        }
+    };
+
 
     const handleTriggerTypeChange = (value: string) => {
         onNodeDataChange(node.id, { triggerType: value });
-    };
-
-    const handleKeywordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        onNodeDataChange(node.id, { triggerKeyword: e.target.value });
     };
 
     const handleMatchTypeChange = (value: string) => {
@@ -70,13 +124,33 @@ function TriggerPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange
             {triggerType === 'keyword' && (
                 <div className="space-y-4 pt-4 border-t">
                     <div className="space-y-2">
-                        <Label htmlFor="keyword-input">Palavra-Chave</Label>
-                        <Input 
-                            id="keyword-input" 
-                            placeholder="Ex: olá, preço, suporte" 
-                            value={node.data.triggerKeyword || ""}
-                            onChange={handleKeywordChange}
-                        />
+                        <Label htmlFor="keyword-input">Palavras-Chave</Label>
+                         <div className="flex gap-2">
+                            <Input
+                                id="keyword-input"
+                                placeholder="Digite uma palavra-chave"
+                                value={newKeyword}
+                                onChange={(e) => setNewKeyword(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                            />
+                            <Button type="button" onClick={handleAddKeyword}><PlusCircle className="h-4 w-4" /></Button>
+                        </div>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                            {keywords.map((kw, index) => (
+                                <Badge key={index} variant="secondary" className="text-base py-1 pl-3 pr-1">
+                                    {kw}
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-5 w-5 ml-1"><MoreHorizontal className="h-4 w-4" /></Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent>
+                                            <DropdownMenuItem onSelect={() => setEditingKeyword({ index, value: kw })}><Pencil className="mr-2 h-4 w-4"/>Editar</DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => handleDeleteKeyword(index)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4"/>Excluir</DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </Badge>
+                            ))}
+                        </div>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="match-type-select">Tipo de Correspondência</Label>
@@ -95,6 +169,22 @@ function TriggerPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange
                             </SelectContent>
                         </Select>
                     </div>
+                     <AlertDialog open={!!editingKeyword} onOpenChange={() => setEditingKeyword(null)}>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Editar Palavra-Chave</AlertDialogTitle>
+                                <AlertDialogDescription>Altere o valor da palavra-chave.</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <Input 
+                                value={editingKeyword?.value || ''}
+                                onChange={(e) => setEditingKeyword(prev => prev ? { ...prev, value: e.target.value } : null)}
+                            />
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleUpdateKeyword}>Salvar</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 </div>
             )}
             

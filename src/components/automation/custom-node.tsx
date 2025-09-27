@@ -14,7 +14,7 @@ export function CustomNode({ data, selected }: NodeProps<{
   label: string, 
   icon: React.ReactNode, 
   color: string, 
-  triggerKeyword?: string,
+  triggerKeywords?: string[],
   triggerType?: string,
   triggerMatchType?: string,
   messageId?: string,
@@ -36,7 +36,9 @@ export function CustomNode({ data, selected }: NodeProps<{
 
   const contentPreview = () => {
     if (data.type === 'keywordTrigger') {
-      return data.triggerKeyword ? `"${data.triggerKeyword}"` : <span className="italic">Nenhuma palavra-chave</span>;
+      return data.triggerKeywords && data.triggerKeywords.length > 0
+        ? `"${data.triggerKeywords[0]}"...` 
+        : <span className="italic">Nenhuma palavra-chave</span>;
     }
     if (data.type === 'message') {
       return data.messageId ? `ID: ...${data.messageId.slice(-4)}` : <span className="italic">Nenhuma mensagem</span>;
@@ -64,9 +66,13 @@ export function CustomNode({ data, selected }: NodeProps<{
             <CardTitle className="text-sm font-semibold">{data.label}</CardTitle>
           </CardHeader>
           <CardContent className="px-3 pb-3 pt-0 text-xs text-muted-foreground space-y-2">
-              <div className="flex justify-between items-center">
-                  <span className="font-medium">Gatilho:</span>
-                  <Badge variant="secondary">{data.triggerKeyword || 'N/A'}</Badge>
+              <div className="flex flex-wrap gap-1">
+                  <span className="font-medium mr-2">Gatilhos:</span>
+                  {(data.triggerKeywords && data.triggerKeywords.length > 0) ? (
+                    data.triggerKeywords.map(kw => <Badge key={kw} variant="secondary">{kw}</Badge>)
+                  ) : (
+                    <Badge variant="outline">Nenhum</Badge>
+                  )}
               </div>
               <div className="flex justify-between items-center">
                   <span className="font-medium">Correspondência:</span>

@@ -1,5 +1,4 @@
 
-
 import type { FieldValue, Timestamp } from "firebase/firestore";
 
 export type User = {
@@ -882,7 +881,7 @@ export type Flow = {
     name: string;
     trigger: {
         type: 'keyword';
-        value: string;
+        value: string | string[]; // Can be a single string or an array of strings
         matchType: 'exact' | 'contains' | 'regex';
     };
     nodes: any[]; // React Flow nodes
