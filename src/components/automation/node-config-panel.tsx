@@ -3,7 +3,7 @@
 "use client";
 
 import type { Node } from "reactflow";
-import { Settings, HelpCircle, PlusCircle, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Settings, HelpCircle, PlusCircle, MoreHorizontal, Pencil, Trash2, Save } from "lucide-react";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
@@ -37,6 +37,8 @@ import {
 type NodeConfigPanelProps = {
     selectedNode: Node | null;
     onNodeDataChange: (nodeId: string, data: any) => void;
+    onSave: () => Promise<void>;
+    hasUnsavedChanges: boolean;
 }
 
 function TriggerPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'] }) {
@@ -274,7 +276,7 @@ function MessagePanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange
 }
 
 
-export function NodeConfigPanel({ selectedNode, onNodeDataChange }: NodeConfigPanelProps) {
+export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, hasUnsavedChanges }: NodeConfigPanelProps) {
 
     const renderPanelContent = () => {
         if (!selectedNode) {
@@ -313,6 +315,12 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange }: NodeConfigPa
             <ScrollArea className="flex-1 px-6">
                 {renderPanelContent()}
             </ScrollArea>
+             <SheetFooter className="p-6 border-t">
+                <Button variant="outline" onClick={onSave} disabled={!hasUnsavedChanges}>
+                    <Save className="mr-2 h-4 w-4" />
+                    Salvar Alterações
+                </Button>
+            </SheetFooter>
         </SheetContent>
     );
 }

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -204,13 +205,11 @@ export default function EditConversationFlowPage() {
         };
 
         try {
-            // Remove functions before saving
-            const { onConfigure, onDelete, ...restData } = dataToUpdate as any;
-            await updateFlow(flow.id, restData);
+            await updateFlow(flow.id, dataToUpdate);
             setFlow(prev => prev ? { ...prev, ...dataToUpdate } as Flow : null);
             toast({ title: "Configurações do fluxo salvas com sucesso!" });
             setIsFlowSettingsOpen(false);
-            setHasUnsavedChanges(true); // Technically, this will be saved with the main button, but good to keep state consistent
+            setHasUnsavedChanges(true);
         } catch (error) {
             toast({ variant: 'destructive', title: "Erro ao salvar configurações" });
         }
@@ -337,7 +336,12 @@ export default function EditConversationFlowPage() {
             </Dialog>
             
             <Sheet open={isConfigOpen} onOpenChange={(isOpen) => { if (!isOpen) setSelectedNode(null); setIsConfigOpen(isOpen);}}>
-                <NodeConfigPanel selectedNode={selectedNode} onNodeDataChange={onNodeDataChange} />
+                <NodeConfigPanel 
+                    selectedNode={selectedNode} 
+                    onNodeDataChange={onNodeDataChange} 
+                    onSave={handleSaveFlow}
+                    hasUnsavedChanges={hasUnsavedChanges}
+                />
             </Sheet>
             
             <Sheet open={isFlowSettingsOpen} onOpenChange={setIsFlowSettingsOpen}>
