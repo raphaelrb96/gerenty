@@ -47,7 +47,6 @@ export function CustomNode({ data, selected }: NodeProps<{
   if (isMainTrigger) {
     return (
       <div className="relative group min-w-[280px]">
-        <Handle type="target" position={Position.Top} className="!bg-primary !w-3 !h-3" isConnectable={false} />
         <Card className={cn(
           "border-l-4 hover:shadow-lg transition-shadow bg-accent/10",
           selected ? 'ring-2 ring-primary ring-offset-2' : 'border-transparent',
