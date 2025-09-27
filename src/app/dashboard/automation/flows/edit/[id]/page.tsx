@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { PageHeader } from "@/components/common/page-header";
 import { FlowBuilder } from "@/components/automation/flow-builder";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
@@ -9,16 +8,13 @@ import { getFlowById, updateFlow } from "@/services/flow-service";
 import { useToast } from "@/hooks/use-toast";
 import type { Flow } from "@/lib/types";
 import { useRouter, useParams } from 'next/navigation';
-import type { Node, Edge, OnNodesChange, OnEdgesChange } from "reactflow";
-import { applyNodeChanges, applyEdgeChanges } from 'reactflow';
+import type { Node, Edge, OnNodesChange, OnEdgesChange, Connection } from "reactflow";
+import { applyNodeChanges, applyEdgeChanges, addEdge } from 'reactflow';
 import { NodeConfigPanel } from "@/components/automation/node-config-panel";
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/components/ui/resizable";
-import { Card } from "@/components/ui/card";
+import { NodesPalette } from "@/components/automation/nodes-palette";
 import { Bot, MessageCircle } from "lucide-react";
+import { Card } from "@/components/ui/card";
+
 
 // Debounce function
 const debounce = <F extends (...args: any[]) => any>(func: F, waitFor: number) => {
@@ -36,10 +32,10 @@ const debounce = <F extends (...args: any[]) => any>(func: F, waitFor: number) =
 };
 
 const nodeTypeConfig = {
-    keywordTrigger: { icon: <Bot size={20} />, color: 'bg-yellow-500/20 border-yellow-500' },
-    message: { icon: <MessageCircle size={20} />, color: 'bg-green-500/20 border-green-500' },
-    // Adicione outros tipos de nó aqui
+    keywordTrigger: { icon: <Bot size={20} />, color: 'border-yellow-500', defaultData: { label: 'Gatilho: Palavra-Chave', type: 'keywordTrigger' } },
+    message: { icon: <MessageCircle size={20} />, color: 'border-green-500', defaultData: { label: 'Enviar Mensagem', type: 'message' } },
 };
+
 
 const enrichNodeData = (node: Node): Node => {
     const config = nodeTypeConfig[node.data.type as keyof typeof nodeTypeConfig] || {};
@@ -52,7 +48,6 @@ const enrichNodeData = (node: Node): Node => {
         },
     };
 };
-
 
 export default function EditConversationFlowPage() {
     const { toast } = useToast();
@@ -94,25 +89,22 @@ export default function EditConversationFlowPage() {
     const saveFlow = useCallback(async (nodesToSave: Node[], edgesToSave: Edge[]) => {
         if (!flow) return;
         try {
-            const nodesToPersist = nodesToSave.map(n => ({
-                id: n.id,
-                type: n.type,
-                position: n.position,
-                data: {
-                    label: n.data.label,
-                    type: n.data.type,
-                    triggerKeyword: n.data.triggerKeyword,
-                    triggerMatchType: n.data.triggerMatchType,
-                    messageId: n.data.messageId,
+            const nodesToPersist = nodesToSave.map(n => {
+                const { icon, color, ...restData } = n.data; // Remove transient data
+                return {
+                    id: n.id,
+                    type: n.type,
+                    position: n.position,
+                    data: restData,
                 }
-            }));
+            });
             await updateFlow(flow.id, { nodes: nodesToPersist, edges: edgesToSave });
         } catch (error) {
             toast({ variant: 'destructive', title: "Erro ao salvar", description: "Não foi possível salvar as alterações." });
         }
     }, [flow, toast]);
     
-    const debouncedSave = useCallback(debounce(saveFlow, 2000), [saveFlow]);
+    const debouncedSave = useMemo(() => debounce(saveFlow, 2000), [saveFlow]);
 
     const onNodesChange: OnNodesChange = useCallback((changes) => {
         setNodes((nds) => {
@@ -143,7 +135,8 @@ export default function EditConversationFlowPage() {
         setNodes((nds) => {
             const newNodes = nds.map((node) => {
                 if (node.id === nodeId) {
-                    return { ...node, data: { ...node.data, ...data } };
+                    const enrichedNode = enrichNodeData({ ...node, data: { ...node.data, ...data } });
+                    return enrichedNode;
                 }
                 return node;
             });
@@ -156,32 +149,50 @@ export default function EditConversationFlowPage() {
         });
     };
 
+    const addNode = (type: keyof typeof nodeTypeConfig) => {
+        const config = nodeTypeConfig[type];
+        const newNode: Node = {
+            id: `${nodes.length + 1}`,
+            type: 'custom',
+            position: { x: Math.random() * 400, y: Math.random() * 400 },
+            data: config.defaultData,
+        };
+        const enriched = enrichNodeData(newNode);
+        setNodes((nds) => nds.concat(enriched));
+    };
+
+     const onConnect = useCallback(
+        (params: Edge | Connection) => setEdges((eds) => addEdge(params, eds)),
+        [setEdges]
+    );
+
     if (loading) {
         return <LoadingSpinner />;
     }
 
     return (
-        <div className="h-[calc(100vh-8rem)] flex flex-col">
-            <PageHeader
-                title={flow?.name || "Editando Fluxo"}
-                description="Desenhe o fluxo da conversa usando nós e conexões para automatizar o atendimento."
-            />
-             <Card className="flex-1 mt-4">
-                <ResizablePanelGroup direction="horizontal" className="h-full">
-                    <ResizablePanel defaultSize={75}>
-                        <FlowBuilder 
-                            nodes={nodes}
-                            edges={edges}
-                            onNodesChange={onNodesChange}
-                            onEdgesChange={onEdgesChange}
-                        />
-                    </ResizablePanel>
-                    <ResizableHandle withHandle />
-                    <ResizablePanel defaultSize={25} minSize={20} maxSize={30}>
-                        <NodeConfigPanel selectedNode={selectedNode} onNodeDataChange={onNodeDataChange} />
-                    </ResizablePanel>
-                </ResizablePanelGroup>
-            </Card>
+        <div className="h-[calc(100vh-8rem)] flex flex-col gap-4">
+            <header>
+                <PageHeader
+                    title={flow?.name || "Editando Fluxo"}
+                    description="Crie e gerencie fluxos de conversa interativos para automatizar o atendimento."
+                />
+            </header>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                 <NodesPalette onNodeAdd={addNode} />
+                 <NodeConfigPanel selectedNode={selectedNode} onNodeDataChange={onNodeDataChange} />
+            </div>
+
+            <main className="flex-1 border rounded-lg overflow-hidden bg-background">
+                <FlowBuilder 
+                    nodes={nodes}
+                    edges={edges}
+                    onNodesChange={onNodesChange}
+                    onEdgesChange={onEdgesChange}
+                    onConnect={onConnect}
+                />
+            </main>
         </div>
     );
 }

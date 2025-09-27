@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import React, { useCallback } from 'react';
@@ -29,14 +27,10 @@ type FlowBuilderProps = {
     edges: Edge[];
     onNodesChange: OnNodesChange;
     onEdgesChange: OnEdgesChange;
+    onConnect: (params: Edge | Connection) => void;
 };
 
-export function FlowBuilder({ nodes, edges, onNodesChange, onEdgesChange }: FlowBuilderProps) {
-
-  const onConnect = useCallback(
-    (params: Edge | Connection) => onEdgesChange((eds) => addEdge(params, eds)),
-    [onEdgesChange]
-  );
+export function FlowBuilder({ nodes, edges, onNodesChange, onEdgesChange, onConnect }: FlowBuilderProps) {
 
   return (
     <div style={{ width: '100%', height: '100%' }}>
