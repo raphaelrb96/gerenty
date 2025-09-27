@@ -280,19 +280,18 @@ export default function EditConversationFlowPage() {
     };
 
      const addNode = (type: keyof typeof nodeTypeConfig, sourceHandle?: string) => {
-         if (quickAddSourceNode) {
-            const sourceNodeIsConditional = quickAddSourceNode.data.type === 'conditional';
-            // Only check for existing connections if the source is not a conditional node
-            if (!sourceNodeIsConditional) {
-                const sourceHasConnection = edges.some(edge => edge.source === quickAddSourceNode.id);
-                if (sourceHasConnection) {
-                    toast({
-                        variant: 'destructive',
-                        title: 'Conexão Inválida',
-                        description: 'Esta tarefa já possui uma conexão de saída. Use o nó "Dividir Fluxo" para criar ramificações.'
-                    });
-                    return; // Stop execution
-                }
+        const sourceNodeIsConditional = quickAddSourceNode?.data.type === 'conditional';
+    
+        // Check if the source node can have another connection
+        if (quickAddSourceNode && !sourceNodeIsConditional) {
+            const sourceHasConnection = edges.some(edge => edge.source === quickAddSourceNode.id);
+            if (sourceHasConnection) {
+                toast({
+                    variant: 'destructive',
+                    title: 'Conexão Inválida',
+                    description: 'Esta tarefa já possui uma conexão de saída. Use o nó "Dividir Fluxo" para criar ramificações.'
+                });
+                return; // Stop execution
             }
         }
         
@@ -362,25 +361,19 @@ export default function EditConversationFlowPage() {
             }
 
             const sourceNode = nodes.find((node) => node.id === params.source);
-            const isConditional = sourceNode?.data.type === 'conditional';
             
-            // Rule 2: Source handle can only have one connection, unless it's a conditional node.
-            const sourceHandleHasConnection = eds.some(
-                (edge) => edge.source === params.source && edge.sourceHandle === params.sourceHandle
-            );
-
-            if (sourceHandleHasConnection) {
-                if (isConditional) {
-                    toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Este ponto de condição já possui uma conexão de saída.' });
-                } else {
+            // Rule 2: Non-conditional nodes can only have one outgoing connection.
+            if (sourceNode && sourceNode.data.type !== 'conditional') {
+                const sourceHasConnection = eds.some(edge => edge.source === params.source);
+                if (sourceHasConnection) {
                     toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Esta tarefa já possui uma conexão de saída. Use o nó "Dividir Fluxo" para criar ramificações.' });
+                    return eds;
                 }
-                return eds;
             }
             
             setHasUnsavedChanges(true);
             
-            if (isConditional && params.source && params.sourceHandle) {
+            if (sourceNode && sourceNode.data.type === 'conditional' && params.source && params.sourceHandle) {
                  setNodes(nds => {
                      const sourceNodeToUpdate = nds.find(n => n.id === params.source);
                      if (sourceNodeToUpdate) {
@@ -647,3 +640,4 @@ export default function EditConversationFlowPage() {
 
 
     
+
