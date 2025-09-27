@@ -60,18 +60,13 @@ export function CustomNode({ data, selected }: NodeProps<{
   const isDeletable = data.isDeletable !== false;
   const isMainTrigger = data.isMainTrigger === true;
 
-  const handlePositions = (count: number) => {
-    const positions = [];
-    if (count === 0) return ['50%'];
-    const spacing = 1 / (count + 1);
-    for (let i = 1; i <= count; i++) {
-        positions.push(`${i * spacing * 100}%`);
-    }
-    return positions;
+  const getVerticalHandlePosition = (index: number) => {
+    const headerHeight = 45; // Approximate height of the CardHeader
+    const itemHeight = 36;   // Approximate height of each condition item div
+    const spacing = 8;       // Approximate spacing between items
+    const topOffset = headerHeight + (index * (itemHeight + spacing)) + (itemHeight / 2);
+    return `${topOffset}px`;
   };
-  
-  const conditionHandlePositions = handlePositions(data.conditions?.length || 0);
-
 
   return (
     <div className="relative group">
@@ -83,9 +78,9 @@ export function CustomNode({ data, selected }: NodeProps<{
                 <Handle
                     key={cond.id}
                     type="source"
-                    position={Position.Bottom}
+                    position={Position.Right}
                     id={cond.id}
-                    style={{ left: conditionHandlePositions[index] }}
+                    style={{ top: getVerticalHandlePosition(index) }}
                     className="!bg-cyan-500 !w-3 !h-3"
                 />
             ))}
@@ -93,7 +88,7 @@ export function CustomNode({ data, selected }: NodeProps<{
                 type="source"
                 position={Position.Bottom}
                 id="else"
-                style={{ left: '50%', transform: 'translateX(-50%)', bottom: -15 }}
+                style={{ left: '50%', transform: 'translateX(-50%)' }}
                 className="!bg-gray-500 !w-3 !h-3"
             />
         </>
@@ -126,9 +121,20 @@ export function CustomNode({ data, selected }: NodeProps<{
                     )}
                 </div>
             </CardContent>
-        ) : !isMainTrigger && (
+        ) : !isMainTrigger && data.type !== 'conditional' ? (
              <CardContent className="px-3 pb-3 pt-2 text-xs text-muted-foreground min-h-[40px]">
               <Badge variant="secondary" className="w-full justify-center truncate">{contentPreview()}</Badge>
+            </CardContent>
+        ) : data.type === 'conditional' && (
+            <CardContent className="px-3 pb-3 pt-2 space-y-2">
+                 {(data.conditions || []).map((cond: any, index: number) => (
+                    <div key={cond.id} className="text-xs p-2 bg-muted rounded-md flex justify-between items-center relative">
+                        <span>Se <strong>{`{{${cond.variable || '...'}}}`}</strong> {cond.operator} <strong>{cond.value || '...'}</strong></span>
+                    </div>
+                ))}
+                 <div className="text-xs p-2 bg-muted rounded-md flex justify-between items-center relative">
+                    <span>Senão (Padrão)</span>
+                </div>
             </CardContent>
         )}
         
