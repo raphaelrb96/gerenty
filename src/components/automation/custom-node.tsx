@@ -2,7 +2,7 @@
 
 "use client";
 
-import { Handle, Position, NodeProps } from 'reactflow';
+import { Handle, Position, NodeProps, useReactFlow } from 'reactflow';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../ui/card';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
@@ -10,10 +10,11 @@ import { Badge } from '../ui/badge';
 import { Settings, Trash2, Zap, PlusCircle } from 'lucide-react';
 import { useTranslation } from '@/context/i18n-context';
 
-export function CustomNode({ data, selected }: NodeProps<{ 
+export function CustomNode({ data, selected, id: nodeId }: NodeProps<{ 
   label: string, 
   icon: React.ReactNode, 
   color: string, 
+  type: string,
   triggerKeywords?: { value: string; matchType: string }[],
   triggerType?: string,
   messageId?: string,
@@ -29,6 +30,8 @@ export function CustomNode({ data, selected }: NodeProps<{
   onQuickAdd: () => void,
 }>) {
   
+  const { getEdges } = useReactFlow();
+
   const getMatchTypeLabel = (matchType?: string) => {
     switch (matchType) {
       case 'exact': return 'Exata';
@@ -61,6 +64,16 @@ export function CustomNode({ data, selected }: NodeProps<{
   const isDeletable = data.isDeletable !== false;
   
   const isMainTrigger = data.isMainTrigger === true;
+
+  const isConnectable = () => {
+    if (data.type === 'conditional') {
+      return true; // Conditional nodes can have multiple outgoing connections
+    }
+    const edges = getEdges();
+    const outgoingEdges = edges.filter(edge => edge.source === nodeId);
+    return outgoingEdges.length < 1;
+  };
+
 
   if (isMainTrigger) {
     return (
@@ -112,7 +125,7 @@ export function CustomNode({ data, selected }: NodeProps<{
             </Button>
           </CardFooter>
         </Card>
-        <Handle type="source" position={Position.Bottom} className="!bg-primary !w-3 !h-3" />
+        <Handle type="source" position={Position.Bottom} className="!bg-primary !w-3 !h-3" isConnectable={isConnectable()} />
       </div>
     )
   }
@@ -166,8 +179,7 @@ export function CustomNode({ data, selected }: NodeProps<{
             )}
         </CardFooter>
       </Card>
-      <Handle type="source" position={Position.Bottom} className="!bg-primary !w-3 !h-3" />
+      <Handle type="source" position={Position.Bottom} className="!bg-primary !w-3 !h-3" isConnectable={isConnectable()} />
     </div>
   );
 }
-
