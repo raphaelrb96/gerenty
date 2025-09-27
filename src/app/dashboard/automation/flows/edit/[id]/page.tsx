@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -11,9 +12,14 @@ import type { Node, Edge, OnNodesChange, OnEdgesChange, Connection } from "react
 import { applyNodeChanges, applyEdgeChanges, addEdge } from 'reactflow';
 import { NodeConfigPanel } from "@/components/automation/node-config-panel";
 import { NodesPalette } from "@/components/automation/nodes-palette";
-import { Bot, MessageCircle, Settings, Plus } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Bot, MessageCircle, Settings, Plus, Pencil } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/common/page-header";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
 
 
 // Debounce function
@@ -63,6 +69,12 @@ export default function EditConversationFlowPage() {
 
     const [isPaletteOpen, setIsPaletteOpen] = useState(false);
     const [isConfigOpen, setIsConfigOpen] = useState(false);
+    const [isFlowSettingsOpen, setIsFlowSettingsOpen] = useState(false);
+    
+    // State for flow settings form
+    const [flowName, setFlowName] = useState("");
+    const [flowStatus, setFlowStatus] = useState<Flow['status']>('draft');
+
 
     useEffect(() => {
         if (typeof flowId !== 'string') return;
@@ -75,6 +87,8 @@ export default function EditConversationFlowPage() {
                     setFlow(fetchedFlow);
                     setNodes((fetchedFlow.nodes || []).map(enrichNodeData));
                     setEdges(fetchedFlow.edges || []);
+                    setFlowName(fetchedFlow.name);
+                    setFlowStatus(fetchedFlow.status);
                 } else {
                     toast({ variant: 'destructive', title: "Fluxo não encontrado" });
                     router.push('/dashboard/automation');
@@ -106,6 +120,18 @@ export default function EditConversationFlowPage() {
             toast({ variant: 'destructive', title: "Erro ao salvar", description: "Não foi possível salvar as alterações." });
         }
     }, [flow, toast]);
+    
+    const handleFlowSettingsSave = async () => {
+        if (!flow) return;
+        try {
+            await updateFlow(flow.id, { name: flowName, status: flowStatus });
+            setFlow(prev => prev ? { ...prev, name: flowName, status: flowStatus } : null);
+            toast({ title: "Configurações do fluxo salvas com sucesso!" });
+            setIsFlowSettingsOpen(false);
+        } catch (error) {
+            toast({ variant: 'destructive', title: "Erro ao salvar configurações" });
+        }
+    };
     
     const debouncedSave = useMemo(() => debounce(saveFlow, 2000), [saveFlow]);
 
@@ -174,8 +200,16 @@ export default function EditConversationFlowPage() {
     }
 
     return (
-        <div className="h-[calc(100vh-8rem)] w-full relative">
-            <div className="absolute top-4 left-4 z-10 space-x-2">
+        <div className="h-[calc(100vh-8rem)] w-full relative p-4">
+             <header className="mb-4 flex justify-between items-center">
+                <h1 className="text-2xl font-bold">{flow?.name || "Carregando..."}</h1>
+                 <Button variant="outline" onClick={() => setIsFlowSettingsOpen(true)}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Editar Fluxo
+                </Button>
+            </header>
+
+            <div className="absolute top-20 left-4 z-10 space-x-2">
                 <Button onClick={() => setIsPaletteOpen(true)}>
                     <Plus className="mr-2 h-4 w-4" />
                     Adicionar Tarefa
@@ -210,6 +244,40 @@ export default function EditConversationFlowPage() {
                      <NodeConfigPanel selectedNode={selectedNode} onNodeDataChange={onNodeDataChange} />
                 </DialogContent>
             </Dialog>
+            
+            <Dialog open={isFlowSettingsOpen} onOpenChange={setIsFlowSettingsOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Configurações do Fluxo</DialogTitle>
+                        <DialogDescription>
+                            Altere o nome e o status do seu fluxo de conversa.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="flow-name">Nome do Fluxo</Label>
+                            <Input id="flow-name" value={flowName} onChange={(e) => setFlowName(e.target.value)} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="flow-status">Status</Label>
+                            <Select value={flowStatus} onValueChange={(value) => setFlowStatus(value as Flow['status'])}>
+                                <SelectTrigger id="flow-status">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="draft">Rascunho</SelectItem>
+                                    <SelectItem value="published">Publicado</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                     <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsFlowSettingsOpen(false)}>Cancelar</Button>
+                        <Button onClick={handleFlowSettingsSave}>Salvar</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
+
