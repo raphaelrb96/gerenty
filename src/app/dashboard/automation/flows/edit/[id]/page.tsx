@@ -348,9 +348,9 @@ export default function EditConversationFlowPage() {
         const referenceNode = quickAddSourceNode || nodes.find(n => n.id === '1');
         
         if (referenceNode) {
-            position = {
-                x: referenceNode.position.x,
-                y: referenceNode.position.y + (referenceNode.height || 100) + spacingY
+             position = {
+                x: referenceNode.position.x + nodeWidth + spacingX,
+                y: referenceNode.position.y
             };
         }
 
@@ -359,12 +359,15 @@ export default function EditConversationFlowPage() {
         while(isOverlapping) {
             isOverlapping = false;
             for (const existingNode of nodes) {
-                const xOverlap = Math.abs(position.x - existingNode.position.x) * 2 < (nodeWidth + spacingX);
-                const yOverlap = Math.abs(position.y - existingNode.position.y) * 2 < (nodeHeight + spacingY);
-
-                if (xOverlap && yOverlap) {
+                // Check for overlap within a bounding box
+                if (
+                    position.x < existingNode.position.x + nodeWidth + spacingX &&
+                    position.x + nodeWidth + spacingX > existingNode.position.x &&
+                    position.y < existingNode.position.y + nodeHeight + spacingY &&
+                    position.y + nodeHeight + spacingY > existingNode.position.y
+                ) {
                     isOverlapping = true;
-                    position.x += nodeWidth + spacingX; // Move to the right
+                    position.y += nodeHeight + spacingY; // Move down if overlap
                     break;
                 }
             }
@@ -724,3 +727,6 @@ export default function EditConversationFlowPage() {
     );
 
     
+
+
+      
