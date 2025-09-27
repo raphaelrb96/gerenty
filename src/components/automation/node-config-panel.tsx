@@ -35,7 +35,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { nodeTypeConfig } from "@/app/dashboard/automation/flows/edit/[id]/page";
 import { NodesPalette } from "./nodes-palette";
 
 type NodeConfigPanelProps = {
@@ -46,7 +45,7 @@ type NodeConfigPanelProps = {
     allNodes: Node[]; // Pass all nodes for selection
     allEdges: Edge[];
     onConnect: (source: string, sourceHandle: string, target: string) => void;
-    onCreateAndConnect: (type: keyof typeof nodeTypeConfig, sourceHandle?: string) => Node | undefined;
+    onCreateAndConnect: (type: keyof any, sourceHandle?: string) => Node | undefined;
 }
 
 function TriggerPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'] }) {
@@ -401,9 +400,10 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
     const [editingHandle, setEditingHandle] = useState<string | null>(null);
     const [isPaletteOpen, setIsPaletteOpen] = useState(false);
     const [paletteHandleId, setPaletteHandleId] = useState<string | null>(null);
+    const [actionType, setActionType] = useState<'connect' | 'create' | null>(null);
 
     const availableNodes = allNodes.filter(n => {
-        if (n.id === node.id) return false;
+        if (n.id === '1' || n.id === node.id) return false;
         const hasIncomingConnection = allEdges.some(edge => edge.target === n.id);
         return !hasIncomingConnection;
     });
@@ -423,25 +423,22 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
         newConditions[index][field] = value;
         onNodeDataChange(node.id, { conditions: newConditions });
     };
-
-    const handleConnectNode = (targetNodeId: string) => {
-        if (editingHandle) {
-            onConnect(node.id, editingHandle, targetNodeId);
-        }
-        resetState();
+    
+    const handleConnect = (handleId: string, targetNodeId: string) => {
+        onConnect(node.id, handleId, targetNodeId);
+        setEditingHandle(null);
+        setActionType(null);
     };
 
-    const handleCreateNode = (type: keyof typeof nodeTypeConfig) => {
-        if (paletteHandleId) {
-            onCreateAndConnect(type, paletteHandleId);
-        }
-        resetState();
+    const handleCreate = (handleId: string, nodeType: keyof any) => {
+        onCreateAndConnect(nodeType, handleId);
+        setEditingHandle(null);
+        setActionType(null);
     };
     
-    const resetState = () => {
-        setEditingHandle(null);
-        setIsPaletteOpen(false);
-        setPaletteHandleId(null);
+    const startEditing = (handleId: string) => {
+        setEditingHandle(handleId);
+        setActionType(null); // Reset action type when starting to edit
     };
 
     const getConnectedNodeName = (handleId: string) => {
@@ -482,46 +479,48 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
                         </div>
                         <div className="space-y-2">
                             <Label>ENTÃO</Label>
-                            {connectedNodeName ? (
+                            {connectedNodeName && !isEditingThisHandle ? (
                                 <div className="flex items-center justify-between p-2 border rounded-md bg-background">
                                     <span className="text-sm font-medium truncate">Conectado a: {connectedNodeName}</span>
-                                    <Button type="button" size="sm" variant="outline" onClick={() => setEditingHandle(cond.id)}>Alterar</Button>
+                                    <Button type="button" size="sm" variant="outline" onClick={() => startEditing(cond.id)}>Alterar</Button>
                                 </div>
-                            ) : null}
-
-                            {isEditingThisHandle || !connectedNodeName ? (
+                            ) : (
                                 <div className="space-y-2">
-                                    <Select onValueChange={(value) => {
-                                        if (value === 'create_new') {
-                                            setPaletteHandleId(cond.id);
-                                            setIsPaletteOpen(true);
-                                        } else {
-                                            handleConnectNode(value);
-                                        }
-                                    }}>
-                                        <SelectTrigger><SelectValue placeholder="Conectar ou Criar Tarefa..." /></SelectTrigger>
+                                    <Select value={actionType || ''} onValueChange={(value) => setActionType(value as any)}>
+                                        <SelectTrigger><SelectValue placeholder="Selecione uma ação..." /></SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="create_new">Criar e conectar nova tarefa...</SelectItem>
-                                            <Separator />
-                                            {availableNodes.map(n => <SelectItem key={n.id} value={n.id}>{n.data.label}</SelectItem>)}
+                                            <SelectItem value="connect">Conectar tarefa existente</SelectItem>
+                                            <SelectItem value="create">Criar nova tarefa</SelectItem>
                                         </SelectContent>
                                     </Select>
+
+                                    {actionType === 'connect' && (
+                                        <Select onValueChange={(nodeId) => handleConnect(cond.id, nodeId)}>
+                                            <SelectTrigger><SelectValue placeholder="Selecione um nó..." /></SelectTrigger>
+                                            <SelectContent>
+                                                {availableNodes.map(n => <SelectItem key={n.id} value={n.id}>{n.data.label}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                    )}
+
+                                    {actionType === 'create' && (
+                                        <Select onValueChange={(nodeType) => handleCreate(cond.id, nodeType)}>
+                                            <SelectTrigger><SelectValue placeholder="Selecione o tipo de tarefa..." /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="message">Enviar Mensagem</SelectItem>
+                                                <SelectItem value="captureData">Capturar Dados</SelectItem>
+                                                <SelectItem value="internalAction">Ação Interna</SelectItem>
+                                                {/* Add other node types here */}
+                                            </SelectContent>
+                                        </Select>
+                                    )}
                                 </div>
-                            ) : null}
+                            )}
                         </div>
                     </div>
                 );
             })}
             <Button type="button" variant="outline" size="sm" onClick={handleAddCondition}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Caminho</Button>
-            
-            <AlertDialog open={isPaletteOpen} onOpenChange={setIsPaletteOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Selecione a Tarefa para Criar</AlertDialogTitle>
-                    </AlertDialogHeader>
-                     <NodesPalette onNodeAdd={handleCreateNode} />
-                </AlertDialogContent>
-            </AlertDialog>
         </div>
     );
 }
@@ -622,3 +621,5 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, hasUns
         </SheetContent>
     );
 }
+
+    
