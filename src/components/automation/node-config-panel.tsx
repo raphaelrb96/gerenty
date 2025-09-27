@@ -297,7 +297,7 @@ function CaptureDataPanel({ node, onNodeDataChange }: { node: Node, onNodeDataCh
                     <TextCursorInput className="h-5 w-5 text-muted-foreground" />
                     <Input id="capture-variable" placeholder="cpf_cliente" value={node.data.captureVariable || ''} onChange={handleFieldChange('captureVariable')} />
                 </div>
-                <p className="text-xs text-muted-foreground">Use este nome para referenciar o dado em outros nós (ex: `{{cpf_cliente}}`).</p>
+                <p className="text-xs text-muted-foreground">Use este nome para referenciar o dado em outros nós (ex: {'{{cpf_cliente}}'}).</p>
             </div>
             <div className="space-y-2">
                 <Label htmlFor="capture-validation">Validação</Label>
