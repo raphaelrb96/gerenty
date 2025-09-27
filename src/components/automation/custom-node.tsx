@@ -70,7 +70,7 @@ export function CustomNode({ data, selected }: NodeProps<{
 
   return (
     <div className="relative group">
-      {!isMainTrigger && <Handle type="target" position={Position.Top} className="!bg-primary !w-3 !h-3" />}
+      {!isMainTrigger && <Handle type="target" position={Position.Top} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10 }} />}
       
       {data.type === 'conditional' ? (
         <>
@@ -88,12 +88,12 @@ export function CustomNode({ data, selected }: NodeProps<{
                 type="source"
                 position={Position.Bottom}
                 id="else"
-                style={{ left: '50%', transform: 'translateX(-50%)' }}
+                style={{ left: '50%', transform: 'translateX(-50%)', zIndex: 10 }}
                 className="!bg-gray-500 !w-3 !h-3"
             />
         </>
       ) : (
-        <Handle type="source" position={Position.Bottom} className="!bg-primary !w-3 !h-3" />
+        <Handle type="source" position={Position.Bottom} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10 }} />
       )}
       
       <Card className={cn(
