@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { FlowBuilder } from "@/components/automation/flow-builder";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { getFlowById, updateFlow } from "@/services/flow-service";
@@ -30,21 +30,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-
-// Debounce function
-const debounce = <F extends (...args: any[]) => any>(func: F, waitFor: number) => {
-    let timeout: ReturnType<typeof setTimeout> | null = null;
-
-    const debounced = (...args: Parameters<F>) => {
-        if (timeout !== null) {
-            clearTimeout(timeout);
-            timeout = null;
-        }
-        timeout = setTimeout(() => func(...args), waitFor);
-    };
-
-    return debounced;
-};
 
 const nodeTypeConfig = {
     keywordTrigger: { icon: <Bot size={20} />, color: 'border-yellow-500', defaultData: { label: 'Gatilho: Palavra-Chave', type: 'keywordTrigger' } },
@@ -131,25 +116,6 @@ export default function EditConversationFlowPage() {
         };
         fetchFlow();
     }, [flowId, toast, router]);
-
-    const saveFlow = useCallback(async (nodesToSave: Node[], edgesToSave: Edge[]) => {
-        if (!flow) return;
-        try {
-            const nodesToPersist = nodesToSave.map(n => {
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const { icon, color, onConfigure, onDelete, ...restData } = n.data; // Remove transient data
-                return {
-                    id: n.id,
-                    type: n.type,
-                    position: n.position,
-                    data: restData,
-                }
-            });
-            await updateFlow(flow.id, { nodes: nodesToPersist, edges: edgesToSave });
-        } catch (error) {
-            toast({ variant: 'destructive', title: "Erro ao salvar", description: "Não foi possível salvar as alterações." });
-        }
-    }, [flow, toast]);
     
     const handleFlowSettingsSave = async () => {
         if (!flow) return;
@@ -163,25 +129,16 @@ export default function EditConversationFlowPage() {
         }
     };
     
-    const debouncedSave = useMemo(() => debounce(saveFlow, 2000), [saveFlow]);
-
     const onNodesChange: OnNodesChange = useCallback((changes) => {
         setNodes((nds) => {
             const newNodes = applyNodeChanges(changes, nds);
-            // Re-enrich nodes to ensure callbacks are fresh
-            const enrichedNodes = newNodes.map(n => enrichNodeData(n, handleConfigureNode, handleDeleteNode));
-            debouncedSave(enrichedNodes, edges);
-            return enrichedNodes;
+            return newNodes.map(n => enrichNodeData(n, handleConfigureNode, handleDeleteNode));
         });
-    }, [setNodes, edges, debouncedSave]);
+    }, [setNodes]);
 
     const onEdgesChange: OnEdgesChange = useCallback((changes) => {
-        setEdges((eds) => {
-            const newEdges = applyEdgeChanges(changes, eds);
-            debouncedSave(nodes, newEdges);
-            return newEdges;
-        });
-    }, [setEdges, nodes, debouncedSave]);
+        setEdges((eds) => applyEdgeChanges(changes, eds));
+    }, [setEdges]);
 
     const onNodeDataChange = (nodeId: string, data: any) => {
         setNodes((nds) => {
@@ -195,7 +152,6 @@ export default function EditConversationFlowPage() {
             if (selectedNode?.id === nodeId) {
                  setSelectedNode(newNodes.find(n => n.id === nodeId) || null);
             }
-            debouncedSave(newNodes, edges);
             return newNodes;
         });
     };
