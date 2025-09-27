@@ -61,10 +61,11 @@ export function CustomNode({ data, selected }: NodeProps<{
   const isMainTrigger = data.isMainTrigger === true;
 
   const getVerticalHandlePosition = (index: number) => {
-    const headerHeight = 48; // Approximate height of CardHeader with p-3
-    const itemHeight = 36; // Approximate height of the div with p-2 and text-xs
-    const spacing = 8; // This is the space-y-2 from CardContent
-    const topOffset = headerHeight + (index * (itemHeight + spacing)) + (itemHeight / 2);
+    const headerHeight = 44; // p-3
+    const contentPaddingTop = 8; // pt-2
+    const itemHeight = 36; // p-2 div (approximate)
+    const itemSpacing = 8; // space-y-2
+    const topOffset = headerHeight + contentPaddingTop + (index * (itemHeight + itemSpacing)) + (itemHeight / 2);
     return `${topOffset}px`;
   };
 
@@ -88,7 +89,7 @@ export function CustomNode({ data, selected }: NodeProps<{
                 type="source"
                 position={Position.Bottom}
                 id="else"
-                style={{ left: '50%', transform: 'translateX(-50%)', zIndex: 10 }}
+                style={{ zIndex: 10 }}
                 className="!bg-gray-500 !w-3 !h-3"
             />
         </>
