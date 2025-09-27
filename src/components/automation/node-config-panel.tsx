@@ -397,7 +397,13 @@ function InternalActionPanel({ node, onNodeDataChange }: { node: Node, onNodeDat
 
 function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnect, onCreateAndConnect }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'], allNodes: Node[], allEdges: Edge[], onConnect: NodeConfigPanelProps['onConnect'], onCreateAndConnect: NodeConfigPanelProps['onCreateAndConnect'] }) {
     const conditions = node.data.conditions || [];
-    const [nodeToCreateForHandle, setNodeToCreateForHandle] = useState<string | null>(null);
+    const [action, setAction] = useState<Record<string, 'connect' | 'create' | null>>({});
+    
+    const availableNodes = allNodes.filter(n => {
+        if (n.id === node.id) return false;
+        const hasConnection = allEdges.some(edge => edge.target === n.id);
+        return !hasConnection;
+    });
 
     const handleAddCondition = () => {
         const newConditions = [...conditions, { id: `handle_${Date.now()}`, variable: '', operator: '==', value: '', label: '' }];
@@ -415,25 +421,10 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
         onNodeDataChange(node.id, { conditions: newConditions });
     };
 
-    const handleTargetNodeChange = (sourceHandle: string, target: string) => {
-        if (target === 'create_new_node') {
-            setNodeToCreateForHandle(sourceHandle);
-        } else {
-            setNodeToCreateForHandle(null);
-            onConnect(node.id, sourceHandle, target);
-        }
-    }
-    
-    const availableNodes = allNodes.filter(n => {
-        if (n.id === node.id) return false;
-        const hasConnection = allEdges.some(edge => edge.target === n.id);
-        return !hasConnection;
-    });
-
-    const handleCreateNewNode = (type: keyof typeof nodeTypeConfig) => {
-        if (nodeToCreateForHandle) {
-            onCreateAndConnect(type, nodeToCreateForHandle);
-            setNodeToCreateForHandle(null); // Reset after creation
+    const handleCreateNewNode = (type: keyof typeof nodeTypeConfig, sourceHandle: string) => {
+        if (sourceHandle) {
+            onCreateAndConnect(type, sourceHandle);
+            setAction(prev => ({...prev, [sourceHandle]: null}));
         }
     }
 
@@ -465,20 +456,27 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
                     </div>
                      <div className="space-y-2">
                         <Label>ENTÃO</Label>
-                         <Select onValueChange={(value) => handleTargetNodeChange(cond.id, value)}>
+                         <Select onValueChange={(value) => setAction(prev => ({ ...prev, [cond.id]: value as any }))}>
                             <SelectTrigger>
-                                <SelectValue placeholder="Conectar a um nó..." />
+                                <SelectValue placeholder="Escolha uma ação..." />
                             </SelectTrigger>
                             <SelectContent>
-                                {availableNodes.map(n => <SelectItem key={n.id} value={n.id}>{n.data.label}</SelectItem>)}
-                                <SelectItem value="create_new_node">
-                                    <span className="font-semibold text-primary">Criar nova tarefa...</span>
-                                </SelectItem>
+                                <SelectItem value="connect">Conectar a tarefa existente</SelectItem>
+                                <SelectItem value="create">Criar nova tarefa</SelectItem>
                             </SelectContent>
                         </Select>
 
-                        {nodeToCreateForHandle === cond.id && (
-                             <Select onValueChange={(type) => handleCreateNewNode(type as any)}>
+                        {action[cond.id] === 'connect' && (
+                            <Select onValueChange={(targetNodeId) => onConnect(node.id, cond.id, targetNodeId)}>
+                                <SelectTrigger><SelectValue placeholder="Selecione um nó..." /></SelectTrigger>
+                                <SelectContent>
+                                    {availableNodes.map(n => <SelectItem key={n.id} value={n.id}>{n.data.label}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        )}
+                        
+                        {action[cond.id] === 'create' && (
+                             <Select onValueChange={(type) => handleCreateNewNode(type as any, cond.id)}>
                                 <SelectTrigger><SelectValue placeholder="Selecione o tipo de tarefa..." /></SelectTrigger>
                                 <SelectContent>
                                     {Object.entries(nodeTypeConfig).filter(([key]) => key !== 'keywordTrigger').map(([key, config]) => (
@@ -592,6 +590,8 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, hasUns
         </SheetContent>
     );
 }
+
+    
 
     
 
