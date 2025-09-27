@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -279,21 +280,28 @@ export default function EditConversationFlowPage() {
     };
 
      const addNode = (type: keyof typeof nodeTypeConfig, sourceHandle?: string) => {
-        const config = nodeTypeConfig[type];
-        
+        // Validation for quick-add connection
         if (quickAddSourceNode) {
             const sourceNode = nodes.find(n => n.id === quickAddSourceNode.id);
             const isConditional = sourceNode?.data.type === 'conditional';
-            const sourceHasConnection = edges.some(edge => edge.source === quickAddSourceNode.id && edge.sourceHandle === (sourceHandle || null));
-
-            if (!isConditional && sourceHasConnection) {
-                 toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Esta tarefa já possui uma conexão de saída. Use o nó "Dividir Fluxo" para criar ramificações.' });
-                 setQuickAddSourceNode(null);
-                 setIsPaletteOpen(false);
-                 return;
+            
+            // Allow multiple connections only for conditional nodes
+            if (!isConditional) {
+                const sourceHasConnection = edges.some(edge => edge.source === quickAddSourceNode.id && edge.sourceHandle === (sourceHandle || null));
+                if (sourceHasConnection) {
+                    toast({ 
+                        variant: 'destructive', 
+                        title: 'Conexão Inválida', 
+                        description: 'Esta tarefa já possui uma conexão de saída. Use o nó "Dividir Fluxo" para criar ramificações.' 
+                    });
+                    setQuickAddSourceNode(null);
+                    setIsPaletteOpen(false);
+                    return; // Abort node creation
+                }
             }
         }
         
+        const config = nodeTypeConfig[type];
         let position = { x: Math.random() * 400, y: Math.random() * 400 };
 
         if (quickAddSourceNode) {
