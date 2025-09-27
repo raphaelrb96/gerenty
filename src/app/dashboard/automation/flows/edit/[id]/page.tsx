@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -484,7 +483,7 @@ export default function EditConversationFlowPage() {
                         </Button>
                     )}
                     <Button variant="outline" size="icon" onClick={() => setIsFlowSettingsOpen(true)}>
-                        <Pencil className="h-4 w-4" />
+                        <Settings className="h-4 w-4" />
                     </Button>
                 </div>
             </header>
@@ -693,16 +692,5 @@ export default function EditConversationFlowPage() {
             </AlertDialog>
         </div>
     );
-
-    
-
-
-    
-
-
-
-
-
-
 
     
