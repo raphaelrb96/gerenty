@@ -86,10 +86,11 @@ export function CustomNode({ data, selected }: NodeProps<{
                 />
             ))}
              <Handle
+                key="else-handle"
                 type="source"
-                position={Position.Bottom}
+                position={Position.Right}
                 id="else"
-                style={{ zIndex: 10 }}
+                style={{ top: getVerticalHandlePosition(data.conditions?.length || 0), right: '-0.75rem', zIndex: 10 }}
                 className="!bg-gray-500 !w-3 !h-3"
             />
         </>
@@ -128,7 +129,7 @@ export function CustomNode({ data, selected }: NodeProps<{
             </CardContent>
         ) : data.type === 'conditional' && (
             <CardContent className="px-3 pb-3 pt-2 space-y-2">
-                 {(data.conditions || []).map((cond: any, index: number) => (
+                 {(data.conditions || []).map((cond: any) => (
                     <div key={cond.id} className="text-xs p-2 bg-muted rounded-md flex justify-between items-center relative">
                         <span>Se <strong>{`{{${cond.variable || '...'}}}`}</strong> {cond.operator} <strong>{cond.value || '...'}</strong></span>
                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => data.onQuickAdd(cond.id)}><PlusCircle className="h-4 w-4" /></Button>
