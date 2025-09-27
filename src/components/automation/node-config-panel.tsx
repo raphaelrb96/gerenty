@@ -3,7 +3,7 @@
 
 import type { Node } from "reactflow";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings, HelpCircle } from "lucide-react";
+import { Settings, HelpCircle, FileText, Image, Video, Mic, MapPin } from "lucide-react";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
@@ -21,8 +21,14 @@ type NodeConfigPanelProps = {
     onNodeDataChange: (nodeId: string, data: any) => void;
 }
 
-function KeywordTriggerPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'] }) {
+function TriggerPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'] }) {
     
+    const triggerType = node.data.triggerType || 'keyword';
+
+    const handleTriggerTypeChange = (value: string) => {
+        onNodeDataChange(node.id, { triggerType: value });
+    };
+
     const handleKeywordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         onNodeDataChange(node.id, { triggerKeyword: e.target.value });
     };
@@ -30,39 +36,86 @@ function KeywordTriggerPanel({ node, onNodeDataChange }: { node: Node, onNodeDat
     const handleMatchTypeChange = (value: string) => {
         onNodeDataChange(node.id, { triggerMatchType: value });
     };
+
+    const handleMediaTypeChange = (value: string) => {
+        onNodeDataChange(node.id, { triggerMediaType: value });
+    }
     
     return (
         <div className="space-y-4">
              <p className="text-sm text-muted-foreground">
-                Defina a palavra-chave que irá acionar o início deste fluxo de conversa.
+                Defina o gatilho que irá acionar o início deste fluxo de conversa.
             </p>
             <Separator />
+            
             <div className="space-y-2">
-                <Label htmlFor="keyword-input">Palavra-Chave</Label>
-                <Input 
-                    id="keyword-input" 
-                    placeholder="Ex: olá, preço, suporte" 
-                    value={node.data.triggerKeyword || ""}
-                    onChange={handleKeywordChange}
-                />
-            </div>
-             <div className="space-y-2">
-                <Label htmlFor="match-type-select">Tipo de Correspondência</Label>
-                <Select 
-                    defaultValue={node.data.triggerMatchType || "exact"}
-                    onValueChange={handleMatchTypeChange}
-                >
-                    <SelectTrigger id="match-type-select">
+                <Label htmlFor="trigger-type-select">Tipo de Gatilho</Label>
+                <Select value={triggerType} onValueChange={handleTriggerTypeChange}>
+                    <SelectTrigger id="trigger-type-select">
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="exact">Correspondência Exata</SelectItem>
-                        <SelectItem value="contains">Contém</SelectItem>
-                        <SelectItem value="starts_with">Começa com</SelectItem>
-                        <SelectItem value="regex">Regex (Avançado)</SelectItem>
+                        <SelectItem value="keyword">Palavra-Chave</SelectItem>
+                        <SelectItem value="media">Tipo de Mensagem</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
+
+            {triggerType === 'keyword' && (
+                <div className="space-y-4 pt-4 border-t">
+                    <div className="space-y-2">
+                        <Label htmlFor="keyword-input">Palavra-Chave</Label>
+                        <Input 
+                            id="keyword-input" 
+                            placeholder="Ex: olá, preço, suporte" 
+                            value={node.data.triggerKeyword || ""}
+                            onChange={handleKeywordChange}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="match-type-select">Tipo de Correspondência</Label>
+                        <Select 
+                            defaultValue={node.data.triggerMatchType || "exact"}
+                            onValueChange={handleMatchTypeChange}
+                        >
+                            <SelectTrigger id="match-type-select">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="exact">Correspondência Exata</SelectItem>
+                                <SelectItem value="contains">Contém</SelectItem>
+                                <SelectItem value="starts_with">Começa com</SelectItem>
+                                <SelectItem value="regex">Regex (Avançado)</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+            )}
+            
+            {triggerType === 'media' && (
+                <div className="space-y-4 pt-4 border-t">
+                     <div className="space-y-2">
+                        <Label htmlFor="media-type-select">Tipo de Mídia Recebida</Label>
+                        <Select 
+                            defaultValue={node.data.triggerMediaType}
+                            onValueChange={handleMediaTypeChange}
+                        >
+                            <SelectTrigger id="media-type-select">
+                                <SelectValue placeholder="Selecione um tipo de mídia..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="any">Qualquer Mídia</SelectItem>
+                                <SelectItem value="image">Imagem</SelectItem>
+                                <SelectItem value="video">Vídeo</SelectItem>
+                                <SelectItem value="audio">Áudio</SelectItem>
+                                <SelectItem value="location">Localização</SelectItem>
+                                <SelectItem value="contact">Contato</SelectItem>
+                                <SelectItem value="document">Documento</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
@@ -132,7 +185,7 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange }: NodeConfigPa
         const nodeType = selectedNode.data.type;
         switch(nodeType) {
             case 'keywordTrigger':
-                return <KeywordTriggerPanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
+                return <TriggerPanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
             case 'message':
                  return <MessagePanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
             default:
