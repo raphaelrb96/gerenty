@@ -420,7 +420,6 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
     
     const availableNodes = allNodes.filter(n => {
         if (n.id === node.id) return false;
-        // Check if the node already has an incoming connection
         const hasConnection = allEdges.some(edge => edge.target === n.id);
         return !hasConnection;
     });
@@ -576,3 +575,5 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, hasUns
         </SheetContent>
     );
 }
+
+    

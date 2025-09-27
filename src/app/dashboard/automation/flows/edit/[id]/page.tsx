@@ -282,7 +282,7 @@ export default function EditConversationFlowPage() {
      const addNode = (type: keyof typeof nodeTypeConfig, sourceHandle?: string) => {
         if (quickAddSourceNode) {
             const isConditional = quickAddSourceNode.data.type === 'conditional';
-            // Only check for existing connections if the source is not a conditional node and we are using the default output handle (null)
+            // Only check for existing connections if the source is not a conditional node and we are using a standard output handle
             if (!isConditional && !sourceHandle) {
                 const sourceHasConnection = edges.some(edge => edge.source === quickAddSourceNode.id && !edge.sourceHandle);
                 if (sourceHasConnection) {
@@ -339,7 +339,6 @@ export default function EditConversationFlowPage() {
      const onConnect = useCallback(
         (params: Edge | Connection) => {
             setEdges((currentEdges) => {
-                // Rule 1: A target handle can only have one incoming connection.
                 const targetHasConnection = currentEdges.some(
                     (edge) => edge.target === params.target && edge.targetHandle === params.targetHandle
                 );
@@ -348,7 +347,6 @@ export default function EditConversationFlowPage() {
                     return currentEdges;
                 }
 
-                // Rule 2: A source handle can only have one outgoing connection, unless it's a 'conditional' node.
                 const sourceNode = nodes.find((node) => node.id === params.source);
                 const isConditional = sourceNode?.data.type === 'conditional';
                 
@@ -362,11 +360,11 @@ export default function EditConversationFlowPage() {
                     }
                 }
                 
-                // Rule 3: If connection comes from conditional, automatically create a condition
-                if (isConditional && params.source && !params.sourceHandle) {
+                if (isConditional && params.source && !currentEdges.some(e => e.sourceHandle === params.sourceHandle)) {
                      setNodes(nds => nds.map(n => {
                          if (n.id === params.source) {
-                             const newConditions = [...(n.data.conditions || []), { id: `handle_${Date.now()}`, variable: '', operator: '==', value: '', label: '' }];
+                             const newHandleId = params.sourceHandle || `handle_${Date.now()}`;
+                             const newConditions = [...(n.data.conditions || []), { id: newHandleId, variable: '', operator: '==', value: '', label: '' }];
                              return {...n, data: {...n.data, conditions: newConditions}};
                          }
                          return n;
@@ -619,3 +617,5 @@ export default function EditConversationFlowPage() {
         </div>
     );
 }
+
+    
