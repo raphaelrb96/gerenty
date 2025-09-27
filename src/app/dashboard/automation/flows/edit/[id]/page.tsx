@@ -51,7 +51,7 @@ export const nodeTypeConfig = {
     message: { icon: <MessageCircle size={20} />, color: 'bg-green-500', defaultData: { label: 'Enviar Mensagem', type: 'message' } },
     captureData: { icon: <HelpCircle size={20} />, color: 'bg-blue-500', defaultData: { label: 'Capturar Dados', type: 'captureData' } },
     internalAction: { icon: <Settings size={20} />, color: 'bg-purple-500', defaultData: { label: 'Ação Interna', type: 'internalAction' } },
-    conditional: { icon: <GitBranch size={20} />, color: 'bg-cyan-500', defaultData: { label: 'Dividir Fluxo', type: 'conditional', conditions: [] } },
+    conditional: { icon: <GitBranch size={20} />, color: 'bg-cyan-500', defaultData: { label: 'Condição Lógica', type: 'conditional', conditions: [] } },
     externalApi: { icon: <Share2 size={20} />, color: 'bg-indigo-500', defaultData: { label: 'API Externa', type: 'externalApi' } },
     delay: { icon: <Timer size={20} />, color: 'bg-orange-500', defaultData: { label: 'Aguardar', type: 'delay' } },
     transfer: { icon: <UserCheck size={20} />, color: 'bg-rose-500', defaultData: { label: 'Transferir Atendente', type: 'transfer' } },
@@ -134,15 +134,57 @@ export default function EditConversationFlowPage() {
 
     const confirmDeleteNode = () => {
         if (!nodeToDelete) return;
-        setNodes((nds) => nds.filter(n => n.id !== nodeToDelete.id));
+        
+        // Also remove any edges connected to this node and conditions in conditional nodes
         setEdges((eds) => eds.filter(e => e.source !== nodeToDelete.id && e.target !== nodeToDelete.id));
+        setNodes((nds) => {
+            const newNodes = nds.filter(n => n.id !== nodeToDelete.id);
+            // Clean up conditions that might point to the deleted node
+            return newNodes.map(n => {
+                if (n.data.type === 'conditional' && n.data.conditions) {
+                    const edgeSourceHandles = edges
+                        .filter(e => e.source === n.id)
+                        .map(e => e.sourceHandle)
+                        .filter(Boolean);
+                    
+                    const updatedConditions = n.data.conditions.filter((cond: any) => 
+                        edgeSourceHandles.includes(cond.id)
+                    );
+
+                    if (updatedConditions.length !== n.data.conditions.length) {
+                       return {...n, data: {...n.data, conditions: updatedConditions}};
+                    }
+                }
+                return n;
+            });
+        });
+
         setNodeToDelete(null);
         setHasUnsavedChanges(true);
         toast({ title: "Tarefa removida com sucesso!" });
     };
 
     const handleEdgesDelete = useCallback((edgesToDelete: Edge[]) => {
-        setEdges(eds => eds.filter(e => !edgesToDelete.find(etd => etd.id === e.id)));
+        setEdges(eds => {
+            const newEdges = eds.filter(e => !edgesToDelete.find(etd => etd.id === e.id));
+            
+            // Remove conditions from conditional nodes if their edge is deleted
+            setNodes(nds => nds.map(n => {
+                 if (n.data.type === 'conditional') {
+                    const deletedSourceHandles = edgesToDelete
+                        .filter(e => e.source === n.id)
+                        .map(e => e.sourceHandle);
+                    
+                    if (deletedSourceHandles.length > 0) {
+                        const updatedConditions = (n.data.conditions || []).filter((cond: any) => !deletedSourceHandles.includes(cond.id));
+                        return {...n, data: {...n.data, conditions: updatedConditions}};
+                    }
+                 }
+                 return n;
+            }));
+
+            return newEdges;
+        });
         setHasUnsavedChanges(true);
     }, [setEdges]);
 
@@ -399,14 +441,27 @@ export default function EditConversationFlowPage() {
     }, [nodes, toast]);
 
     const onConnectFromPanel = (source: string, sourceHandle: string, target: string) => {
-        const newEdge: Edge = {
-            id: `e${source}-${target}-${sourceHandle}`,
-            source,
-            sourceHandle,
-            target,
-            type: 'smoothstep'
-        };
-        onConnect(newEdge);
+        // Prevent connecting a conditional handle to an already connected node
+        const targetNodeHasIncomingEdge = edges.some(edge => edge.target === target);
+        if (targetNodeHasIncomingEdge) {
+            toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Esta tarefa de destino já possui uma conexão de entrada.' });
+            return;
+        }
+
+        // Remove existing edge from this source handle if it exists
+        setEdges(prevEdges => {
+            const filteredEdges = prevEdges.filter(edge => !(edge.source === source && edge.sourceHandle === sourceHandle));
+            const newEdge: Edge = {
+                id: `e${source}-${target}-${sourceHandle}`,
+                source,
+                sourceHandle,
+                target,
+                type: 'smoothstep'
+            };
+            return addEdge(newEdge, filteredEdges);
+        });
+
+        setHasUnsavedChanges(true);
     }
 
 
@@ -640,4 +695,5 @@ export default function EditConversationFlowPage() {
 
 
     
+
 

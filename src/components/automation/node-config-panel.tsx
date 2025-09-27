@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import type { Node, Edge } from "reactflow";
@@ -34,8 +35,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
 import { NodesPalette } from "./nodes-palette";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 
 type NodeConfigPanelProps = {
     selectedNode: Node | null;
@@ -400,7 +402,6 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
     const [editingHandle, setEditingHandle] = useState<string | null>(null);
     const [isPaletteOpen, setIsPaletteOpen] = useState(false);
     const [paletteHandleId, setPaletteHandleId] = useState<string | null>(null);
-    const [actionType, setActionType] = useState<'connect' | 'create' | null>(null);
 
     const availableNodes = allNodes.filter(n => {
         if (n.id === '1' || n.id === node.id) return false;
@@ -427,18 +428,17 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
     const handleConnect = (handleId: string, targetNodeId: string) => {
         onConnect(node.id, handleId, targetNodeId);
         setEditingHandle(null);
-        setActionType(null);
     };
 
-    const handleCreate = (handleId: string, nodeType: keyof any) => {
-        onCreateAndConnect(nodeType, handleId);
-        setEditingHandle(null);
-        setActionType(null);
+    const handleCreateNode = (nodeType: keyof any) => {
+        if (!paletteHandleId) return;
+        onCreateAndConnect(nodeType, paletteHandleId);
+        setPaletteHandleId(null);
+        setIsPaletteOpen(false);
     };
     
     const startEditing = (handleId: string) => {
         setEditingHandle(handleId);
-        setActionType(null); // Reset action type when starting to edit
     };
 
     const getConnectedNodeName = (handleId: string) => {
@@ -485,39 +485,14 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
                                     <Button type="button" size="sm" variant="outline" onClick={() => startEditing(cond.id)}>Alterar</Button>
                                 </div>
                             ) : (
-                                <div className="space-y-2">
-                                    <Select value={actionType || ''} onValueChange={(value) => setActionType(value as any)}>
-                                        <SelectTrigger><SelectValue placeholder="Selecione uma ação..." /></SelectTrigger>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <Select onValueChange={(nodeId) => handleConnect(cond.id, nodeId)}>
+                                        <SelectTrigger><SelectValue placeholder="Conectar tarefa..." /></SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="connect">Conectar tarefa existente</SelectItem>
-                                            <SelectItem value="create">Criar nova tarefa</SelectItem>
+                                            {availableNodes.map(n => <SelectItem key={n.id} value={n.id}>{n.data.label}</SelectItem>)}
                                         </SelectContent>
                                     </Select>
-
-                                    {actionType === 'connect' && (
-                                        <Select onValueChange={(nodeId) => handleConnect(cond.id, nodeId)}>
-                                            <SelectTrigger><SelectValue placeholder="Selecione um nó..." /></SelectTrigger>
-                                            <SelectContent>
-                                                {availableNodes.map(n => <SelectItem key={n.id} value={n.id}>{n.data.label}</SelectItem>)}
-                                            </SelectContent>
-                                        </Select>
-                                    )}
-
-                                    {actionType === 'create' && (
-                                        <Select onValueChange={(nodeType) => handleCreate(cond.id, nodeType)}>
-                                            <SelectTrigger><SelectValue placeholder="Selecione o tipo de tarefa..." /></SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="message">Enviar Mensagem</SelectItem>
-                                                <SelectItem value="captureData">Capturar Dados</SelectItem>
-                                                <SelectItem value="internalAction">Ação Interna</SelectItem>
-                                                <SelectItem value="conditional">Dividir Fluxo</SelectItem>
-                                                <SelectItem value="externalApi">API Externa</SelectItem>
-                                                <SelectItem value="delay">Aguardar</SelectItem>
-                                                <SelectItem value="transfer">Transferir Atendente</SelectItem>
-                                                <SelectItem value="endFlow">Finalizar Fluxo</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    )}
+                                     <Button type="button" variant="outline" onClick={() => { setPaletteHandleId(cond.id); setIsPaletteOpen(true); }}><PlusCircle className="mr-2 h-4 w-4" /> Criar</Button>
                                 </div>
                             )}
                         </div>
@@ -525,6 +500,15 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
                 );
             })}
             <Button type="button" variant="outline" size="sm" onClick={handleAddCondition}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Caminho</Button>
+
+            <Dialog open={isPaletteOpen} onOpenChange={setIsPaletteOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Selecione a Tarefa para Criar</DialogTitle>
+                    </DialogHeader>
+                     <NodesPalette onNodeAdd={handleCreateNode} />
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
