@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -12,7 +13,7 @@ import type { Node, Edge, OnNodesChange, OnEdgesChange, Connection } from "react
 import { applyNodeChanges, applyEdgeChanges, addEdge } from 'reactflow';
 import { NodeConfigPanel } from "@/components/automation/node-config-panel";
 import { NodesPalette } from "@/components/automation/nodes-palette";
-import { Bot, MessageCircle, Settings, Plus, Pencil, Trash2, Save } from "lucide-react";
+import { Bot, MessageCircle, Settings, Plus, Pencil, Trash2, Save, MoreVertical } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -28,6 +29,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 
 const nodeTypeConfig = {
@@ -228,14 +235,23 @@ export default function EditConversationFlowPage() {
                             {isSaving ? "Salvando..." : "Salvar Alterações"}
                         </Button>
                     )}
-                    <Button onClick={() => setIsPaletteOpen(true)}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Adicionar Tarefa
-                    </Button>
-                     <Button variant="outline" onClick={() => setIsFlowSettingsOpen(true)}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Editar Fluxo
-                    </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="icon">
+                                <MoreVertical className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onSelect={() => setIsPaletteOpen(true)}>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Adicionar Tarefa
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => setIsFlowSettingsOpen(true)}>
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Editar Fluxo
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             </header>
             
