@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -282,7 +281,7 @@ export default function EditConversationFlowPage() {
      const addNode = (type: keyof typeof nodeTypeConfig, sourceHandle?: string) => {
         if (quickAddSourceNode) {
             const isConditional = quickAddSourceNode.data.type === 'conditional';
-            // Only check for existing connections if the source is not a conditional node and we are using a standard output handle
+            // Only check for existing connections if the source is not a conditional node and we are not using a specific source handle (like 'else')
             if (!isConditional && !sourceHandle) {
                 const sourceHasConnection = edges.some(edge => edge.source === quickAddSourceNode.id && !edge.sourceHandle);
                 if (sourceHasConnection) {
@@ -291,8 +290,8 @@ export default function EditConversationFlowPage() {
                         title: 'Conexão Inválida',
                         description: 'Esta tarefa já possui uma conexão de saída. Use o nó "Dividir Fluxo" para criar ramificações.'
                     });
-                    setQuickAddSourceNode(null);
-                    setIsPaletteOpen(false);
+                    setQuickAddSourceNode(null); // Reset source node
+                    setIsPaletteOpen(false); // Close palette
                     return;
                 }
             }
@@ -329,12 +328,13 @@ export default function EditConversationFlowPage() {
             };
             setEdges((eds) => addEdge(newEdge, eds));
             
-            // If the source is a conditional node, automatically add a condition for the new connection
             if (quickAddSourceNode.data.type === 'conditional' && sourceHandle) {
                  setNodes(nds => nds.map(n => {
                      if (n.id === quickAddSourceNode.id) {
                          const existingConditions = n.data.conditions || [];
+                         // Check if a condition for this handle already exists
                          if (!existingConditions.some((c: any) => c.id === sourceHandle)) {
+                             // Add a new blank condition associated with the new handle
                              const newConditions = [...existingConditions, { id: sourceHandle, variable: '', operator: '==', value: '', label: '' }];
                              return {...n, data: {...n.data, conditions: newConditions}};
                          }
@@ -375,7 +375,8 @@ export default function EditConversationFlowPage() {
                     }
                 }
                 
-                if (isConditional && params.source) {
+                // If a new connection is made from a conditional node, create a new condition for it
+                if (isConditional && params.source && params.sourceHandle) {
                      setNodes(nds => {
                          const sourceNode = nds.find(n => n.id === params.source);
                          if (sourceNode) {
@@ -385,8 +386,7 @@ export default function EditConversationFlowPage() {
                              if (!handleAlreadyExists) {
                                  return nds.map(n => {
                                      if (n.id === params.source) {
-                                         const newHandleId = params.sourceHandle || `handle_${Date.now()}`;
-                                         const newConditions = [...existingConditions, { id: newHandleId, variable: '', operator: '==', value: '', label: '' }];
+                                         const newConditions = [...existingConditions, { id: params.sourceHandle, variable: '', operator: '==', value: '', label: '' }];
                                          return {...n, data: {...n.data, conditions: newConditions}};
                                      }
                                      return n;
@@ -642,6 +642,5 @@ export default function EditConversationFlowPage() {
             </AlertDialog>
         </div>
     );
-}
 
     
