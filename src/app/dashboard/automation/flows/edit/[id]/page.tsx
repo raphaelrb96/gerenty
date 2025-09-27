@@ -13,7 +13,7 @@ import type { Node, Edge, OnNodesChange, OnEdgesChange, Connection } from "react
 import { applyNodeChanges, applyEdgeChanges, addEdge } from 'reactflow';
 import { NodeConfigPanel } from "@/components/automation/node-config-panel";
 import { NodesPalette } from "@/components/automation/nodes-palette";
-import { Bot, MessageCircle, Settings, Plus, Pencil, Trash2, Save, MoreVertical, Clock, Calendar, Repeat, MessageSquareX, Forward, Send } from "lucide-react";
+import { Bot, MessageCircle, Settings, Plus, Pencil, Trash2, Save, MoreVertical, Clock, Calendar, Repeat, MessageSquareX, Forward, Send, HelpCircle, GitBranch, Share2, Timer, UserCheck, CheckCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import {
   Sheet,
@@ -49,14 +49,20 @@ import { Checkbox } from "@/components/ui/checkbox";
 const nodeTypeConfig = {
     keywordTrigger: { icon: <Bot size={20} />, color: 'border-yellow-500', defaultData: { label: 'Gatilho: Palavra-Chave', type: 'keywordTrigger' } },
     message: { icon: <MessageCircle size={20} />, color: 'border-green-500', defaultData: { label: 'Enviar Mensagem', type: 'message' } },
+    captureData: { icon: <HelpCircle size={20} />, color: 'border-blue-500', defaultData: { label: 'Capturar Dados', type: 'captureData' } },
+    internalAction: { icon: <Settings size={20} />, color: 'border-purple-500', defaultData: { label: 'Ação Interna', type: 'internalAction' } },
+    conditional: { icon: <GitBranch size={20} />, color: 'border-cyan-500', defaultData: { label: 'Dividir Fluxo', type: 'conditional' } },
+    externalApi: { icon: <Share2 size={20} />, color: 'border-indigo-500', defaultData: { label: 'API Externa', type: 'externalApi' } },
+    delay: { icon: <Timer size={20} />, color: 'border-orange-500', defaultData: { label: 'Aguardar', type: 'delay' } },
+    transfer: { icon: <UserCheck size={20} />, color: 'border-rose-500', defaultData: { label: 'Transferir Atendente', type: 'transfer' } },
+    endFlow: { icon: <CheckCircle size={20} />, color: 'border-gray-500', defaultData: { label: 'Finalizar Fluxo', type: 'endFlow' } },
 };
 
 
 const enrichNodeData = (node: Node, onConfigure: (node: Node) => void, onDelete: (node: Node) => void): Node => {
     const config = nodeTypeConfig[node.data.type as keyof typeof nodeTypeConfig] || {};
     
-    // Forçar que os nós 1 e 2 não sejam deletáveis
-    const isDeletable = node.id !== '1' && node.id !== '2';
+    const isDeletable = node.id !== '1';
 
     return {
         ...node,
@@ -209,7 +215,7 @@ export default function EditConversationFlowPage() {
             setFlow(prev => prev ? { ...prev, ...dataToUpdate } as Flow : null);
             toast({ title: "Configurações do fluxo salvas com sucesso!" });
             setIsFlowSettingsOpen(false);
-            setHasUnsavedChanges(true);
+            setHasUnsavedChanges(true); // Mark changes to be saved on the main flow
         } catch (error) {
             toast({ variant: 'destructive', title: "Erro ao salvar configurações" });
         }
@@ -391,10 +397,10 @@ export default function EditConversationFlowPage() {
                                             <Select value={flowSettings.timeoutAction} onValueChange={(value) => setFlowSettings(prev => ({...prev, timeoutAction: value as any}))}>
                                                 <SelectTrigger id="timeout-action"><SelectValue /></SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="end_flow"><MessageSquareX className="mr-2 h-4 w-4"/>Encerrar Fluxo</SelectItem>
-                                                    <SelectItem value="send_message"><Send className="mr-2 h-4 w-4"/>Enviar Mensagem Automática</SelectItem>
-                                                    <SelectItem value="transfer"><Bot className="mr-2 h-4 w-4"/>Transferir para Atendente</SelectItem>
-                                                    <SelectItem value="forward_flow"><Forward className="mr-2 h-4 w-4"/>Encaminhar para Outro Fluxo</SelectItem>
+                                                    <SelectItem value="end_flow"><MessageSquareX className="h-4 w-4 mr-2" />Encerrar Fluxo</SelectItem>
+                                                    <SelectItem value="send_message"><Send className="h-4 w-4 mr-2"/>Enviar Mensagem Automática</SelectItem>
+                                                    <SelectItem value="transfer"><Bot className="h-4 w-4 mr-2"/>Transferir para Atendente</SelectItem>
+                                                    <SelectItem value="forward_flow"><Forward className="h-4 w-4 mr-2"/>Encaminhar para Outro Fluxo</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <p className="text-xs text-muted-foreground pt-1">

@@ -95,7 +95,7 @@ export function CustomNode({ data, selected }: NodeProps<{
     <div className="relative group">
       <Handle type="target" position={Position.Top} className="!bg-primary !w-3 !h-3" />
       <Card className={cn(
-        "border-l-4 hover:shadow-lg transition-shadow",
+        "border-l-4 hover:shadow-lg transition-shadow min-w-[250px]",
         selected ? 'ring-2 ring-primary ring-offset-2' : 'border-transparent',
         data.color
       )}>

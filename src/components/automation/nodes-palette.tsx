@@ -1,28 +1,61 @@
+
 "use client";
 
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Bot, MessageCircle, type LucideIcon } from "lucide-react";
+import { Bot, MessageCircle, HelpCircle, Settings, GitBranch, Share2, Timer, UserCheck, CheckCircle } from "lucide-react";
 import React from "react";
 
 const nodeTypes = [
-    {
-        type: 'keywordTrigger' as const,
-        label: "Gatilho de Palavra-Chave",
-        description: "Inicia o fluxo com base em uma palavra.",
-        icon: Bot
-    },
     {
         type: 'message' as const,
         label: "Enviar Mensagem",
         description: "Envia uma mensagem da biblioteca.",
         icon: MessageCircle
+    },
+    {
+        type: 'captureData' as const,
+        label: "Capturar Dados",
+        description: "Solicita e valida uma informação do usuário.",
+        icon: HelpCircle
+    },
+    {
+        type: 'internalAction' as const,
+        label: "Ação Interna",
+        description: "Executa ações no CRM ou em Pedidos.",
+        icon: Settings
+    },
+     {
+        type: 'conditional' as const,
+        label: "Dividir Fluxo",
+        description: "Cria um caminho baseado em condições.",
+        icon: GitBranch
+    },
+    {
+        type: 'delay' as const,
+        label: "Aguardar",
+        description: "Pausa o fluxo por um tempo determinado.",
+        icon: Timer
+    },
+    {
+        type: 'transfer' as const,
+        label: "Transferir Atendente",
+        description: "Encerra e notifica um atendente.",
+        icon: UserCheck
+    },
+    {
+        type: 'endFlow' as const,
+        label: "Finalizar Fluxo",
+        description: "Marca o fim de um caminho no fluxo.",
+        icon: CheckCircle
     }
 ]
 
 type NodePaletteProps = {
-    onNodeAdd: (type: 'keywordTrigger' | 'message') => void;
+    onNodeAdd: (type: keyof typeof nodeTypesByName) => void;
 }
+
+const nodeTypesByName = Object.fromEntries(nodeTypes.map(n => [n.type, n]));
 
 export function NodesPalette({ onNodeAdd }: NodePaletteProps) {
 
