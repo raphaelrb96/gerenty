@@ -232,22 +232,12 @@ export default function EditConversationFlowPage() {
                     {hasUnsavedChanges && (
                         <Button onClick={handleSaveFlow} disabled={isSaving}>
                             <Save className="mr-2 h-4 w-4" />
-                            {isSaving ? "Salvando..." : "Salvar Alterações"}
+                            {isSaving ? "Salvando..." : "Salvar"}
                         </Button>
                     )}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="icon">
-                                <MoreVertical className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem onSelect={() => setIsFlowSettingsOpen(true)}>
-                                <Pencil className="mr-2 h-4 w-4" />
-                                Editar Fluxo
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Button variant="outline" size="icon" onClick={() => setIsFlowSettingsOpen(true)}>
+                        <Pencil className="h-4 w-4" />
+                    </Button>
                 </div>
             </header>
             
@@ -336,3 +326,5 @@ export default function EditConversationFlowPage() {
         </div>
     );
 }
+
+    
