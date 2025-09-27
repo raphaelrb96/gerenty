@@ -12,7 +12,7 @@ import type { Node, Edge, OnNodesChange, OnEdgesChange, Connection } from "react
 import { applyNodeChanges, applyEdgeChanges, addEdge } from 'reactflow';
 import { NodeConfigPanel } from "@/components/automation/node-config-panel";
 import { NodesPalette } from "@/components/automation/nodes-palette";
-import { Bot, MessageCircle, Settings, Plus, Pencil, Trash2 } from "lucide-react";
+import { Bot, MessageCircle, Settings, Plus, Pencil, Trash2, Save } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -66,6 +66,8 @@ export default function EditConversationFlowPage() {
     const [edges, setEdges] = useState<Edge[]>([]);
     const [selectedNode, setSelectedNode] = useState<Node | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
     const [isPaletteOpen, setIsPaletteOpen] = useState(false);
     const [isConfigOpen, setIsConfigOpen] = useState(false);
@@ -90,11 +92,13 @@ export default function EditConversationFlowPage() {
         setNodes((nds) => nds.filter(n => n.id !== nodeToDelete.id));
         setEdges((eds) => eds.filter(e => e.source !== nodeToDelete.id && e.target !== nodeToDelete.id));
         setNodeToDelete(null);
+        setHasUnsavedChanges(true);
         toast({ title: "Tarefa removida com sucesso!" });
     };
 
     const handleEdgesDelete = useCallback((edgesToDelete: Edge[]) => {
         setEdges(eds => eds.filter(e => !edgesToDelete.find(etd => etd.id === e.id)));
+        setHasUnsavedChanges(true);
     }, [setEdges]);
 
 
@@ -136,16 +140,38 @@ export default function EditConversationFlowPage() {
             toast({ variant: 'destructive', title: "Erro ao salvar configurações" });
         }
     };
+
+    const handleSaveFlow = async () => {
+        if (!flow || !hasUnsavedChanges) return;
+        
+        setIsSaving(true);
+        try {
+            // Remove the circular 'on*' functions before saving
+            const nodesToSave = nodes.map(node => {
+                const { onConfigure, onDelete, ...restData } = node.data;
+                return { ...node, data: restData };
+            });
+            await updateFlow(flow.id, { nodes: nodesToSave, edges });
+            toast({ title: "Fluxo salvo com sucesso!" });
+            setHasUnsavedChanges(false);
+        } catch (error) {
+            toast({ variant: 'destructive', title: "Erro ao salvar o fluxo." });
+        } finally {
+            setIsSaving(false);
+        }
+    };
     
     const onNodesChange: OnNodesChange = useCallback((changes) => {
         setNodes((nds) => {
             const newNodes = applyNodeChanges(changes, nds);
             return newNodes.map(n => enrichNodeData(n, handleConfigureNode, handleDeleteNode));
         });
+        setHasUnsavedChanges(true);
     }, [setNodes]);
 
     const onEdgesChange: OnEdgesChange = useCallback((changes) => {
         setEdges((eds) => applyEdgeChanges(changes, eds));
+        setHasUnsavedChanges(true);
     }, [setEdges]);
 
     const onNodeDataChange = (nodeId: string, data: any) => {
@@ -162,6 +188,7 @@ export default function EditConversationFlowPage() {
             }
             return newNodes;
         });
+        setHasUnsavedChanges(true);
     };
 
     const addNode = (type: keyof typeof nodeTypeConfig) => {
@@ -175,10 +202,14 @@ export default function EditConversationFlowPage() {
         const enriched = enrichNodeData(newNode, handleConfigureNode, handleDeleteNode);
         setNodes((nds) => nds.concat(enriched));
         setIsPaletteOpen(false); // Close modal on add
+        setHasUnsavedChanges(true);
     };
 
      const onConnect = useCallback(
-        (params: Edge | Connection) => setEdges((eds) => addEdge(params, eds)),
+        (params: Edge | Connection) => {
+            setEdges((eds) => addEdge(params, eds));
+            setHasUnsavedChanges(true);
+        },
         [setEdges]
     );
 
@@ -191,6 +222,12 @@ export default function EditConversationFlowPage() {
              <header className="mb-4 flex justify-between items-center flex-shrink-0">
                 <h1 className="text-2xl font-bold">{flow?.name || "Carregando..."}</h1>
                 <div className="flex items-center gap-2">
+                    {hasUnsavedChanges && (
+                        <Button onClick={handleSaveFlow} disabled={isSaving}>
+                            <Save className="mr-2 h-4 w-4" />
+                            {isSaving ? "Salvando..." : "Salvar Alterações"}
+                        </Button>
+                    )}
                     <Button onClick={() => setIsPaletteOpen(true)}>
                         <Plus className="mr-2 h-4 w-4" />
                         Adicionar Tarefa
