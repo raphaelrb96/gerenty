@@ -61,13 +61,15 @@ export function CustomNode({ data, selected }: NodeProps<{
   const isMainTrigger = data.isMainTrigger === true;
 
   const getVerticalHandlePosition = (index: number) => {
-    const headerHeight = 44; // p-3 -> 12px padding, title h is 20px approx.
-    const contentPaddingTop = 8; // pt-2
-    const itemHeight = 44; // p-2 div + content = 8 + 36 approx
-    const itemSpacing = 8; // space-y-2
+    const headerHeight = 44; 
+    const contentPaddingTop = 8;
+    const itemHeight = 44;
+    const itemSpacing = 8;
     const topOffset = headerHeight + contentPaddingTop + (index * (itemHeight + itemSpacing)) + (itemHeight / 2);
     return `${topOffset}px`;
   };
+
+  const hasKeywords = data.triggerKeywords && data.triggerKeywords.length > 0;
 
   return (
     <div className="relative group">
@@ -113,11 +115,11 @@ export function CustomNode({ data, selected }: NodeProps<{
           <CardTitle className="text-sm font-semibold">{data.label}</CardTitle>
         </CardHeader>
         
-        {isMainTrigger && data.triggerKeywords && data.triggerKeywords.length > 0 ? (
+        {isMainTrigger && hasKeywords ? (
             <CardContent className="px-3 pb-3 pt-2 text-xs text-muted-foreground space-y-2 min-h-[60px]">
                 <div className="space-y-1">
                     <span className="font-medium mr-2 text-foreground">Gatilhos:</span>
-                    {data.triggerKeywords.map((kw, index) => 
+                    {data.triggerKeywords?.map((kw, index) => 
                         <div key={index} className="flex justify-between items-center text-xs">
                             <Badge variant="secondary">{kw.value}</Badge>
                             <Badge variant="outline">{getMatchTypeLabel(kw.matchType)}</Badge>
@@ -125,13 +127,19 @@ export function CustomNode({ data, selected }: NodeProps<{
                     )}
                 </div>
             </CardContent>
+        ) : isMainTrigger && !hasKeywords ? (
+            <CardContent className="px-4 pb-4 pt-2 text-center text-muted-foreground min-h-[80px] flex flex-col items-center justify-center">
+                <Zap className="h-6 w-6 mb-2 text-yellow-500"/>
+                <p className="text-sm font-semibold text-foreground">Gatilhos do Fluxo</p>
+                <p className="text-xs">Configure as palavras-chave que iniciam esta conversa clicando no ícone de configurações.</p>
+            </CardContent>
         ) : !isMainTrigger && data.type !== 'conditional' ? (
              <CardContent className="px-3 pb-3 pt-2 text-xs text-muted-foreground min-h-[40px]">
               <Badge variant="secondary" className="w-full justify-center truncate">{contentPreview()}</Badge>
             </CardContent>
         ) : data.type === 'conditional' && (
             <CardContent className="px-3 pb-3 pt-2 space-y-2">
-                 {(data.conditions || []).map((cond: any) => (
+                 {(data.conditions || []).map((cond: any, index: number) => (
                     <div key={cond.id} className="text-xs p-2 bg-muted rounded-md flex justify-between items-center relative">
                         <span>Se <strong>{`{{${cond.variable || '...'}}}`}</strong> {cond.operator} <strong>{cond.value || '...'}</strong></span>
                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => data.onQuickAdd(cond.id)}><PlusCircle className="h-4 w-4" /></Button>
@@ -157,7 +165,7 @@ export function CustomNode({ data, selected }: NodeProps<{
                 <Settings className="h-4 w-4"/>
                 <span className="sr-only">Configurar Tarefa</span>
             </Button>
-            {data.type !== 'conditional' && (
+            {data.type !== 'conditional' && !isMainTrigger && (
              <Button 
                 variant="ghost" 
                 size="icon" 
