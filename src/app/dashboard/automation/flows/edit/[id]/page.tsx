@@ -39,6 +39,10 @@ const nodeTypeConfig = {
 
 const enrichNodeData = (node: Node, onConfigure: (node: Node) => void, onDelete: (node: Node) => void): Node => {
     const config = nodeTypeConfig[node.data.type as keyof typeof nodeTypeConfig] || {};
+    
+    // Forçar que os nós 1 e 2 não sejam deletáveis
+    const isDeletable = node.id !== '1' && node.id !== '2';
+
     return {
         ...node,
         data: {
@@ -47,6 +51,7 @@ const enrichNodeData = (node: Node, onConfigure: (node: Node) => void, onDelete:
             color: config.color,
             onConfigure: () => onConfigure(node),
             onDelete: () => onDelete(node),
+            isDeletable: isDeletable,
         },
     };
 };
@@ -98,7 +103,6 @@ export default function EditConversationFlowPage() {
                 const fetchedFlow = await getFlowById(flowId);
                 if (fetchedFlow) {
                     setFlow(fetchedFlow);
-                    // Pass the configure and delete callbacks when enriching nodes
                     setNodes((fetchedFlow.nodes || []).map(n => enrichNodeData(n, handleConfigureNode, handleDeleteNode)));
                     setEdges(fetchedFlow.edges || []);
                     setFlowName(fetchedFlow.name);

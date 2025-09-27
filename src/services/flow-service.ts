@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { db } from "@/lib/firebase";
@@ -34,12 +35,12 @@ export async function createFlow(ownerId: string, companyId: string): Promise<Fl
         { 
             id: '1', 
             type: 'input', 
-            data: { label: 'Gatilho: Palavra-Chave', type: 'keywordTrigger', isDeletable: false }, 
+            data: { label: 'Gatilho: Palavra-Chave', type: 'keywordTrigger' }, 
             position: { x: 250, y: 5 } 
         },
         { 
             id: '2', 
-            data: { label: 'Enviar Mensagem de Boas-Vindas', type: 'message', isDeletable: false }, 
+            data: { label: 'Enviar Mensagem de Boas-Vindas', type: 'message' }, 
             position: { x: 250, y: 125 } 
         },
     ];
