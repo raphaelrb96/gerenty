@@ -319,10 +319,35 @@ export default function EditConversationFlowPage() {
 
      const onConnect = useCallback(
         (params: Edge | Connection) => {
-            setEdges((eds) => addEdge(params, eds));
-            setHasUnsavedChanges(true);
+            setEdges((currentEdges) => {
+                // Rule 1: A target handle can only have one incoming connection.
+                const targetHasConnection = currentEdges.some(
+                    (edge) => edge.target === params.target && edge.targetHandle === params.targetHandle
+                );
+                if (targetHasConnection) {
+                    toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Cada tarefa só pode ter uma conexão de entrada.' });
+                    return currentEdges;
+                }
+
+                // Rule 2: A source handle can only have one outgoing connection, unless it's a 'conditional' node.
+                const sourceNode = nodes.find((node) => node.id === params.source);
+                const isConditional = sourceNode?.data.type === 'conditional';
+                
+                if (!isConditional) {
+                    const sourceHasConnection = currentEdges.some(
+                        (edge) => edge.source === params.source && edge.sourceHandle === params.sourceHandle
+                    );
+                    if (sourceHasConnection) {
+                        toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Esta tarefa já possui uma conexão de saída. Use o nó "Dividir Fluxo" para criar ramificações.' });
+                        return currentEdges;
+                    }
+                }
+
+                setHasUnsavedChanges(true);
+                return addEdge(params, currentEdges);
+            });
         },
-        [setEdges]
+        [setEdges, nodes, toast]
     );
 
     if (loading) {
@@ -379,7 +404,7 @@ export default function EditConversationFlowPage() {
             <Sheet open={isConfigOpen} onOpenChange={(isOpen) => { if (!isOpen) setSelectedNode(null); setIsConfigOpen(isOpen);}}>
                 <NodeConfigPanel 
                     selectedNode={selectedNode} 
-                    onNodeDataChange={onNodeDataChange} 
+                    onNodeDataChange={onNodeDataChange}
                     onSave={handleSaveFlow}
                     hasUnsavedChanges={hasUnsavedChanges}
                 />
