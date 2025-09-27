@@ -425,7 +425,8 @@ export default function EditConversationFlowPage() {
                          const existingConditions = sourceNodeToUpdate.data.conditions || [];
                          const handleAlreadyExists = existingConditions.some((c: any) => c.id === params.sourceHandle);
                          
-                         if (!handleAlreadyExists) {
+                         // Only add a new condition if the handle doesn't exist and it's not the 'else' handle
+                         if (!handleAlreadyExists && params.sourceHandle !== 'else') {
                              return nds.map(n => {
                                  if (n.id === params.source) {
                                      const newConditions = [...existingConditions, { id: params.sourceHandle, variable: '', operator: '==', value: '', label: '' }];
@@ -702,3 +703,6 @@ export default function EditConversationFlowPage() {
 
 
 
+
+
+    
