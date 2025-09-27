@@ -66,7 +66,7 @@ export function FlowBuilder({ nodes, edges, onNodesChange, onEdgesChange, onConn
         proOptions={proOptions}
       >
         <Controls />
-        <Background variant={BackgroundVariant.Lines} gap={24} size={1} />
+        <Background variant={BackgroundVariant.Dots} gap={24} size={1} />
       </ReactFlow>
     </div>
   );
