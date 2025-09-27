@@ -406,6 +406,15 @@ export default function EditConversationFlowPage() {
                     return eds;
                 }
             }
+
+            // Rule 3: Conditional node handles can only have one outgoing connection each.
+            if (sourceNode && sourceNode.data.type === 'conditional' && params.sourceHandle) {
+                 const handleHasConnection = eds.some(edge => edge.source === params.source && edge.sourceHandle === params.sourceHandle);
+                 if (handleHasConnection) {
+                     toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Este caminho da condição já possui uma conexão de saída.' });
+                     return eds;
+                 }
+            }
             
             setHasUnsavedChanges(true);
             
@@ -688,6 +697,7 @@ export default function EditConversationFlowPage() {
 
 
     
+
 
 
 
