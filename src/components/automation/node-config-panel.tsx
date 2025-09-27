@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import type { Node } from "reactflow";
@@ -298,7 +297,7 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, hasUns
                  return (
                     <div className="flex flex-col items-center justify-center text-center text-muted-foreground p-4 h-full">
                         <HelpCircle className="h-8 w-8 mb-2" />
-                        <p>Tarefa de tipo desconhecido. Não há configurações disponíveis.</p>
+                        <p>Nenhuma configuração disponível para este tipo de tarefa ainda.</p>
                     </div>
                 )
         }

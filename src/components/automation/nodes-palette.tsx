@@ -7,6 +7,12 @@ import { Bot, MessageCircle, HelpCircle, Settings, GitBranch, Share2, Timer, Use
 import React from "react";
 
 const nodeTypes = [
+     {
+        type: 'keywordTrigger' as const,
+        label: "Gatilho: Palavra-Chave",
+        description: "Inicia um fluxo secundário se a palavra for dita.",
+        icon: Bot
+    },
     {
         type: 'message' as const,
         label: "Enviar Mensagem",
@@ -30,6 +36,12 @@ const nodeTypes = [
         label: "Dividir Fluxo",
         description: "Cria um caminho baseado em condições.",
         icon: GitBranch
+    },
+      {
+        type: 'externalApi' as const,
+        label: "API Externa",
+        description: "Envia requisições para sistemas externos.",
+        icon: Share2
     },
     {
         type: 'delay' as const,
