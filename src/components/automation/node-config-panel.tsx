@@ -2,8 +2,8 @@
 
 "use client";
 
-import type { Node } from "reactflow";
-import { Settings, HelpCircle, PlusCircle, MoreHorizontal, Pencil, Trash2, Save, TextCursorInput, Link } from "lucide-react";
+import type { Node, Edge } from "reactflow";
+import { Settings, HelpCircle, PlusCircle, MoreHorizontal, Pencil, Trash2, Save, TextCursorInput, Link, Bot, MessageCircle } from "lucide-react";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
@@ -36,6 +36,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { nodeTypeConfig } from "@/app/dashboard/automation/flows/edit/[id]/page";
 
 type NodeConfigPanelProps = {
     selectedNode: Node | null;
@@ -43,7 +44,9 @@ type NodeConfigPanelProps = {
     onSave: () => Promise<void>;
     hasUnsavedChanges: boolean;
     allNodes: Node[]; // Pass all nodes for selection
+    allEdges: Edge[];
     onConnect: (source: string, sourceHandle: string, target: string) => void;
+    onCreateAndConnect: (type: keyof typeof nodeTypeConfig, sourceHandle?: string) => Node | undefined;
 }
 
 function TriggerPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'] }) {
@@ -392,8 +395,10 @@ function InternalActionPanel({ node, onNodeDataChange }: { node: Node, onNodeDat
     );
 }
 
-function ConditionalPanel({ node, onNodeDataChange, allNodes, onConnect }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'], allNodes: Node[], onConnect: NodeConfigPanelProps['onConnect'] }) {
+function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnect, onCreateAndConnect }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'], allNodes: Node[], allEdges: Edge[], onConnect: NodeConfigPanelProps['onConnect'], onCreateAndConnect: NodeConfigPanelProps['onCreateAndConnect'] }) {
     const conditions = node.data.conditions || [];
+    const [nodeCreatorState, setNodeCreatorState] = useState<{ [handleId: string]: boolean }>({});
+
 
     const handleAddCondition = () => {
         const newConditions = [...conditions, { id: `handle_${Date.now()}`, variable: '', operator: '==', value: '', label: '' }];
@@ -415,7 +420,19 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, onConnect }: { nod
         onConnect(node.id, sourceHandle, target);
     }
     
-    const availableNodes = allNodes.filter(n => n.id !== node.id);
+    const availableNodes = allNodes.filter(n => {
+        if (n.id === node.id) return false;
+        // Check if the node already has an incoming connection
+        const hasConnection = allEdges.some(edge => edge.target === n.id);
+        return !hasConnection;
+    });
+
+    const handleCreateNewNode = (handleId: string, nodeType: keyof typeof nodeTypeConfig) => {
+        const newNode = onCreateAndConnect(nodeType, handleId);
+        if (newNode) {
+            setNodeCreatorState(prev => ({...prev, [handleId]: false}));
+        }
+    }
 
 
     return (
@@ -429,7 +446,7 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, onConnect }: { nod
                     <div className="space-y-2">
                         <Label>SE</Label>
                         <div className="grid grid-cols-2 gap-2">
-                            <Input placeholder="Variável (ex: {{cpf}})" value={cond.variable} onChange={(e) => handleConditionChange(index, 'variable', e.target.value)} />
+                            <Input placeholder="Variável (ex: cpf)" value={cond.variable} onChange={(e) => handleConditionChange(index, 'variable', e.target.value)} />
                             <Select value={cond.operator} onValueChange={(val) => handleConditionChange(index, 'operator', val)}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
@@ -445,12 +462,31 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, onConnect }: { nod
                     </div>
                      <div className="space-y-2">
                         <Label>ENTÃO</Label>
-                        <Select onValueChange={(targetNodeId) => handleTargetNodeChange(cond.id, targetNodeId)}>
-                            <SelectTrigger><SelectValue placeholder="Conectar ao nó..." /></SelectTrigger>
-                            <SelectContent>
-                                {availableNodes.map(n => <SelectItem key={n.id} value={n.id}>{n.data.label} (ID: {n.id})</SelectItem>)}
-                            </SelectContent>
-                        </Select>
+                        {nodeCreatorState[cond.id] ? (
+                            <Select onValueChange={(type) => handleCreateNewNode(cond.id, type as any)}>
+                                <SelectTrigger><SelectValue placeholder="Selecione o tipo de tarefa..." /></SelectTrigger>
+                                <SelectContent>
+                                    {Object.entries(nodeTypeConfig).filter(([key]) => key !== 'keywordTrigger').map(([key, config]) => (
+                                        <SelectItem key={key} value={key}><div className="flex items-center gap-2">{config.icon} {config.defaultData.label}</div></SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        ) : (
+                            <Select onValueChange={(value) => {
+                                if (value === 'create_new') {
+                                    setNodeCreatorState(prev => ({ ...prev, [cond.id]: true }))
+                                } else {
+                                    handleTargetNodeChange(cond.id, value)
+                                }
+                            }}>
+                                <SelectTrigger><SelectValue placeholder="Conectar ao nó..." /></SelectTrigger>
+                                <SelectContent>
+                                     <SelectItem value="create_new"><PlusCircle className="mr-2 h-4 w-4" />Criar e Conectar Nova Tarefa...</SelectItem>
+                                     <Separator className="my-1"/>
+                                    {availableNodes.map(n => <SelectItem key={n.id} value={n.id}>{n.data.label}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        )}
                      </div>
                       <div className="space-y-2">
                          <Label>Rótulo da Conexão</Label>
@@ -493,7 +529,7 @@ function TransferPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChang
     )
 }
 
-export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, hasUnsavedChanges, allNodes, onConnect }: NodeConfigPanelProps) {
+export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, hasUnsavedChanges, allNodes, allEdges, onConnect, onCreateAndConnect }: NodeConfigPanelProps) {
 
     const renderPanelContent = () => {
         if (!selectedNode) {
@@ -516,7 +552,7 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, hasUns
             case 'internalAction':
                 return <InternalActionPanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
             case 'conditional':
-                return <ConditionalPanel node={selectedNode} onNodeDataChange={onNodeDataChange} allNodes={allNodes} onConnect={onConnect} />;
+                return <ConditionalPanel node={selectedNode} onNodeDataChange={onNodeDataChange} allNodes={allNodes} allEdges={allEdges} onConnect={onConnect} onCreateAndConnect={onCreateAndConnect}/>;
             case 'transfer':
                 return <TransferPanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
             case 'delay':

@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -46,7 +44,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 
 
-const nodeTypeConfig = {
+export const nodeTypeConfig = {
     keywordTrigger: { icon: <Bot size={20} />, color: 'border-yellow-500', defaultData: { label: 'Gatilho: Palavra-Chave', type: 'keywordTrigger' } },
     message: { icon: <MessageCircle size={20} />, color: 'border-green-500', defaultData: { label: 'Enviar Mensagem', type: 'message' } },
     captureData: { icon: <HelpCircle size={20} />, color: 'border-blue-500', defaultData: { label: 'Capturar Dados', type: 'captureData' } },
@@ -279,16 +277,19 @@ export default function EditConversationFlowPage() {
         setHasUnsavedChanges(true);
     };
 
-     const addNode = (type: keyof typeof nodeTypeConfig) => {
+     const addNode = (type: keyof typeof nodeTypeConfig, sourceHandle?: string) => {
         const config = nodeTypeConfig[type];
         const newNodeId = `${Date.now()}`;
         
         if (quickAddSourceNode) {
             const sourceNode = nodes.find(n => n.id === quickAddSourceNode.id);
-            const isConditional = sourceNode?.data.type === 'conditional';
-            const sourceHasConnection = edges.some(edge => edge.source === quickAddSourceNode.id && !isConditional);
-
-            if (sourceHasConnection) {
+            if (!sourceNode) return;
+            const isConditional = sourceNode.data.type === 'conditional';
+            
+            // For non-conditional nodes, check if a connection for the main handle already exists.
+            const sourceHasConnection = edges.some(edge => edge.source === quickAddSourceNode.id && !edge.sourceHandle);
+            
+            if (!isConditional && sourceHasConnection) {
                  toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Esta tarefa já possui uma conexão de saída. Use o nó "Dividir Fluxo" para criar ramificações.' });
                  setQuickAddSourceNode(null);
                  setIsPaletteOpen(false);
@@ -320,7 +321,8 @@ export default function EditConversationFlowPage() {
                 id: `e${quickAddSourceNode.id}-${newNodeId}`,
                 source: quickAddSourceNode.id,
                 target: newNodeId,
-                type: 'smoothstep'
+                type: 'smoothstep',
+                sourceHandle: sourceHandle || null,
             };
             setEdges((eds) => addEdge(newEdge, eds));
             setQuickAddSourceNode(null); // Reset after adding
@@ -328,6 +330,7 @@ export default function EditConversationFlowPage() {
         
         setIsPaletteOpen(false);
         setHasUnsavedChanges(true);
+        return newNode;
     };
 
      const onConnect = useCallback(
@@ -433,7 +436,9 @@ export default function EditConversationFlowPage() {
                     onSave={handleSaveFlow}
                     hasUnsavedChanges={hasUnsavedChanges}
                     allNodes={nodes}
+                    allEdges={edges}
                     onConnect={onConnectFromPanel}
+                    onCreateAndConnect={addNode}
                 />
             </Sheet>
             
