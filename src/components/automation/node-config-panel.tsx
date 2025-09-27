@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { NodesPalette } from "./nodes-palette";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
+import { nodeTypeConfig } from "@/app/dashboard/automation/flows/edit/[id]/page";
 
 type NodeConfigPanelProps = {
     selectedNode: Node | null;
@@ -47,7 +48,7 @@ type NodeConfigPanelProps = {
     allNodes: Node[]; // Pass all nodes for selection
     allEdges: Edge[];
     onConnect: (source: string, sourceHandle: string, target: string) => void;
-    onCreateAndConnect: (type: keyof any, sourceHandle?: string) => Node | undefined;
+    onCreateAndConnect: (type: keyof typeof nodeTypeConfig, sourceHandle?: string) => Node | undefined;
 }
 
 function TriggerPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'] }) {
@@ -399,9 +400,9 @@ function InternalActionPanel({ node, onNodeDataChange }: { node: Node, onNodeDat
 
 function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnect, onCreateAndConnect }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'], allNodes: Node[], allEdges: Edge[], onConnect: NodeConfigPanelProps['onConnect'], onCreateAndConnect: NodeConfigPanelProps['onCreateAndConnect'] }) {
     const conditions = node.data.conditions || [];
-    const [editingHandle, setEditingHandle] = useState<string | null>(null);
-    const [isPaletteOpen, setIsPaletteOpen] = useState(false);
-    const [paletteHandleId, setPaletteHandleId] = useState<string | null>(null);
+    const [paletteOpen, setPaletteOpen] = useState(false);
+    const [currentHandle, setCurrentHandle] = useState<string | null>(null);
+
 
     const availableNodes = allNodes.filter(n => {
         if (n.id === '1' || n.id === node.id) return false;
@@ -415,6 +416,7 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
     };
 
     const handleRemoveCondition = (index: number) => {
+        const handleIdToRemove = conditions[index].id;
         const newConditions = conditions.filter((_: any, i: number) => i !== index);
         onNodeDataChange(node.id, { conditions: newConditions });
     };
@@ -427,20 +429,16 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
     
     const handleConnect = (handleId: string, targetNodeId: string) => {
         onConnect(node.id, handleId, targetNodeId);
-        setEditingHandle(null);
-    };
-
-    const handleCreateNode = (nodeType: keyof any) => {
-        if (!paletteHandleId) return;
-        onCreateAndConnect(nodeType, paletteHandleId);
-        setPaletteHandleId(null);
-        setIsPaletteOpen(false);
     };
     
-    const startEditing = (handleId: string) => {
-        setEditingHandle(handleId);
-    };
-
+    const handleCreateAndConnect = (type: keyof typeof nodeTypeConfig) => {
+        if (currentHandle) {
+            onCreateAndConnect(type, currentHandle);
+        }
+        setPaletteOpen(false);
+        setCurrentHandle(null);
+    }
+    
     const getConnectedNodeName = (handleId: string) => {
         const edge = allEdges.find(e => e.source === node.id && e.sourceHandle === handleId);
         if (!edge) return null;
@@ -454,7 +452,6 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
             <Separator />
             {conditions.map((cond: any, index: number) => {
                 const connectedNodeName = getConnectedNodeName(cond.id);
-                const isEditingThisHandle = editingHandle === cond.id;
 
                 return (
                     <div key={index} className="p-3 border rounded-lg space-y-3 relative bg-muted/50">
@@ -479,34 +476,27 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
                         </div>
                         <div className="space-y-2">
                             <Label>ENTÃO</Label>
-                            {connectedNodeName && !isEditingThisHandle ? (
-                                <div className="flex items-center justify-between p-2 border rounded-md bg-background">
-                                    <span className="text-sm font-medium truncate">Conectado a: {connectedNodeName}</span>
-                                    <Button type="button" size="sm" variant="outline" onClick={() => startEditing(cond.id)}>Alterar</Button>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-2 gap-2">
-                                    <Select onValueChange={(nodeId) => handleConnect(cond.id, nodeId)}>
-                                        <SelectTrigger><SelectValue placeholder="Conectar tarefa..." /></SelectTrigger>
-                                        <SelectContent>
-                                            {availableNodes.map(n => <SelectItem key={n.id} value={n.id}>{n.data.label}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
-                                     <Button type="button" variant="outline" onClick={() => { setPaletteHandleId(cond.id); setIsPaletteOpen(true); }}><PlusCircle className="mr-2 h-4 w-4" /> Criar</Button>
-                                </div>
-                            )}
+                            <div className="grid grid-cols-2 gap-2">
+                                <Select onValueChange={(nodeId) => handleConnect(cond.id, nodeId)} value={allEdges.find(e => e.source === node.id && e.sourceHandle === cond.id)?.target || ""}>
+                                    <SelectTrigger><SelectValue placeholder="Conectar tarefa..." /></SelectTrigger>
+                                    <SelectContent>
+                                        {availableNodes.map(n => <SelectItem key={n.id} value={n.id}>{n.data.label}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                                 <Button type="button" variant="outline" onClick={() => {setCurrentHandle(cond.id); setPaletteOpen(true);}}><PlusCircle className="mr-2 h-4 w-4" /> Criar</Button>
+                            </div>
                         </div>
                     </div>
                 );
             })}
             <Button type="button" variant="outline" size="sm" onClick={handleAddCondition}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Caminho</Button>
 
-            <Dialog open={isPaletteOpen} onOpenChange={setIsPaletteOpen}>
+            <Dialog open={paletteOpen} onOpenChange={setPaletteOpen}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Selecione a Tarefa para Criar</DialogTitle>
                     </DialogHeader>
-                     <NodesPalette onNodeAdd={handleCreateNode} />
+                     <NodesPalette onNodeAdd={handleCreateAndConnect} />
                 </DialogContent>
             </Dialog>
         </div>

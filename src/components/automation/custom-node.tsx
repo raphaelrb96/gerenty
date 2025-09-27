@@ -148,6 +148,7 @@ export function CustomNode({ data, selected }: NodeProps<{
                 <Settings className="h-4 w-4"/>
                 <span className="sr-only">Configurar Tarefa</span>
             </Button>
+            {data.type !== 'conditional' && (
              <Button 
                 variant="ghost" 
                 size="icon" 
@@ -157,6 +158,7 @@ export function CustomNode({ data, selected }: NodeProps<{
                 <PlusCircle className="h-4 w-4"/>
                 <span className="sr-only">Adicionar Tarefa</span>
             </Button>
+            )}
             {isDeletable && (
                 <Button 
                     variant="ghost" 
