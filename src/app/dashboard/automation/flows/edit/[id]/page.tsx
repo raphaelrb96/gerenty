@@ -41,7 +41,7 @@ import { Separator } from "@/components/ui/separator";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useCompany } from "@/context/company-context";
 import { getLibraryMessagesByCompany } from "@/services/library-message-service";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 
@@ -489,5 +489,3 @@ export default function EditConversationFlowPage() {
         </div>
     );
 }
-
-    
