@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -89,9 +88,14 @@ export default function EditConversationFlowPage() {
     const confirmDeleteNode = () => {
         if (!nodeToDelete) return;
         setNodes((nds) => nds.filter(n => n.id !== nodeToDelete.id));
+        setEdges((eds) => eds.filter(e => e.source !== nodeToDelete.id && e.target !== nodeToDelete.id));
         setNodeToDelete(null);
         toast({ title: "Tarefa removida com sucesso!" });
     };
+
+    const handleEdgesDelete = useCallback((edgesToDelete: Edge[]) => {
+        setEdges(eds => eds.filter(e => !edgesToDelete.find(etd => etd.id === e.id)));
+    }, [setEdges]);
 
 
     useEffect(() => {
@@ -205,6 +209,7 @@ export default function EditConversationFlowPage() {
                     onNodesChange={onNodesChange}
                     onEdgesChange={onEdgesChange}
                     onConnect={onConnect}
+                    onEdgesDelete={handleEdgesDelete}
                 />
             </main>
 
