@@ -11,6 +11,7 @@ import { Settings, Trash2, Zap, PlusCircle, GitBranch } from 'lucide-react';
 
 export function CustomNode({ data, selected }: NodeProps<{ 
   label: string, 
+  customLabel?: string,
   icon: React.ReactNode, 
   color: string, 
   type: string,
@@ -64,7 +65,7 @@ export function CustomNode({ data, selected }: NodeProps<{
   const getVerticalHandlePosition = (index: number) => {
     const headerHeight = 44; 
     const contentPaddingTop = 8;
-    const itemHeight = 44;
+    const itemHeight = 60; // Adjusted for better spacing
     const itemSpacing = 8;
     const topOffset = headerHeight + contentPaddingTop + (index * (itemHeight + itemSpacing)) + (itemHeight / 2);
     return `${topOffset}px`;
@@ -99,7 +100,7 @@ export function CustomNode({ data, selected }: NodeProps<{
         </>
       )}
       
-      {data.type !== 'conditional' && (
+      {data.type !== 'conditional' && !isMainTrigger && (
           <Handle type="source" position={Position.Bottom} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10 }} />
       )}
       
@@ -117,7 +118,7 @@ export function CustomNode({ data, selected }: NodeProps<{
            <div className="p-1 rounded-md">
             {data.icon}
           </div>
-          <CardTitle className="text-sm font-semibold">{data.label}</CardTitle>
+          <CardTitle className="text-sm font-semibold">{data.customLabel || data.label}</CardTitle>
         </CardHeader>
         
         {isMainTrigger && hasKeywords ? (
@@ -150,7 +151,7 @@ export function CustomNode({ data, selected }: NodeProps<{
                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => data.onQuickAdd(cond.id)}><PlusCircle className="h-4 w-4" /></Button>
                     </div>
                 ))}
-                 <div className="text-xs p-2 bg-muted rounded-md flex justify-between items-center relative">
+                 <div className="text-xs p-3 bg-muted rounded-md flex justify-between items-center relative">
                     <div>
                       <span className="font-semibold">Fluxo Padrão</span>
                       <p className="text-xs text-muted-foreground">(Se nenhuma condição for válida)</p>

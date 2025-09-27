@@ -449,7 +449,7 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
                 <Select onValueChange={(nodeId) => handleConnect(handleId, nodeId)} value={currentTargetId || ""}>
                     <SelectTrigger><SelectValue placeholder="Conectar tarefa..." /></SelectTrigger>
                     <SelectContent>
-                        {availableNodes.map(n => <SelectItem key={n.id} value={n.id}>{n.data.label}</SelectItem>)}
+                        {availableNodes.map(n => <SelectItem key={n.id} value={n.id}>{n.data.customLabel || n.data.label}</SelectItem>)}
                     </SelectContent>
                 </Select>
                  <Button type="button" variant="outline" onClick={() => {setCurrentHandle(handleId); setPaletteOpen(true);}}><PlusCircle className="mr-2 h-4 w-4" /> Criar</Button>
@@ -459,11 +459,20 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
 
     return (
         <div className="space-y-4">
+             <div className="space-y-2">
+                <Label htmlFor="custom-label">Rótulo Personalizado</Label>
+                <Input 
+                    id="custom-label" 
+                    placeholder="Ex: Verificar CPF" 
+                    value={node.data.customLabel || ''} 
+                    onChange={(e) => onNodeDataChange(node.id, { customLabel: e.target.value })}
+                />
+            </div>
             <p className="text-sm text-muted-foreground">Crie caminhos "Se" para o fluxo. A saída padrão "Senão" será usada se nenhuma das regras for atendida.</p>
             <Separator />
             {conditions.map((cond: any, index: number) => {
                 return (
-                    <div key={index} className="p-3 border rounded-lg space-y-3 relative bg-muted/50">
+                    <div key={cond.id} className="p-3 border rounded-lg space-y-3 relative bg-muted/50">
                         <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6 text-destructive" onClick={() => handleRemoveCondition(cond.id)}><Trash2 className="h-4 w-4"/></Button>
                         <p className="text-sm font-semibold">Condição {index + 1}</p>
                         <div className="space-y-2">
@@ -593,7 +602,7 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, hasUns
     return (
         <SheetContent className="sm:max-w-lg flex flex-col p-0">
             <SheetHeader className="p-6">
-                <SheetTitle>Configurar: {selectedNode?.data.label || 'Tarefa'}</SheetTitle>
+                <SheetTitle>Configurar: {selectedNode?.data.customLabel || selectedNode?.data.label || 'Tarefa'}</SheetTitle>
                  <SheetDescription>
                     ID da Tarefa: <span className="font-mono text-xs">{selectedNode?.id}</span>
                 </SheetDescription>
@@ -610,9 +619,3 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, hasUns
         </SheetContent>
     );
 }
-
-    
-
-    
-
-
