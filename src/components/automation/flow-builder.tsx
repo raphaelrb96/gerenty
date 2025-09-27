@@ -3,7 +3,6 @@
 
 import React from 'react';
 import ReactFlow, {
-  MiniMap,
   Controls,
   Background,
   OnNodesChange,
@@ -11,7 +10,8 @@ import ReactFlow, {
   Connection,
   Edge,
   Node,
-  BackgroundVariant
+  BackgroundVariant,
+  ProOptions
 } from 'reactflow';
 import { CustomNode } from './custom-node';
 import { CustomEdge } from './custom-edge';
@@ -25,6 +25,8 @@ const nodeTypes = {
 const edgeTypes = {
   custom: CustomEdge,
 };
+
+const proOptions: ProOptions = { hideAttribution: true };
 
 type FlowBuilderProps = {
     nodes: Node[];
@@ -61,9 +63,9 @@ export function FlowBuilder({ nodes, edges, onNodesChange, onEdgesChange, onConn
         fitViewOptions={{ padding: 0.4 }}
         defaultEdgeOptions={{ type: 'smoothstep', style: { strokeWidth: 2, stroke: '#9ca3af' } }}
         deleteKeyCode={['Backspace', 'Delete']}
+        proOptions={proOptions}
       >
         <Controls />
-        <MiniMap style={{ height: 80, width: 120 }} />
         <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
       </ReactFlow>
     </div>
