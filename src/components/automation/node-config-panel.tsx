@@ -303,7 +303,7 @@ function CaptureDataPanel({ node, onNodeDataChange }: { node: Node, onNodeDataCh
                     <TextCursorInput className="h-5 w-5 text-muted-foreground" />
                     <Input id="capture-variable" placeholder="cpf_cliente" value={node.data.captureVariable || ''} onChange={handleFieldChange('captureVariable')} />
                 </div>
-                 <p className="text-xs text-muted-foreground">Use este nome para referenciar o dado em outros nós (ex: {'{{cpf_cliente}}'}).</p>
+                 <p className="text-xs text-muted-foreground">Use este nome para referenciar o dado em outros nós (ex: {{cpf_cliente}}).</p>
             </div>
             <div className="space-y-2">
                 <Label htmlFor="capture-validation">Validação</Label>
@@ -397,8 +397,6 @@ function InternalActionPanel({ node, onNodeDataChange }: { node: Node, onNodeDat
 
 function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnect, onCreateAndConnect }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'], allNodes: Node[], allEdges: Edge[], onConnect: NodeConfigPanelProps['onConnect'], onCreateAndConnect: NodeConfigPanelProps['onCreateAndConnect'] }) {
     const conditions = node.data.conditions || [];
-    const [nodeCreatorState, setNodeCreatorState] = useState<{ [handleId: string]: boolean }>({});
-
 
     const handleAddCondition = () => {
         const newConditions = [...conditions, { id: `handle_${Date.now()}`, variable: '', operator: '==', value: '', label: '' }];
@@ -428,10 +426,7 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
     });
 
     const handleCreateNewNode = (handleId: string, nodeType: keyof typeof nodeTypeConfig) => {
-        const newNode = onCreateAndConnect(nodeType, handleId);
-        if (newNode) {
-            setNodeCreatorState(prev => ({...prev, [handleId]: false}));
-        }
+        onCreateAndConnect(nodeType, handleId);
     }
 
 
@@ -462,31 +457,20 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
                     </div>
                      <div className="space-y-2">
                         <Label>ENTÃO</Label>
-                        {nodeCreatorState[cond.id] ? (
-                            <Select onValueChange={(type) => handleCreateNewNode(cond.id, type as any)}>
-                                <SelectTrigger><SelectValue placeholder="Selecione o tipo de tarefa..." /></SelectTrigger>
-                                <SelectContent>
-                                    {Object.entries(nodeTypeConfig).filter(([key]) => key !== 'keywordTrigger').map(([key, config]) => (
-                                        <SelectItem key={key} value={key}><div className="flex items-center gap-2">{config.icon} {config.defaultData.label}</div></SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        ) : (
-                            <Select onValueChange={(value) => {
-                                if (value === 'create_new') {
-                                    setNodeCreatorState(prev => ({ ...prev, [cond.id]: true }))
-                                } else {
-                                    handleTargetNodeChange(cond.id, value)
-                                }
-                            }}>
-                                <SelectTrigger><SelectValue placeholder="Conectar ao nó..." /></SelectTrigger>
-                                <SelectContent>
-                                     <SelectItem value="create_new"><PlusCircle className="mr-2 h-4 w-4" />Criar e Conectar Nova Tarefa...</SelectItem>
-                                     <Separator className="my-1"/>
-                                    {availableNodes.map(n => <SelectItem key={n.id} value={n.id}>{n.data.label}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                        )}
+                         <Select onValueChange={(value) => handleTargetNodeChange(cond.id, value)}>
+                            <SelectTrigger><SelectValue placeholder="Conectar a um nó existente..." /></SelectTrigger>
+                            <SelectContent>
+                                {availableNodes.map(n => <SelectItem key={n.id} value={n.id}>{n.data.label}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        <Select onValueChange={(type) => handleCreateNewNode(cond.id, type as any)}>
+                            <SelectTrigger><SelectValue placeholder="Criar e conectar nova tarefa..." /></SelectTrigger>
+                            <SelectContent>
+                                {Object.entries(nodeTypeConfig).filter(([key]) => key !== 'keywordTrigger').map(([key, config]) => (
+                                    <SelectItem key={key} value={key}><div className="flex items-center gap-2">{config.icon} {config.defaultData.label}</div></SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                      </div>
                       <div className="space-y-2">
                          <Label>Rótulo da Conexão</Label>
