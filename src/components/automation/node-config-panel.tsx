@@ -303,7 +303,7 @@ function CaptureDataPanel({ node, onNodeDataChange }: { node: Node, onNodeDataCh
                     <TextCursorInput className="h-5 w-5 text-muted-foreground" />
                     <Input id="capture-variable" placeholder="cpf_cliente" value={node.data.captureVariable || ''} onChange={handleFieldChange('captureVariable')} />
                 </div>
-                 <p className="text-xs text-muted-foreground">Use este nome para referenciar o dado em outros nós (ex: {{cpf_cliente}}).</p>
+                 <p className="text-xs text-muted-foreground">Use este nome para referenciar o dado em outros nós (ex: {{`{{cpf_cliente}}`}}).</p>
             </div>
             <div className="space-y-2">
                 <Label htmlFor="capture-validation">Validação</Label>
@@ -397,10 +397,11 @@ function InternalActionPanel({ node, onNodeDataChange }: { node: Node, onNodeDat
 
 function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnect, onCreateAndConnect }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'], allNodes: Node[], allEdges: Edge[], onConnect: NodeConfigPanelProps['onConnect'], onCreateAndConnect: NodeConfigPanelProps['onCreateAndConnect'] }) {
     const conditions = node.data.conditions || [];
-    const [action, setAction] = useState<Record<string, 'connect' | 'create' | null>>({});
-    
+    const [editingHandle, setEditingHandle] = useState<string | null>(null);
+
     const availableNodes = allNodes.filter(n => {
         if (n.id === node.id) return false;
+        // A node is available if it's not a target of ANY edge yet.
         const hasConnection = allEdges.some(edge => edge.target === n.id);
         return !hasConnection;
     });
@@ -420,82 +421,79 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
         newConditions[index][field] = value;
         onNodeDataChange(node.id, { conditions: newConditions });
     };
-
-    const handleCreateNewNode = (type: keyof typeof nodeTypeConfig, sourceHandle: string) => {
-        if (sourceHandle) {
-            onCreateAndConnect(type, sourceHandle);
-            setAction(prev => ({...prev, [sourceHandle]: null}));
+    
+    const handleAction = (handleId: string, action: 'connect' | 'create', value?: any) => {
+        if (action === 'create' && value) {
+             onCreateAndConnect(value, handleId);
+        } else if (action === 'connect' && value) {
+            onConnect(node.id, handleId, value);
         }
-    }
+        setEditingHandle(null);
+    };
 
+    const getConnectedNodeName = (handleId: string) => {
+        const edge = allEdges.find(e => e.source === node.id && e.sourceHandle === handleId);
+        if (!edge) return null;
+        const targetNode = allNodes.find(n => n.id === edge.target);
+        return targetNode?.data.label || 'Nó desconhecido';
+    };
 
     return (
         <div className="space-y-4">
-             <p className="text-sm text-muted-foreground">Crie caminhos "Se" para o fluxo. A saída padrão "Senão" será usada se nenhuma das regras for atendida.</p>
-             <Separator />
-            {conditions.map((cond: any, index: number) => (
-                <div key={index} className="p-3 border rounded-lg space-y-2 relative bg-muted/50">
-                     <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6 text-destructive" onClick={() => handleRemoveCondition(index)}><Trash2 className="h-4 w-4"/></Button>
-                     <p className="text-sm font-semibold">Caminho {index + 1}</p>
-                    <div className="space-y-2">
-                        <Label>SE</Label>
-                        <div className="grid grid-cols-2 gap-2">
-                            <Input placeholder="Variável (ex: cpf)" value={cond.variable} onChange={(e) => handleConditionChange(index, 'variable', e.target.value)} />
-                            <Select value={cond.operator} onValueChange={(val) => handleConditionChange(index, 'operator', val)}>
-                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="==">É igual a</SelectItem>
-                                    <SelectItem value="!=">É diferente de</SelectItem>
-                                    <SelectItem value=">">É maior que</SelectItem>
-                                    <SelectItem value="<">É menor que</SelectItem>
-                                    <SelectItem value="contains">Contém</SelectItem>
-                                </SelectContent>
-                            </Select>
+            <p className="text-sm text-muted-foreground">Crie caminhos "Se" para o fluxo. A saída padrão "Senão" será usada se nenhuma das regras for atendida.</p>
+            <Separator />
+            {conditions.map((cond: any, index: number) => {
+                const connectedNodeName = getConnectedNodeName(cond.id);
+                const isEditing = editingHandle === cond.id;
+                return (
+                    <div key={index} className="p-3 border rounded-lg space-y-3 relative bg-muted/50">
+                        <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6 text-destructive" onClick={() => handleRemoveCondition(index)}><Trash2 className="h-4 w-4"/></Button>
+                        <p className="text-sm font-semibold">Caminho {index + 1}</p>
+                        <div className="space-y-2">
+                            <Label>SE</Label>
+                            <div className="grid grid-cols-2 gap-2">
+                                <Input placeholder="Variável (ex: cpf)" value={cond.variable} onChange={(e) => handleConditionChange(index, 'variable', e.target.value)} />
+                                <Select value={cond.operator} onValueChange={(val) => handleConditionChange(index, 'operator', val)}>
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="==">É igual a</SelectItem>
+                                        <SelectItem value="!=">É diferente de</SelectItem>
+                                        <SelectItem value=">">É maior que</SelectItem>
+                                        <SelectItem value="<">É menor que</SelectItem>
+                                        <SelectItem value="contains">Contém</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <Input placeholder="Valor a comparar" value={cond.value} onChange={(e) => handleConditionChange(index, 'value', e.target.value)} />
                         </div>
-                        <Input placeholder="Valor a comparar" value={cond.value} onChange={(e) => handleConditionChange(index, 'value', e.target.value)} />
+                        <div className="space-y-2">
+                            <Label>ENTÃO</Label>
+                            {isEditing ? (
+                                <Select onValueChange={(value) => handleAction(cond.id, value === 'create_new' ? 'create' : 'connect', value === 'create_new' ? undefined : value)}>
+                                    <SelectTrigger><SelectValue placeholder="Conectar ou criar..." /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="create_new">Criar nova tarefa...</SelectItem>
+                                        <Separator className="my-1"/>
+                                        {availableNodes.map(n => <SelectItem key={n.id} value={n.id}>{n.data.label}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            ) : connectedNodeName ? (
+                                <div className="flex items-center justify-between p-2 border rounded-md bg-background">
+                                    <span className="text-sm font-medium">Conectado a: {connectedNodeName}</span>
+                                    <Button type="button" size="sm" variant="outline" onClick={() => setEditingHandle(cond.id)}>Alterar</Button>
+                                </div>
+                            ) : (
+                                <Button type="button" className="w-full" variant="outline" onClick={() => setEditingHandle(cond.id)}>Conectar ou Criar Tarefa</Button>
+                            )}
+                        </div>
                     </div>
-                     <div className="space-y-2">
-                        <Label>ENTÃO</Label>
-                         <Select onValueChange={(value) => setAction(prev => ({ ...prev, [cond.id]: value as any }))}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Escolha uma ação..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="connect">Conectar a tarefa existente</SelectItem>
-                                <SelectItem value="create">Criar nova tarefa</SelectItem>
-                            </SelectContent>
-                        </Select>
-
-                        {action[cond.id] === 'connect' && (
-                            <Select onValueChange={(targetNodeId) => onConnect(node.id, cond.id, targetNodeId)}>
-                                <SelectTrigger><SelectValue placeholder="Selecione um nó..." /></SelectTrigger>
-                                <SelectContent>
-                                    {availableNodes.map(n => <SelectItem key={n.id} value={n.id}>{n.data.label}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                        )}
-                        
-                        {action[cond.id] === 'create' && (
-                             <Select onValueChange={(type) => handleCreateNewNode(type as any, cond.id)}>
-                                <SelectTrigger><SelectValue placeholder="Selecione o tipo de tarefa..." /></SelectTrigger>
-                                <SelectContent>
-                                    {Object.entries(nodeTypeConfig).filter(([key]) => key !== 'keywordTrigger').map(([key, config]) => (
-                                        <SelectItem key={key} value={key}><div className="flex items-center gap-2">{config.icon} {config.defaultData.label}</div></SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        )}
-                     </div>
-                      <div className="space-y-2">
-                         <Label>Rótulo da Conexão</Label>
-                         <Input placeholder="Ex: Cliente VIP" value={cond.label} onChange={(e) => handleConditionChange(index, 'label', e.target.value)} />
-                     </div>
-                </div>
-            ))}
+                );
+            })}
             <Button type="button" variant="outline" size="sm" onClick={handleAddCondition}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Caminho</Button>
         </div>
     );
 }
+
 
 function TransferPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'] }) {
     const { effectiveOwnerId } = useAuth();
