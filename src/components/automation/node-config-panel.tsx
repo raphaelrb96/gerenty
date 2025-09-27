@@ -291,9 +291,9 @@ function CaptureDataPanel({ node, onNodeDataChange }: { node: Node, onNodeDataCh
 
     return (
         <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">Peça uma informação ao usuário e armazene-a em uma variável.</p>
-            <Separator />
-            <div className="space-y-2">
+             <p className="text-sm text-muted-foreground">Peça uma informação ao usuário e armazene-a em uma variável.</p>
+             <Separator />
+             <div className="space-y-2">
                 <Label htmlFor="capture-message">Mensagem de Solicitação</Label>
                 <Input id="capture-message" placeholder="Qual o seu CPF?" value={node.data.captureMessage || ''} onChange={handleFieldChange('captureMessage')} />
             </div>
@@ -399,7 +399,6 @@ function InternalActionPanel({ node, onNodeDataChange }: { node: Node, onNodeDat
 function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnect, onCreateAndConnect }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'], allNodes: Node[], allEdges: Edge[], onConnect: NodeConfigPanelProps['onConnect'], onCreateAndConnect: NodeConfigPanelProps['onCreateAndConnect'] }) {
     const conditions = node.data.conditions || [];
     const [editingHandle, setEditingHandle] = useState<string | null>(null);
-    const [actionChoice, setActionChoice] = useState<'connect' | 'create' | null>(null);
     const [isPaletteOpen, setIsPaletteOpen] = useState(false);
     const [paletteHandleId, setPaletteHandleId] = useState<string | null>(null);
 
@@ -425,11 +424,6 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
         onNodeDataChange(node.id, { conditions: newConditions });
     };
 
-    const handleSelectAction = (handleId: string, action: 'connect' | 'create') => {
-        setEditingHandle(handleId);
-        setActionChoice(action);
-    };
-
     const handleConnectNode = (targetNodeId: string) => {
         if (editingHandle) {
             onConnect(node.id, editingHandle, targetNodeId);
@@ -438,24 +432,14 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
     };
 
     const handleCreateNode = (type: keyof typeof nodeTypeConfig) => {
-        if (editingHandle) {
-            onCreateAndConnect(type, editingHandle);
-        } else if (paletteHandleId) {
+        if (paletteHandleId) {
             onCreateAndConnect(type, paletteHandleId);
         }
         resetState();
     };
     
-    const handleNodeAddFromPalette = (type: keyof typeof nodeTypeConfig) => {
-        if (paletteHandleId) {
-            onCreateAndConnect(type, paletteHandleId);
-        }
-        resetState();
-    }
-
     const resetState = () => {
         setEditingHandle(null);
-        setActionChoice(null);
         setIsPaletteOpen(false);
         setPaletteHandleId(null);
     };
@@ -501,27 +485,29 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
                             {connectedNodeName ? (
                                 <div className="flex items-center justify-between p-2 border rounded-md bg-background">
                                     <span className="text-sm font-medium truncate">Conectado a: {connectedNodeName}</span>
-                                    <Button type="button" size="sm" variant="outline" onClick={() => { setEditingHandle(cond.id); setActionChoice(null); }}>Alterar</Button>
+                                    <Button type="button" size="sm" variant="outline" onClick={() => setEditingHandle(cond.id)}>Alterar</Button>
                                 </div>
-                            ) : isEditingThisHandle ? (
+                            ) : null}
+
+                            {isEditingThisHandle || !connectedNodeName ? (
                                 <div className="space-y-2">
-                                    {!actionChoice ? (
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <Button type="button" variant="secondary" onClick={() => handleSelectAction(cond.id, 'connect')}>Conectar Tarefa</Button>
-                                            <Button type="button" variant="secondary" onClick={() => { setPaletteHandleId(cond.id); setIsPaletteOpen(true); }}>Criar Tarefa</Button>
-                                        </div>
-                                    ) : actionChoice === 'connect' ? (
-                                        <Select onValueChange={handleConnectNode}>
-                                            <SelectTrigger><SelectValue placeholder="Selecione o nó de destino..." /></SelectTrigger>
-                                            <SelectContent>
-                                                {availableNodes.map(n => <SelectItem key={n.id} value={n.id}>{n.data.label}</SelectItem>)}
-                                            </SelectContent>
-                                        </Select>
-                                    ) : null}
+                                    <Select onValueChange={(value) => {
+                                        if (value === 'create_new') {
+                                            setPaletteHandleId(cond.id);
+                                            setIsPaletteOpen(true);
+                                        } else {
+                                            handleConnectNode(value);
+                                        }
+                                    }}>
+                                        <SelectTrigger><SelectValue placeholder="Conectar ou Criar Tarefa..." /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="create_new">Criar e conectar nova tarefa...</SelectItem>
+                                            <Separator />
+                                            {availableNodes.map(n => <SelectItem key={n.id} value={n.id}>{n.data.label}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
-                            ) : (
-                                <Button type="button" className="w-full" variant="outline" onClick={() => { setEditingHandle(cond.id); setActionChoice(null);}}>Conectar ou Criar Tarefa</Button>
-                            )}
+                            ) : null}
                         </div>
                     </div>
                 );
@@ -636,5 +622,3 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, hasUns
         </SheetContent>
     );
 }
-
-    
