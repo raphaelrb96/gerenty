@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -279,16 +280,12 @@ export default function EditConversationFlowPage() {
 
      const addNode = (type: keyof typeof nodeTypeConfig, sourceHandle?: string) => {
         const config = nodeTypeConfig[type];
-        const newNodeId = `${Date.now()}`;
         
         if (quickAddSourceNode) {
             const sourceNode = nodes.find(n => n.id === quickAddSourceNode.id);
-            if (!sourceNode) return;
-            const isConditional = sourceNode.data.type === 'conditional';
-            
-            // For non-conditional nodes, check if a connection for the main handle already exists.
-            const sourceHasConnection = edges.some(edge => edge.source === quickAddSourceNode.id && !edge.sourceHandle);
-            
+            const isConditional = sourceNode?.data.type === 'conditional';
+            const sourceHasConnection = edges.some(edge => edge.source === quickAddSourceNode.id && edge.sourceHandle === (sourceHandle || null));
+
             if (!isConditional && sourceHasConnection) {
                  toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Esta tarefa já possui uma conexão de saída. Use o nó "Dividir Fluxo" para criar ramificações.' });
                  setQuickAddSourceNode(null);
@@ -305,7 +302,8 @@ export default function EditConversationFlowPage() {
                 y: quickAddSourceNode.position.y + (quickAddSourceNode.height || 100) + 75
             };
         }
-
+        
+        const newNodeId = `${Date.now()}`;
         const newNode: Node = {
             id: newNodeId,
             type: 'custom',
@@ -358,6 +356,18 @@ export default function EditConversationFlowPage() {
                         return currentEdges;
                     }
                 }
+                
+                // Rule 3: If connection comes from conditional, automatically create a condition
+                if (isConditional && params.source && !params.sourceHandle) {
+                     setNodes(nds => nds.map(n => {
+                         if (n.id === params.source) {
+                             const newConditions = [...(n.data.conditions || []), { id: `handle_${Date.now()}`, variable: '', operator: '==', value: '', label: '' }];
+                             return {...n, data: {...n.data, conditions: newConditions}};
+                         }
+                         return n;
+                     }));
+                }
+
 
                 setHasUnsavedChanges(true);
                 return addEdge({ ...params, type: 'smoothstep' }, currentEdges);
