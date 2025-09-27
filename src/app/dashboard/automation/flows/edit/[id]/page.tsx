@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -9,11 +10,21 @@ import { useToast } from "@/hooks/use-toast";
 import type { Flow } from "@/lib/types";
 import { useRouter, useParams } from 'next/navigation';
 import type { Node, Edge, OnNodesChange, OnEdgesChange, Connection } from "reactflow";
-import { applyNodeChanges, applyEdgeChanges, addEdge } from 'reactflow';
+import { applyNodeChanges, applyEdgeChanges, addEdge, removeNodes } from 'reactflow';
 import { NodeConfigPanel } from "@/components/automation/node-config-panel";
 import { NodesPalette } from "@/components/automation/nodes-palette";
-import { Bot, MessageCircle, Settings, Plus, Pencil } from "lucide-react";
+import { Bot, MessageCircle, Settings, Plus, Pencil, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,7 +52,7 @@ const nodeTypeConfig = {
 };
 
 
-const enrichNodeData = (node: Node, onConfigure: (node: Node) => void): Node => {
+const enrichNodeData = (node: Node, onConfigure: (node: Node) => void, onDelete: (node: Node) => void): Node => {
     const config = nodeTypeConfig[node.data.type as keyof typeof nodeTypeConfig] || {};
     return {
         ...node,
@@ -49,7 +60,8 @@ const enrichNodeData = (node: Node, onConfigure: (node: Node) => void): Node => 
             ...node.data,
             icon: config.icon,
             color: config.color,
-            onConfigure: () => onConfigure(node), // Add callback to data
+            onConfigure: () => onConfigure(node),
+            onDelete: () => onDelete(node),
         },
     };
 };
@@ -73,10 +85,24 @@ export default function EditConversationFlowPage() {
     const [flowName, setFlowName] = useState("");
     const [flowStatus, setFlowStatus] = useState<Flow['status']>('draft');
     
+    const [nodeToDelete, setNodeToDelete] = useState<Node | null>(null);
+    
     const handleConfigureNode = (node: Node) => {
         setSelectedNode(node);
         setIsConfigOpen(true);
     };
+
+    const handleDeleteNode = (node: Node) => {
+        setNodeToDelete(node);
+    };
+
+    const confirmDeleteNode = () => {
+        if (!nodeToDelete) return;
+        setNodes((nds) => removeNodes([nodeToDelete], nds));
+        setNodeToDelete(null);
+        toast({ title: "Tarefa removida com sucesso!" });
+    };
+
 
     useEffect(() => {
         if (typeof flowId !== 'string') return;
@@ -87,8 +113,8 @@ export default function EditConversationFlowPage() {
                 const fetchedFlow = await getFlowById(flowId);
                 if (fetchedFlow) {
                     setFlow(fetchedFlow);
-                    // Pass the configure callback when enriching nodes
-                    setNodes((fetchedFlow.nodes || []).map(n => enrichNodeData(n, handleConfigureNode)));
+                    // Pass the configure and delete callbacks when enriching nodes
+                    setNodes((fetchedFlow.nodes || []).map(n => enrichNodeData(n, handleConfigureNode, handleDeleteNode)));
                     setEdges(fetchedFlow.edges || []);
                     setFlowName(fetchedFlow.name);
                     setFlowStatus(fetchedFlow.status);
@@ -111,7 +137,7 @@ export default function EditConversationFlowPage() {
         try {
             const nodesToPersist = nodesToSave.map(n => {
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const { icon, color, onConfigure, ...restData } = n.data; // Remove transient data
+                const { icon, color, onConfigure, onDelete, ...restData } = n.data; // Remove transient data
                 return {
                     id: n.id,
                     type: n.type,
@@ -142,8 +168,8 @@ export default function EditConversationFlowPage() {
     const onNodesChange: OnNodesChange = useCallback((changes) => {
         setNodes((nds) => {
             const newNodes = applyNodeChanges(changes, nds);
-            // Re-enrich nodes to ensure onConfigure callback is fresh
-            const enrichedNodes = newNodes.map(n => enrichNodeData(n, handleConfigureNode));
+            // Re-enrich nodes to ensure callbacks are fresh
+            const enrichedNodes = newNodes.map(n => enrichNodeData(n, handleConfigureNode, handleDeleteNode));
             debouncedSave(enrichedNodes, edges);
             return enrichedNodes;
         });
@@ -161,7 +187,7 @@ export default function EditConversationFlowPage() {
         setNodes((nds) => {
             const newNodes = nds.map((node) => {
                 if (node.id === nodeId) {
-                    const enrichedNode = enrichNodeData({ ...node, data: { ...node.data, ...data } }, handleConfigureNode);
+                    const enrichedNode = enrichNodeData({ ...node, data: { ...node.data, ...data } }, handleConfigureNode, handleDeleteNode);
                     return enrichedNode;
                 }
                 return node;
@@ -182,7 +208,7 @@ export default function EditConversationFlowPage() {
             position: { x: Math.random() * 400, y: Math.random() * 400 },
             data: config.defaultData,
         };
-        const enriched = enrichNodeData(newNode, handleConfigureNode);
+        const enriched = enrichNodeData(newNode, handleConfigureNode, handleDeleteNode);
         setNodes((nds) => nds.concat(enriched));
         setIsPaletteOpen(false); // Close modal on add
     };
@@ -269,6 +295,24 @@ export default function EditConversationFlowPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            <AlertDialog open={!!nodeToDelete} onOpenChange={() => setNodeToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Excluir Tarefa?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                           Tem certeza de que deseja excluir a tarefa "{nodeToDelete?.data.label}"? Esta ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDeleteNode} className="bg-destructive hover:bg-destructive/90">
+                           Excluir
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
+
