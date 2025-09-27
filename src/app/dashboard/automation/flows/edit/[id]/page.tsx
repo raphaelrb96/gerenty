@@ -282,6 +282,7 @@ export default function EditConversationFlowPage() {
                     onEdgesChange={onEdgesChange}
                     onConnect={onConnect}
                     onEdgesDelete={handleEdgesDelete}
+                    proOptions={{ hideAttribution: true }}
                 />
                  <Button 
                     className="absolute bottom-6 right-6 rounded-full w-14 h-14"
@@ -354,6 +355,9 @@ export default function EditConversationFlowPage() {
                                             <SelectItem value="transfer"><Bot className="mr-2 h-4 w-4"/>Transferir para Atendente</SelectItem>
                                         </SelectContent>
                                     </Select>
+                                    <p className="text-xs text-muted-foreground pt-1">
+                                        Define o que acontece se o cliente não responder dentro do tempo limite.
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -422,5 +426,3 @@ export default function EditConversationFlowPage() {
         </div>
     );
 }
-
-    
