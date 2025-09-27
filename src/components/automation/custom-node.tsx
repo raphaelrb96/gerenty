@@ -80,7 +80,7 @@ export function CustomNode({ data, selected }: NodeProps<{
                     type="source"
                     position={Position.Right}
                     id={cond.id}
-                    style={{ top: getVerticalHandlePosition(index) }}
+                    style={{ top: getVerticalHandlePosition(index), right: '-0.5rem', zIndex: 10 }}
                     className="!bg-cyan-500 !w-3 !h-3"
                 />
             ))}
