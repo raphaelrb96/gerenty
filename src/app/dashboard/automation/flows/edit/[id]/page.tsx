@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -58,7 +59,7 @@ const nodeTypeConfig = {
 };
 
 
-const enrichNodeData = (node: Node, onConfigure: (node: Node) => void, onDelete: (node: Node) => void): Node => {
+const enrichNodeData = (node: Node, onConfigure: (node: Node) => void, onDelete: (node: Node) => void, onQuickAdd: (node: Node) => void): Node => {
     const config = nodeTypeConfig[node.data.type as keyof typeof nodeTypeConfig] || {};
     
     const isDeletable = node.id !== '1';
@@ -71,6 +72,7 @@ const enrichNodeData = (node: Node, onConfigure: (node: Node) => void, onDelete:
             color: config.color,
             onConfigure: () => onConfigure(node),
             onDelete: () => onDelete(node),
+            onQuickAdd: () => onQuickAdd(node),
             isDeletable: isDeletable,
             isMainTrigger: node.id === '1',
         },
@@ -113,6 +115,8 @@ export default function EditConversationFlowPage() {
     });
     
     const [nodeToDelete, setNodeToDelete] = useState<Node | null>(null);
+    const [quickAddSourceNode, setQuickAddSourceNode] = useState<Node | null>(null);
+
     
     const handleConfigureNode = (node: Node) => {
         setSelectedNode(node);
@@ -121,6 +125,11 @@ export default function EditConversationFlowPage() {
 
     const handleDeleteNode = (node: Node) => {
         setNodeToDelete(node);
+    };
+
+    const handleQuickAdd = (sourceNode: Node) => {
+        setQuickAddSourceNode(sourceNode);
+        setIsPaletteOpen(true);
     };
 
     const confirmDeleteNode = () => {
@@ -147,7 +156,7 @@ export default function EditConversationFlowPage() {
                 const fetchedFlow = await getFlowById(flowId);
                 if (fetchedFlow) {
                     setFlow(fetchedFlow);
-                    setNodes((fetchedFlow.nodes || []).map(n => enrichNodeData(n, handleConfigureNode, handleDeleteNode)));
+                    setNodes((fetchedFlow.nodes || []).map(n => enrichNodeData(n, handleConfigureNode, handleDeleteNode, handleQuickAdd)));
                     setEdges(fetchedFlow.edges || []);
                     setFlowSettings({
                         name: fetchedFlow.name,
@@ -227,7 +236,7 @@ export default function EditConversationFlowPage() {
         try {
             // Remove the circular 'on*' functions before saving
             const nodesToSave = nodes.map(node => {
-                const { icon, color, onConfigure, onDelete, isDeletable, isMainTrigger, ...restData } = node.data;
+                const { icon, color, onConfigure, onDelete, onQuickAdd, isDeletable, isMainTrigger, ...restData } = node.data;
                 return { ...node, data: restData };
             });
             await updateFlow(flow.id, { nodes: nodesToSave, edges });
@@ -243,7 +252,7 @@ export default function EditConversationFlowPage() {
     const onNodesChange: OnNodesChange = useCallback((changes) => {
         setNodes((nds) => {
             const newNodes = applyNodeChanges(changes, nds);
-            return newNodes.map(n => enrichNodeData(n, handleConfigureNode, handleDeleteNode));
+            return newNodes.map(n => enrichNodeData(n, handleConfigureNode, handleDeleteNode, handleQuickAdd));
         });
         setHasUnsavedChanges(true);
     }, [setNodes]);
@@ -257,7 +266,7 @@ export default function EditConversationFlowPage() {
         setNodes((nds) => {
             const newNodes = nds.map((node) => {
                 if (node.id === nodeId) {
-                    const enrichedNode = enrichNodeData({ ...node, data: { ...node.data, ...data } }, handleConfigureNode, handleDeleteNode);
+                    const enrichedNode = enrichNodeData({ ...node, data: { ...node.data, ...data } }, handleConfigureNode, handleDeleteNode, handleQuickAdd);
                     return enrichedNode;
                 }
                 return node;
@@ -270,17 +279,41 @@ export default function EditConversationFlowPage() {
         setHasUnsavedChanges(true);
     };
 
-    const addNode = (type: keyof typeof nodeTypeConfig) => {
+     const addNode = (type: keyof typeof nodeTypeConfig) => {
         const config = nodeTypeConfig[type];
+        const newNodeId = `${Date.now()}`;
+        
+        let position = { x: Math.random() * 400, y: Math.random() * 400 };
+
+        if (quickAddSourceNode) {
+            position = {
+                x: quickAddSourceNode.position.x,
+                y: quickAddSourceNode.position.y + (quickAddSourceNode.height || 150) + 75
+            };
+        }
+
         const newNode: Node = {
-            id: `${nodes.length + 1}`,
+            id: newNodeId,
             type: 'custom',
-            position: { x: Math.random() * 400, y: Math.random() * 400 },
+            position,
             data: config.defaultData,
         };
-        const enriched = enrichNodeData(newNode, handleConfigureNode, handleDeleteNode);
+
+        const enriched = enrichNodeData(newNode, handleConfigureNode, handleDeleteNode, handleQuickAdd);
         setNodes((nds) => nds.concat(enriched));
-        setIsPaletteOpen(false); // Close modal on add
+
+        if (quickAddSourceNode) {
+            const newEdge: Edge = {
+                id: `e${quickAddSourceNode.id}-${newNodeId}`,
+                source: quickAddSourceNode.id,
+                target: newNodeId,
+                type: 'smoothstep'
+            };
+            setEdges((eds) => addEdge(newEdge, eds));
+            setQuickAddSourceNode(null); // Reset after adding
+        }
+        
+        setIsPaletteOpen(false);
         setHasUnsavedChanges(true);
     };
 
@@ -324,7 +357,10 @@ export default function EditConversationFlowPage() {
                 />
                  <Button 
                     className="absolute bottom-6 right-6 rounded-full w-14 h-14"
-                    onClick={() => setIsPaletteOpen(true)}
+                    onClick={() => {
+                        setQuickAddSourceNode(null);
+                        setIsPaletteOpen(true);
+                    }}
                 >
                     <Plus className="h-6 w-6" />
                     <span className="sr-only">Adicionar Tarefa</span>
@@ -511,3 +547,4 @@ export default function EditConversationFlowPage() {
         </div>
     );
 }
+

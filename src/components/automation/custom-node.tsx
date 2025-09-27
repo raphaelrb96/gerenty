@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../ui/card
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { Badge } from '../ui/badge';
-import { Settings, Trash2, Zap } from 'lucide-react';
+import { Settings, Trash2, Zap, PlusCircle } from 'lucide-react';
 import { useTranslation } from '@/context/i18n-context';
 
 export function CustomNode({ data, selected }: NodeProps<{ 
@@ -25,7 +25,8 @@ export function CustomNode({ data, selected }: NodeProps<{
   isDeletable?: boolean,
   isMainTrigger?: boolean,
   onConfigure: () => void,
-  onDelete: () => void 
+  onDelete: () => void,
+  onQuickAdd: () => void,
 }>) {
   
   const getMatchTypeLabel = (matchType?: string) => {
@@ -100,6 +101,15 @@ export function CustomNode({ data, selected }: NodeProps<{
                 <Settings className="h-4 w-4"/>
                 <span className="sr-only">Configurar Tarefa</span>
             </Button>
+             <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-7 w-7 text-primary hover:text-primary hover:bg-primary/10"
+                onClick={data.onQuickAdd}
+            >
+                <PlusCircle className="h-4 w-4"/>
+                <span className="sr-only">Adicionar Tarefa</span>
+            </Button>
           </CardFooter>
         </Card>
         <Handle type="source" position={Position.Bottom} className="!bg-primary !w-3 !h-3" />
@@ -134,6 +144,15 @@ export function CustomNode({ data, selected }: NodeProps<{
                 <Settings className="h-4 w-4"/>
                 <span className="sr-only">Configurar Tarefa</span>
             </Button>
+             <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-7 w-7 text-primary hover:text-primary hover:bg-primary/10"
+                onClick={data.onQuickAdd}
+            >
+                <PlusCircle className="h-4 w-4"/>
+                <span className="sr-only">Adicionar Tarefa</span>
+            </Button>
             {isDeletable && (
                 <Button 
                     variant="ghost" 
@@ -151,3 +170,4 @@ export function CustomNode({ data, selected }: NodeProps<{
     </div>
   );
 }
+
