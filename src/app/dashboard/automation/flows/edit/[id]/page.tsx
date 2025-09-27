@@ -15,11 +15,9 @@ import { NodesPalette } from "@/components/automation/nodes-palette";
 import { Bot, MessageCircle, Settings, Plus, Pencil } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/components/common/page-header";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
 
 
 // Debounce function
@@ -43,7 +41,7 @@ const nodeTypeConfig = {
 };
 
 
-const enrichNodeData = (node: Node): Node => {
+const enrichNodeData = (node: Node, onConfigure: (node: Node) => void): Node => {
     const config = nodeTypeConfig[node.data.type as keyof typeof nodeTypeConfig] || {};
     return {
         ...node,
@@ -51,6 +49,7 @@ const enrichNodeData = (node: Node): Node => {
             ...node.data,
             icon: config.icon,
             color: config.color,
+            onConfigure: () => onConfigure(node), // Add callback to data
         },
     };
 };
@@ -71,10 +70,13 @@ export default function EditConversationFlowPage() {
     const [isConfigOpen, setIsConfigOpen] = useState(false);
     const [isFlowSettingsOpen, setIsFlowSettingsOpen] = useState(false);
     
-    // State for flow settings form
     const [flowName, setFlowName] = useState("");
     const [flowStatus, setFlowStatus] = useState<Flow['status']>('draft');
-
+    
+    const handleConfigureNode = (node: Node) => {
+        setSelectedNode(node);
+        setIsConfigOpen(true);
+    };
 
     useEffect(() => {
         if (typeof flowId !== 'string') return;
@@ -85,7 +87,8 @@ export default function EditConversationFlowPage() {
                 const fetchedFlow = await getFlowById(flowId);
                 if (fetchedFlow) {
                     setFlow(fetchedFlow);
-                    setNodes((fetchedFlow.nodes || []).map(enrichNodeData));
+                    // Pass the configure callback when enriching nodes
+                    setNodes((fetchedFlow.nodes || []).map(n => enrichNodeData(n, handleConfigureNode)));
                     setEdges(fetchedFlow.edges || []);
                     setFlowName(fetchedFlow.name);
                     setFlowStatus(fetchedFlow.status);
@@ -107,7 +110,8 @@ export default function EditConversationFlowPage() {
         if (!flow) return;
         try {
             const nodesToPersist = nodesToSave.map(n => {
-                const { icon, color, ...restData } = n.data; // Remove transient data
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { icon, color, onConfigure, ...restData } = n.data; // Remove transient data
                 return {
                     id: n.id,
                     type: n.type,
@@ -138,17 +142,10 @@ export default function EditConversationFlowPage() {
     const onNodesChange: OnNodesChange = useCallback((changes) => {
         setNodes((nds) => {
             const newNodes = applyNodeChanges(changes, nds);
-            const selectedChange = changes.find(c => c.type === 'select' && c.selected);
-            if (selectedChange) {
-                const node = newNodes.find(n => n.id === selectedChange.id);
-                setSelectedNode(node || null);
-            } else if (changes.some(c => c.type === 'select' && !c.selected)) {
-                 const selectedNodeExists = changes.some(c => c.type === 'select' && c.selected);
-                 if(!selectedNodeExists) setSelectedNode(null);
-            }
-
-            debouncedSave(newNodes, edges);
-            return newNodes;
+            // Re-enrich nodes to ensure onConfigure callback is fresh
+            const enrichedNodes = newNodes.map(n => enrichNodeData(n, handleConfigureNode));
+            debouncedSave(enrichedNodes, edges);
+            return enrichedNodes;
         });
     }, [setNodes, edges, debouncedSave]);
 
@@ -164,7 +161,7 @@ export default function EditConversationFlowPage() {
         setNodes((nds) => {
             const newNodes = nds.map((node) => {
                 if (node.id === nodeId) {
-                    const enrichedNode = enrichNodeData({ ...node, data: { ...node.data, ...data } });
+                    const enrichedNode = enrichNodeData({ ...node, data: { ...node.data, ...data } }, handleConfigureNode);
                     return enrichedNode;
                 }
                 return node;
@@ -185,7 +182,7 @@ export default function EditConversationFlowPage() {
             position: { x: Math.random() * 400, y: Math.random() * 400 },
             data: config.defaultData,
         };
-        const enriched = enrichNodeData(newNode);
+        const enriched = enrichNodeData(newNode, handleConfigureNode);
         setNodes((nds) => nds.concat(enriched));
         setIsPaletteOpen(false); // Close modal on add
     };
@@ -200,27 +197,22 @@ export default function EditConversationFlowPage() {
     }
 
     return (
-        <div className="h-[calc(100vh-8rem)] w-full relative p-4">
-             <header className="mb-4 flex justify-between items-center">
+        <div className="h-[calc(100vh-8rem)] w-full relative p-4 flex flex-col">
+             <header className="mb-4 flex justify-between items-center flex-shrink-0">
                 <h1 className="text-2xl font-bold">{flow?.name || "Carregando..."}</h1>
-                 <Button variant="outline" onClick={() => setIsFlowSettingsOpen(true)}>
-                    <Pencil className="mr-2 h-4 w-4" />
-                    Editar Fluxo
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button onClick={() => setIsPaletteOpen(true)}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Adicionar Tarefa
+                    </Button>
+                     <Button variant="outline" onClick={() => setIsFlowSettingsOpen(true)}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Editar Fluxo
+                    </Button>
+                </div>
             </header>
-
-            <div className="absolute top-20 left-4 z-10 space-x-2">
-                <Button onClick={() => setIsPaletteOpen(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Adicionar Tarefa
-                </Button>
-                <Button variant="outline" onClick={() => setIsConfigOpen(true)} disabled={!selectedNode}>
-                     <Settings className="mr-2 h-4 w-4" />
-                    Configurar Tarefa
-                </Button>
-            </div>
             
-            <main className="h-full w-full border rounded-lg overflow-hidden bg-background">
+            <main className="flex-1 h-full w-full border rounded-lg overflow-hidden bg-background">
                 <FlowBuilder 
                     nodes={nodes}
                     edges={edges}
@@ -239,7 +231,7 @@ export default function EditConversationFlowPage() {
                 </DialogContent>
             </Dialog>
             
-            <Dialog open={isConfigOpen} onOpenChange={setIsConfigOpen}>
+            <Dialog open={isConfigOpen} onOpenChange={(isOpen) => { if (!isOpen) setSelectedNode(null); setIsConfigOpen(isOpen);}}>
                 <DialogContent>
                      <NodeConfigPanel selectedNode={selectedNode} onNodeDataChange={onNodeDataChange} />
                 </DialogContent>
@@ -280,4 +272,3 @@ export default function EditConversationFlowPage() {
         </div>
     );
 }
-
