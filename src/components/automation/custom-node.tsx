@@ -98,7 +98,11 @@ export function CustomNode({ data, selected }: NodeProps<{
         </>
       )}
       
-      {data.type !== 'conditional' && (
+      {data.type !== 'conditional' && !isMainTrigger && (
+          <Handle type="source" position={Position.Bottom} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10 }} />
+      )}
+      
+       {isMainTrigger && (
           <Handle type="source" position={Position.Bottom} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10 }} />
       )}
       
@@ -130,8 +134,8 @@ export function CustomNode({ data, selected }: NodeProps<{
         ) : isMainTrigger && !hasKeywords ? (
             <CardContent className="px-4 pb-4 pt-2 text-center text-muted-foreground min-h-[80px] flex flex-col items-center justify-center">
                 <Zap className="h-6 w-6 mb-2 text-yellow-500"/>
-                <p className="text-sm font-semibold text-foreground">Gatilhos do Fluxo</p>
-                <p className="text-xs text-muted-foreground">Configure as palavras-chave que iniciam esta conversa clicando no ícone de configurações.</p>
+                <p className="text-sm font-semibold text-foreground">Gatilho Inicial</p>
+                <p className="text-xs text-muted-foreground/80">Configure as palavras-chave que iniciam esta conversa clicando no ícone de configurações.</p>
             </CardContent>
         ) : !isMainTrigger && data.type !== 'conditional' ? (
              <CardContent className="px-3 pb-3 pt-2 text-xs text-muted-foreground min-h-[40px]">
