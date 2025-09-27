@@ -59,7 +59,7 @@ export const nodeTypeConfig = {
 };
 
 
-const enrichNodeData = (node: Node, onConfigure: (node: Node) => void, onDelete: (node: Node) => void, onQuickAdd: (node: Node) => void): Node => {
+const enrichNodeData = (node: Node, onConfigure: (node: Node) => void, onDelete: (node: Node) => void, onQuickAdd: (sourceHandle?: string) => void): Node => {
     const config = nodeTypeConfig[node.data.type as keyof typeof nodeTypeConfig] || {};
     
     const isDeletable = node.id !== '1';
@@ -72,7 +72,7 @@ const enrichNodeData = (node: Node, onConfigure: (node: Node) => void, onDelete:
             color: config.color,
             onConfigure: () => onConfigure(node),
             onDelete: () => onDelete(node),
-            onQuickAdd: () => onQuickAdd(node),
+            onQuickAdd: (sourceHandle?: string) => onQuickAdd(sourceHandle),
             isDeletable: isDeletable,
             isMainTrigger: node.id === '1',
         },
@@ -127,37 +127,31 @@ export default function EditConversationFlowPage() {
         setNodeToDelete(node);
     };
 
-    const handleQuickAdd = (sourceNode: Node) => {
-        setQuickAddSourceNode(sourceNode);
+    const handleQuickAdd = (sourceNode: Node, sourceHandle?: string) => {
+        setQuickAddSourceNode({ ...sourceNode, data: { ...sourceNode.data, sourceHandleForQuickAdd: sourceHandle } });
         setIsPaletteOpen(true);
     };
 
     const confirmDeleteNode = () => {
         if (!nodeToDelete) return;
         
-        // Also remove any edges connected to this node and conditions in conditional nodes
-        setEdges((eds) => eds.filter(e => e.source !== nodeToDelete.id && e.target !== nodeToDelete.id));
-        setNodes((nds) => {
-            const newNodes = nds.filter(n => n.id !== nodeToDelete.id);
-            // Clean up conditions that might point to the deleted node
-            return newNodes.map(n => {
-                if (n.data.type === 'conditional' && n.data.conditions) {
-                    const edgeSourceHandles = edges
-                        .filter(e => e.source === n.id)
-                        .map(e => e.sourceHandle)
-                        .filter(Boolean);
-                    
-                    const updatedConditions = n.data.conditions.filter((cond: any) => 
-                        edgeSourceHandles.includes(cond.id)
-                    );
-
-                    if (updatedConditions.length !== n.data.conditions.length) {
-                       return {...n, data: {...n.data, conditions: updatedConditions}};
-                    }
-                }
-                return n;
-            });
+        setEdges((eds) => {
+            const newEdges = eds.filter(e => e.source !== nodeToDelete.id && e.target !== nodeToDelete.id);
+            setNodes(nds => nds.map(n => {
+                 if (n.data.type === 'conditional' && n.data.conditions) {
+                     const updatedConditions = n.data.conditions.filter((cond: any) => {
+                         const edgeForCond = newEdges.find(e => e.source === n.id && e.sourceHandle === cond.id);
+                         return !!edgeForCond;
+                     });
+                     if (updatedConditions.length !== n.data.conditions.length) {
+                         return {...n, data: {...n.data, conditions: updatedConditions}};
+                     }
+                 }
+                 return n;
+            }));
+            return newEdges;
         });
+        setNodes((nds) => nds.filter(n => n.id !== nodeToDelete.id));
 
         setNodeToDelete(null);
         setHasUnsavedChanges(true);
@@ -198,7 +192,7 @@ export default function EditConversationFlowPage() {
                 const fetchedFlow = await getFlowById(flowId);
                 if (fetchedFlow) {
                     setFlow(fetchedFlow);
-                    setNodes((fetchedFlow.nodes || []).map(n => enrichNodeData(n, handleConfigureNode, handleDeleteNode, handleQuickAdd)));
+                    setNodes((fetchedFlow.nodes || []).map(n => enrichNodeData(n, handleConfigureNode, handleDeleteNode, (sourceHandle) => handleQuickAdd(n, sourceHandle))));
                     setEdges(fetchedFlow.edges || []);
                     setFlowSettings({
                         name: fetchedFlow.name,
@@ -294,7 +288,7 @@ export default function EditConversationFlowPage() {
     const onNodesChange: OnNodesChange = useCallback((changes) => {
         setNodes((nds) => {
             const newNodes = applyNodeChanges(changes, nds);
-            return newNodes.map(n => enrichNodeData(n, handleConfigureNode, handleDeleteNode, handleQuickAdd));
+            return newNodes.map(n => enrichNodeData(n, handleConfigureNode, handleDeleteNode, (sourceHandle) => handleQuickAdd(n, sourceHandle)));
         });
         setHasUnsavedChanges(true);
     }, [setNodes]);
@@ -308,7 +302,7 @@ export default function EditConversationFlowPage() {
         setNodes((nds) => {
             const newNodes = nds.map((node) => {
                 if (node.id === nodeId) {
-                    const enrichedNode = enrichNodeData({ ...node, data: { ...node.data, ...data } }, handleConfigureNode, handleDeleteNode, handleQuickAdd);
+                    const enrichedNode = enrichNodeData({ ...node, data: { ...node.data, ...data } }, handleConfigureNode, handleDeleteNode, (sourceHandle) => handleQuickAdd(node, sourceHandle));
                     return enrichedNode;
                 }
                 return node;
@@ -323,6 +317,8 @@ export default function EditConversationFlowPage() {
 
      const addNode = (type: keyof typeof nodeTypeConfig, sourceHandle?: string) => {
         const sourceNodeIsConditional = quickAddSourceNode?.data.type === 'conditional';
+        const handleFromQuickAdd = quickAddSourceNode?.data.sourceHandleForQuickAdd;
+
     
         // Check if the source node can have another connection
         if (quickAddSourceNode && !sourceNodeIsConditional) {
@@ -331,7 +327,7 @@ export default function EditConversationFlowPage() {
                 toast({
                     variant: 'destructive',
                     title: 'Conexão Inválida',
-                    description: 'Esta tarefa já possui uma conexão de saída. Use o nó "Dividir Fluxo" para criar ramificações.'
+                    description: 'Esta tarefa já possui uma conexão de saída. Use o nó "Condição Lógica" para criar ramificações.'
                 });
                 return; // Stop execution
             }
@@ -355,7 +351,7 @@ export default function EditConversationFlowPage() {
             data: config.defaultData,
         };
 
-        const enriched = enrichNodeData(newNode, handleConfigureNode, handleDeleteNode, handleQuickAdd);
+        const enriched = enrichNodeData(newNode, handleConfigureNode, handleDeleteNode, (sh) => handleQuickAdd(newNode, sh));
         setNodes((nds) => nds.concat(enriched));
 
         if (quickAddSourceNode) {
@@ -364,18 +360,16 @@ export default function EditConversationFlowPage() {
                 source: quickAddSourceNode.id,
                 target: newNodeId,
                 type: 'smoothstep',
-                sourceHandle: sourceHandle || null,
+                sourceHandle: handleFromQuickAdd || sourceHandle || null,
             };
             setEdges((eds) => addEdge(newEdge, eds));
             
-            if (quickAddSourceNode.data.type === 'conditional' && sourceHandle) {
+            if (quickAddSourceNode.data.type === 'conditional' && handleFromQuickAdd) {
                  setNodes(nds => nds.map(n => {
                      if (n.id === quickAddSourceNode.id) {
                          const existingConditions = n.data.conditions || [];
-                         // Check if a condition for this handle already exists
-                         if (!existingConditions.some((c: any) => c.id === sourceHandle)) {
-                             // Add a new blank condition associated with the new handle
-                             const newConditions = [...existingConditions, { id: sourceHandle, variable: '', operator: '==', value: '', label: '' }];
+                         if (!existingConditions.some((c: any) => c.id === handleFromQuickAdd)) {
+                             const newConditions = [...existingConditions, { id: handleFromQuickAdd, variable: '', operator: '==', value: '', label: '' }];
                              return {...n, data: {...n.data, conditions: newConditions}};
                          }
                      }
@@ -408,7 +402,7 @@ export default function EditConversationFlowPage() {
             if (sourceNode && sourceNode.data.type !== 'conditional') {
                 const sourceHasConnection = eds.some(edge => edge.source === params.source);
                 if (sourceHasConnection) {
-                    toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Esta tarefa já possui uma conexão de saída. Use o nó "Dividir Fluxo" para criar ramificações.' });
+                    toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Esta tarefa já possui uma conexão de saída. Use o nó "Condição Lógica" para criar ramificações.' });
                     return eds;
                 }
             }
@@ -441,16 +435,15 @@ export default function EditConversationFlowPage() {
     }, [nodes, toast]);
 
     const onConnectFromPanel = (source: string, sourceHandle: string, target: string) => {
-        // Prevent connecting a conditional handle to an already connected node
-        const targetNodeHasIncomingEdge = edges.some(edge => edge.target === target);
-        if (targetNodeHasIncomingEdge) {
-            toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Esta tarefa de destino já possui uma conexão de entrada.' });
-            return;
-        }
-
-        // Remove existing edge from this source handle if it exists
         setEdges(prevEdges => {
             const filteredEdges = prevEdges.filter(edge => !(edge.source === source && edge.sourceHandle === sourceHandle));
+            
+            const targetHasIncomingEdge = filteredEdges.some(edge => edge.target === target);
+            if (targetHasIncomingEdge) {
+                toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Esta tarefa de destino já possui uma conexão de entrada.' });
+                return prevEdges; // Return original edges
+            }
+
             const newEdge: Edge = {
                 id: `e${source}-${target}-${sourceHandle}`,
                 source,
@@ -695,5 +688,6 @@ export default function EditConversationFlowPage() {
 
 
     
+
 
 

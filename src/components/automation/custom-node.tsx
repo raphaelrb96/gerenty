@@ -25,7 +25,7 @@ export function CustomNode({ data, selected }: NodeProps<{
   isMainTrigger?: boolean,
   onConfigure: () => void,
   onDelete: () => void,
-  onQuickAdd: () => void,
+  onQuickAdd: (sourceHandle?: string) => void,
 }>) {
   
   const getMatchTypeLabel = (matchType?: string) => {
@@ -130,10 +130,12 @@ export function CustomNode({ data, selected }: NodeProps<{
                  {(data.conditions || []).map((cond: any, index: number) => (
                     <div key={cond.id} className="text-xs p-2 bg-muted rounded-md flex justify-between items-center relative">
                         <span>Se <strong>{`{{${cond.variable || '...'}}}`}</strong> {cond.operator} <strong>{cond.value || '...'}</strong></span>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => data.onQuickAdd(cond.id)}><PlusCircle className="h-4 w-4" /></Button>
                     </div>
                 ))}
                  <div className="text-xs p-2 bg-muted rounded-md flex justify-between items-center relative">
                     <span>Senão (Padrão)</span>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => data.onQuickAdd('else')}><PlusCircle className="h-4 w-4" /></Button>
                 </div>
             </CardContent>
         )}
@@ -153,7 +155,7 @@ export function CustomNode({ data, selected }: NodeProps<{
                 variant="ghost" 
                 size="icon" 
                 className="h-7 w-7 text-primary hover:text-primary hover:bg-primary/10"
-                onClick={data.onQuickAdd}
+                onClick={() => data.onQuickAdd()}
             >
                 <PlusCircle className="h-4 w-4"/>
                 <span className="sr-only">Adicionar Tarefa</span>
