@@ -302,6 +302,13 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange }: NodeConfigPa
         }
     }
 
+    const handleClose = () => {
+        const closeButton = document.querySelector('[data-radix-collection-item] > button[aria-label="Close"]') as HTMLElement;
+        if (closeButton) {
+            closeButton.click();
+        }
+    }
+
 
     return (
         <SheetContent className="sm:max-w-lg flex flex-col p-0">
@@ -314,9 +321,12 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange }: NodeConfigPa
             <ScrollArea className="flex-1 px-6">
                 {renderPanelContent()}
             </ScrollArea>
-             <SheetFooter className="p-6 border-t">
-                <Button variant="outline" onClick={() => (document.querySelector('[data-radix-collection-item] > button[aria-label="Close"]') as HTMLElement)?.click()}>
-                    Fechar
+            <SheetFooter className="p-6 border-t gap-2">
+                <Button variant="outline" onClick={handleClose}>
+                    Cancelar
+                </Button>
+                 <Button onClick={handleClose}>
+                    Salvar Alterações
                 </Button>
             </SheetFooter>
         </SheetContent>
