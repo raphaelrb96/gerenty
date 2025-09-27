@@ -891,6 +891,8 @@ export type Flow = {
     sessionConfig: {
         timeoutMinutes: number;
         timeoutAction: 'end_flow' | 'send_message' | 'transfer' | 'forward_flow';
+        timeoutMessageId?: string; // ID of the message to send on timeout
+        timeoutForwardFlowId?: string; // ID of the flow to forward to on timeout
     };
     schedule: {
         timezone: string;

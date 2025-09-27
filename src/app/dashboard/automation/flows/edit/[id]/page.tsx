@@ -7,7 +7,7 @@ import { FlowBuilder } from "@/components/automation/flow-builder";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { getFlowById, updateFlow } from "@/services/flow-service";
 import { useToast } from "@/hooks/use-toast";
-import type { Flow } from "@/lib/types";
+import type { Flow, LibraryMessage } from "@/lib/types";
 import { useRouter, useParams } from 'next/navigation';
 import type { Node, Edge, OnNodesChange, OnEdgesChange, Connection } from "reactflow";
 import { applyNodeChanges, applyEdgeChanges, addEdge } from 'reactflow';
@@ -37,6 +37,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useCompany } from "@/context/company-context";
+import { getLibraryMessagesByCompany } from "@/services/library-message-service";
 
 
 const nodeTypeConfig = {
@@ -69,8 +71,11 @@ export default function EditConversationFlowPage() {
     const router = useRouter();
     const params = useParams();
     const { id: flowId } = params;
+    const { activeCompany } = useCompany();
 
     const [flow, setFlow] = useState<Flow | null>(null);
+    const [allFlows, setAllFlows] = useState<Flow[]>([]);
+    const [libraryMessages, setLibraryMessages] = useState<LibraryMessage[]>([]);
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
     const [selectedNode, setSelectedNode] = useState<Node | null>(null);
@@ -87,6 +92,8 @@ export default function EditConversationFlowPage() {
         status: 'draft' as Flow['status'],
         sessionTimeout: 30,
         timeoutAction: 'end_flow' as Flow['sessionConfig']['timeoutAction'],
+        timeoutMessageId: '',
+        timeoutForwardFlowId: '',
         timezone: 'America/Sao_Paulo',
         activationTime: '00:00',
         deactivationTime: '23:59',
@@ -135,6 +142,8 @@ export default function EditConversationFlowPage() {
                         status: fetchedFlow.status,
                         sessionTimeout: fetchedFlow.sessionConfig?.timeoutMinutes || 30,
                         timeoutAction: fetchedFlow.sessionConfig?.timeoutAction || 'end_flow',
+                        timeoutMessageId: fetchedFlow.sessionConfig?.timeoutMessageId || '',
+                        timeoutForwardFlowId: fetchedFlow.sessionConfig?.timeoutForwardFlowId || '',
                         timezone: fetchedFlow.schedule?.timezone || 'America/Sao_Paulo',
                         activationTime: fetchedFlow.schedule?.activationTime || '00:00',
                         deactivationTime: fetchedFlow.schedule?.deactivationTime || '23:59',
@@ -154,6 +163,18 @@ export default function EditConversationFlowPage() {
         fetchFlow();
     }, [flowId, toast, router]);
     
+    // Fetch complementary data for the settings modal
+    useEffect(() => {
+        if (activeCompany) {
+            getLibraryMessagesByCompany(activeCompany.id)
+                .then(setLibraryMessages)
+                .catch(() => toast({ variant: 'destructive', title: 'Erro ao carregar mensagens da biblioteca' }));
+
+            // You'd also fetch all other flows here for the "Forward Flow" option
+            // getFlowsByCompany(activeCompany.id).then(setAllFlows)...
+        }
+    }, [activeCompany, toast]);
+
     const handleFlowSettingsSave = async () => {
         if (!flow) return;
         const dataToUpdate: Partial<Flow> = {
@@ -162,6 +183,8 @@ export default function EditConversationFlowPage() {
             sessionConfig: {
                 timeoutMinutes: flowSettings.sessionTimeout,
                 timeoutAction: flowSettings.timeoutAction,
+                timeoutMessageId: flowSettings.timeoutMessageId,
+                timeoutForwardFlowId: flowSettings.timeoutForwardFlowId,
             },
             schedule: {
                 timezone: flowSettings.timezone,
@@ -176,6 +199,7 @@ export default function EditConversationFlowPage() {
             setFlow(prev => prev ? { ...prev, ...dataToUpdate } as Flow : null);
             toast({ title: "Configurações do fluxo salvas com sucesso!" });
             setIsFlowSettingsOpen(false);
+            setHasUnsavedChanges(true); // Mark as changed to allow main save button to appear
         } catch (error) {
             toast({ variant: 'destructive', title: "Erro ao salvar configurações" });
         }
@@ -362,6 +386,32 @@ export default function EditConversationFlowPage() {
                                     </p>
                                 </div>
                             </div>
+                            {flowSettings.timeoutAction === 'send_message' && (
+                                <div className="space-y-2 pt-4 border-t">
+                                    <Label htmlFor="timeout-message-select">Mensagem a Enviar</Label>
+                                    <Select value={flowSettings.timeoutMessageId} onValueChange={(value) => setFlowSettings(prev => ({...prev, timeoutMessageId: value}))}>
+                                        <SelectTrigger id="timeout-message-select"><SelectValue placeholder="Selecione uma mensagem..." /></SelectTrigger>
+                                        <SelectContent>
+                                            {libraryMessages.map(msg => (
+                                                <SelectItem key={msg.id} value={msg.id}>{msg.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
+                            {flowSettings.timeoutAction === 'forward_flow' && (
+                                <div className="space-y-2 pt-4 border-t">
+                                    <Label htmlFor="timeout-flow-select">Fluxo de Destino</Label>
+                                     <Select value={flowSettings.timeoutForwardFlowId} onValueChange={(value) => setFlowSettings(prev => ({...prev, timeoutForwardFlowId: value}))}>
+                                        <SelectTrigger id="timeout-flow-select"><SelectValue placeholder="Selecione um fluxo..." /></SelectTrigger>
+                                        <SelectContent>
+                                            {allFlows.filter(f => f.id !== flow?.id).map(f => (
+                                                <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
                         </div>
 
                         <div className="space-y-4 p-4 border rounded-lg">
