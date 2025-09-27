@@ -16,6 +16,14 @@ import { NodesPalette } from "@/components/automation/nodes-palette";
 import { Bot, MessageCircle, Settings, Plus, Pencil, Trash2, Save, MoreVertical, Clock, Calendar, Repeat, MessageSquareX, Forward, Send } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+} from "@/components/ui/sheet";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -29,16 +37,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useCompany } from "@/context/company-context";
 import { getLibraryMessagesByCompany } from "@/services/library-message-service";
+import { Card } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 
 const nodeTypeConfig = {
@@ -332,132 +336,139 @@ export default function EditConversationFlowPage() {
                 </DialogContent>
             </Dialog>
             
-            <Dialog open={isFlowSettingsOpen} onOpenChange={setIsFlowSettingsOpen}>
-                <DialogContent className="sm:max-w-2xl">
-                    <DialogHeader>
-                        <DialogTitle>Configurações Avançadas do Fluxo</DialogTitle>
-                        <DialogDescription>
+            <Sheet open={isFlowSettingsOpen} onOpenChange={setIsFlowSettingsOpen}>
+                 <SheetContent className="sm:max-w-lg flex flex-col p-0">
+                    <SheetHeader className="p-6">
+                        <SheetTitle>Configurações Avançadas do Fluxo</SheetTitle>
+                        <SheetDescription>
                             Ajuste detalhes de funcionamento, agendamento e comportamento do seu fluxo de conversa.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="py-4 space-y-6">
-                        <div className="space-y-4 p-4 border rounded-lg">
-                             <h4 className="font-semibold">Geral</h4>
-                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="flow-name">Nome do Fluxo</Label>
-                                    <Input id="flow-name" value={flowSettings.name} onChange={(e) => setFlowSettings(prev => ({...prev, name: e.target.value}))} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="flow-status">Status</Label>
-                                    <Select value={flowSettings.status} onValueChange={(value) => setFlowSettings(prev => ({...prev, status: value as Flow['status']}))}>
-                                        <SelectTrigger id="flow-status">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="draft">Rascunho</SelectItem>
-                                            <SelectItem value="published">Publicado</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                             </div>
-                        </div>
+                        </SheetDescription>
+                    </SheetHeader>
+                    <ScrollArea className="flex-1 px-6">
+                        <div className="space-y-6 pb-6">
+                            <Card>
+                                <CardContent className="p-4 pt-6 space-y-4">
+                                    <h4 className="font-semibold">Geral</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="flow-name">Nome do Fluxo</Label>
+                                            <Input id="flow-name" value={flowSettings.name} onChange={(e) => setFlowSettings(prev => ({...prev, name: e.target.value}))} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="flow-status">Status</Label>
+                                            <Select value={flowSettings.status} onValueChange={(value) => setFlowSettings(prev => ({...prev, status: value as Flow['status']}))}>
+                                                <SelectTrigger id="flow-status">
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="draft">Rascunho</SelectItem>
+                                                    <SelectItem value="published">Publicado</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
 
-                        <div className="space-y-4 p-4 border rounded-lg">
-                            <h4 className="font-semibold flex items-center gap-2"><Clock className="h-4 w-4"/> Configurações de Sessão</h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="session-timeout">Timeout de Inatividade (minutos)</Label>
-                                    <Input id="session-timeout" type="number" value={flowSettings.sessionTimeout} onChange={(e) => setFlowSettings(prev => ({...prev, sessionTimeout: Number(e.target.value)}))} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="timeout-action">Ação Pós-Timeout</Label>
-                                    <Select value={flowSettings.timeoutAction} onValueChange={(value) => setFlowSettings(prev => ({...prev, timeoutAction: value as any}))}>
-                                        <SelectTrigger id="timeout-action"><SelectValue /></SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="end_flow"><MessageSquareX className="mr-2 h-4 w-4"/>Encerrar Fluxo</SelectItem>
-                                            <SelectItem value="send_message"><Send className="mr-2 h-4 w-4"/>Enviar Mensagem Automática</SelectItem>
-                                            <SelectItem value="transfer"><Bot className="mr-2 h-4 w-4"/>Transferir para Atendente</SelectItem>
-                                            <SelectItem value="forward_flow"><Forward className="mr-2 h-4 w-4"/>Encaminhar para Outro Fluxo</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <p className="text-xs text-muted-foreground pt-1">
-                                        Define o que acontece se o cliente não responder dentro do tempo limite.
-                                    </p>
-                                </div>
-                            </div>
-                            {flowSettings.timeoutAction === 'send_message' && (
-                                <div className="space-y-2 pt-4 border-t">
-                                    <Label htmlFor="timeout-message-select">Mensagem a Enviar</Label>
-                                    <Select value={flowSettings.timeoutMessageId} onValueChange={(value) => setFlowSettings(prev => ({...prev, timeoutMessageId: value}))}>
-                                        <SelectTrigger id="timeout-message-select"><SelectValue placeholder="Selecione uma mensagem..." /></SelectTrigger>
-                                        <SelectContent>
-                                            {libraryMessages.map(msg => (
-                                                <SelectItem key={msg.id} value={msg.id}>{msg.name}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            )}
-                            {flowSettings.timeoutAction === 'forward_flow' && (
-                                <div className="space-y-2 pt-4 border-t">
-                                    <Label htmlFor="timeout-flow-select">Fluxo de Destino</Label>
-                                     <Select value={flowSettings.timeoutForwardFlowId} onValueChange={(value) => setFlowSettings(prev => ({...prev, timeoutForwardFlowId: value}))}>
-                                        <SelectTrigger id="timeout-flow-select"><SelectValue placeholder="Selecione um fluxo..." /></SelectTrigger>
-                                        <SelectContent>
-                                            {allFlows.filter(f => f.id !== flow?.id).map(f => (
-                                                <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            )}
-                        </div>
+                            <Card>
+                                 <CardContent className="p-4 pt-6 space-y-4">
+                                    <h4 className="font-semibold flex items-center gap-2"><Clock className="h-4 w-4"/> Configurações de Sessão</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="session-timeout">Timeout de Inatividade (minutos)</Label>
+                                            <Input id="session-timeout" type="number" value={flowSettings.sessionTimeout} onChange={(e) => setFlowSettings(prev => ({...prev, sessionTimeout: Number(e.target.value)}))} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="timeout-action">Ação Pós-Timeout</Label>
+                                            <Select value={flowSettings.timeoutAction} onValueChange={(value) => setFlowSettings(prev => ({...prev, timeoutAction: value as any}))}>
+                                                <SelectTrigger id="timeout-action"><SelectValue /></SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="end_flow"><MessageSquareX className="mr-2 h-4 w-4"/>Encerrar Fluxo</SelectItem>
+                                                    <SelectItem value="send_message"><Send className="mr-2 h-4 w-4"/>Enviar Mensagem Automática</SelectItem>
+                                                    <SelectItem value="transfer"><Bot className="mr-2 h-4 w-4"/>Transferir para Atendente</SelectItem>
+                                                    <SelectItem value="forward_flow"><Forward className="mr-2 h-4 w-4"/>Encaminhar para Outro Fluxo</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <p className="text-xs text-muted-foreground pt-1">
+                                                Define o que acontece se o cliente não responder dentro do tempo limite.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    {flowSettings.timeoutAction === 'send_message' && (
+                                        <div className="space-y-2 pt-4 border-t">
+                                            <Label htmlFor="timeout-message-select">Mensagem a Enviar</Label>
+                                            <Select value={flowSettings.timeoutMessageId} onValueChange={(value) => setFlowSettings(prev => ({...prev, timeoutMessageId: value}))}>
+                                                <SelectTrigger id="timeout-message-select"><SelectValue placeholder="Selecione uma mensagem..." /></SelectTrigger>
+                                                <SelectContent>
+                                                    {libraryMessages.map(msg => (
+                                                        <SelectItem key={msg.id} value={msg.id}>{msg.name}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    )}
+                                    {flowSettings.timeoutAction === 'forward_flow' && (
+                                        <div className="space-y-2 pt-4 border-t">
+                                            <Label htmlFor="timeout-flow-select">Fluxo de Destino</Label>
+                                            <Select value={flowSettings.timeoutForwardFlowId} onValueChange={(value) => setFlowSettings(prev => ({...prev, timeoutForwardFlowId: value}))}>
+                                                <SelectTrigger id="timeout-flow-select"><SelectValue placeholder="Selecione um fluxo..." /></SelectTrigger>
+                                                <SelectContent>
+                                                    {allFlows.filter(f => f.id !== flow?.id).map(f => (
+                                                        <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
 
-                        <div className="space-y-4 p-4 border rounded-lg">
-                            <h4 className="font-semibold flex items-center gap-2"><Calendar className="h-4 w-4"/> Horário de Ativação</h4>
-                             <div className="space-y-2">
-                                <Label htmlFor="flow-timezone">Fuso Horário</Label>
-                                <Select value={flowSettings.timezone} onValueChange={(value) => setFlowSettings(prev => ({...prev, timezone: value}))}>
-                                    <SelectTrigger id="flow-timezone"><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="America/Sao_Paulo">Brasil (São Paulo)</SelectItem>
-                                        <SelectItem value="America/New_York">EUA (Nova York)</SelectItem>
-                                        <SelectItem value="Europe/Lisbon">Portugal (Lisboa)</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="activation-time">Ativar às</Label>
-                                    <Input id="activation-time" type="time" value={flowSettings.activationTime} onChange={(e) => setFlowSettings(prev => ({...prev, activationTime: e.target.value}))}/>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="deactivation-time">Desativar às</Label>
-                                    <Input id="deactivation-time" type="time" value={flowSettings.deactivationTime} onChange={(e) => setFlowSettings(prev => ({...prev, deactivationTime: e.target.value}))}/>
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Dias Ativos</Label>
-                                <ToggleGroup type="multiple" value={flowSettings.activeDays} onValueChange={(value) => setFlowSettings(prev => ({...prev, activeDays: value as any[]}))} className="flex-wrap justify-start">
-                                    <ToggleGroupItem value="sun">Dom</ToggleGroupItem>
-                                    <ToggleGroupItem value="mon">Seg</ToggleGroupItem>
-                                    <ToggleGroupItem value="tue">Ter</ToggleGroupItem>
-                                    <ToggleGroupItem value="wed">Qua</ToggleGroupItem>
-                                    <ToggleGroupItem value="thu">Qui</ToggleGroupItem>
-                                    <ToggleGroupItem value="fri">Sex</ToggleGroupItem>
-                                    <ToggleGroupItem value="sat">Sáb</ToggleGroupItem>
-                                </ToggleGroup>
-                            </div>
+                            <Card>
+                                 <CardContent className="p-4 pt-6 space-y-4">
+                                    <h4 className="font-semibold flex items-center gap-2"><Calendar className="h-4 w-4"/> Horário de Ativação</h4>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="flow-timezone">Fuso Horário</Label>
+                                        <Select value={flowSettings.timezone} onValueChange={(value) => setFlowSettings(prev => ({...prev, timezone: value}))}>
+                                            <SelectTrigger id="flow-timezone"><SelectValue /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="America/Sao_Paulo">Brasil (São Paulo)</SelectItem>
+                                                <SelectItem value="America/New_York">EUA (Nova York)</SelectItem>
+                                                <SelectItem value="Europe/Lisbon">Portugal (Lisboa)</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="activation-time">Ativar às</Label>
+                                            <Input id="activation-time" type="time" value={flowSettings.activationTime} onChange={(e) => setFlowSettings(prev => ({...prev, activationTime: e.target.value}))}/>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="deactivation-time">Desativar às</Label>
+                                            <Input id="deactivation-time" type="time" value={flowSettings.deactivationTime} onChange={(e) => setFlowSettings(prev => ({...prev, deactivationTime: e.target.value}))}/>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Dias Ativos</Label>
+                                        <ToggleGroup type="multiple" value={flowSettings.activeDays} onValueChange={(value) => setFlowSettings(prev => ({...prev, activeDays: value as any[]}))} className="flex-wrap justify-start">
+                                            <ToggleGroupItem value="sun">Dom</ToggleGroupItem>
+                                            <ToggleGroupItem value="mon">Seg</ToggleGroupItem>
+                                            <ToggleGroupItem value="tue">Ter</ToggleGroupItem>
+                                            <ToggleGroupItem value="wed">Qua</ToggleGroupItem>
+                                            <ToggleGroupItem value="thu">Qui</ToggleGroupItem>
+                                            <ToggleGroupItem value="fri">Sex</ToggleGroupItem>
+                                            <ToggleGroupItem value="sat">Sáb</ToggleGroupItem>
+                                        </ToggleGroup>
+                                    </div>
+                                </CardContent>
+                            </Card>
                         </div>
-
-                    </div>
-                     <DialogFooter>
+                    </ScrollArea>
+                    <SheetFooter className="p-6 border-t">
                         <Button variant="outline" onClick={() => setIsFlowSettingsOpen(false)}>Cancelar</Button>
                         <Button onClick={handleFlowSettingsSave}>Salvar Configurações</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                    </SheetFooter>
+                </SheetContent>
+            </Sheet>
 
             <AlertDialog open={!!nodeToDelete} onOpenChange={() => setNodeToDelete(null)}>
                 <AlertDialogContent>
@@ -478,3 +489,5 @@ export default function EditConversationFlowPage() {
         </div>
     );
 }
+
+    
