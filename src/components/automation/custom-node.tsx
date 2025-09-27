@@ -61,9 +61,9 @@ export function CustomNode({ data, selected }: NodeProps<{
   const isMainTrigger = data.isMainTrigger === true;
 
   const getVerticalHandlePosition = (index: number) => {
-    const headerHeight = 48;
-    const itemHeight = 36;
-    const spacing = 8;
+    const headerHeight = 48; // Approximate height of CardHeader with p-3
+    const itemHeight = 36; // Approximate height of the div with p-2 and text-xs
+    const spacing = 8; // This is the space-y-2 from CardContent
     const topOffset = headerHeight + (index * (itemHeight + spacing)) + (itemHeight / 2);
     return `${topOffset}px`;
   };
