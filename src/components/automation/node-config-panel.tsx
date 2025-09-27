@@ -2,8 +2,7 @@
 "use client";
 
 import type { Node } from "reactflow";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings, HelpCircle, FileText, Image, Video, Mic, MapPin } from "lucide-react";
+import { Settings, HelpCircle } from "lucide-react";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
@@ -13,7 +12,9 @@ import { useState, useEffect } from "react";
 import { getLibraryMessagesByCompany } from "@/services/library-message-service";
 import { useCompany } from "@/context/company-context";
 import { useToast } from "@/hooks/use-toast";
-import { DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog";
+import { SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetFooter } from "../ui/sheet";
+import { ScrollArea } from "../ui/scroll-area";
+import { Button } from "../ui/button";
 
 
 type NodeConfigPanelProps = {
@@ -188,22 +189,16 @@ function MessagePanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange
 
 export function NodeConfigPanel({ selectedNode, onNodeDataChange }: NodeConfigPanelProps) {
 
-    if (!selectedNode) {
-        return (
-            <>
-            <DialogHeader>
-                <DialogTitle>Configuração da Tarefa</DialogTitle>
-                <DialogDescription>Selecione uma tarefa no fluxograma para ver e editar suas propriedades aqui.</DialogDescription>
-            </DialogHeader>
-            <div className="h-32 flex flex-col items-center justify-center text-center p-6 text-muted-foreground">
-                <Settings className="h-8 w-8 mb-2" />
-                <p className="text-sm">Nenhuma tarefa selecionada.</p>
-            </div>
-            </>
-        );
-    }
-    
     const renderPanelContent = () => {
+        if (!selectedNode) {
+            return (
+                <div className="flex flex-col items-center justify-center text-center p-6 text-muted-foreground h-full">
+                    <Settings className="h-8 w-8 mb-2" />
+                    <p className="text-sm">Selecione uma tarefa no fluxograma para ver e editar suas propriedades aqui.</p>
+                </div>
+            )
+        }
+
         const nodeType = selectedNode.data.type;
         switch(nodeType) {
             case 'keywordTrigger':
@@ -212,7 +207,7 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange }: NodeConfigPa
                  return <MessagePanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
             default:
                  return (
-                    <div className="flex flex-col items-center justify-center text-center text-muted-foreground p-4">
+                    <div className="flex flex-col items-center justify-center text-center text-muted-foreground p-4 h-full">
                         <HelpCircle className="h-8 w-8 mb-2" />
                         <p>Tarefa de tipo desconhecido. Não há configurações disponíveis.</p>
                     </div>
@@ -222,16 +217,21 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange }: NodeConfigPa
 
 
     return (
-        <div className="h-full bg-card">
-            <DialogHeader>
-                <DialogTitle>Configurar: {selectedNode.data.label}</DialogTitle>
-                 <DialogDescription>
-                    ID da Tarefa: <span className="font-mono text-xs">{selectedNode.id}</span>
-                </DialogDescription>
-            </DialogHeader>
-            <div className="p-4">
+        <SheetContent className="sm:max-w-lg flex flex-col p-0">
+            <SheetHeader className="p-6">
+                <SheetTitle>Configurar: {selectedNode?.data.label || 'Tarefa'}</SheetTitle>
+                 <SheetDescription>
+                    ID da Tarefa: <span className="font-mono text-xs">{selectedNode?.id}</span>
+                </SheetDescription>
+            </SheetHeader>
+            <ScrollArea className="flex-1 px-6">
                 {renderPanelContent()}
-            </div>
-        </div>
+            </ScrollArea>
+             <SheetFooter className="p-6 border-t">
+                <Button variant="outline" onClick={() => (document.querySelector('[data-radix-collection-item] > button[aria-label="Close"]') as HTMLElement)?.click()}>
+                    Fechar
+                </Button>
+            </SheetFooter>
+        </SheetContent>
     );
 }

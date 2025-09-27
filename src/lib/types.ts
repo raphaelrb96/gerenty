@@ -891,12 +891,12 @@ export type Flow = {
     sessionConfig: {
         timeoutMinutes: number;
         timeoutAction: 'end_flow' | 'send_message' | 'transfer' | 'forward_flow';
-        timeoutMessageId?: string; // ID of the message to send on timeout
-        timeoutForwardFlowId?: string; // ID of the flow to forward to on timeout
+        timeoutMessageId?: string; 
+        timeoutForwardFlowId?: string;
     };
     schedule: {
         timezone: string;
-        isPerpetual?: boolean;
+        isPerpetual: boolean;
         activationTime: string; // HH:mm format
         deactivationTime: string; // HH:mm format
         activeDays: ('sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat')[];

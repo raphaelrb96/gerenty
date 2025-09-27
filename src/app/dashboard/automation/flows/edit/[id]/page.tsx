@@ -183,6 +183,7 @@ export default function EditConversationFlowPage() {
 
     const handleFlowSettingsSave = async () => {
         if (!flow) return;
+        
         const dataToUpdate: Partial<Flow> = {
             name: flowSettings.name,
             status: flowSettings.status,
@@ -206,7 +207,7 @@ export default function EditConversationFlowPage() {
             setFlow(prev => prev ? { ...prev, ...dataToUpdate } as Flow : null);
             toast({ title: "Configurações do fluxo salvas com sucesso!" });
             setIsFlowSettingsOpen(false);
-            setHasUnsavedChanges(true); // Mark as changed to allow main save button to appear
+            setHasUnsavedChanges(true);
         } catch (error) {
             toast({ variant: 'destructive', title: "Erro ao salvar configurações" });
         }
@@ -332,11 +333,9 @@ export default function EditConversationFlowPage() {
                 </DialogContent>
             </Dialog>
             
-            <Dialog open={isConfigOpen} onOpenChange={(isOpen) => { if (!isOpen) setSelectedNode(null); setIsConfigOpen(isOpen);}}>
-                <DialogContent>
-                     <NodeConfigPanel selectedNode={selectedNode} onNodeDataChange={onNodeDataChange} />
-                </DialogContent>
-            </Dialog>
+            <Sheet open={isConfigOpen} onOpenChange={(isOpen) => { if (!isOpen) setSelectedNode(null); setIsConfigOpen(isOpen);}}>
+                <NodeConfigPanel selectedNode={selectedNode} onNodeDataChange={onNodeDataChange} />
+            </Sheet>
             
             <Sheet open={isFlowSettingsOpen} onOpenChange={setIsFlowSettingsOpen}>
                  <SheetContent className="sm:max-w-lg flex flex-col p-0">
@@ -499,5 +498,4 @@ export default function EditConversationFlowPage() {
             </AlertDialog>
         </div>
     );
-
-    
+}
