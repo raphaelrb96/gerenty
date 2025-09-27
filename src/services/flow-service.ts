@@ -30,31 +30,40 @@ export async function getFlowsByCompany(companyId: string): Promise<Flow[]> {
     }
 }
 
-export async function createFlow(ownerId: string, companyId: string): Promise<Flow> {
+export async function createFlow(ownerId: string, companyId: string, name: string, triggerType: string): Promise<Flow> {
     const initialNodes = [
         { 
             id: '1', 
-            type: 'input', 
-            data: { label: 'Gatilho: Palavra-Chave', type: 'keywordTrigger' }, 
+            type: 'custom', 
+            data: { 
+                label: 'Gatilho: Palavra-Chave', 
+                type: 'keywordTrigger',
+                triggerType: triggerType,
+                triggerKeywords: []
+            }, 
             position: { x: 250, y: 5 } 
         },
-        { 
-            id: '2', 
-            data: { label: 'Enviar Mensagem de Boas-Vindas', type: 'message' }, 
-            position: { x: 250, y: 125 } 
-        },
     ];
-    const initialEdges = [{ id: 'e1-2', source: '1', target: '2', animated: true }];
 
     try {
         const docRef = await addDoc(flowsCollection, {
             ownerId,
             companyId,
-            name: "Novo Fluxo de Conversa",
-            trigger: { type: 'keyword', value: '', matchType: 'exact' },
+            name,
             nodes: initialNodes,
-            edges: initialEdges,
+            edges: [],
             status: 'draft',
+            sessionConfig: {
+                timeoutMinutes: 30,
+                timeoutAction: 'end_flow',
+            },
+            schedule: {
+                timezone: 'America/Sao_Paulo',
+                isPerpetual: true,
+                activationTime: '00:00',
+                deactivationTime: '23:59',
+                activeDays: ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'],
+            },
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
         });
