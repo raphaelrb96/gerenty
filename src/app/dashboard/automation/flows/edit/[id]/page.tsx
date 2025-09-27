@@ -283,12 +283,24 @@ export default function EditConversationFlowPage() {
         const config = nodeTypeConfig[type];
         const newNodeId = `${Date.now()}`;
         
+        if (quickAddSourceNode) {
+            const isConditional = quickAddSourceNode.data.type === 'conditional';
+            const sourceHasConnection = edges.some(edge => edge.source === quickAddSourceNode.id);
+
+            if (!isConditional && sourceHasConnection) {
+                 toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Esta tarefa já possui uma conexão de saída. Use o nó "Dividir Fluxo" para criar ramificações.' });
+                 setQuickAddSourceNode(null);
+                 setIsPaletteOpen(false);
+                 return;
+            }
+        }
+        
         let position = { x: Math.random() * 400, y: Math.random() * 400 };
 
         if (quickAddSourceNode) {
             position = {
                 x: quickAddSourceNode.position.x,
-                y: quickAddSourceNode.position.y + (quickAddSourceNode.height || 150) + 75
+                y: quickAddSourceNode.position.y + (quickAddSourceNode.height || 100) + 75
             };
         }
 
@@ -303,20 +315,13 @@ export default function EditConversationFlowPage() {
         setNodes((nds) => nds.concat(enriched));
 
         if (quickAddSourceNode) {
-            const isConditional = quickAddSourceNode.data.type === 'conditional';
-            const sourceHasConnection = edges.some(edge => edge.source === quickAddSourceNode.id);
-
-            if (!isConditional && sourceHasConnection) {
-                 toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Esta tarefa já possui uma conexão de saída. Use o nó "Dividir Fluxo" para criar ramificações.' });
-            } else {
-                const newEdge: Edge = {
-                    id: `e${quickAddSourceNode.id}-${newNodeId}`,
-                    source: quickAddSourceNode.id,
-                    target: newNodeId,
-                    type: 'smoothstep'
-                };
-                setEdges((eds) => addEdge(newEdge, eds));
-            }
+            const newEdge: Edge = {
+                id: `e${quickAddSourceNode.id}-${newNodeId}`,
+                source: quickAddSourceNode.id,
+                target: newNodeId,
+                type: 'smoothstep'
+            };
+            setEdges((eds) => addEdge(newEdge, eds));
             setQuickAddSourceNode(null); // Reset after adding
         }
         
