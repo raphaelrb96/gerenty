@@ -36,7 +36,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { nodeTypeConfig } from "@/app/dashboard/automation/flows/edit/[id]/page";
-import { NodePalette } from "./nodes-palette";
+import { NodesPalette } from "./nodes-palette";
 
 type NodeConfigPanelProps = {
     selectedNode: Node | null;
