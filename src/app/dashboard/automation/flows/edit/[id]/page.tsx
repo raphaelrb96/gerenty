@@ -43,6 +43,7 @@ import { useCompany } from "@/context/company-context";
 import { getLibraryMessagesByCompany } from "@/services/library-message-service";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Checkbox } from "@/components/ui/checkbox";
 
 
 const nodeTypeConfig = {
@@ -99,6 +100,7 @@ export default function EditConversationFlowPage() {
         timeoutMessageId: '',
         timeoutForwardFlowId: '',
         timezone: 'America/Sao_Paulo',
+        isPerpetual: false,
         activationTime: '00:00',
         deactivationTime: '23:59',
         activeDays: ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as Flow['schedule']['activeDays'],
@@ -149,6 +151,7 @@ export default function EditConversationFlowPage() {
                         timeoutMessageId: fetchedFlow.sessionConfig?.timeoutMessageId || '',
                         timeoutForwardFlowId: fetchedFlow.sessionConfig?.timeoutForwardFlowId || '',
                         timezone: fetchedFlow.schedule?.timezone || 'America/Sao_Paulo',
+                        isPerpetual: fetchedFlow.schedule?.isPerpetual || false,
                         activationTime: fetchedFlow.schedule?.activationTime || '00:00',
                         deactivationTime: fetchedFlow.schedule?.deactivationTime || '23:59',
                         activeDays: fetchedFlow.schedule?.activeDays || ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'],
@@ -192,6 +195,7 @@ export default function EditConversationFlowPage() {
             },
             schedule: {
                 timezone: flowSettings.timezone,
+                isPerpetual: flowSettings.isPerpetual,
                 activationTime: flowSettings.activationTime,
                 deactivationTime: flowSettings.deactivationTime,
                 activeDays: flowSettings.activeDays,
@@ -310,7 +314,6 @@ export default function EditConversationFlowPage() {
                     onEdgesChange={onEdgesChange}
                     onConnect={onConnect}
                     onEdgesDelete={handleEdgesDelete}
-                    proOptions={{ hideAttribution: true }}
                 />
                  <Button 
                     className="absolute bottom-6 right-6 rounded-full w-14 h-14"
@@ -383,10 +386,10 @@ export default function EditConversationFlowPage() {
                                             <Select value={flowSettings.timeoutAction} onValueChange={(value) => setFlowSettings(prev => ({...prev, timeoutAction: value as any}))}>
                                                 <SelectTrigger id="timeout-action"><SelectValue /></SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="end_flow"><MessageSquareX className="h-4 w-4"/>Encerrar Fluxo</SelectItem>
-                                                    <SelectItem value="send_message"><Send className="h-4 w-4"/>Enviar Mensagem Automática</SelectItem>
-                                                    <SelectItem value="transfer"><Bot className="h-4 w-4"/>Transferir para Atendente</SelectItem>
-                                                    <SelectItem value="forward_flow"><Forward className="h-4 w-4"/>Encaminhar para Outro Fluxo</SelectItem>
+                                                    <SelectItem value="end_flow"><MessageSquareX className="mr-2 h-4 w-4"/>Encerrar Fluxo</SelectItem>
+                                                    <SelectItem value="send_message"><Send className="mr-2 h-4 w-4"/>Enviar Mensagem Automática</SelectItem>
+                                                    <SelectItem value="transfer"><Bot className="mr-2 h-4 w-4"/>Transferir para Atendente</SelectItem>
+                                                    <SelectItem value="forward_flow"><Forward className="mr-2 h-4 w-4"/>Encaminhar para Outro Fluxo</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <p className="text-xs text-muted-foreground pt-1">
@@ -426,9 +429,18 @@ export default function EditConversationFlowPage() {
                             <Card>
                                  <CardContent className="p-4 pt-6 space-y-4">
                                     <h4 className="font-semibold flex items-center gap-2"><Calendar className="h-4 w-4"/> Horário de Ativação</h4>
+                                     <div className="flex items-center space-x-2">
+                                        <Checkbox 
+                                            id="is-perpetual" 
+                                            checked={flowSettings.isPerpetual} 
+                                            onCheckedChange={(checked) => setFlowSettings(prev => ({ ...prev, isPerpetual: checked as boolean }))}
+                                        />
+                                        <Label htmlFor="is-perpetual">Fluxo Vitalício (Sempre Ativo)</Label>
+                                    </div>
+                                    <Separator />
                                     <div className="space-y-2">
                                         <Label htmlFor="flow-timezone">Fuso Horário</Label>
-                                        <Select value={flowSettings.timezone} onValueChange={(value) => setFlowSettings(prev => ({...prev, timezone: value}))}>
+                                        <Select value={flowSettings.timezone} onValueChange={(value) => setFlowSettings(prev => ({...prev, timezone: value}))} disabled={flowSettings.isPerpetual}>
                                             <SelectTrigger id="flow-timezone"><SelectValue /></SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="America/Sao_Paulo">Brasil (São Paulo)</SelectItem>
@@ -440,16 +452,16 @@ export default function EditConversationFlowPage() {
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <Label htmlFor="activation-time">Ativar às</Label>
-                                            <Input id="activation-time" type="time" value={flowSettings.activationTime} onChange={(e) => setFlowSettings(prev => ({...prev, activationTime: e.target.value}))}/>
+                                            <Input id="activation-time" type="time" value={flowSettings.activationTime} onChange={(e) => setFlowSettings(prev => ({...prev, activationTime: e.target.value}))} disabled={flowSettings.isPerpetual}/>
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="deactivation-time">Desativar às</Label>
-                                            <Input id="deactivation-time" type="time" value={flowSettings.deactivationTime} onChange={(e) => setFlowSettings(prev => ({...prev, deactivationTime: e.target.value}))}/>
+                                            <Input id="deactivation-time" type="time" value={flowSettings.deactivationTime} onChange={(e) => setFlowSettings(prev => ({...prev, deactivationTime: e.target.value}))} disabled={flowSettings.isPerpetual}/>
                                         </div>
                                     </div>
                                     <div className="space-y-2">
                                         <Label>Dias Ativos</Label>
-                                        <ToggleGroup type="multiple" value={flowSettings.activeDays} onValueChange={(value) => setFlowSettings(prev => ({...prev, activeDays: value as any[]}))} className="flex-wrap justify-start">
+                                        <ToggleGroup type="multiple" value={flowSettings.activeDays} onValueChange={(value) => setFlowSettings(prev => ({...prev, activeDays: value as any[]}))} className="flex-wrap justify-start" disabled={flowSettings.isPerpetual}>
                                             <ToggleGroupItem value="sun">Dom</ToggleGroupItem>
                                             <ToggleGroupItem value="mon">Seg</ToggleGroupItem>
                                             <ToggleGroupItem value="tue">Ter</ToggleGroupItem>

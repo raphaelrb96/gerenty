@@ -896,6 +896,7 @@ export type Flow = {
     };
     schedule: {
         timezone: string;
+        isPerpetual?: boolean;
         activationTime: string; // HH:mm format
         deactivationTime: string; // HH:mm format
         activeDays: ('sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat')[];
