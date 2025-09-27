@@ -291,7 +291,7 @@ function CaptureDataPanel({ node, onNodeDataChange }: { node: Node, onNodeDataCh
 
     return (
         <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">Peça uma informação ao usuário e armazene-a em uma variável.</p>
+             <p className="text-sm text-muted-foreground">Peça uma informação ao usuário e armazene-a em uma variável.</p>
             <Separator />
              <div className="space-y-2">
                 <Label htmlFor="capture-message">Mensagem de Solicitação</Label>
@@ -594,3 +594,4 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, hasUns
     
 
     
+
