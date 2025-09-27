@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -382,10 +383,10 @@ export default function EditConversationFlowPage() {
                                             <Select value={flowSettings.timeoutAction} onValueChange={(value) => setFlowSettings(prev => ({...prev, timeoutAction: value as any}))}>
                                                 <SelectTrigger id="timeout-action"><SelectValue /></SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="end_flow"><MessageSquareX/>Encerrar Fluxo</SelectItem>
-                                                    <SelectItem value="send_message"><Send/>Enviar Mensagem Automática</SelectItem>
-                                                    <SelectItem value="transfer"><Bot/>Transferir para Atendente</SelectItem>
-                                                    <SelectItem value="forward_flow"><Forward/>Encaminhar para Outro Fluxo</SelectItem>
+                                                    <SelectItem value="end_flow"><MessageSquareX className="h-4 w-4"/>Encerrar Fluxo</SelectItem>
+                                                    <SelectItem value="send_message"><Send className="h-4 w-4"/>Enviar Mensagem Automática</SelectItem>
+                                                    <SelectItem value="transfer"><Bot className="h-4 w-4"/>Transferir para Atendente</SelectItem>
+                                                    <SelectItem value="forward_flow"><Forward className="h-4 w-4"/>Encaminhar para Outro Fluxo</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <p className="text-xs text-muted-foreground pt-1">
