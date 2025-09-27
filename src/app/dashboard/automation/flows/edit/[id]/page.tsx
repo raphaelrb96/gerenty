@@ -223,7 +223,7 @@ export default function EditConversationFlowPage() {
         try {
             // Remove the circular 'on*' functions before saving
             const nodesToSave = nodes.map(node => {
-                const { onConfigure, onDelete, isDeletable, icon, color, isMainTrigger, ...restData } = node.data;
+                const { icon, color, onConfigure, onDelete, isDeletable, isMainTrigger, ...restData } = node.data;
                 return { ...node, data: restData };
             });
             await updateFlow(flow.id, { nodes: nodesToSave, edges });
