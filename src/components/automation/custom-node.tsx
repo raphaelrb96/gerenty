@@ -117,7 +117,7 @@ export function CustomNode({ data, selected }: NodeProps<{
         </CardHeader>
         
         {isMainTrigger && data.triggerKeywords && data.triggerKeywords.length > 0 ? (
-            <CardContent className="px-3 pb-3 pt-2 text-xs text-muted-foreground space-y-2">
+            <CardContent className="px-3 pb-3 pt-2 text-xs text-muted-foreground space-y-2 min-h-[60px]">
                 <div className="space-y-1">
                     <span className="font-medium mr-2 text-foreground">Gatilhos:</span>
                     {data.triggerKeywords.map((kw, index) => 
@@ -129,7 +129,7 @@ export function CustomNode({ data, selected }: NodeProps<{
                 </div>
             </CardContent>
         ) : !isMainTrigger && (
-             <CardContent className="px-3 pb-3 pt-2 text-xs text-muted-foreground">
+             <CardContent className="px-3 pb-3 pt-2 text-xs text-muted-foreground min-h-[40px]">
               <Badge variant="secondary" className="w-full justify-center truncate">{contentPreview()}</Badge>
             </CardContent>
         )}
