@@ -2,15 +2,18 @@
 "use client";
 
 import type { Node } from "reactflow";
-import { Settings, HelpCircle, PlusCircle, MoreHorizontal, Pencil, Trash2, Save } from "lucide-react";
+import { Settings, HelpCircle, PlusCircle, MoreHorizontal, Pencil, Trash2, Save, TextCursorInput } from "lucide-react";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Separator } from "../ui/separator";
-import type { LibraryMessage } from "@/lib/types";
+import type { LibraryMessage, Employee, Stage } from "@/lib/types";
 import { useState, useEffect, KeyboardEvent } from "react";
 import { getLibraryMessagesByCompany } from "@/services/library-message-service";
+import { getEmployeesByUser } from "@/services/employee-service";
+import { getStagesByUser } from "@/services/stage-service";
 import { useCompany } from "@/context/company-context";
+import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetFooter } from "../ui/sheet";
 import { ScrollArea } from "../ui/scroll-area";
@@ -274,6 +277,195 @@ function MessagePanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange
     )
 }
 
+function CaptureDataPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'] }) {
+    const handleFieldChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | string) => {
+        const value = typeof e === 'string' ? e : e.target.value;
+        onNodeDataChange(node.id, { [field]: value });
+    };
+
+    return (
+        <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">Peça uma informação ao usuário e armazene-a em uma variável.</p>
+            <Separator />
+             <div className="space-y-2">
+                <Label htmlFor="capture-message">Mensagem de Solicitação</Label>
+                <Input id="capture-message" placeholder="Qual o seu CPF?" value={node.data.captureMessage || ''} onChange={handleFieldChange('captureMessage')} />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="capture-variable">Nome da Variável</Label>
+                 <div className="flex items-center gap-2">
+                    <TextCursorInput className="h-5 w-5 text-muted-foreground" />
+                    <Input id="capture-variable" placeholder="cpf_cliente" value={node.data.captureVariable || ''} onChange={handleFieldChange('captureVariable')} />
+                </div>
+                <p className="text-xs text-muted-foreground">Use este nome para referenciar o dado em outros nós (ex: `{{cpf_cliente}}`).</p>
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="capture-validation">Validação</Label>
+                <Select value={node.data.captureValidation || 'none'} onValueChange={handleFieldChange('captureValidation')}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="none">Nenhuma</SelectItem>
+                        <SelectItem value="text">Texto</SelectItem>
+                        <SelectItem value="number">Número</SelectItem>
+                        <SelectItem value="email">Email</SelectItem>
+                        <SelectItem value="cpf">CPF</SelectItem>
+                        <SelectItem value="phone">Telefone</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+             <div className="space-y-2">
+                <Label htmlFor="capture-error-message">Mensagem de Erro na Validação</Label>
+                <Input id="capture-error-message" placeholder="Formato inválido. Por favor, digite novamente." value={node.data.captureErrorMessage || ''} onChange={handleFieldChange('captureErrorMessage')} />
+            </div>
+        </div>
+    );
+}
+
+function InternalActionPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'] }) {
+    const { effectiveOwnerId } = useAuth();
+    const { toast } = useToast();
+    const [crmStages, setCrmStages] = useState<Stage[]>([]);
+
+    useEffect(() => {
+        if (effectiveOwnerId) {
+            getStagesByUser(effectiveOwnerId)
+                .then(setCrmStages)
+                .catch(() => toast({ variant: 'destructive', title: 'Erro ao buscar estágios do CRM' }));
+        }
+    }, [effectiveOwnerId, toast]);
+    
+    const handleActionTypeChange = (value: string) => {
+        onNodeDataChange(node.id, { actionType: value });
+    };
+
+    const handleValueChange = (field: string) => (value: string) => {
+        onNodeDataChange(node.id, { [field]: value });
+    };
+    
+    const actionType = node.data.actionType;
+
+    return (
+        <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">Execute uma ação automática no sistema.</p>
+            <Separator />
+            <div className="space-y-2">
+                <Label htmlFor="action-type">Tipo de Ação</Label>
+                <Select value={actionType} onValueChange={handleActionTypeChange}>
+                    <SelectTrigger id="action-type"><SelectValue placeholder="Selecione uma ação..." /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="addTag">Adicionar Tag ao Contato</SelectItem>
+                        <SelectItem value="removeTag">Remover Tag do Contato</SelectItem>
+                        <SelectItem value="moveCrmStage">Mover Contato no Funil</SelectItem>
+                        <SelectItem value="updateOrderStatus">Atualizar Status de Pedido</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+            
+            {actionType === 'addTag' && (
+                <div className="space-y-2 pt-4 border-t">
+                    <Label htmlFor="tag-value">Tag a ser Adicionada</Label>
+                    <Input id="tag-value" placeholder="Ex: lead_qualificado" value={node.data.actionValue || ''} onChange={(e) => onNodeDataChange(node.id, { actionValue: e.target.value })} />
+                </div>
+            )}
+            {actionType === 'removeTag' && (
+                <div className="space-y-2 pt-4 border-t">
+                    <Label htmlFor="tag-value">Tag a ser Removida</Label>
+                    <Input id="tag-value" placeholder="Ex: novo_cliente" value={node.data.actionValue || ''} onChange={(e) => onNodeDataChange(node.id, { actionValue: e.target.value })} />
+                </div>
+            )}
+             {actionType === 'moveCrmStage' && (
+                <div className="space-y-2 pt-4 border-t">
+                    <Label htmlFor="crm-stage-select">Mover para o Estágio</Label>
+                    <Select onValueChange={handleValueChange('actionValue')} value={node.data.actionValue}>
+                        <SelectTrigger id="crm-stage-select"><SelectValue placeholder="Selecione um estágio..." /></SelectTrigger>
+                        <SelectContent>
+                            {crmStages.map(stage => <SelectItem key={stage.id} value={stage.id}>{stage.name}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                </div>
+            )}
+            {/* Add more fields for other actions */}
+        </div>
+    );
+}
+
+function ConditionalPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'] }) {
+    const conditions = node.data.conditions || [];
+
+    const handleAddCondition = () => {
+        const newConditions = [...conditions, { variable: '', operator: '==', value: '' }];
+        onNodeDataChange(node.id, { conditions: newConditions });
+    };
+
+    const handleRemoveCondition = (index: number) => {
+        const newConditions = conditions.filter((_: any, i: number) => i !== index);
+        onNodeDataChange(node.id, { conditions: newConditions });
+    };
+
+    const handleConditionChange = (index: number, field: string, value: string) => {
+        const newConditions = [...conditions];
+        newConditions[index][field] = value;
+        onNodeDataChange(node.id, { conditions: newConditions });
+    };
+
+    return (
+        <div className="space-y-4">
+             <p className="text-sm text-muted-foreground">Crie um caminho "Se" para o fluxo. A condição "Senão" (saída padrão) será usada se nenhuma das regras for atendida.</p>
+             <Separator />
+            {conditions.map((cond: any, index: number) => (
+                <div key={index} className="p-3 border rounded-lg space-y-2 relative bg-muted/50">
+                     <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6 text-destructive" onClick={() => handleRemoveCondition(index)}><Trash2 className="h-4 w-4"/></Button>
+                     <p className="text-xs font-semibold">Condição {index + 1}</p>
+                    <div className="grid grid-cols-2 gap-2">
+                        <Input placeholder="Variável (ex: cpf)" value={cond.variable} onChange={(e) => handleConditionChange(index, 'variable', e.target.value)} />
+                        <Select value={cond.operator} onValueChange={(val) => handleConditionChange(index, 'operator', val)}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="==">É igual a</SelectItem>
+                                <SelectItem value="!=">É diferente de</SelectItem>
+                                <SelectItem value=">">É maior que</SelectItem>
+                                <SelectItem value="<">É menor que</SelectItem>
+                                <SelectItem value="contains">Contém</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <Input placeholder="Valor a comparar" value={cond.value} onChange={(e) => handleConditionChange(index, 'value', e.target.value)} />
+                </div>
+            ))}
+            <Button type="button" variant="outline" size="sm" onClick={handleAddCondition}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Condição</Button>
+        </div>
+    );
+}
+
+function TransferPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'] }) {
+    const { effectiveOwnerId } = useAuth();
+    const { toast } = useToast();
+    const [employees, setEmployees] = useState<Employee[]>([]);
+
+    useEffect(() => {
+        if (effectiveOwnerId) {
+            getEmployeesByUser(effectiveOwnerId)
+                .then(setEmployees)
+                .catch(() => toast({ variant: 'destructive', title: 'Erro ao buscar funcionários' }));
+        }
+    }, [effectiveOwnerId, toast]);
+    
+    return (
+         <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">Transfira a conversa para um atendente humano ou departamento.</p>
+            <Separator />
+            <div className="space-y-2">
+                <Label htmlFor="transfer-to">Transferir Para</Label>
+                <Select value={node.data.transferTo} onValueChange={(value) => onNodeDataChange(node.id, { transferTo: value })}>
+                    <SelectTrigger id="transfer-to"><SelectValue placeholder="Selecione um destino..." /></SelectTrigger>
+                    <SelectContent>
+                        {employees.map(emp => <SelectItem key={emp.id} value={emp.id}>{emp.name}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+            </div>
+        </div>
+    )
+}
 
 export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, hasUnsavedChanges }: NodeConfigPanelProps) {
 
@@ -293,6 +485,21 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, hasUns
                 return <TriggerPanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
             case 'message':
                  return <MessagePanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
+            case 'captureData':
+                return <CaptureDataPanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
+            case 'internalAction':
+                return <InternalActionPanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
+            case 'conditional':
+                return <ConditionalPanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
+            case 'transfer':
+                return <TransferPanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
+            case 'delay':
+                return (
+                    <div className="space-y-2">
+                        <Label htmlFor="delay-seconds">Aguardar (em segundos)</Label>
+                        <Input id="delay-seconds" type="number" value={selectedNode.data.delaySeconds || ''} onChange={(e) => onNodeDataChange(selectedNode.id, { delaySeconds: Number(e.target.value) })} />
+                    </div>
+                )
             default:
                  return (
                     <div className="flex flex-col items-center justify-center text-center text-muted-foreground p-4 h-full">
@@ -315,7 +522,7 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, hasUns
                 {renderPanelContent()}
             </ScrollArea>
              <SheetFooter className="p-6 border-t">
-                <Button variant="outline" onClick={onSave} disabled={!hasUnsavedChanges}>
+                 <Button variant="outline" onClick={onSave} disabled={!hasUnsavedChanges}>
                     <Save className="mr-2 h-4 w-4" />
                     Salvar Alterações
                 </Button>

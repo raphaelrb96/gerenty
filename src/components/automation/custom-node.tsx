@@ -17,6 +17,11 @@ export function CustomNode({ data, selected }: NodeProps<{
   triggerKeywords?: { value: string; matchType: string }[],
   triggerType?: string,
   messageId?: string,
+  actionType?: string,
+  captureVariable?: string,
+  delaySeconds?: number,
+  transferTo?: string,
+  conditions?: any[],
   isDeletable?: boolean,
   isMainTrigger?: boolean,
   onConfigure: () => void,
@@ -34,10 +39,22 @@ export function CustomNode({ data, selected }: NodeProps<{
   }
 
   const contentPreview = () => {
-    if (data.type === 'message') {
-      return data.messageId ? `ID: ...${data.messageId.slice(-4)}` : <span className="italic">Nenhuma mensagem</span>;
+    switch (data.type) {
+        case 'message':
+            return data.messageId ? `ID: ...${data.messageId.slice(-4)}` : <span className="italic">Nenhuma mensagem</span>;
+        case 'internalAction':
+            return data.actionType ? `Ação: ${data.actionType}` : <span className="italic">Nenhuma ação</span>;
+        case 'captureData':
+            return data.captureVariable ? `Variável: ${data.captureVariable}` : <span className="italic">Nenhuma variável</span>;
+        case 'delay':
+            return data.delaySeconds ? `Aguardar: ${data.delaySeconds}s` : <span className="italic">Sem atraso</span>;
+        case 'transfer':
+            return data.transferTo ? `Para: ${data.transferTo}`: <span className="italic">Ninguém selecionado</span>
+        case 'conditional':
+             return data.conditions?.length ? `${data.conditions.length} condição(ões)` : <span className="italic">Nenhuma condição</span>;
+        default:
+            return 'Nenhuma configuração';
     }
-    return 'Nenhuma configuração';
   };
   
   const isDeletable = data.isDeletable !== false;
@@ -92,7 +109,7 @@ export function CustomNode({ data, selected }: NodeProps<{
 
   return (
     <div className="relative group">
-      <Handle type="target" position={Position.Top} className="!bg-primary !w-3 !h-3" />
+      {!isMainTrigger && <Handle type="target" position={Position.Top} className="!bg-primary !w-3 !h-3" />}
       <Card className={cn(
         "border-l-4 hover:shadow-lg transition-shadow min-w-[250px]",
         selected ? 'ring-2 ring-primary ring-offset-2' : 'border-transparent',
