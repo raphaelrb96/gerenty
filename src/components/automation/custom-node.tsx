@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { Handle, Position, NodeProps } from 'reactflow';
@@ -63,6 +62,7 @@ export function CustomNode({ data, selected }: NodeProps<{
 
   const handlePositions = (count: number) => {
     const positions = [];
+    if (count === 0) return ['50%'];
     const spacing = 1 / (count + 1);
     for (let i = 1; i <= count; i++) {
         positions.push(`${i * spacing * 100}%`);
