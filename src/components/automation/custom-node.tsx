@@ -15,6 +15,7 @@ export function CustomNode({ data, selected }: NodeProps<{
   color: string, 
   triggerKeyword?: string, 
   messageId?: string,
+  isDeletable?: boolean,
   onConfigure: () => void,
   onDelete: () => void 
 }>) {
@@ -28,6 +29,8 @@ export function CustomNode({ data, selected }: NodeProps<{
     }
     return 'Nenhuma configuração';
   };
+  
+  const isDeletable = data.isDeletable !== false;
 
   return (
     <div className="relative group">
@@ -56,19 +59,22 @@ export function CustomNode({ data, selected }: NodeProps<{
                 <Settings className="h-4 w-4"/>
                 <span className="sr-only">Configurar Tarefa</span>
             </Button>
-             <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
-                onClick={data.onDelete}
-            >
-                <Trash2 className="h-4 w-4"/>
-                <span className="sr-only">Excluir Tarefa</span>
-            </Button>
+            {isDeletable && (
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={data.onDelete}
+                >
+                    <Trash2 className="h-4 w-4"/>
+                    <span className="sr-only">Excluir Tarefa</span>
+                </Button>
+            )}
         </CardFooter>
       </Card>
       <Handle type="source" position={Position.Bottom} className="!bg-primary !w-3 !h-3" />
     </div>
   );
 }
+
 
