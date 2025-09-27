@@ -280,23 +280,20 @@ export default function EditConversationFlowPage() {
     };
 
      const addNode = (type: keyof typeof nodeTypeConfig, sourceHandle?: string) => {
-        // Validation for quick-add connection
         if (quickAddSourceNode) {
-            const sourceNode = nodes.find(n => n.id === quickAddSourceNode.id);
-            const isConditional = sourceNode?.data.type === 'conditional';
-            
-            // Allow multiple connections only for conditional nodes
-            if (!isConditional) {
-                const sourceHasConnection = edges.some(edge => edge.source === quickAddSourceNode.id && edge.sourceHandle === (sourceHandle || null));
+            const isConditional = quickAddSourceNode.data.type === 'conditional';
+            // Only check for existing connections if the source is not a conditional node and we are using the default output handle (null)
+            if (!isConditional && !sourceHandle) {
+                const sourceHasConnection = edges.some(edge => edge.source === quickAddSourceNode.id && !edge.sourceHandle);
                 if (sourceHasConnection) {
-                    toast({ 
-                        variant: 'destructive', 
-                        title: 'Conexão Inválida', 
-                        description: 'Esta tarefa já possui uma conexão de saída. Use o nó "Dividir Fluxo" para criar ramificações.' 
+                    toast({
+                        variant: 'destructive',
+                        title: 'Conexão Inválida',
+                        description: 'Esta tarefa já possui uma conexão de saída. Use o nó "Dividir Fluxo" para criar ramificações.'
                     });
                     setQuickAddSourceNode(null);
                     setIsPaletteOpen(false);
-                    return; // Abort node creation
+                    return;
                 }
             }
         }
