@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -46,15 +47,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 
 export const nodeTypeConfig = {
-    keywordTrigger: { icon: <Bot size={20} />, color: 'border-yellow-500', defaultData: { label: 'Gatilho: Palavra-Chave', type: 'keywordTrigger' } },
-    message: { icon: <MessageCircle size={20} />, color: 'border-green-500', defaultData: { label: 'Enviar Mensagem', type: 'message' } },
-    captureData: { icon: <HelpCircle size={20} />, color: 'border-blue-500', defaultData: { label: 'Capturar Dados', type: 'captureData' } },
-    internalAction: { icon: <Settings size={20} />, color: 'border-purple-500', defaultData: { label: 'Ação Interna', type: 'internalAction' } },
-    conditional: { icon: <GitBranch size={20} />, color: 'border-cyan-500', defaultData: { label: 'Dividir Fluxo', type: 'conditional', conditions: [] } },
-    externalApi: { icon: <Share2 size={20} />, color: 'border-indigo-500', defaultData: { label: 'API Externa', type: 'externalApi' } },
-    delay: { icon: <Timer size={20} />, color: 'border-orange-500', defaultData: { label: 'Aguardar', type: 'delay' } },
-    transfer: { icon: <UserCheck size={20} />, color: 'border-rose-500', defaultData: { label: 'Transferir Atendente', type: 'transfer' } },
-    endFlow: { icon: <CheckCircle size={20} />, color: 'border-gray-500', defaultData: { label: 'Finalizar Fluxo', type: 'endFlow' } },
+    keywordTrigger: { icon: <Bot size={20} />, color: 'bg-yellow-500', defaultData: { label: 'Gatilho: Palavra-Chave', type: 'keywordTrigger' } },
+    message: { icon: <MessageCircle size={20} />, color: 'bg-green-500', defaultData: { label: 'Enviar Mensagem', type: 'message' } },
+    captureData: { icon: <HelpCircle size={20} />, color: 'bg-blue-500', defaultData: { label: 'Capturar Dados', type: 'captureData' } },
+    internalAction: { icon: <Settings size={20} />, color: 'bg-purple-500', defaultData: { label: 'Ação Interna', type: 'internalAction' } },
+    conditional: { icon: <GitBranch size={20} />, color: 'bg-cyan-500', defaultData: { label: 'Dividir Fluxo', type: 'conditional', conditions: [] } },
+    externalApi: { icon: <Share2 size={20} />, color: 'bg-indigo-500', defaultData: { label: 'API Externa', type: 'externalApi' } },
+    delay: { icon: <Timer size={20} />, color: 'bg-orange-500', defaultData: { label: 'Aguardar', type: 'delay' } },
+    transfer: { icon: <UserCheck size={20} />, color: 'bg-rose-500', defaultData: { label: 'Transferir Atendente', type: 'transfer' } },
+    endFlow: { icon: <CheckCircle size={20} />, color: 'bg-gray-500', defaultData: { label: 'Finalizar Fluxo', type: 'endFlow' } },
 };
 
 
@@ -280,9 +281,9 @@ export default function EditConversationFlowPage() {
 
      const addNode = (type: keyof typeof nodeTypeConfig, sourceHandle?: string) => {
         if (quickAddSourceNode) {
-            const isConditional = quickAddSourceNode.data.type === 'conditional';
+            const sourceNodeIsConditional = quickAddSourceNode.data.type === 'conditional';
             // Only check for existing connections if the source is not a conditional node and we are not using a specific source handle (like 'else')
-            if (!isConditional && !sourceHandle) {
+            if (!sourceNodeIsConditional && !sourceHandle) {
                 const sourceHasConnection = edges.some(edge => edge.source === quickAddSourceNode.id && !edge.sourceHandle);
                 if (sourceHasConnection) {
                     toast({

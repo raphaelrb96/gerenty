@@ -2,15 +2,14 @@
 
 "use client";
 
-import { Handle, Position, NodeProps, useReactFlow } from 'reactflow';
+import { Handle, Position, NodeProps } from 'reactflow';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../ui/card';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { Badge } from '../ui/badge';
-import { Settings, Trash2, Zap, PlusCircle } from 'lucide-react';
-import { useTranslation } from '@/context/i18n-context';
+import { Settings, Trash2, Zap, PlusCircle, GitBranch } from 'lucide-react';
 
-export function CustomNode({ data, selected, id: nodeId }: NodeProps<{ 
+export function CustomNode({ data, selected }: NodeProps<{ 
   label: string, 
   icon: React.ReactNode, 
   color: string, 
@@ -30,8 +29,6 @@ export function CustomNode({ data, selected, id: nodeId }: NodeProps<{
   onQuickAdd: () => void,
 }>) {
   
-  const { getEdges } = useReactFlow();
-
   const getMatchTypeLabel = (matchType?: string) => {
     switch (matchType) {
       case 'exact': return 'Exata';
@@ -62,8 +59,19 @@ export function CustomNode({ data, selected, id: nodeId }: NodeProps<{
   };
   
   const isDeletable = data.isDeletable !== false;
-  
   const isMainTrigger = data.isMainTrigger === true;
+
+  const handlePositions = (count: number) => {
+    const positions = [];
+    const spacing = 1 / (count + 1);
+    for (let i = 1; i <= count; i++) {
+        positions.push(`${i * spacing * 100}%`);
+    }
+    return positions;
+  };
+  
+  const conditionHandlePositions = handlePositions(data.conditions?.length || 0);
+
 
   return (
     <div className="relative group">
@@ -75,16 +83,18 @@ export function CustomNode({ data, selected, id: nodeId }: NodeProps<{
                 <Handle
                     key={cond.id}
                     type="source"
-                    position={Position.Right}
+                    position={Position.Bottom}
                     id={cond.id}
-                    style={{ top: `${(index + 1) * 30}px`, background: '#555' }}
+                    style={{ left: conditionHandlePositions[index] }}
+                    className="!bg-cyan-500 !w-3 !h-3"
                 />
             ))}
              <Handle
                 type="source"
                 position={Position.Bottom}
                 id="else"
-                style={{ background: '#555' }}
+                style={{ left: '50%', transform: 'translateX(-50%)', bottom: -15 }}
+                className="!bg-gray-500 !w-3 !h-3"
             />
         </>
       ) : (
@@ -92,22 +102,23 @@ export function CustomNode({ data, selected, id: nodeId }: NodeProps<{
       )}
       
       <Card className={cn(
-        "border-l-4 hover:shadow-lg transition-shadow min-w-[250px]",
-        selected ? 'ring-2 ring-primary ring-offset-2' : 'border-transparent',
-        isMainTrigger ? 'bg-accent/10' : '',
-        data.color
+        "border-2 hover:shadow-lg transition-shadow w-[250px]",
+        selected ? 'ring-2 ring-primary ring-offset-2 border-primary' : 'border-transparent',
       )}>
-        <CardHeader className="flex flex-row items-center gap-3 p-3 pb-2">
-          <div className="p-1.5 rounded-md bg-muted">
-            {isMainTrigger ? <Zap/> : data.icon}
+        <CardHeader className={cn(
+            "flex flex-row items-center gap-3 p-3 text-primary-foreground rounded-t-md",
+            data.color, // This is now the background color class
+        )}>
+           <div className="p-1 rounded-md bg-white/20">
+            {data.icon}
           </div>
           <CardTitle className="text-sm font-semibold">{data.label}</CardTitle>
         </CardHeader>
         
         {isMainTrigger && data.triggerKeywords && data.triggerKeywords.length > 0 ? (
-            <CardContent className="px-3 pb-3 pt-0 text-xs text-muted-foreground space-y-2">
+            <CardContent className="px-3 pb-3 pt-2 text-xs text-muted-foreground space-y-2">
                 <div className="space-y-1">
-                    <span className="font-medium mr-2">Gatilhos:</span>
+                    <span className="font-medium mr-2 text-foreground">Gatilhos:</span>
                     {data.triggerKeywords.map((kw, index) => 
                         <div key={index} className="flex justify-between items-center text-xs">
                             <Badge variant="secondary">{kw.value}</Badge>
@@ -117,7 +128,7 @@ export function CustomNode({ data, selected, id: nodeId }: NodeProps<{
                 </div>
             </CardContent>
         ) : !isMainTrigger && (
-             <CardContent className="px-3 pb-3 pt-0 text-xs text-muted-foreground">
+             <CardContent className="px-3 pb-3 pt-2 text-xs text-muted-foreground">
               <Badge variant="secondary" className="w-full justify-center truncate">{contentPreview()}</Badge>
             </CardContent>
         )}
