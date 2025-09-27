@@ -328,6 +328,21 @@ export default function EditConversationFlowPage() {
                 sourceHandle: sourceHandle || null,
             };
             setEdges((eds) => addEdge(newEdge, eds));
+            
+            // If the source is a conditional node, automatically add a condition for the new connection
+            if (quickAddSourceNode.data.type === 'conditional' && sourceHandle) {
+                 setNodes(nds => nds.map(n => {
+                     if (n.id === quickAddSourceNode.id) {
+                         const existingConditions = n.data.conditions || [];
+                         if (!existingConditions.some((c: any) => c.id === sourceHandle)) {
+                             const newConditions = [...existingConditions, { id: sourceHandle, variable: '', operator: '==', value: '', label: '' }];
+                             return {...n, data: {...n.data, conditions: newConditions}};
+                         }
+                     }
+                     return n;
+                 }));
+            }
+            
             setQuickAddSourceNode(null); // Reset after adding
         }
         
@@ -360,15 +375,26 @@ export default function EditConversationFlowPage() {
                     }
                 }
                 
-                if (isConditional && params.source && !currentEdges.some(e => e.sourceHandle === params.sourceHandle)) {
-                     setNodes(nds => nds.map(n => {
-                         if (n.id === params.source) {
-                             const newHandleId = params.sourceHandle || `handle_${Date.now()}`;
-                             const newConditions = [...(n.data.conditions || []), { id: newHandleId, variable: '', operator: '==', value: '', label: '' }];
-                             return {...n, data: {...n.data, conditions: newConditions}};
+                if (isConditional && params.source) {
+                     setNodes(nds => {
+                         const sourceNode = nds.find(n => n.id === params.source);
+                         if (sourceNode) {
+                             const existingConditions = sourceNode.data.conditions || [];
+                             const handleAlreadyExists = existingConditions.some((c: any) => c.id === params.sourceHandle);
+                             
+                             if (!handleAlreadyExists) {
+                                 return nds.map(n => {
+                                     if (n.id === params.source) {
+                                         const newHandleId = params.sourceHandle || `handle_${Date.now()}`;
+                                         const newConditions = [...existingConditions, { id: newHandleId, variable: '', operator: '==', value: '', label: '' }];
+                                         return {...n, data: {...n.data, conditions: newConditions}};
+                                     }
+                                     return n;
+                                 });
+                             }
                          }
-                         return n;
-                     }));
+                         return nds;
+                     });
                 }
 
 
