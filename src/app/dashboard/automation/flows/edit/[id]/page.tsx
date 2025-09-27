@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Flow } from "@/lib/types";
 import { useRouter, useParams } from 'next/navigation';
 import type { Node, Edge, OnNodesChange, OnEdgesChange, Connection } from "reactflow";
-import { applyNodeChanges, applyEdgeChanges, addEdge, removeNodes } from 'reactflow';
+import { applyNodeChanges, applyEdgeChanges, addEdge } from 'reactflow';
 import { NodeConfigPanel } from "@/components/automation/node-config-panel";
 import { NodesPalette } from "@/components/automation/nodes-palette";
 import { Bot, MessageCircle, Settings, Plus, Pencil, Trash2 } from "lucide-react";
@@ -98,7 +98,7 @@ export default function EditConversationFlowPage() {
 
     const confirmDeleteNode = () => {
         if (!nodeToDelete) return;
-        setNodes((nds) => removeNodes([nodeToDelete], nds));
+        setNodes((nds) => nds.filter(n => n.id !== nodeToDelete.id));
         setNodeToDelete(null);
         toast({ title: "Tarefa removida com sucesso!" });
     };
@@ -315,4 +315,3 @@ export default function EditConversationFlowPage() {
         </div>
     );
 }
-
