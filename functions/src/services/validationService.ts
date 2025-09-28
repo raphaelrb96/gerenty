@@ -1,0 +1,63 @@
+// functions/src/services/validationService.ts
+import * as crypto from 'crypto';
+import * as functions from 'firebase-functions';
+
+export class ValidationService {
+  static validateWebhookSignature(payload: any, signature: string, appSecret: string): boolean {
+    try {
+      const hmac = crypto.createHmac('sha256', appSecret);
+      const generatedSignature = hmac.update(JSON.stringify(payload)).digest('hex');
+      
+      return `sha256=${generatedSignature}` === signature;
+    } catch (error) {
+      functions.logger.error('Erro ao validar assinatura do webhook:', error);
+      return false;
+    }
+  }
+
+  static async authenticateRequest(authHeader: string | undefined): Promise<{ userId: string; companyId: string }> {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new Error('Token de autenticação não fornecido');
+    }
+
+    const token = authHeader.split('Bearer ')[1];
+    
+    try {
+      // Verificar token do Firebase Auth
+      const admin = await import('firebase-admin');
+      const decodedToken = await admin.auth().verifyIdToken(token);
+      
+      if (!decodedToken.companyId) {
+        throw new Error('Company ID não encontrado no token');
+      }
+
+      return {
+        userId: decodedToken.uid,
+        companyId: decodedToken.companyId,
+      };
+    } catch (error) {
+      functions.logger.error('Erro na autenticação:', error);
+      throw new Error('Token inválido ou expirado');
+    }
+  }
+
+  static validateWhatsAppCredentials(credentials: any): void {
+    const requiredFields = ['accessToken', 'whatsAppBusinessAccountId', 'phoneNumberId', 'metaAppSecret'];
+    
+    for (const field of requiredFields) {
+      if (!credentials[field]) {
+        throw new Error(`Campo obrigatório faltando: ${field}`);
+      }
+    }
+
+    // Validar formato do access token (exemplo básico)
+    if (credentials.accessToken.length < 10) {
+      throw new Error('Access Token inválido');
+    }
+
+    // Validar formato do phone number ID
+    if (!credentials.phoneNumberId.match(/^\d+$/)) {
+      throw new Error('Phone Number ID inválido');
+    }
+  }
+}

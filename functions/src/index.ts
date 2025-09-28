@@ -1,32 +1,17 @@
-/**
- * Import function triggers from their respective submodules:
- *
- * import {onCall} from "firebase-functions/v2/https";
- * import {onDocumentWritten} from "firebase-functions/v2/firestore";
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
+// functions/src/index.ts
+//import * as functions from 'firebase-functions';
+import { validateAndSaveCredentials } from './functions/credentialFunctions';
+import { whatsappWebhookListener } from './functions/webhookFunctions';
+import { sendWhatsAppMessage, sendTestMessage } from './functions/messageFunctions';
 
-import {setGlobalOptions} from "firebase-functions";
-import {onRequest} from "firebase-functions/https";
-import * as logger from "firebase-functions/logger";
+// Configuração multi-tenant das credenciais
+export const whatsappValidateCredentials = validateAndSaveCredentials;
 
-// Start writing functions
-// https://firebase.google.com/docs/functions/typescript
+// Webhook para recebimento de mensagens (URL inclui companyId)
+export const whatsappWebhook = whatsappWebhookListener;
 
-// For cost control, you can set the maximum number of containers that can be
-// running at the same time. This helps mitigate the impact of unexpected
-// traffic spikes by instead downgrading performance. This limit is a
-// per-function limit. You can override the limit for each function using the
-// `maxInstances` option in the function's options, e.g.
-// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
-// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
-// functions should each use functions.runWith({ maxInstances: 10 }) instead.
-// In the v1 API, each function can only serve one request per container, so
-// this will be the maximum concurrent request count.
-setGlobalOptions({ maxInstances: 10 });
+// Função callable para envio de mensagens
+export const sendMessage = sendWhatsAppMessage;
 
-// export const helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+// Função utilitária para teste
+export const whatsappSendTest = sendTestMessage;
