@@ -102,7 +102,7 @@ export interface MessageData {
   type: string;
   content: {
     text?: { body: string };
-    // Adicionar outros tipos de conteúdo conforme necessário
+    [key: string]: any; // Permite outros tipos de conteúdo como media, template, etc.
   };
   timestamp: Date;
   status: 'sent' | 'delivered' | 'read' | 'failed';
