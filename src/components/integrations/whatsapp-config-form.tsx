@@ -20,6 +20,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, Eye, EyeOff, Copy, CheckCircle, AlertCircle, XCircle, Info, TestTube2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/auth-context";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
 
 const formSchema = z.object({
   whatsAppBusinessAccountId: z.string().min(10, "ID da Conta do WhatsApp Business é obrigatório."),
@@ -143,25 +144,44 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
     
         <Card>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Info /> Instruções e Webhook</CardTitle>
+                <CardTitle className="flex items-center gap-2"><Info /> Instruções de Configuração</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4 text-sm text-muted-foreground">
-                <p>Para conectar o Gerenty ao WhatsApp, você precisa de uma conta na <a href="https://developers.facebook.com/docs/whatsapp/cloud-api/get-started" target="_blank" rel="noopener noreferrer" className="text-primary underline">API Cloud da Meta</a>.</p>
-                <ol className="list-decimal list-inside space-y-2">
-                    <li>Acesse o painel de desenvolvedores da Meta e selecione seu aplicativo.</li>
-                    <li>No menu lateral, vá para "WhatsApp" &gt; "Configuração da API".</li>
-                    <li>Copie o "ID do número de telefone" e o "ID da conta do WhatsApp Business" e cole-os nos campos abaixo.</li>
-                    <li>Gere um "Token de acesso temporário" e cole-o no campo correspondente. (Para produção, use um Token de Acesso Permanente).</li>
-                    <li>Na seção "Webhook", clique em "Editar". Cole a URL abaixo e insira o Token de Verificação que você mesmo criou (App Secret).</li>
-                </ol>
-                <div className="space-y-2 pt-2">
-                    <Label htmlFor="webhook-url">Sua URL de Webhook</Label>
-                    <div className="flex gap-2">
-                        <Input id="webhook-url" value={integration?.webhookUrl || "Salve as credenciais para gerar"} readOnly />
-                        <Button type="button" size="icon" onClick={() => copyToClipboard(integration?.webhookUrl || "")} disabled={!integration?.webhookUrl}><Copy className="h-4 w-4" /></Button>
-                    </div>
-                     <p className="text-xs">Este é o endereço que o WhatsApp usará para nos enviar mensagens.</p>
-                </div>
+            <CardContent className="text-sm">
+                <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
+                    <AccordionItem value="item-1">
+                        <AccordionTrigger>Passo 1: Obtendo suas Credenciais na Meta</AccordionTrigger>
+                        <AccordionContent className="space-y-2 text-muted-foreground pt-2">
+                             <p>Para conectar o Gerenty ao WhatsApp, você precisa de uma conta na <a href="https://developers.facebook.com/docs/whatsapp/cloud-api/get-started" target="_blank" rel="noopener noreferrer" className="text-primary underline">API Cloud da Meta</a>.</p>
+                             <ol className="list-decimal list-inside space-y-1">
+                                <li>Acesse o painel de desenvolvedores da Meta e selecione seu aplicativo.</li>
+                                <li>No menu lateral, vá para "WhatsApp" {'>'} "Configuração da API".</li>
+                                <li>Copie o **ID da conta do WhatsApp Business** e o **ID do número de telefone** e cole-os nos campos abaixo.</li>
+                                <li>Gere um **Token de acesso temporário** e cole-o no campo "Token de Acesso". Para uso em produção, recomendamos criar e usar um Token de Acesso Permanente.</li>
+                                <li>No painel da Meta, encontre o seu **"App Secret"** (ou "Segredo do Aplicativo"). Este é o seu token de verificação.</li>
+                             </ol>
+                        </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="item-2">
+                        <AccordionTrigger>Passo 2: Configurando o Webhook</AccordionTrigger>
+                        <AccordionContent className="space-y-2 text-muted-foreground pt-2">
+                            <p>O Webhook é o que permite que o WhatsApp envie as mensagens dos seus clientes para o Gerenty em tempo real.</p>
+                            <ol className="list-decimal list-inside space-y-1">
+                                <li>Na seção "Configuração da API" da Meta, encontre a seção "Webhooks" e clique em "Configurar".</li>
+                                <li>Cole a **URL de Webhook** abaixo no campo "URL de Callback".</li>
+                                <li>No campo "Token de verificação", cole o seu **"Meta App Secret"** (o mesmo que você preencheu no formulário aqui).</li>
+                                <li>Clique em "Verificar e salvar".</li>
+                                <li>Após salvar, em "Webhook fields", clique em "Manage" e assine os eventos `messages` e `message_template_status`.</li>
+                            </ol>
+                            <div className="space-y-2 pt-4">
+                                <Label htmlFor="webhook-url">Sua URL de Webhook (somente leitura)</Label>
+                                <div className="flex gap-2">
+                                    <Input id="webhook-url" value={integration?.webhookUrl || "Salve as credenciais para gerar"} readOnly />
+                                    <Button type="button" size="icon" onClick={() => copyToClipboard(integration?.webhookUrl || "")} disabled={!integration?.webhookUrl}><Copy className="h-4 w-4" /></Button>
+                                </div>
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
             </CardContent>
         </Card>
         
