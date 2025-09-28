@@ -8,7 +8,7 @@ import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 import type { Company, WhatsAppIntegration } from "@/lib/types";
-import { saveWhatsAppCredentials, getWhatsAppIntegration } from "@/services/integration-service";
+import { saveWhatsAppCredentials, sendTestMessage } from "@/services/integration-service";
 import { onSnapshot, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
@@ -19,11 +19,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, Eye, EyeOff, Copy, CheckCircle, AlertCircle, XCircle, Info, TestTube2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/context/auth-context";
 
 const formSchema = z.object({
-  wabaId: z.string().min(10, "ID da Conta do WhatsApp Business é obrigatório."),
-  phoneId: z.string().min(10, "ID do Telefone é obrigatório."),
+  whatsAppBusinessAccountId: z.string().min(10, "ID da Conta do WhatsApp Business é obrigatório."),
+  phoneNumberId: z.string().min(10, "ID do Telefone é obrigatório."),
   accessToken: z.string().min(20, "Token de Acesso é obrigatório."),
+  metaAppSecret: z.string().min(10, "Meta App Secret é obrigatório."),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -31,12 +33,20 @@ type FormValues = z.infer<typeof formSchema>;
 export function WhatsAppConfigForm({ company }: { company: Company }) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
   const [showToken, setShowToken] = useState(false);
+  const [showSecret, setShowSecret] = useState(false);
   const [integration, setIntegration] = useState<WhatsAppIntegration | null>(null);
+  const { user } = useAuth();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { wabaId: "", phoneId: "", accessToken: "" },
+    defaultValues: { 
+        whatsAppBusinessAccountId: "", 
+        phoneNumberId: "", 
+        accessToken: "",
+        metaAppSecret: "" 
+    },
   });
 
   useEffect(() => {
@@ -46,12 +56,14 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
             const data = doc.data() as WhatsAppIntegration;
             setIntegration(data);
             form.reset({
-                wabaId: data.wabaId,
-                phoneId: data.phoneId,
-                accessToken: "******************" // Mask saved token
+                whatsAppBusinessAccountId: data.whatsAppBusinessAccountId || "",
+                phoneNumberId: data.phoneNumberId || "",
+                accessToken: "******************", // Mask saved token
+                metaAppSecret: "******************"
             });
         } else {
             setIntegration(null);
+            form.reset();
         }
     });
     return () => unsub();
@@ -70,7 +82,7 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
       case 'connected':
         return { icon: <CheckCircle className="h-5 w-5 text-green-500" />, title: "Conectado", description: "A integração com o WhatsApp está ativa.", variant: "default" as const };
       case 'error':
-        return { icon: <AlertCircle className="h-5 w-5 text-destructive" />, title: "Erro na Conexão", description: integration.lastError || "Verifique suas credenciais e tente novamente.", variant: "destructive" as const };
+        return { icon: <AlertCircle className="h-5 w-5 text-destructive" />, title: "Erro na Conexão", description: integration.error || "Verifique suas credenciais e tente novamente.", variant: "destructive" as const };
       default:
         return { icon: <XCircle className="h-5 w-5 text-destructive" />, title: "Desconectado", description: "A integração não está ativa.", variant: "destructive" as const };
     }
@@ -81,19 +93,40 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
     try {
-        await saveWhatsAppCredentials(company.id, values);
-        toast({ title: "Credenciais salvas com sucesso!", description: "Tentando validar a conexão..." });
-    } catch (error) {
+        const idToken = await user?.getIdToken(true);
+        if (!idToken) throw new Error("Não autorizado");
+
+        await saveWhatsAppCredentials(idToken, values);
+        toast({ title: "Credenciais salvas!", description: "Validando a conexão com a API do WhatsApp..." });
+    } catch (error: any) {
         console.error("Error saving credentials:", error);
-        toast({ variant: "destructive", title: "Erro ao Salvar", description: "Não foi possível salvar as credenciais." });
+        toast({ variant: "destructive", title: "Erro ao Salvar", description: error.message || "Não foi possível salvar as credenciais." });
     } finally {
         setIsLoading(false);
     }
   };
   
-   const handleTestConnection = () => {
-      toast({ title: "Função de teste ainda não implementada." });
-      // Here you would call a cloud function like `sendTestMessage(company.id)`
+   const handleTestConnection = async () => {
+      setIsTesting(true);
+      try {
+          const idToken = await user?.getIdToken(true);
+          if (!idToken) throw new Error("Não autorizado");
+          
+          // A simple phone number for testing. This should be improved later.
+          const testPhone = prompt("Digite um número de telefone para teste (formato internacional, ex: 5511999999999):");
+          if (!testPhone) {
+              setIsTesting(false);
+              return;
+          }
+
+          const result = await sendTestMessage(idToken, testPhone);
+          toast({ title: "Teste Enviado!", description: `Mensagem de teste enviada para ${result.recipient}. ID: ${result.messageId}` });
+
+      } catch (error: any) {
+          toast({ variant: "destructive", title: "Erro no Teste", description: error.message || "Não foi possível enviar a mensagem de teste." });
+      } finally {
+          setIsTesting(false);
+      }
    }
 
   return (
@@ -119,7 +152,7 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
                     <li>No menu lateral, vá para "WhatsApp" &gt; "Configuração da API".</li>
                     <li>Copie o "ID do número de telefone" e o "ID da conta do WhatsApp Business" e cole-os nos campos abaixo.</li>
                     <li>Gere um "Token de acesso temporário" e cole-o no campo correspondente. (Para produção, use um Token de Acesso Permanente).</li>
-                    <li>Na seção "Webhook", clique em "Editar". Cole a URL abaixo e insira o Token de Verificação.</li>
+                    <li>Na seção "Webhook", clique em "Editar". Cole a URL abaixo e insira o Token de Verificação que você mesmo criou (App Secret).</li>
                 </ol>
                 <div className="space-y-2 pt-2">
                     <Label htmlFor="webhook-url">Sua URL de Webhook</Label>
@@ -127,13 +160,7 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
                         <Input id="webhook-url" value={integration?.webhookUrl || "Salve as credenciais para gerar"} readOnly />
                         <Button type="button" size="icon" onClick={() => copyToClipboard(integration?.webhookUrl || "")} disabled={!integration?.webhookUrl}><Copy className="h-4 w-4" /></Button>
                     </div>
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="webhook-token">Seu Token de Verificação do Webhook</Label>
-                    <div className="flex gap-2">
-                        <Input id="webhook-token" value={integration?.webhookVerifyToken || "Salve as credenciais para gerar"} readOnly />
-                        <Button type="button" size="icon" onClick={() => copyToClipboard(integration?.webhookVerifyToken || "")} disabled={!integration?.webhookVerifyToken}><Copy className="h-4 w-4" /></Button>
-                    </div>
+                     <p className="text-xs">Este é o endereço que o WhatsApp usará para nos enviar mensagens.</p>
                 </div>
             </CardContent>
         </Card>
@@ -146,11 +173,25 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
                         <CardDescription>Insira as informações obtidas no painel da Meta.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <FormField control={form.control} name="wabaId" render={({ field }) => (<FormItem><FormLabel>ID da Conta do WhatsApp Business</FormLabel><FormControl><Input placeholder="109876543210987" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                        <FormField control={form.control} name="phoneId" render={({ field }) => (<FormItem><FormLabel>ID do Telefone</FormLabel><FormControl><Input placeholder="123456789012345" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                        <FormField control={form.control} name="whatsAppBusinessAccountId" render={({ field }) => (<FormItem><FormLabel>ID da Conta do WhatsApp Business</FormLabel><FormControl><Input placeholder="109876543210987" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                        <FormField control={form.control} name="phoneNumberId" render={({ field }) => (<FormItem><FormLabel>ID do Telefone</FormLabel><FormControl><Input placeholder="123456789012345" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                         <FormField control={form.control} name="metaAppSecret" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Meta App Secret (Token de Verificação)</FormLabel>
+                                <div className="relative">
+                                    <FormControl>
+                                        <Input type={showSecret ? "text" : "password"} placeholder="Seu token secreto do webhook" {...field} />
+                                    </FormControl>
+                                    <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowSecret(!showSecret)}>
+                                        {showSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </Button>
+                                </div>
+                                <FormMessage />
+                            </FormItem>
+                        )}/>
                         <FormField control={form.control} name="accessToken" render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Token de Acesso</FormLabel>
+                                <FormLabel>Token de Acesso da API</FormLabel>
                                 <div className="relative">
                                     <FormControl>
                                         <Input type={showToken ? "text" : "password"} placeholder="EAAD..." {...field} />
@@ -164,9 +205,10 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
                         )}/>
                     </CardContent>
                     <CardFooter className="flex justify-between">
-                         <Button type="button" variant="outline" onClick={handleTestConnection} disabled={integration?.status !== 'connected'}>
+                         <Button type="button" variant="outline" onClick={handleTestConnection} disabled={integration?.status !== 'connected' || isTesting}>
+                             {isTesting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             <TestTube2 className="mr-2 h-4 w-4" />
-                            Testar Conexão
+                            Enviar Teste
                         </Button>
                         <Button type="submit" disabled={isLoading}>
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

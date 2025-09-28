@@ -908,13 +908,14 @@ export type Flow = {
 export type WhatsAppIntegration = {
   id?: string;
   companyId: string;
-  wabaId: string; // WhatsApp Business Account ID
-  phoneId: string; // Phone Number ID
-  accessToken: string; // Encrypted Access Token
+  whatsAppBusinessAccountId: string;
+  phoneNumberId: string;
+  accessToken?: string;
+  metaAppSecret?: string;
   status: 'connected' | 'disconnected' | 'error';
-  lastError?: string;
-  webhookUrl?: string; // URL for Meta to send events to
-  webhookVerifyToken?: string; // Token to verify webhook setup
+  error?: string;
+  lastVerifiedAt?: Timestamp;
+  webhookUrl?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 };
