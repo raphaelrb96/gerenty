@@ -1,8 +1,6 @@
-
 // functions/src/functions/messageFunctions.ts
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import * as functions from 'firebase-functions';
-import { ValidationService } from '../services/validationService';
 import { SecretManagerService } from '../services/secretManager';
 import { FirestoreService } from '../services/firestoreService';
 import { WhatsAppService } from '../services/whatsappService';
@@ -108,25 +106,22 @@ export const sendWhatsAppMessage = functions.https.onCall(async (data: any, cont
 });
 
 
-export const sendTestMessage = functions.https.onRequest(async (req, res) => {
-    // Handle CORS
-    res.set('Access-Control-Allow-Origin', '*');
-    if (req.method === 'OPTIONS') {
-        res.set('Access-Control-Allow-Methods', 'POST');
-        res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-        res.status(204).send('');
-        return;
+export const sendTestMessage = functions.https.onCall(async (data: any, context: any) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'A requisição precisa ser autenticada.');
     }
 
-    let companyId;
-    try {
-        const authData = await ValidationService.authenticateRequest(req.headers.authorization);
-        companyId = authData.companyId;
+    const companyId = context.auth.token.companyId;
 
-        const { testPhone } = req.body.data;
-        if (!testPhone) {
+    if (!companyId) {
+        throw new functions.https.HttpsError('failed-precondition', 'Company ID não encontrado no token de autenticação.');
+    }
+    
+    try {
+        if (!data.testPhone) {
             throw new functions.https.HttpsError('invalid-argument', 'Número de teste é obrigatório');
         }
+        const { testPhone } = data;
 
         const integration = await FirestoreService.getCompanyIntegration(companyId);
         if (!integration || integration.status !== 'connected') {
@@ -147,22 +142,19 @@ export const sendTestMessage = functions.https.onRequest(async (req, res) => {
             throw new functions.https.HttpsError('internal', 'Resposta inválida da API do WhatsApp');
         }
 
-        res.status(200).send({
-            result: {
-                success: true,
-                messageId: result.messages[0].id,
-                recipient: testPhone,
-            }
-        });
+        return {
+            success: true,
+            messageId: result.messages[0].id,
+            recipient: testPhone,
+        };
     } catch (error: any) {
         functions.logger.error('Erro no envio de teste:', error);
         if (error instanceof functions.https.HttpsError) {
-            res.status(error.httpErrorCode.status).send({ error: { message: error.message, code: error.code } });
+            throw error;
         }
-        res.status(500).send({ error: { message: error.message || 'Erro interno ao enviar mensagem de teste.' } });
+        throw new functions.https.HttpsError('internal', error.message || 'Erro interno ao enviar mensagem de teste.');
     }
 });
-
 
 // Funções auxiliares
 async function findOrCreateConsumerId(companyId: string, phoneNumber: string): Promise<string> {

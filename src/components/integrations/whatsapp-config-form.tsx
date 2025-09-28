@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -94,10 +93,7 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
     try {
-        if (!user) throw new Error("Usuário não autenticado.");
-        const idToken = await user.getIdToken(true); // Force token refresh
-        
-        await saveWhatsAppCredentials(values, idToken);
+        await saveWhatsAppCredentials(values);
         toast({ title: "Credenciais salvas!", description: "Validando a conexão com a API do WhatsApp..." });
     } catch (error: any) {
         console.error("Error saving credentials:", error);
@@ -110,16 +106,13 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
    const handleTestConnection = async () => {
       setIsTesting(true);
       try {
-          if (!user) throw new Error("Usuário não autenticado.");
-          const idToken = await user.getIdToken(true);
-          
           const testPhone = prompt("Digite um número de telefone para teste (formato internacional, ex: 5511999999999):");
           if (!testPhone) {
               setIsTesting(false);
               return;
           }
 
-          const result = await sendTestMessage(testPhone, idToken);
+          const result = await sendTestMessage(testPhone);
           toast({ title: "Teste Enviado!", description: `Mensagem de teste enviada para ${result.recipient}. ID: ${result.messageId}` });
 
       } catch (error: any) {
