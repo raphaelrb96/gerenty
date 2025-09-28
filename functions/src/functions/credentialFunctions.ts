@@ -6,7 +6,7 @@ import { SecretManagerService } from '../services/secretManager';
 import { FirestoreService } from '../services/firestoreService';
 import { WhatsAppCredentials } from '../types/whatsapp';
 
-export const validateAndSaveCredentials = functions.https.onCall(async (data, context) => {
+export const validateAndSaveCredentials = functions.https.onCall(async (data: any, context: any) => {
   // Autenticação (onCall já verifica o token, mas precisamos do companyId)
   if (!context.auth) {
     throw new functions.https.HttpsError('unauthenticated', 'A requisição precisa ser autenticada.');

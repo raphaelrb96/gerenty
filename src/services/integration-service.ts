@@ -3,7 +3,6 @@
 
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { app } from "@/lib/firebase";
-import { getAuth } from "firebase/auth";
 
 type WhatsAppCredentials = {
   whatsAppBusinessAccountId: string;
@@ -12,13 +11,16 @@ type WhatsAppCredentials = {
   metaAppSecret: string;
 };
 
-export async function saveWhatsAppCredentials(credentials: WhatsAppCredentials): Promise<any> {
+export async function saveWhatsAppCredentials(idToken: string, credentials: WhatsAppCredentials): Promise<any> {
     const functions = getFunctions(app);
-    // Usando httpsCallable que gerencia a autenticação automaticamente
     const validateAndSave = httpsCallable(functions, 'whatsappValidateCredentials');
     
     try {
-        const result = await validateAndSave(credentials);
+        const result = await validateAndSave(credentials, {
+            auth: {
+                token: idToken
+            }
+        });
         return result.data;
     } catch (error: any) {
         console.error("Error calling validateAndSaveCredentials function:", error);
