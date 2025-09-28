@@ -11,16 +11,13 @@ type WhatsAppCredentials = {
   metaAppSecret: string;
 };
 
-export async function saveWhatsAppCredentials(idToken: string, credentials: WhatsAppCredentials): Promise<any> {
+export async function saveWhatsAppCredentials(credentials: WhatsAppCredentials): Promise<any> {
     const functions = getFunctions(app);
     const validateAndSave = httpsCallable(functions, 'whatsappValidateCredentials');
     
     try {
-        const result = await validateAndSave(credentials, {
-            auth: {
-                token: idToken
-            }
-        });
+        // O SDK do Firebase gerencia a autenticação automaticamente com onCall
+        const result = await validateAndSave(credentials);
         return result.data;
     } catch (error: any) {
         console.error("Error calling validateAndSaveCredentials function:", error);
@@ -28,31 +25,13 @@ export async function saveWhatsAppCredentials(idToken: string, credentials: What
     }
 }
 
-export async function sendTestMessage(idToken: string, testPhone: string): Promise<any> {
-    // Usando fetch para a função onRequest, que requer o token no header.
+export async function sendTestMessage(testPhone: string): Promise<any> {
     const functions = getFunctions(app);
-    const region = functions.region || 'us-central1';
-    const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-    const url = `https://${region}-${projectId}.cloudfunctions.net/whatsappSendTest`;
+    const sendTest = httpsCallable(functions, 'whatsappSendTest');
 
     try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${idToken}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ testPhone })
-        });
-        
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.error || "Failed to send test message");
-        }
-        
-        return data;
-
+        const result = await sendTest({ testPhone });
+        return result.data;
     } catch (error: any) {
         console.error("Error calling sendTestMessage function:", error);
         throw new Error(error.message || "O envio da mensagem de teste falhou.");

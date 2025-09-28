@@ -1,3 +1,4 @@
+
 // functions/src/index.ts
 import { validateAndSaveCredentials } from './functions/credentialFunctions';
 import { whatsappWebhookListener } from './functions/webhookFunctions';

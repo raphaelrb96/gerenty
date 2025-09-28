@@ -94,10 +94,9 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
     try {
-        const idToken = await user?.getIdToken(true);
-        if (!idToken) throw new Error("Não autorizado");
+        if (!user) throw new Error("Usuário não autenticado.");
 
-        await saveWhatsAppCredentials(idToken, values);
+        await saveWhatsAppCredentials(values);
         toast({ title: "Credenciais salvas!", description: "Validando a conexão com a API do WhatsApp..." });
     } catch (error: any) {
         console.error("Error saving credentials:", error);
@@ -110,8 +109,7 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
    const handleTestConnection = async () => {
       setIsTesting(true);
       try {
-          const idToken = await user?.getIdToken(true);
-          if (!idToken) throw new Error("Não autorizado");
+          if (!user) throw new Error("Usuário não autenticado.");
           
           const testPhone = prompt("Digite um número de telefone para teste (formato internacional, ex: 5511999999999):");
           if (!testPhone) {
@@ -119,7 +117,7 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
               return;
           }
 
-          const result = await sendTestMessage(idToken, testPhone);
+          const result = await sendTestMessage(testPhone);
           toast({ title: "Teste Enviado!", description: `Mensagem de teste enviada para ${result.recipient}. ID: ${result.messageId}` });
 
       } catch (error: any) {

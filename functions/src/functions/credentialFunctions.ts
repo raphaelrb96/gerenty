@@ -1,3 +1,4 @@
+
 // functions/src/functions/credentialFunctions.ts
 import * as functions from 'firebase-functions';
 import { ValidationService } from '../services/validationService';
@@ -6,7 +7,7 @@ import { SecretManagerService } from '../services/secretManager';
 import { FirestoreService } from '../services/firestoreService';
 import { WhatsAppCredentials } from '../types/whatsapp';
 
-export const validateAndSaveCredentials = functions.https.onCall(async (data: any, context: any) => {
+export const validateAndSaveCredentials = functions.https.onCall(async (data: any, context) => {
   // Autenticação (onCall já verifica o token, mas precisamos do companyId)
   if (!context.auth) {
     throw new functions.https.HttpsError('unauthenticated', 'A requisição precisa ser autenticada.');

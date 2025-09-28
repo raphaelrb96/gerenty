@@ -1,3 +1,4 @@
+
 // functions/src/functions/messageFunctions.ts
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import * as functions from 'firebase-functions';
@@ -116,58 +117,55 @@ export const sendWhatsAppMessage = functions.https.onCall(async (data: any, cont
 });
 
 
-export const sendTestMessage = functions.https.onRequest(async (req, res) => {
-  res.set('Access-Control-Allow-Origin', '*');
-  res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.set('Access-Control-Allow-Headers', 'Authorization, Content-Type');
-
-  if (req.method === 'OPTIONS') {
-    res.status(204).send('');
-    return;
-  }
-  if (req.method !== 'POST') {
-    res.status(405).json({ error: 'Método não permitido' });
-    return;
-  }
-
-  try {
-    const { companyId } = await ValidationService.authenticateRequest(req.headers.authorization);
-
-    if (!req.body || !req.body.testPhone) {
-      res.status(400).json({ error: 'Número de teste é obrigatório' });
-      return;
-    }
-    const { testPhone } = req.body;
-
-    const integration = await FirestoreService.getCompanyIntegration(companyId);
-    if (!integration || integration.status !== 'connected') {
-      res.status(400).json({ error: 'Integração do WhatsApp não está ativa.' });
-      return;
+export const sendTestMessage = functions.https.onCall(async (data: any, context: any) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'A requisição precisa ser autenticada.');
     }
 
-    const accessToken = await SecretManagerService.getWhatsAppAccessToken(companyId);
+    const token = context.auth.token as CustomAuthToken;
+    const companyId = token.companyId;
+
+    if (!companyId) {
+        throw new functions.https.HttpsError('failed-precondition', 'Company ID não encontrado no token de autenticação.');
+    }
     
-    const payload: SendMessagePayload = {
-      messaging_product: 'whatsapp',
-      to: testPhone,
-      type: 'template',
-      template: { name: 'hello_world', language: { code: 'pt_BR' } },
-    };
+    try {
+        if (!data.testPhone) {
+            throw new functions.https.HttpsError('invalid-argument', 'Número de teste é obrigatório');
+        }
+        const { testPhone } = data;
 
-    const result = await WhatsAppService.sendMessage(accessToken, integration.phoneNumberId, payload);
-    if (!result.messages || result.messages.length === 0) {
-      throw new Error('Resposta inválida da API do WhatsApp');
+        const integration = await FirestoreService.getCompanyIntegration(companyId);
+        if (!integration || integration.status !== 'connected') {
+            throw new functions.https.HttpsError('failed-precondition', 'Integração do WhatsApp não está ativa.');
+        }
+
+        const accessToken = await SecretManagerService.getWhatsAppAccessToken(companyId);
+        
+        const payload: SendMessagePayload = {
+            messaging_product: 'whatsapp',
+            to: testPhone,
+            type: 'template',
+            template: { name: 'hello_world', language: { code: 'pt_BR' } },
+        };
+
+        const result = await WhatsAppService.sendMessage(accessToken, integration.phoneNumberId, payload);
+        if (!result.messages || result.messages.length === 0) {
+            throw new functions.https.HttpsError('internal', 'Resposta inválida da API do WhatsApp');
+        }
+
+        return {
+            success: true,
+            messageId: result.messages[0].id,
+            recipient: testPhone,
+        };
+    } catch (error: any) {
+        functions.logger.error('Erro no envio de teste:', error);
+        if (error instanceof functions.https.HttpsError) {
+            throw error;
+        }
+        throw new functions.https.HttpsError('internal', error.message || 'Erro interno ao enviar mensagem de teste.');
     }
-
-    res.status(200).json({
-      success: true,
-      messageId: result.messages[0].id,
-      recipient: testPhone,
-    });
-  } catch (error: any) {
-    functions.logger.error('Erro no envio de teste:', error);
-    res.status(500).json({ error: error.message || 'Erro interno ao enviar mensagem de teste.' });
-  }
 });
 
 // Funções auxiliares
