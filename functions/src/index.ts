@@ -1,17 +1,16 @@
 // functions/src/index.ts
-//import * as functions from 'firebase-functions';
 import { validateAndSaveCredentials } from './functions/credentialFunctions';
 import { whatsappWebhookListener } from './functions/webhookFunctions';
 import { sendWhatsAppMessage, sendTestMessage } from './functions/messageFunctions';
 
-// Configuração multi-tenant das credenciais
+// Callable function para validação e salvamento de credenciais
 export const whatsappValidateCredentials = validateAndSaveCredentials;
 
-// Webhook para recebimento de mensagens (URL inclui companyId)
+// Webhook para recebimento de mensagens
 export const whatsappWebhook = whatsappWebhookListener;
 
-// Função callable para envio de mensagens
+// Callable function para envio de mensagens
 export const sendMessage = sendWhatsAppMessage;
 
-// Função utilitária para teste
+// HTTP function para teste de envio (pode ser convertida para callable também se preferir)
 export const whatsappSendTest = sendTestMessage;

@@ -1,6 +1,7 @@
 // functions/src/services/validationService.ts
 import * as crypto from 'crypto';
 import * as functions from 'firebase-functions';
+import { WhatsAppCredentials } from '../types/whatsapp';
 
 export class ValidationService {
   static validateWebhookSignature(payload: any, signature: string, appSecret: string): boolean {
@@ -17,18 +18,17 @@ export class ValidationService {
 
   static async authenticateRequest(authHeader: string | undefined): Promise<{ userId: string; companyId: string }> {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new Error('Token de autenticação não fornecido');
+      throw new Error('Token de autenticação não fornecido ou mal formatado.');
     }
 
     const token = authHeader.split('Bearer ')[1];
     
     try {
-      // Verificar token do Firebase Auth
       const admin = await import('firebase-admin');
       const decodedToken = await admin.auth().verifyIdToken(token);
       
       if (!decodedToken.companyId) {
-        throw new Error('Company ID não encontrado no token');
+        throw new Error('Company ID não encontrado no token.');
       }
 
       return {
@@ -37,27 +37,24 @@ export class ValidationService {
       };
     } catch (error) {
       functions.logger.error('Erro na autenticação:', error);
-      throw new Error('Token inválido ou expirado');
+      throw new Error('Token inválido ou expirado.');
     }
   }
 
-  static validateWhatsAppCredentials(credentials: any): void {
-    const requiredFields = ['accessToken', 'whatsAppBusinessAccountId', 'phoneNumberId', 'metaAppSecret'];
+  static validateWhatsAppCredentials(credentials: WhatsAppCredentials): void {
+    const requiredFields: (keyof WhatsAppCredentials)[] = ['accessToken', 'whatsAppBusinessAccountId', 'phoneNumberId', 'metaAppSecret'];
     
     for (const field of requiredFields) {
       if (!credentials[field]) {
-        throw new Error(`Campo obrigatório faltando: ${field}`);
+        throw new functions.https.HttpsError('invalid-argument', `Campo obrigatório faltando: ${field}`);
       }
     }
 
-    // Validar formato do access token (exemplo básico)
-    if (credentials.accessToken.length < 10) {
-      throw new Error('Access Token inválido');
+    if (credentials.accessToken.length < 20) {
+      throw new functions.https.HttpsError('invalid-argument', 'Access Token inválido.');
     }
-
-    // Validar formato do phone number ID
-    if (!credentials.phoneNumberId.match(/^\d+$/)) {
-      throw new Error('Phone Number ID inválido');
+    if (!/^\d+$/.test(credentials.phoneNumberId)) {
+      throw new functions.https.HttpsError('invalid-argument', 'Phone Number ID inválido.');
     }
   }
 }
