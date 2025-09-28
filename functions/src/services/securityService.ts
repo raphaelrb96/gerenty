@@ -35,7 +35,7 @@ export class SecurityService {
             // Por enquanto, vamos confiar que se o usuário está autenticado, ele pode agir.
             // Em um cenário de produção, esta verificação é crucial.
             const companyDoc = await this.db.collection('companies').doc(companyId).get();
-            if (!companyDoc.exists()) {
+            if (!companyDoc) {
                 return { isValid: false, error: 'Company not found' };
             }
             // Verifica se o dono da empresa é o usuário que faz a requisição
