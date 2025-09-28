@@ -17,7 +17,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, Eye, EyeOff, Copy, CheckCircle, AlertCircle, XCircle, Info, TestTube2 } from "lucide-react";
+import { Loader2, Eye, EyeOff, Copy, CheckCircle, AlertCircle, XCircle, Info, TestTube2, ExternalLink } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/auth-context";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
@@ -113,7 +113,6 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
           const idToken = await user?.getIdToken(true);
           if (!idToken) throw new Error("Não autorizado");
           
-          // A simple phone number for testing. This should be improved later.
           const testPhone = prompt("Digite um número de telefone para teste (formato internacional, ex: 5511999999999):");
           if (!testPhone) {
               setIsTesting(false);
@@ -144,38 +143,82 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
     
         <Card>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Info /> Instruções de Configuração</CardTitle>
+                <CardTitle className="flex items-center gap-2"><Info className="h-5 w-5"/> Guia de Configuração Completo</CardTitle>
+                <CardDescription>Siga estes passos para obter e configurar suas credenciais da API Cloud do WhatsApp.</CardDescription>
             </CardHeader>
             <CardContent className="text-sm">
-                <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
-                    <AccordionItem value="item-1">
-                        <AccordionTrigger>Passo 1: Obtendo suas Credenciais na Meta</AccordionTrigger>
+                <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="item-0">
+                        <AccordionTrigger>Visão Geral e Pré-requisitos</AccordionTrigger>
                         <AccordionContent className="space-y-2 text-muted-foreground pt-2">
-                             <p>Para conectar o Gerenty ao WhatsApp, você precisa de uma conta na <a href="https://developers.facebook.com/docs/whatsapp/cloud-api/get-started" target="_blank" rel="noopener noreferrer" className="text-primary underline">API Cloud da Meta</a>.</p>
-                             <ol className="list-decimal list-inside space-y-1">
-                                <li>Acesse o painel de desenvolvedores da Meta e selecione seu aplicativo.</li>
-                                <li>No menu lateral, vá para "WhatsApp" {'>'} "Configuração da API".</li>
-                                <li>Copie o <strong>ID da conta do WhatsApp Business</strong> e o <strong>ID do número de telefone</strong> e cole-os nos campos abaixo.</li>
-                                <li>Gere um <strong>Token de acesso temporário</strong> e cole-o no campo "Token de Acesso". Para uso em produção, recomendamos criar e usar um Token de Acesso Permanente.</li>
-                                <li>No painel da Meta, encontre o seu <strong>"App Secret"</strong> (ou "Segredo do Aplicativo"). Este é o seu token de verificação.</li>
+                             <p>A API Cloud do WhatsApp, hospedada pela Meta, permite que empresas de médio e grande porte se comuniquem com clientes em escala.</p>
+                             <p className="font-semibold text-foreground">Antes de começar, você precisará de:</p>
+                             <ul className="list-disc list-inside space-y-1">
+                                <li>Uma conta do Facebook e uma conta no <a href="https://business.facebook.com/overview" target="_blank" rel="noopener noreferrer" className="text-primary underline">Gerenciador de Negócios da Meta</a>.</li>
+                                <li>Um número de telefone que não esteja vinculado a outra conta do WhatsApp (pessoal ou Business App).</li>
+                             </ul>
+                        </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="item-1">
+                        <AccordionTrigger>Passo 1: Criar um App na Meta for Developers</AccordionTrigger>
+                        <AccordionContent className="space-y-2 text-muted-foreground pt-2">
+                             <ol className="list-decimal list-inside space-y-2">
+                                <li>Acesse o site <a href="https://developers.facebook.com/apps/" target="_blank" rel="noopener noreferrer" className="text-primary underline">Meta for Developers</a> e faça login.</li>
+                                <li>Clique em <strong>"Criar Aplicativo"</strong> (ou "Create App").</li>
+                                <li>Selecione o tipo de aplicativo <strong>"Business"</strong> (ou "Empresarial") e clique em "Avançar".</li>
+                                <li>Dê um nome ao seu aplicativo (ex: "App de Atendimento Gerenty") e verifique se seu e-mail e conta empresarial estão corretos.</li>
+                                <li>Clique em <strong>"Criar Aplicativo"</strong>. Você será redirecionado para o painel do seu novo app.</li>
                              </ol>
                         </AccordionContent>
                     </AccordionItem>
-                    <AccordionItem value="item-2">
-                        <AccordionTrigger>Passo 2: Configurando o Webhook</AccordionTrigger>
+                     <AccordionItem value="item-2">
+                        <AccordionTrigger>Passo 2: Configurar o produto "WhatsApp"</AccordionTrigger>
                         <AccordionContent className="space-y-2 text-muted-foreground pt-2">
-                            <p>O Webhook é o que permite que o WhatsApp envie as mensagens dos seus clientes para o Gerenty em tempo real.</p>
-                            <ol className="list-decimal list-inside space-y-1">
-                                <li>Na seção "Configuração da API" da Meta, encontre a seção "Webhooks" e clique em "Configurar".</li>
-                                <li>Cole a <strong>URL de Webhook</strong> abaixo no campo "URL de Callback".</li>
-                                <li>No campo "Token de verificação", cole o seu <strong>"Meta App Secret"</strong> (o mesmo que você preencheu no formulário aqui).</li>
-                                <li>Clique em "Verificar e salvar".</li>
-                                <li>Após salvar, em "Webhook fields", clique em "Manage" e assine os eventos `messages` e `message_template_status`.</li>
+                             <ol className="list-decimal list-inside space-y-2">
+                                <li>No painel do seu app, role para baixo até encontrar "WhatsApp" e clique em <strong>"Configurar"</strong>.</li>
+                                <li>Na tela seguinte, você precisará vincular sua Conta Empresarial da Meta. Selecione-a no menu suspenso.</li>
+                                <li>Clique em <strong>"Continuar"</strong>. O WhatsApp irá criar uma conta de teste para você.</li>
+                             </ol>
+                        </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="item-3">
+                        <AccordionTrigger>Passo 3: Obter suas Credenciais</AccordionTrigger>
+                        <AccordionContent className="space-y-4 text-muted-foreground pt-4">
+                            <p>Agora, no painel do seu aplicativo Meta, vá para o menu lateral: <strong>WhatsApp {'>'} Configuração da API</strong>. Aqui você encontrará tudo o que precisa:</p>
+                             <div className="p-3 border rounded-md">
+                                <p className="font-semibold text-foreground">1. ID da Conta do WhatsApp Business</p>
+                                <p>Na seção "Enviar e receber mensagens", você verá o campo <strong>"ID da conta do WhatsApp Business"</strong>. Copie este valor.</p>
+                            </div>
+                            <div className="p-3 border rounded-md">
+                                <p className="font-semibold text-foreground">2. ID do Número de Telefone</p>
+                                <p>Logo abaixo do campo anterior, você verá o <strong>"ID do número de telefone"</strong>. Copie este valor.</p>
+                            </div>
+                             <div className="p-3 border rounded-md">
+                                <p className="font-semibold text-foreground">3. Token de Acesso</p>
+                                <p>Na mesma seção, há um campo chamado <strong>"Token de acesso temporário"</strong>. Copie este token. <strong>Atenção:</strong> Este token expira em 24 horas. Para produção, você deve gerar um <a href="https://developers.facebook.com/docs/whatsapp/cloud-api/reference/business-accounts#--access-token" target="_blank" rel="noopener noreferrer" className="text-primary underline">token de acesso permanente</a>.</p>
+                            </div>
+                             <div className="p-3 border rounded-md">
+                                <p className="font-semibold text-foreground">4. Meta App Secret (Token de Verificação)</p>
+                                <p>No menu lateral esquerdo, vá para <strong>Configurações do aplicativo {'>'} Básico</strong>. Você verá o campo <strong>"Segredo do aplicativo"</strong> (App Secret). Clique em "Mostrar" e copie este valor. Este será o seu token para verificar o webhook.</p>
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="item-4">
+                        <AccordionTrigger>Passo 4: Configurando o Webhook</AccordionTrigger>
+                        <AccordionContent className="space-y-2 text-muted-foreground pt-2">
+                            <p>O Webhook permite que o WhatsApp nos envie as mensagens em tempo real.</p>
+                            <ol className="list-decimal list-inside space-y-2">
+                                <li>Volte para a seção <strong>WhatsApp {'>'} Configuração da API</strong> no painel da Meta.</li>
+                                <li>Encontre a seção "Webhooks" e clique em <strong>"Editar"</strong>.</li>
+                                <li>No campo "URL de Retorno de Chamada", cole a <strong>URL de Webhook</strong> abaixo.</li>
+                                <li>No campo "Token de verificação do webhook", cole o seu <strong>"Meta App Secret"</strong> que você obteve no passo anterior.</li>
+                                <li>Clique em <strong>"Verificar e salvar"</strong>.</li>
+                                <li>Após salvar, em "Campos de webhook", clique em "Gerenciar" e assine os eventos `messages` e `message_template_status`.</li>
                             </ol>
                             <div className="space-y-2 pt-4">
-                                <Label htmlFor="webhook-url">Sua URL de Webhook (somente leitura)</Label>
+                                <Label htmlFor="webhook-url">Sua URL de Webhook (clique para copiar)</Label>
                                 <div className="flex gap-2">
-                                    <Input id="webhook-url" value={integration?.webhookUrl || "Salve as credenciais para gerar"} readOnly />
+                                    <Input id="webhook-url" value={integration?.webhookUrl || "Salve as credenciais para gerar"} readOnly className="cursor-pointer" onClick={() => copyToClipboard(integration?.webhookUrl || "")}/>
                                     <Button type="button" size="icon" onClick={() => copyToClipboard(integration?.webhookUrl || "")} disabled={!integration?.webhookUrl}><Copy className="h-4 w-4" /></Button>
                                 </div>
                             </div>
