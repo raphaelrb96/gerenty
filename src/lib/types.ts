@@ -1,4 +1,5 @@
 
+
 import type { FieldValue, Timestamp } from "firebase/firestore";
 
 export type User = {
@@ -902,5 +903,19 @@ export type Flow = {
     };
     createdAt: Timestamp;
     updatedAt: Timestamp;
+};
+
+export type WhatsAppIntegration = {
+  id?: string;
+  companyId: string;
+  wabaId: string; // WhatsApp Business Account ID
+  phoneId: string; // Phone Number ID
+  accessToken: string; // Encrypted Access Token
+  status: 'connected' | 'disconnected' | 'error';
+  lastError?: string;
+  webhookUrl?: string; // URL for Meta to send events to
+  webhookVerifyToken?: string; // Token to verify webhook setup
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 };
     

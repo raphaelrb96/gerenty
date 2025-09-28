@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import {
@@ -10,6 +11,9 @@ import {
   SidebarMenuButton,
   SidebarFooter,
   useSidebar,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem
 } from "@/components/ui/sidebar";
 import { Logo } from "@/components/logo";
 import {
@@ -29,7 +33,8 @@ import {
   Puzzle,
   TrendingUp,
   MessageSquare,
-  Bot
+  Bot,
+  MessageCircle
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -70,7 +75,12 @@ export function MainSidebar() {
     { href: "/dashboard/reports", label: "Relatórios", icon: BarChart, module: 'reports' as const },
     { href: "/dashboard/team", label: "Equipe", icon: Users, module: 'team' as const },
     { href: "/dashboard/companies", label: t("companiesPage.sidebarTitle"), icon: Building, module: 'companies' as const },
-    { href: "/dashboard/integrations", label: "Integrações", icon: Puzzle, module: 'integrations' as const },
+    {
+      href: "/dashboard/integrations", label: "Integrações", icon: Puzzle, module: 'integrations' as const,
+      subItems: [
+          { href: "/dashboard/integrations/whatsapp", label: "WhatsApp" },
+      ]
+    },
     { href: "/dashboard/settings", label: "Configurações", icon: Settings, module: 'settings' as const },
   ];
 
@@ -103,7 +113,7 @@ export function MainSidebar() {
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild
-                isActive={pathname.startsWith(item.href) && item.href !== "/dashboard" ? pathname.startsWith(item.href) : pathname === item.href}
+                isActive={pathname.startsWith(item.href) && (item.href !== "/dashboard" || pathname === "/dashboard")}
                 tooltip={item.label}
                 onClick={handleLinkClick}
               >
@@ -112,6 +122,20 @@ export function MainSidebar() {
                   <span>{item.label}</span>
                 </Link>
               </SidebarMenuButton>
+               {item.subItems && (
+                <SidebarMenuSub>
+                  {item.subItems.map(subItem => (
+                    <SidebarMenuSubItem key={subItem.href}>
+                      <SidebarMenuSubButton asChild isActive={pathname.startsWith(subItem.href)} onClick={handleLinkClick}>
+                        <Link href={subItem.href}>
+                            <MessageCircle />
+                            <span>{subItem.label}</span>
+                        </Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  ))}
+                </SidebarMenuSub>
+              )}
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
