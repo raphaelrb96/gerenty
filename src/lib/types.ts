@@ -905,18 +905,29 @@ export type Flow = {
     updatedAt: Timestamp;
 };
 
-export type WhatsAppIntegration = {
-  id?: string;
-  companyId: string;
-  whatsAppBusinessAccountId: string;
+export interface WhatsAppIntegration {
+  whatsAppId: string;
   phoneNumberId: string;
-  accessToken?: string;
-  metaAppSecret?: string;
-  status: 'connected' | 'disconnected' | 'error';
+  webhookUrl: string;
+  status: 'connected' | 'error' | 'disconnected';
+  companyId: string;
+  createdAt: string;
+  updatedAt: string;
   error?: string;
-  lastVerifiedAt?: Timestamp;
-  webhookUrl?: string;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-};
+  // NOTA: accessToken e metaAppSecret NÃO estão aqui
+  // pois são armazenados no Secret Manager
+}
+
+export interface WhatsAppCredentials {
+  accessToken: string;
+  phoneNumberId: string;
+  whatsAppBusinessId: string;
+  metaAppSecret: string;
+}
+
+export interface TestMessageResponse {
+  success: boolean;
+  messageId?: string;
+  message: string;
+}
     

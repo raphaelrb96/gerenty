@@ -1,109 +1,83 @@
-// functions/src/types/whatsapp.ts
+// src/types/whatsapp.ts
+import * as functions from 'firebase-functions';
+import * as admin from 'firebase-admin';
 
-// Para a função validateAndSaveCredentials
+// Remove a definição customizada e usa a do Firebase
+export type CallableRequest<T = any> = functions.https.CallableRequest<T>;
+
 export interface WhatsAppCredentials {
   accessToken: string;
-  whatsAppBusinessAccountId: string;
   phoneNumberId: string;
+  whatsAppBusinessId: string;
   metaAppSecret: string;
 }
 
-// Para a função getCompanyIntegration e saveCompanyIntegration
-export interface CompanyIntegration {
-  companyId: string;
-  whatsAppBusinessAccountId: string;
+export interface WhatsAppIntegration {
+  whatsAppId: string;
   phoneNumberId: string;
   webhookUrl: string;
-  status: 'connected' | 'disconnected' | 'error';
-  lastVerifiedAt: Date;
+  status: 'connected' | 'error' | 'disconnected';
+  companyId: string;
+  createdAt: admin.firestore.Timestamp;
+  updatedAt: admin.firestore.Timestamp;
+}
+
+export interface WebhookPayload {
+  object: string;
+  entry: Array<{
+    id: string;
+    changes: Array<{
+      value: {
+        messaging_product: string;
+        metadata: {
+          display_phone_number: string;
+          phone_number_id: string;
+        };
+        contacts?: Array<{
+          profile: {
+            name: string;
+          };
+          wa_id: string;
+        }>;
+        messages?: Array<{
+          from: string;
+          id: string;
+          timestamp: string;
+          type: string;
+          text?: {
+            body: string;
+          };
+          image?: any;
+          document?: any;
+          video?: any;
+        }>;
+        statuses?: Array<{
+          id: string;
+          status: string;
+          timestamp: string;
+          recipient_id: string;
+        }>;
+      };
+      field: string;
+    }>;
+  }>;
+}
+
+export interface SendMessagePayload {
+  phoneNumber: string;
+  message: string;
+  type?: 'text' | 'template';
+  templateName?: string;
+}
+
+export interface ValidationResult {
+  isValid: boolean;
+  companyId?: string;
   error?: string;
 }
 
-// Para a função de webhook
-export interface WebhookPayload {
-  object: string;
-  entry: WebhookEntry[];
-}
-
-export interface WebhookEntry {
-  id: string;
-  changes: WebhookChange[];
-}
-
-export interface WebhookChange {
-  value: {
-    messaging_product: string;
-    metadata: {
-      display_phone_number: string;
-      phone_number_id: string;
-    };
-    contacts?: Contact[];
-    messages?: Message[];
-    statuses?: Status[];
-  };
-  field: string;
-}
-
-export interface Contact {
-  profile: {
-    name: string;
-  };
-  wa_id: string;
-}
-
-export interface Message {
-  from: string;
-  id: string;
-  timestamp: string;
-  type: 'text' | 'image' | 'audio' | 'video' | 'document' | 'sticker' | 'location' | 'contacts' | 'interactive' | 'unsupported';
-  text?: {
-    body: string;
-  };
-  image?: { id: string, mime_type: string, sha256: string, caption?: string };
-  // Adicionar outros tipos de mídia conforme necessário
-}
-
-export interface Status {
-  id: string;
-  status: 'sent' | 'delivered' | 'read' | 'failed';
-  timestamp: string;
-  recipient_id: string;
-  conversation?: {
-      id: string;
-      origin: { type: string };
-  };
-  pricing?: {
-      billable: boolean;
-      pricing_model: string;
-      category: string;
-  };
-}
-
-// Para a função de envio de mensagens
-export interface SendMessagePayload {
-  messaging_product: 'whatsapp';
-  to: string;
-  type: 'text' | 'template';
-  text?: {
-    body: string;
-  };
-  template?: {
-    name: string;
-    language: {
-      code: string;
-    };
-    components?: any[];
-  };
-}
-
-export interface MessageData {
-  id: string;
-  direction: 'inbound' | 'outbound';
-  type: string;
-  content: {
-    text?: { body: string };
-    [key: string]: any; // Permite outros tipos de conteúdo como media, template, etc.
-  };
-  timestamp: Date;
-  status: 'sent' | 'delivered' | 'read' | 'failed';
+export interface ApiResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: string;
 }

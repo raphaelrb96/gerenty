@@ -1,81 +1,108 @@
-// functions/src/services/secretManager.ts
+// src/services/secretManager.ts
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 import * as functions from 'firebase-functions';
 
 const client = new SecretManagerServiceClient();
 
 export class SecretManagerService {
-  private static async getSecretName(companyId: string, secretType: 'token' | 'secret'): Promise<string> {
-    return `projects/${process.env.GCLOUD_PROJECT}/secrets/WHATSAPP_${companyId}_${secretType.toUpperCase()}/versions/latest`;
+  private static instance: SecretManagerService;
+
+  private constructor() {}
+
+  static getInstance(): SecretManagerService {
+    if (!SecretManagerService.instance) {
+      SecretManagerService.instance = new SecretManagerService();
+    }
+    return SecretManagerService.instance;
   }
 
-  static async saveWhatsAppCredentials(companyId: string, credentials: { accessToken: string; metaAppSecret: string }): Promise<void> {
+  async storeSecret(secretName: string, secretValue: string): Promise<void> {
     try {
-      // Salvar Access Token
-      const tokenSecretName = await this.getSecretName(companyId, 'token');
+      const projectId = process.env.GCLOUD_PROJECT;
+      const parent = `projects/${projectId}`;
+      
+      // Cria o secret se não existir
+      try {
+        await client.createSecret({
+          parent,
+          secretId: secretName,
+          secret: {
+            replication: {
+              automatic: {},
+            },
+          },
+        });
+      } catch (error: any) {
+        // Secret já existe, continua
+        if (error.code !== 6) { // 6 = ALREADY_EXISTS
+          throw error;
+        }
+      }
+
+      // Adiciona a versão do secret
       await client.addSecretVersion({
-        parent: `projects/${process.env.GCLOUD_PROJECT}/secrets/WHATSAPP_${companyId}_TOKEN`,
+        parent: `${parent}/secrets/${secretName}`,
         payload: {
-          data: Buffer.from(credentials.accessToken, 'utf8'),
+          data: Buffer.from(secretValue, 'utf8'),
         },
       });
 
-      // Salvar App Secret
-      const secretSecretName = await this.getSecretName(companyId, 'secret');
-      await client.addSecretVersion({
-        parent: `projects/${process.env.GCLOUD_PROJECT}/secrets/WHATSAPP_${companyId}_SECRET`,
-        payload: {
-          data: Buffer.from(credentials.metaAppSecret, 'utf8'),
-        },
-      });
-
-      functions.logger.info(`Credenciais salvas para empresa: ${companyId}`);
+      functions.logger.info(`Secret ${secretName} stored successfully`);
     } catch (error) {
-      functions.logger.error('Erro ao salvar credenciais:', error);
-      throw new Error('Falha ao salvar credenciais no Secret Manager');
+      functions.logger.error('Error storing secret:', error);
+      throw new Error('Failed to store secret');
     }
   }
 
-  static async getWhatsAppAccessToken(companyId: string): Promise<string> {
+  async getSecret(secretName: string): Promise<string> {
     try {
-      const secretName = await this.getSecretName(companyId, 'token');
-      const [version] = await client.accessSecretVersion({
-        name: secretName,
-      });
+      const projectId = process.env.GCLOUD_PROJECT;
+      const name = `projects/${projectId}/secrets/${secretName}/versions/latest`;
+
+      const [version] = await client.accessSecretVersion({ name });
       
-      return version.payload?.data?.toString() || '';
+      if (!version.payload?.data) {
+        throw new Error('Secret not found or empty');
+      }
+
+      return version.payload.data.toString();
     } catch (error) {
-      functions.logger.error(`Erro ao obter access token para empresa ${companyId}:`, error);
-      throw new Error('Credenciais não encontradas para esta empresa');
+      functions.logger.error('Error retrieving secret:', error);
+      throw new Error('Failed to retrieve secret');
     }
   }
 
-  static async getWhatsAppAppSecret(companyId: string): Promise<string> {
+  async deleteSecret(secretName: string): Promise<void> {
     try {
-      const secretName = await this.getSecretName(companyId, 'secret');
-      const [version] = await client.accessSecretVersion({
-        name: secretName,
-      });
-      
-      return version.payload?.data?.toString() || '';
+      const projectId = process.env.GCLOUD_PROJECT;
+      const name = `projects/${projectId}/secrets/${secretName}`;
+
+      await client.deleteSecret({ name });
+      functions.logger.info(`Secret ${secretName} deleted successfully`);
     } catch (error) {
-      functions.logger.error(`Erro ao obter app secret para empresa ${companyId}:`, error);
-      throw new Error('App Secret não encontrado para esta empresa');
+      functions.logger.error('Error deleting secret:', error);
+      throw new Error('Failed to delete secret');
     }
   }
 
-  static async deleteWhatsAppCredentials(companyId: string): Promise<void> {
-    try {
-      const tokenSecretName = `projects/${process.env.GCLOUD_PROJECT}/secrets/WHATSAPP_${companyId}_TOKEN`;
-      const secretSecretName = `projects/${process.env.GCLOUD_PROJECT}/secrets/WHATSAPP_${companyId}_SECRET`;
+  // Métodos específicos para WhatsApp
+  async storeWhatsAppToken(companyId: string, accessToken: string): Promise<void> {
+    const secretName = `WHATSAPP_${companyId}_TOKEN`;
+    await this.storeSecret(secretName, accessToken);
+  }
 
-      await client.deleteSecret({ name: tokenSecretName });
-      await client.deleteSecret({ name: secretSecretName });
+  async storeWhatsAppSecret(companyId: string, appSecret: string): Promise<void> {
+    const secretName = `WHATSAPP_${companyId}_SECRET`;
+    await this.storeSecret(secretName, appSecret);
+  }
 
-      functions.logger.info(`Credenciais deletadas para empresa: ${companyId}`);
-    } catch (error) {
-      functions.logger.error('Erro ao deletar credenciais:', error);
-      throw new Error('Falha ao deletar credenciais');
-    }
+  async getWhatsAppToken(companyId: string): Promise<string> {
+    const secretName = `WHATSAPP_${companyId}_TOKEN`;
+    return await this.getSecret(secretName);
+  }
+
+  async getWhatsAppSecret(companyId: string): Promise<string> {
+    const secretName = `WHATSAPP_${companyId}_SECRET`;
+    return await this.getSecret(secretName);
   }
 }
