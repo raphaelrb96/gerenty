@@ -331,19 +331,29 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
                                 <p className="text-muted-foreground">O Webhook é o "endereço" para onde o WhatsApp enviará as mensagens que seus clientes mandarem.</p>
                                 <ol className="list-decimal list-inside space-y-2">
                                     <li>Primeiro, preencha e salve as 4 credenciais do passo anterior neste formulário.</li>
-                                    <li>Após salvar, esta URL de Webhook será gerada para sua empresa. Copie a URL abaixo:</li>
-                                     <div className="flex gap-2">
-                                        <Input id="webhook-url" value={webhookUrl || 'Salve as credenciais para gerar a URL'} readOnly className="flex-1 font-mono text-sm" />
-                                        <Button type="button" size="icon" variant="outline" onClick={() => copyToClipboard(webhookUrl || '')} disabled={!webhookUrl}><Copy className="h-4 w-4" /></Button>
-                                    </div>
                                     <li>Volte ao painel da Meta, em <span className="font-mono text-xs bg-muted p-1 rounded">WhatsApp {'>'} Configuração da API</span> e clique em "Editar" na seção de Webhooks.</li>
-                                    <li>Cole a URL no campo "URL de Retorno de Chamada".</li>
+                                    <li>Cole a URL de Webhook fornecida abaixo no campo "URL de Retorno de Chamada".</li>
                                     <li>No campo "Token de Verificação", cole o seu <strong>Meta App Secret</strong> (a mesma credencial do campo "Segredo do Aplicativo" deste formulário).</li>
                                     <li>Clique em "Verificar e Salvar". Se tudo estiver correto, uma mensagem de sucesso aparecerá.</li>
                                 </ol>
                             </AccordionContent>
                         </AccordionItem>
                     </Accordion>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>URL de Webhook</CardTitle>
+                    <CardDescription>Use esta URL no painel da Meta para receber mensagens.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex gap-2">
+                        <Input id="webhook-url" value={webhookUrl || 'Salve as credenciais para gerar a URL'} readOnly className="flex-1 font-mono text-sm" />
+                        <Button type="button" size="icon" variant="outline" onClick={() => copyToClipboard(webhookUrl || '')} disabled={!webhookUrl}>
+                            <Copy className="h-4 w-4" />
+                        </Button>
+                    </div>
                 </CardContent>
             </Card>
 
