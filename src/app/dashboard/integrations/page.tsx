@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/common/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Shield, ArrowRight } from "lucide-react";
+import { CheckCircle, Shield, ArrowRight, Puzzle, XCircle, AlertCircle } from "lucide-react";
 import Image from "next/image";
 import { usePermissions } from "@/context/permissions-context";
 import { useCompany } from "@/context/company-context";
@@ -34,13 +34,6 @@ const allIntegrationsData: IntegrationCategory[] = [
   {
     title: "Comunicação e Marketing",
     integrations: [
-      { 
-        name: "API do WhatsApp", 
-        description: "Conecte a API Cloud oficial para automatizar conversas e notificações.", 
-        logo: "/logos/whatsapp.svg",
-        isConfigurable: true,
-        href: "/dashboard/integrations/whatsapp",
-      },
       { name: "Meta (Facebook/Instagram)", description: "Sincronize seu catálogo e crie anúncios dinâmicos.", logo: "/logos/meta.svg" },
       { name: "Google Ads", description: "Monitore o desempenho de suas campanhas de publicidade.", logo: "/logos/google-ads.svg" },
       { name: "Mailchimp", description: "Automatize seu e-mail marketing com base nas vendas.", logo: "/logos/mailchimp.svg" },
@@ -82,24 +75,63 @@ const allIntegrationsData: IntegrationCategory[] = [
   },
 ];
 
-const ActiveIntegrationCard = ({ integration }: { integration: Integration }) => (
-  <Card className="flex flex-col md:flex-row items-center justify-between p-6 transition-transform transform hover:-translate-y-1 hover:shadow-lg">
-     <div className="flex items-center gap-6">
-        {integration.logo && (
+const WhatsAppIntegrationCard = ({ status }: { status: WhatsAppIntegration['status'] }) => {
+    const isConnected = status === 'connected';
+    const isError = status === 'error';
+
+    const getStatusInfo = () => {
+        if (isConnected) {
+            return {
+                text: 'Conectado',
+                icon: <CheckCircle className="h-4 w-4 text-green-500" />,
+                buttonText: 'Configurar',
+                buttonIcon: <ArrowRight className="ml-2 h-4 w-4" />
+            };
+        }
+        if (isError) {
+             return {
+                text: 'Erro na Conexão',
+                icon: <AlertCircle className="h-4 w-4 text-destructive" />,
+                buttonText: 'Verificar',
+                buttonIcon: <ArrowRight className="ml-2 h-4 w-4" />
+            };
+        }
+        return {
+            text: 'Desconectado',
+            icon: <XCircle className="h-4 w-4 text-muted-foreground" />,
+            buttonText: 'Conectar Agora',
+            buttonIcon: <ArrowRight className="ml-2 h-4 w-4" />
+        };
+    }
+
+    const statusInfo = getStatusInfo();
+    
+    return (
+      <Card className="flex flex-col md:flex-row items-center justify-between p-6 transition-transform transform hover:-translate-y-1 hover:shadow-lg border-primary/20 shadow-md">
+         <div className="flex items-center gap-6">
             <div className="relative w-16 h-16">
-                <Image src={integration.logo} alt={`${integration.name} logo`} layout="fill" objectFit="contain" />
+                <Image src="/logos/whatsapp.svg" alt="WhatsApp logo" layout="fill" objectFit="contain" />
             </div>
-        )}
-        <div>
-            <h3 className="text-xl font-bold">{integration.name}</h3>
-            <p className="text-muted-foreground">{integration.description}</p>
-        </div>
-     </div>
-     <Button asChild className="mt-4 md:mt-0">
-        <Link href={integration.href || '#'}>Configurar <ArrowRight className="ml-2 h-4 w-4"/></Link>
-     </Button>
-  </Card>
-);
+            <div>
+                <h3 className="text-xl font-bold flex items-center gap-2">
+                    API do WhatsApp
+                    <span className="flex items-center gap-1 text-sm font-medium text-muted-foreground">
+                        {statusInfo.icon}
+                        {statusInfo.text}
+                    </span>
+                </h3>
+                <p className="text-muted-foreground">Conecte a API Cloud oficial para automatizar conversas e notificações.</p>
+            </div>
+         </div>
+         <Button asChild className="mt-4 md:mt-0">
+            <Link href={'/dashboard/integrations/whatsapp'}>
+                {statusInfo.buttonText}
+                {statusInfo.buttonIcon}
+            </Link>
+         </Button>
+      </Card>
+    );
+};
 
 
 const AvailableIntegrationCard = ({ integration }: { integration: Integration }) => (
@@ -119,7 +151,7 @@ const AvailableIntegrationCard = ({ integration }: { integration: Integration })
 export default function IntegrationsPage() {
   const { hasAccess } = usePermissions();
   const { activeCompany } = useCompany();
-  const [whatsAppStatus, setWhatsAppStatus] = useState<'connected' | 'disconnected' | 'error'>('disconnected');
+  const [whatsAppStatus, setWhatsAppStatus] = useState<WhatsAppIntegration['status']>('disconnected');
 
   useEffect(() => {
     if (activeCompany) {
@@ -148,17 +180,6 @@ export default function IntegrationsPage() {
       );
   }
 
-  const whatsAppIntegration = allIntegrationsData
-    .flatMap(c => c.integrations)
-    .find(i => i.name === 'API do WhatsApp');
-
-  const otherIntegrations = allIntegrationsData
-    .map(category => ({
-        ...category,
-        integrations: category.integrations.filter(i => i.name !== 'API do WhatsApp')
-    }))
-    .filter(category => category.integrations.length > 0);
-
   return (
     <div className="space-y-8">
       <PageHeader
@@ -168,20 +189,13 @@ export default function IntegrationsPage() {
 
       <div className="space-y-8">
         <div>
-          <h2 className="text-2xl font-bold font-headline mb-4">Integrações Ativas</h2>
-          {whatsAppStatus === 'connected' && whatsAppIntegration ? (
-            <ActiveIntegrationCard integration={whatsAppIntegration} />
-          ) : (
-             <Card className="text-center p-8 border-2 border-dashed">
-                <p className="text-muted-foreground">Nenhuma integração ativa no momento.</p>
-                <Button variant="link" asChild><Link href="/dashboard/integrations/whatsapp">Conectar WhatsApp agora</Link></Button>
-             </Card>
-          )}
+          <h2 className="text-2xl font-bold font-headline mb-4">Integrações Principais</h2>
+          <WhatsAppIntegrationCard status={whatsAppStatus} />
         </div>
 
         <div>
-            <h2 className="text-2xl font-bold font-headline mb-4">Integrações Disponíveis</h2>
-            {otherIntegrations.map((category) => (
+            <h2 className="text-2xl font-bold font-headline mb-4">Mais Integrações Disponíveis</h2>
+            {allIntegrationsData.map((category) => (
             <div key={category.title} className="mb-8">
                 <h3 className="text-lg font-semibold mb-3">{category.title}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
