@@ -75,12 +75,7 @@ export function MainSidebar() {
     { href: "/dashboard/reports", label: "Relatórios", icon: BarChart, module: 'reports' as const },
     { href: "/dashboard/team", label: "Equipe", icon: Users, module: 'team' as const },
     { href: "/dashboard/companies", label: t("companiesPage.sidebarTitle"), icon: Building, module: 'companies' as const },
-    {
-      href: "/dashboard/integrations", label: "Integrações", icon: Puzzle, module: 'integrations' as const,
-      subItems: [
-          { href: "/dashboard/integrations/whatsapp", label: "WhatsApp" },
-      ]
-    },
+    { href: "/dashboard/integrations", label: "Integrações", icon: Puzzle, module: 'integrations' as const },
     { href: "/dashboard/settings", label: "Configurações", icon: Settings, module: 'settings' as const },
   ];
 
@@ -100,7 +95,7 @@ export function MainSidebar() {
         }
         return hasAccess(item.module);
     });
-  }, [userData, hasAccess, t, allMenuItems]);
+  }, [userData, hasAccess, t]);
 
   return (
     <Sidebar>

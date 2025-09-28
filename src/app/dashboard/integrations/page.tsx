@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { PageHeader } from "@/components/common/page-header";
@@ -8,12 +9,15 @@ import { CheckCircle, Shield } from "lucide-react";
 import Image from "next/image";
 import { usePermissions } from "@/context/permissions-context";
 import { EmptyState } from "@/components/common/empty-state";
+import Link from "next/link";
 
 type Integration = {
   name: string;
   description: string;
   logo: string;
   isConnected?: boolean;
+  isConfigurable?: boolean;
+  href?: string;
 };
 
 type IntegrationCategory = {
@@ -22,6 +26,22 @@ type IntegrationCategory = {
 };
 
 const integrationsData: IntegrationCategory[] = [
+  {
+    title: "Comunicação e Marketing",
+    integrations: [
+      { 
+        name: "API do WhatsApp", 
+        description: "Conecte a API Cloud oficial para automatizar conversas e notificações.", 
+        logo: "/logos/whatsapp.svg",
+        isConfigurable: true,
+        href: "/dashboard/integrations/whatsapp",
+      },
+      { name: "Meta (Facebook/Instagram)", description: "Sincronize seu catálogo e crie anúncios dinâmicos.", logo: "/logos/meta.svg" },
+      { name: "Google Ads", description: "Monitore o desempenho de suas campanhas de publicidade.", logo: "/logos/google-ads.svg" },
+      { name: "Mailchimp", description: "Automatize seu e-mail marketing com base nas vendas.", logo: "/logos/mailchimp.svg" },
+      { name: "Twilio", description: "Envie notificações por SMS ou WhatsApp para seus clientes.", logo: "/logos/twilio.svg" },
+    ],
+  },
   {
     title: "Marketplaces",
     integrations: [
@@ -55,15 +75,6 @@ const integrationsData: IntegrationCategory[] = [
       { name: "PagSeguro", description: "Integre com uma das maiores plataformas de pagamento do Brasil.", logo: "/logos/pagseguro.svg" },
     ],
   },
-   {
-    title: "Marketing e Comunicação",
-    integrations: [
-      { name: "Meta (Facebook/Instagram)", description: "Sincronize seu catálogo e crie anúncios dinâmicos.", logo: "/logos/meta.svg" },
-      { name: "Google Ads", description: "Monitore o desempenho de suas campanhas de publicidade.", logo: "/logos/google-ads.svg" },
-      { name: "Mailchimp", description: "Automatize seu e-mail marketing com base nas vendas.", logo: "/logos/mailchimp.svg" },
-      { name: "Twilio", description: "Envie notificações por SMS ou WhatsApp para seus clientes.", logo: "/logos/twilio.svg" },
-    ],
-  },
 ];
 
 const IntegrationCard = ({ integration }: { integration: Integration }) => (
@@ -78,7 +89,11 @@ const IntegrationCard = ({ integration }: { integration: Integration }) => (
       </div>
     </CardHeader>
     <CardFooter className="mt-auto">
-      {integration.isConnected ? (
+      {integration.isConfigurable && integration.href ? (
+         <Button asChild className="w-full">
+            <Link href={integration.href}>Configurar</Link>
+         </Button>
+      ) : integration.isConnected ? (
         <Button variant="outline" className="w-full" disabled>
           <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
           Conectado
