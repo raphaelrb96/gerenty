@@ -138,8 +138,10 @@ const AvailableIntegrationCard = ({ integration }: { integration: Integration })
   <Card className="flex flex-col h-full transition-shadow hover:shadow-md">
     <CardHeader>
         <CardTitle className="text-base">{integration.name}</CardTitle>
-        <CardDescription className="mt-1 text-xs">{integration.description}</CardDescription>
     </CardHeader>
+    <CardContent className="flex-grow">
+        <CardDescription className="mt-1 text-xs">{integration.description}</CardDescription>
+    </CardContent>
     <CardFooter className="mt-auto">
         <Button variant="secondary" className="w-full" disabled>
           Em breve
@@ -189,12 +191,12 @@ export default function IntegrationsPage() {
 
       <div className="space-y-8">
         <div>
-          <h2 className="text-2xl font-bold font-headline mb-4">Integrações Principais</h2>
+          <h2 className="text-2xl font-bold font-headline mb-4">Integrações Disponíveis</h2>
           <WhatsAppIntegrationCard status={whatsAppStatus} />
         </div>
 
         <div>
-            <h2 className="text-2xl font-bold font-headline mb-4">Mais Integrações Disponíveis</h2>
+            <h2 className="text-2xl font-bold font-headline mb-4">Integrações em Desenvolvimento</h2>
             {allIntegrationsData.map((category) => (
             <div key={category.title} className="mb-8">
                 <h3 className="text-lg font-semibold mb-3">{category.title}</h3>
