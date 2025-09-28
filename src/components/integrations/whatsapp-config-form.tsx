@@ -217,6 +217,7 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
                     title: "Número inválido",
                     description: "Use apenas números no formato internacional (ex: 5511999999999)."
                 });
+                setIsTesting(false);
                 return;
             }
 
@@ -257,8 +258,11 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
                             onClick={handleTestConnection}
                             disabled={isTesting}
                         >
-                            {isTesting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            <TestTube2 className="mr-2 h-4 w-4" />
+                            {isTesting ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                                <TestTube2 className="mr-2 h-4 w-4" />
+                            )}
                             Testar
                         </Button>
                     )}
@@ -273,7 +277,7 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="text-sm">
-                    <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
+                    <Accordion type="single" collapsible className="w-full">
                         <AccordionItem value="item-1">
                             <AccordionTrigger>Passo 1: Criar sua Conta de Negócios</AccordionTrigger>
                             <AccordionContent className="space-y-4 pt-4">
@@ -330,7 +334,7 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
                             <AccordionContent className="space-y-4 pt-4">
                                 <p className="text-muted-foreground">O Webhook é o "endereço" para onde o WhatsApp enviará as mensagens que seus clientes mandarem.</p>
                                 <ol className="list-decimal list-inside space-y-2">
-                                    <li>Primeiro, preencha e salve as 4 credenciais do passo anterior neste formulário.</li>
+                                    <li>Primeiro, preencha e salve as 4 credenciais do passo anterior neste formulário. A URL do Webhook será gerada automaticamente.</li>
                                     <li>Volte ao painel da Meta, em <span className="font-mono text-xs bg-muted p-1 rounded">WhatsApp {'>'} Configuração da API</span> e clique em "Editar" na seção de Webhooks.</li>
                                     <li>Cole a URL de Webhook fornecida abaixo no campo "URL de Retorno de Chamada".</li>
                                     <li>No campo "Token de Verificação", cole o seu <strong>Meta App Secret</strong> (a mesma credencial do campo "Segredo do Aplicativo" deste formulário).</li>
