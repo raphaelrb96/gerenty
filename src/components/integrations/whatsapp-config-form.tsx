@@ -1,3 +1,4 @@
+
 // src/components/integrations/WhatsAppConfigForm.tsx
 "use client";
 
@@ -270,54 +271,39 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
                         <Info className="h-5 w-5" />
                         Guia de Configuração
                     </CardTitle>
-                    <CardDescription>
-                        Configure a integração com a API Oficial do WhatsApp Business
-                    </CardDescription>
                 </CardHeader>
                 <CardContent className="text-sm">
                     <Accordion type="single" collapsible className="w-full">
                         <AccordionItem value="item-1">
-                            <AccordionTrigger>Onde encontrar as credenciais</AccordionTrigger>
+                            <AccordionTrigger>Passo 1: Encontrar as Credenciais</AccordionTrigger>
                             <AccordionContent className="space-y-4 pt-4">
-                                <div className="space-y-3">
-                                    <p className="font-semibold">No painel do Meta for Developers:</p>
-                                    <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                                        <li><strong>WhatsApp {'>'} Configuração da API</strong> - Encontre o ID da Conta e ID do Telefone</li>
-                                        <li><strong>Configurações {'>'} Básico</strong> - Encontre o App Secret</li>
-                                        <li><strong>WhatsApp {'>'} Configuração da API</strong> - Token de Acesso</li>
-                                    </ul>
-                                </div>
+                                <p>Para conectar, você precisará de 4 informações do seu <a href="https://developers.facebook.com/apps/" target="_blank" rel="noopener noreferrer" className="text-primary underline">Painel de Aplicativos da Meta <ExternalLink className="inline h-3 w-3"/></a>.</p>
+                                <ul className="list-decimal list-inside space-y-2 text-muted-foreground">
+                                    <li><b>ID da Conta do WhatsApp Business:</b> Vá em <span className="font-mono text-xs bg-muted p-1 rounded">WhatsApp {'>'} Configuração da API</span>.</li>
+                                    <li><b>ID do Número de Telefone:</b> Na mesma tela, encontre o ID do número que você irá usar.</li>
+                                     <li><b>Token de Acesso:</b> Na mesma tela, gere um token de acesso permanente. Guarde-o bem.</li>
+                                    <li><b>Meta App Secret (Segredo do Aplicativo):</b> Vá em <span className="font-mono text-xs bg-muted p-1 rounded">Configurações do aplicativo {'>'} Básico</span> e copie o "Segredo do Aplicativo".</li>
+                                </ul>
                             </AccordionContent>
                         </AccordionItem>
 
                         <AccordionItem value="item-2">
-                            <AccordionTrigger>Configuração do Webhook</AccordionTrigger>
+                            <AccordionTrigger>Passo 2: Configurar o Webhook</AccordionTrigger>
                             <AccordionContent className="space-y-4 pt-4">
                                 <p className="text-muted-foreground">
-                                    Após salvar as credenciais, use a URL abaixo para configurar o webhook no painel da Meta:
+                                    Após salvar as credenciais neste formulário, você precisará configurar o Webhook no painel da Meta para que possamos receber as mensagens.
                                 </p>
-                                <div className="space-y-2">
-                                    <Label htmlFor="webhook-url">URL do Webhook</Label>
-                                    <div className="flex gap-2">
-                                        <Input
-                                            id="webhook-url"
-                                            value={webhookUrl}
-                                            readOnly
-                                            className="flex-1 font-mono text-sm"
-                                        />
-                                        <Button
-                                            type="button"
-                                            size="icon"
-                                            variant="outline"
-                                            onClick={() => copyToClipboard(webhookUrl)}
-                                        >
-                                            <Copy className="h-4 w-4" />
-                                        </Button>
+                                <ol className="list-decimal list-inside space-y-2">
+                                    <li>Copie a URL abaixo:</li>
+                                     <div className="flex gap-2">
+                                        <Input id="webhook-url" value={webhookUrl} readOnly className="flex-1 font-mono text-sm" />
+                                        <Button type="button" size="icon" variant="outline" onClick={() => copyToClipboard(webhookUrl)}><Copy className="h-4 w-4" /></Button>
                                     </div>
-                                    <p className="text-xs text-muted-foreground">
-                                        No token de verificação, use o mesmo "Meta App Secret" informado no formulário
-                                    </p>
-                                </div>
+                                    <li>No painel da Meta, vá em <span className="font-mono text-xs bg-muted p-1 rounded">WhatsApp {'>'} Configuração da API</span> e clique em "Editar" na seção de Webhooks.</li>
+                                    <li>Cole a URL no campo "URL de Retorno de Chamada".</li>
+                                    <li>No campo "Token de Verificação", cole o seu <strong>Meta App Secret</strong>. É a mesma credencial que você usou no campo "Segredo do Aplicativo" deste formulário.</li>
+                                    <li>Clique em "Verificar e Salvar".</li>
+                                </ol>
                             </AccordionContent>
                         </AccordionItem>
                     </Accordion>
@@ -394,7 +380,7 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
                                         name="metaAppSecret"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Meta App Secret</FormLabel>
+                                                <FormLabel>Meta App Secret (Segredo do Aplicativo)</FormLabel>
                                                 <div className="relative">
                                                     <FormControl>
                                                         <Input
@@ -423,7 +409,7 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
                                         name="accessToken"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Token de Acesso</FormLabel>
+                                                <FormLabel>Token de Acesso Permanente</FormLabel>
                                                 <div className="relative">
                                                     <FormControl>
                                                         <Input
@@ -465,7 +451,7 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
 
                             <Button
                                 type="submit"
-                                disabled={isLoading}
+                                disabled={isLoading || (integration && !isEditing)}
                             >
                                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 {integration ? (isEditing ? 'Atualizar Credenciais' : 'Credenciais Salvas') : 'Salvar Credenciais'}
