@@ -1,3 +1,4 @@
+
 // functions/src/functions/messageFunctions.ts
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import * as functions from 'firebase-functions';
@@ -6,14 +7,14 @@ import { FirestoreService } from '../services/firestoreService';
 import { WhatsAppService } from '../services/whatsappService';
 import { SendMessagePayload, MessageData } from '../types/whatsapp';
 
-export const sendWhatsAppMessage = functions.https.onCall(async (data: any, context: any) => {
+export const sendWhatsAppMessage = functions.https.onCall(async (request) => {
   // Verificar autenticação - onCall já faz a verificação básica
-  if (!context.auth) {
+  if (!request.auth) {
     throw new functions.https.HttpsError('unauthenticated', 'Usuário não autenticado.');
   }
 
   // Extrair companyId do token de autenticação (mais seguro)
-  const companyId = context.auth.token.companyId;
+  const companyId = request.auth.token.companyId;
   
   if (!companyId) {
     throw new functions.https.HttpsError('failed-precondition', 'Company ID é obrigatório e não foi encontrado no token.');
@@ -21,7 +22,7 @@ export const sendWhatsAppMessage = functions.https.onCall(async (data: any, cont
 
   try {
     // Validar dados de entrada
-    const { to, message, messageType = 'text', templateName } = data;
+    const { to, message, messageType = 'text', templateName } = request.data;
     
     if (!to) {
       throw new functions.https.HttpsError('invalid-argument', 'Número de destinatário é obrigatório.');
@@ -97,7 +98,7 @@ export const sendWhatsAppMessage = functions.https.onCall(async (data: any, cont
     };
 
   } catch (error: any) {
-    functions.logger.error('Erro ao enviar mensagem:', { companyId, error: error.message, stack: error.stack, data });
+    functions.logger.error('Erro ao enviar mensagem:', { companyId, error: error.message, stack: error.stack, data: request.data });
     if (error instanceof functions.https.HttpsError) {
       throw error;
     }
@@ -106,22 +107,22 @@ export const sendWhatsAppMessage = functions.https.onCall(async (data: any, cont
 });
 
 
-export const sendTestMessage = functions.https.onCall(async (data: any, context: any) => {
-    if (!context.auth) {
+export const sendTestMessage = functions.https.onCall(async (request) => {
+    if (!request.auth) {
         throw new functions.https.HttpsError('unauthenticated', 'A requisição precisa ser autenticada.');
     }
 
-    const companyId = context.auth.token.companyId;
+    const companyId = request.auth.token.companyId;
 
     if (!companyId) {
         throw new functions.https.HttpsError('failed-precondition', 'Company ID não encontrado no token de autenticação.');
     }
     
     try {
-        if (!data.testPhone) {
+        if (!request.data.testPhone) {
             throw new functions.https.HttpsError('invalid-argument', 'Número de teste é obrigatório');
         }
-        const { testPhone } = data;
+        const { testPhone } = request.data;
 
         const integration = await FirestoreService.getCompanyIntegration(companyId);
         if (!integration || integration.status !== 'connected') {

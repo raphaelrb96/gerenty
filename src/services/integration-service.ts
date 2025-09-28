@@ -1,7 +1,9 @@
+
 'use server';
 
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { app } from "@/lib/firebase";
+import { getAuth } from "firebase/auth";
 
 type WhatsAppCredentials = {
   whatsAppBusinessAccountId: string;

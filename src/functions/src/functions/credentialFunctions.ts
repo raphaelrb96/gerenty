@@ -1,3 +1,4 @@
+
 // functions/src/functions/credentialFunctions.ts
 import * as functions from 'firebase-functions';
 import { ValidationService } from '../services/validationService';
@@ -6,20 +7,20 @@ import { SecretManagerService } from '../services/secretManager';
 import { FirestoreService } from '../services/firestoreService';
 import { WhatsAppCredentials } from '../types/whatsapp';
 
-export const validateAndSaveCredentials = functions.https.onCall(async (data: any, context: any) => {
+export const validateAndSaveCredentials = functions.https.onCall(async (request) => {
   // Autenticação (onCall já verifica o token, mas precisamos do companyId)
-  if (!context.auth) {
+  if (!request.auth) {
     throw new functions.https.HttpsError('unauthenticated', 'A requisição precisa ser autenticada.');
   }
 
-  const companyId = context.auth.token.companyId;
+  const companyId = request.auth.token.companyId;
   if (!companyId) {
     throw new functions.https.HttpsError('failed-precondition', 'Company ID não encontrado no token de autenticação.');
   }
   
   try {
     // Validação dos dados
-    const credentials = data as WhatsAppCredentials;
+    const credentials = request.data as WhatsAppCredentials;
     ValidationService.validateWhatsAppCredentials(credentials);
 
     // Teste de conexão com a API do WhatsApp
