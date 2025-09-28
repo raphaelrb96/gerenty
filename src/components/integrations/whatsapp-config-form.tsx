@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, Eye, EyeOff, Copy, CheckCircle, AlertCircle, XCircle, Info, TestTube2 } from "lucide-react";
+import { Label } from "@/components/ui/label";
 
 const formSchema = z.object({
   wabaId: z.string().min(10, "ID da Conta do WhatsApp Business é obrigatório."),
