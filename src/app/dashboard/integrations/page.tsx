@@ -2,19 +2,24 @@
 
 "use client";
 
+import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/common/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Shield } from "lucide-react";
+import { CheckCircle, Shield, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { usePermissions } from "@/context/permissions-context";
+import { useCompany } from "@/context/company-context";
 import { EmptyState } from "@/components/common/empty-state";
 import Link from "next/link";
+import { onSnapshot, doc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import type { WhatsAppIntegration } from "@/lib/types";
 
 type Integration = {
   name: string;
   description: string;
-  logo: string;
+  logo?: string;
   isConnected?: boolean;
   isConfigurable?: boolean;
   href?: string;
@@ -25,7 +30,7 @@ type IntegrationCategory = {
   integrations: Integration[];
 };
 
-const integrationsData: IntegrationCategory[] = [
+const allIntegrationsData: IntegrationCategory[] = [
   {
     title: "Comunicação e Marketing",
     integrations: [
@@ -54,7 +59,7 @@ const integrationsData: IntegrationCategory[] = [
   {
     title: "E-commerce",
     integrations: [
-      { name: "Shopify", description: "Sincronize seus produtos e pedidos com sua loja Shopify.", logo: "/logos/shopify.svg", isConnected: true },
+      { name: "Shopify", description: "Sincronize seus produtos e pedidos com sua loja Shopify.", logo: "/logos/shopify.svg" },
       { name: "Nuvemshop", description: "Gerencie seu e-commerce Nuvemshop diretamente daqui.", logo: "/logos/nuvemshop.svg" },
       { name: "WooCommerce", description: "Conecte sua loja baseada em WordPress.", logo: "/logos/woocommerce.svg" },
     ],
@@ -71,44 +76,64 @@ const integrationsData: IntegrationCategory[] = [
     title: "Pagamentos",
     integrations: [
       { name: "Stripe", description: "Processe pagamentos online e assinaturas com segurança.", logo: "/logos/stripe.svg" },
-      { name: "Mercado Pago", description: "Receba pagamentos com a solução do Mercado Livre.", logo: "/logos/mercado-pago.svg", isConnected: true },
+      { name: "Mercado Pago", description: "Receba pagamentos com a solução do Mercado Livre.", logo: "/logos/mercado-pago.svg" },
       { name: "PagSeguro", description: "Integre com uma das maiores plataformas de pagamento do Brasil.", logo: "/logos/pagseguro.svg" },
     ],
   },
 ];
 
-const IntegrationCard = ({ integration }: { integration: Integration }) => (
-  <Card className="flex flex-col h-full transition-transform transform hover:-translate-y-1 hover:shadow-lg">
-    <CardHeader className="flex flex-row items-start gap-4">
-      <div className="relative w-12 h-12">
-        <Image src={integration.logo} alt={`${integration.name} logo`} layout="fill" objectFit="contain" />
-      </div>
-      <div>
-        <CardTitle>{integration.name}</CardTitle>
-        <CardDescription className="mt-1">{integration.description}</CardDescription>
-      </div>
+const ActiveIntegrationCard = ({ integration }: { integration: Integration }) => (
+  <Card className="flex flex-col md:flex-row items-center justify-between p-6 transition-transform transform hover:-translate-y-1 hover:shadow-lg">
+     <div className="flex items-center gap-6">
+        {integration.logo && (
+            <div className="relative w-16 h-16">
+                <Image src={integration.logo} alt={`${integration.name} logo`} layout="fill" objectFit="contain" />
+            </div>
+        )}
+        <div>
+            <h3 className="text-xl font-bold">{integration.name}</h3>
+            <p className="text-muted-foreground">{integration.description}</p>
+        </div>
+     </div>
+     <Button asChild className="mt-4 md:mt-0">
+        <Link href={integration.href || '#'}>Configurar <ArrowRight className="ml-2 h-4 w-4"/></Link>
+     </Button>
+  </Card>
+);
+
+
+const AvailableIntegrationCard = ({ integration }: { integration: Integration }) => (
+  <Card className="flex flex-col h-full transition-shadow hover:shadow-md">
+    <CardHeader>
+        <CardTitle className="text-base">{integration.name}</CardTitle>
+        <CardDescription className="mt-1 text-xs">{integration.description}</CardDescription>
     </CardHeader>
     <CardFooter className="mt-auto">
-      {integration.isConfigurable && integration.href ? (
-         <Button asChild className="w-full">
-            <Link href={integration.href}>Configurar</Link>
-         </Button>
-      ) : integration.isConnected ? (
-        <Button variant="outline" className="w-full" disabled>
-          <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
-          Conectado
+        <Button variant="secondary" className="w-full" disabled>
+          Em breve
         </Button>
-      ) : (
-        <Button variant="default" className="w-full" disabled>
-          Conectar
-        </Button>
-      )}
     </CardFooter>
   </Card>
 );
 
 export default function IntegrationsPage() {
   const { hasAccess } = usePermissions();
+  const { activeCompany } = useCompany();
+  const [whatsAppStatus, setWhatsAppStatus] = useState<'connected' | 'disconnected' | 'error'>('disconnected');
+
+  useEffect(() => {
+    if (activeCompany) {
+      const unsub = onSnapshot(doc(db, "companies", activeCompany.id, "integrations", "whatsapp"), (doc) => {
+        if (doc.exists()) {
+          const data = doc.data() as WhatsAppIntegration;
+          setWhatsAppStatus(data.status);
+        } else {
+          setWhatsAppStatus('disconnected');
+        }
+      });
+      return () => unsub();
+    }
+  }, [activeCompany]);
 
   // Security Check
   if (!hasAccess('integrations')) {
@@ -123,6 +148,17 @@ export default function IntegrationsPage() {
       );
   }
 
+  const whatsAppIntegration = allIntegrationsData
+    .flatMap(c => c.integrations)
+    .find(i => i.name === 'API do WhatsApp');
+
+  const otherIntegrations = allIntegrationsData
+    .map(category => ({
+        ...category,
+        integrations: category.integrations.filter(i => i.name !== 'API do WhatsApp')
+    }))
+    .filter(category => category.integrations.length > 0);
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -131,16 +167,31 @@ export default function IntegrationsPage() {
       />
 
       <div className="space-y-8">
-        {integrationsData.map((category) => (
-          <div key={category.title}>
-            <h2 className="text-2xl font-bold font-headline mb-4">{category.title}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {category.integrations.map((integration) => (
-                <IntegrationCard key={integration.name} integration={integration} />
-              ))}
+        <div>
+          <h2 className="text-2xl font-bold font-headline mb-4">Integrações Ativas</h2>
+          {whatsAppStatus === 'connected' && whatsAppIntegration ? (
+            <ActiveIntegrationCard integration={whatsAppIntegration} />
+          ) : (
+             <Card className="text-center p-8 border-2 border-dashed">
+                <p className="text-muted-foreground">Nenhuma integração ativa no momento.</p>
+                <Button variant="link" asChild><Link href="/dashboard/integrations/whatsapp">Conectar WhatsApp agora</Link></Button>
+             </Card>
+          )}
+        </div>
+
+        <div>
+            <h2 className="text-2xl font-bold font-headline mb-4">Integrações Disponíveis</h2>
+            {otherIntegrations.map((category) => (
+            <div key={category.title} className="mb-8">
+                <h3 className="text-lg font-semibold mb-3">{category.title}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {category.integrations.map((integration) => (
+                    <AvailableIntegrationCard key={integration.name} integration={integration} />
+                ))}
+                </div>
             </div>
-          </div>
-        ))}
+            ))}
+        </div>
       </div>
     </div>
   );
