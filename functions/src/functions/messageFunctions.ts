@@ -14,7 +14,7 @@ interface CustomAuthToken {
   [key: string]: any;
 }
 
-export const sendWhatsAppMessage = functions.https.onCall(async (data: any, context) => {
+export const sendWhatsAppMessage = functions.https.onCall(async (data: any, context: any) => {
   // Verificar autenticação - onCall já faz a verificação básica
   if (!context.auth) {
     throw new functions.https.HttpsError('unauthenticated', 'Usuário não autenticado.');

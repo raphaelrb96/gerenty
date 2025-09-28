@@ -17,9 +17,9 @@ export async function saveWhatsAppCredentials(idToken: string, credentials: What
     const validateAndSave = httpsCallable(functions, 'whatsappValidateCredentials');
     
     try {
-        const result = await validateAndSave(credentials, {
-             headers: { Authorization: `Bearer ${idToken}` }
-        });
+        // O SDK do Firebase para 'httpsCallable' anexa automaticamente o token de autenticação.
+        // Não é necessário (e não funciona) passá-lo manualmente via headers.
+        const result = await validateAndSave(credentials);
         return result.data;
     } catch (error: any) {
         console.error("Error calling validateAndSaveCredentials function:", error);
@@ -29,6 +29,7 @@ export async function saveWhatsAppCredentials(idToken: string, credentials: What
 
 export async function sendTestMessage(idToken: string, testPhone: string): Promise<any> {
     const functions = getFunctions(app);
+    // Esta é uma função HTTP onRequest, então o token de autenticação PRECISA ser passado no header.
     const sendTest = httpsCallable(functions, 'whatsappSendTest');
     
     try {
