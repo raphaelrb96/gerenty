@@ -3,6 +3,7 @@
 
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { app } from "@/lib/firebase";
+import { getAuth } from "firebase/auth";
 
 type WhatsAppCredentials = {
   whatsAppBusinessAccountId: string;
@@ -13,6 +14,7 @@ type WhatsAppCredentials = {
 
 export async function saveWhatsAppCredentials(credentials: WhatsAppCredentials): Promise<any> {
     const functions = getFunctions(app);
+    // Usando httpsCallable que gerencia a autenticação automaticamente
     const validateAndSave = httpsCallable(functions, 'whatsappValidateCredentials');
     
     try {
@@ -25,8 +27,7 @@ export async function saveWhatsAppCredentials(credentials: WhatsAppCredentials):
 }
 
 export async function sendTestMessage(idToken: string, testPhone: string): Promise<any> {
-    // The callable function might not be the best approach for a simple test.
-    // Let's use fetch to call the onRequest function directly, which is simpler for this case.
+    // Usando fetch para a função onRequest, que requer o token no header.
     const functions = getFunctions(app);
     const region = functions.region || 'us-central1';
     const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
