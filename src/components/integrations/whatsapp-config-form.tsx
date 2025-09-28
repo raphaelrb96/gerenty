@@ -155,9 +155,9 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
                              <ol className="list-decimal list-inside space-y-1">
                                 <li>Acesse o painel de desenvolvedores da Meta e selecione seu aplicativo.</li>
                                 <li>No menu lateral, vá para "WhatsApp" {'>'} "Configuração da API".</li>
-                                <li>Copie o **ID da conta do WhatsApp Business** e o **ID do número de telefone** e cole-os nos campos abaixo.</li>
-                                <li>Gere um **Token de acesso temporário** e cole-o no campo "Token de Acesso". Para uso em produção, recomendamos criar e usar um Token de Acesso Permanente.</li>
-                                <li>No painel da Meta, encontre o seu **"App Secret"** (ou "Segredo do Aplicativo"). Este é o seu token de verificação.</li>
+                                <li>Copie o <strong>ID da conta do WhatsApp Business</strong> e o <strong>ID do número de telefone</strong> e cole-os nos campos abaixo.</li>
+                                <li>Gere um <strong>Token de acesso temporário</strong> e cole-o no campo "Token de Acesso". Para uso em produção, recomendamos criar e usar um Token de Acesso Permanente.</li>
+                                <li>No painel da Meta, encontre o seu <strong>"App Secret"</strong> (ou "Segredo do Aplicativo"). Este é o seu token de verificação.</li>
                              </ol>
                         </AccordionContent>
                     </AccordionItem>
@@ -167,8 +167,8 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
                             <p>O Webhook é o que permite que o WhatsApp envie as mensagens dos seus clientes para o Gerenty em tempo real.</p>
                             <ol className="list-decimal list-inside space-y-1">
                                 <li>Na seção "Configuração da API" da Meta, encontre a seção "Webhooks" e clique em "Configurar".</li>
-                                <li>Cole a **URL de Webhook** abaixo no campo "URL de Callback".</li>
-                                <li>No campo "Token de verificação", cole o seu **"Meta App Secret"** (o mesmo que você preencheu no formulário aqui).</li>
+                                <li>Cole a <strong>URL de Webhook</strong> abaixo no campo "URL de Callback".</li>
+                                <li>No campo "Token de verificação", cole o seu <strong>"Meta App Secret"</strong> (o mesmo que você preencheu no formulário aqui).</li>
                                 <li>Clique em "Verificar e salvar".</li>
                                 <li>Após salvar, em "Webhook fields", clique em "Manage" e assine os eventos `messages` e `message_template_status`.</li>
                             </ol>
