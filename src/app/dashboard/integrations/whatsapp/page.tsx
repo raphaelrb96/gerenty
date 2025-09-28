@@ -15,6 +15,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useTranslation } from "@/context/i18n-context";
+import { Card, CardContent } from "@/components/ui/card";
+
 
 function CompanySelector() {
     const { t } = useTranslation();
@@ -28,28 +30,38 @@ function CompanySelector() {
     };
 
     if (companies.length === 0) {
-        return null; // Don't show selector if there are no companies
+        return null;
     }
 
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-full md:w-[300px] justify-between mb-6">
-                    <div className="flex items-center gap-2">
-                        <Building className="h-4 w-4" />
-                        <span className="truncate max-w-[250px]">{getDisplayName()}</span>
+        <Card className="mb-6">
+            <CardContent className="p-4 flex items-center justify-between">
+                 <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-md bg-muted">
+                        <Building className="h-6 w-6 text-muted-foreground" />
                     </div>
-                    <ChevronsUpDown className="h-4 w-4 opacity-50" />
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-[--radix-dropdown-menu-trigger-width)]">
-                {companies.map((company) => (
-                    <DropdownMenuItem key={company.id} onSelect={() => setActiveCompany(company)}>
-                        {company.name}
-                    </DropdownMenuItem>
-                ))}
-            </DropdownMenuContent>
-        </DropdownMenu>
+                    <div>
+                        <p className="text-xs text-muted-foreground">Empresa Ativa</p>
+                        <h2 className="text-lg font-bold">{getDisplayName()}</h2>
+                    </div>
+                </div>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline">
+                            Trocar Empresa
+                            <ChevronsUpDown className="ml-2 h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        {companies.map((company) => (
+                            <DropdownMenuItem key={company.id} onSelect={() => setActiveCompany(company)}>
+                                {company.name}
+                            </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </CardContent>
+        </Card>
     );
 }
 
