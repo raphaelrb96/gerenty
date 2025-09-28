@@ -78,7 +78,8 @@ export const validateAndSaveCredentials = functions.https.onCall(
             // Registra o webhook no Meta
             const webhookRegistered = await registerWebhookWithMeta(companyId, accessToken, whatsAppBusinessId);
             if (!webhookRegistered) {
-                throw new functions.https.HttpsError('internal', 'Failed to register webhook with Meta');
+                // Log a warning but don't fail the operation, user can do it manually.
+                functions.logger.warn(`Webhook registration failed for company: ${companyId}. User should configure it manually.`);
             }
 
             return {
@@ -121,12 +122,14 @@ export const whatsappWebhookListener = functions.https.onRequest(
 
             try {
                 // Verifica o token usando o secret da empresa
-                const expectedToken = await secretManager.getWhatsAppSecret(companyId);
+                // No painel da Meta, o 'Verify Token' deve ser o mesmo que o 'metaAppSecret'
+                const appSecret = await secretManager.getWhatsAppSecret(companyId);
 
-                if (mode === 'subscribe' && token === expectedToken) {
+                if (mode === 'subscribe' && token === appSecret) {
                     functions.logger.info(`Webhook verified for company: ${companyId}`);
                     res.status(200).send(challenge);
                 } else {
+                    functions.logger.error(`Webhook verification failed for company ${companyId}. Mode: ${mode}, Token: ${token}`);
                     res.status(403).send('Verification failed');
                 }
             } catch (error) {
@@ -266,6 +269,12 @@ async function registerWebhookWithMeta(
                 }),
             }
         );
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            functions.logger.error(`Error registering webhook for company ${companyId}:`, errorData);
+            return false;
+        }
 
         return response.ok;
     } catch (error) {
@@ -439,3 +448,4 @@ async function processMessageStatus(companyId: string, status: any): Promise<voi
         throw error;
     }
 }
+    
