@@ -6,22 +6,27 @@ import { SecretManagerService } from '../services/secretManager';
 import { FirestoreService } from '../services/firestoreService';
 import { WhatsAppCredentials } from '../types/whatsapp';
 
-export const validateAndSaveCredentials = functions.https.onCall(async (data: any, context: any) => {
-  // Autenticação (onCall já verifica o token, mas precisamos do companyId)
-  if (!context.auth) {
-    throw new functions.https.HttpsError('unauthenticated', 'A requisição precisa ser autenticada.');
+export const validateAndSaveCredentials = functions.https.onRequest(async (req, res) => {
+  // CORS
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
   }
-  const companyId = context.auth.token.companyId;
-  if (!companyId) {
-    throw new functions.https.HttpsError('failed-precondition', 'Company ID não encontrado no token de autenticação.');
+   if (req.method !== 'POST') {
+    res.status(405).json({ error: 'Método não permitido' });
+    return;
   }
 
   try {
-    // Validação dos dados
-    const credentials = data;
+    const { companyId } = await ValidationService.authenticateRequest(req.headers.authorization);
+    
+    const credentials = req.body;
     ValidationService.validateWhatsAppCredentials(credentials);
 
-    // Teste de conexão com a API do WhatsApp
     const isConnectionValid = await WhatsAppService.testConnection(
       credentials.accessToken,
       credentials.phoneNumberId
@@ -29,21 +34,19 @@ export const validateAndSaveCredentials = functions.https.onCall(async (data: an
 
     if (!isConnectionValid) {
       await FirestoreService.updateIntegrationStatus(companyId, 'error', 'Falha na validação da API');
-      throw new functions.https.HttpsError('invalid-argument', 'Credenciais inválidas ou sem permissões necessárias');
+      res.status(400).json({ error: 'Credenciais inválidas ou sem permissões necessárias' });
+      return;
     }
-
-    // Salvar credenciais no Secret Manager
+    
     await SecretManagerService.saveWhatsAppCredentials(companyId, {
       accessToken: credentials.accessToken,
       metaAppSecret: credentials.metaAppSecret,
     });
-
-    // Gerar URL do webhook (precisa do nome da função e região)
+    
     const region = process.env.FUNCTION_REGION || 'us-central1';
     const projectId = process.env.GCLOUD_PROJECT;
     const webhookUrl = `https://${region}-${projectId}.cloudfunctions.net/whatsappWebhook/${companyId}`;
-
-    // Configurar webhook
+    
     const webhookSetupSuccess = await WhatsAppService.setupWebhook(
       credentials.accessToken,
       credentials.whatsAppBusinessAccountId,
@@ -53,8 +56,7 @@ export const validateAndSaveCredentials = functions.https.onCall(async (data: an
     if (!webhookSetupSuccess) {
       functions.logger.warn('Webhook não pôde ser configurado automaticamente para a empresa:', companyId);
     }
-
-    // Salvar dados não sensíveis no Firestore
+    
     await FirestoreService.saveCompanyIntegration(companyId, {
       whatsAppBusinessAccountId: credentials.whatsAppBusinessAccountId,
       phoneNumberId: credentials.phoneNumberId,
@@ -62,18 +64,19 @@ export const validateAndSaveCredentials = functions.https.onCall(async (data: an
       status: 'connected',
       lastVerifiedAt: new Date(),
     });
-
-    return {
+    
+    res.status(200).json({
       success: true,
       message: 'Credenciais validadas e salvas com sucesso',
       webhookUrl,
-    };
+    });
 
   } catch (error: any) {
     functions.logger.error('Erro na validação de credenciais:', error);
-    if (error instanceof functions.https.HttpsError) {
-      throw error;
+    if (error.message.includes("Token de autenticação")) {
+        res.status(401).json({ error: error.message });
+    } else {
+        res.status(500).json({ error: error.message || 'Erro interno do servidor' });
     }
-    throw new functions.https.HttpsError('internal', 'Erro interno do servidor');
   }
 });
