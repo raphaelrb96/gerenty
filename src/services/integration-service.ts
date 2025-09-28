@@ -27,6 +27,7 @@ export async function saveWhatsAppCredentials(credentials: WhatsAppCredentials):
 
 export async function sendTestMessage(testPhone: string): Promise<any> {
     const functions = getFunctions(app);
+    // Alterado para onCall para consistência e segurança
     const sendTest = httpsCallable(functions, 'whatsappSendTest');
 
     try {
