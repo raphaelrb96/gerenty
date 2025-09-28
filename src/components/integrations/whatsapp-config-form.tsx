@@ -238,8 +238,8 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
             setIsTesting(false);
         }
     };
-
-    const webhookUrl = integration?.webhookUrl || "https://us-central1-your-project.cloudfunctions.net/whatsappWebhookListener/" + company.id;
+    
+    const webhookUrl = integration?.webhookUrl;
 
     return (
         <div className="space-y-6">
@@ -333,8 +333,8 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
                                     <li>Primeiro, preencha e salve as 4 credenciais do passo anterior neste formulário.</li>
                                     <li>Após salvar, esta URL de Webhook será gerada para sua empresa. Copie a URL abaixo:</li>
                                      <div className="flex gap-2">
-                                        <Input id="webhook-url" value={webhookUrl} readOnly className="flex-1 font-mono text-sm" />
-                                        <Button type="button" size="icon" variant="outline" onClick={() => copyToClipboard(webhookUrl)}><Copy className="h-4 w-4" /></Button>
+                                        <Input id="webhook-url" value={webhookUrl || 'Salve as credenciais para gerar a URL'} readOnly className="flex-1 font-mono text-sm" />
+                                        <Button type="button" size="icon" variant="outline" onClick={() => copyToClipboard(webhookUrl || '')} disabled={!webhookUrl}><Copy className="h-4 w-4" /></Button>
                                     </div>
                                     <li>Volte ao painel da Meta, em <span className="font-mono text-xs bg-muted p-1 rounded">WhatsApp {'>'} Configuração da API</span> e clique em "Editar" na seção de Webhooks.</li>
                                     <li>Cole a URL no campo "URL de Retorno de Chamada".</li>
