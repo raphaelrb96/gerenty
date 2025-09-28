@@ -21,7 +21,7 @@ const whatsAppService = new WhatsAppService();
  * 1. validateAndSaveCredentials - Configuração Segura Multi-Tenant
  */
 export const validateAndSaveCredentials = functions.https.onCall(
-    async (request: CallableRequest<WhatsAppCredentials>): Promise<{
+    async (request: CallableRequest<WhatsAppCredentials & { companyId: string }>): Promise<{
         success: boolean;
         message: string;
         webhookUrl: string;
@@ -192,7 +192,7 @@ export const whatsappWebhookListener = functions.https.onRequest(
  * 3. sendTestMessage - Utilitário Multi-Tenant
  */
 export const sendTestMessage = functions.https.onCall(
-    async (request: CallableRequest<SendMessagePayload>): Promise<{
+    async (request: CallableRequest<SendMessagePayload & { companyId: string }>): Promise<{
         success: boolean;
         messageId?: string;
         message: string;

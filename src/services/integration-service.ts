@@ -4,7 +4,7 @@ import { functions } from '@/lib/firebase';
 import { WhatsAppCredentials, TestMessageResponse } from '@/lib/types';
 
 // Referências para as Cloud Functions
-const validateAndSaveCredentialsCallable = httpsCallable<WhatsAppCredentials, {
+const validateAndSaveCredentialsCallable = httpsCallable<WhatsAppCredentials & { companyId: string }, {
   success: boolean;
   message: string;
   webhookUrl: string;
@@ -12,6 +12,7 @@ const validateAndSaveCredentialsCallable = httpsCallable<WhatsAppCredentials, {
 }>(functions, 'validateAndSaveCredentials');
 
 const sendTestMessageCallable = httpsCallable<{ 
+  companyId: string;
   phoneNumber: string; 
   message?: string; 
   type?: 'text' | 'template';
@@ -19,9 +20,9 @@ const sendTestMessageCallable = httpsCallable<{
 }, TestMessageResponse>(functions, 'sendTestMessage');
 
 export const integrationService = {
-  async saveWhatsAppCredentials(credentials: WhatsAppCredentials) {
+  async saveWhatsAppCredentials(companyId: string, credentials: WhatsAppCredentials) {
     try {
-      const result = await validateAndSaveCredentialsCallable(credentials);
+      const result = await validateAndSaveCredentialsCallable({ ...credentials, companyId });
       return result.data;
     } catch (error: any) {
       console.error('Error saving WhatsApp credentials:', error);
@@ -41,12 +42,13 @@ export const integrationService = {
     }
   },
 
-  async sendTestMessage(phoneNumber: string, message: string = 'Mensagem de teste do Gerenty') {
+  async sendTestMessage(companyId: string, phoneNumber: string, message: string = 'hello_world') {
     try {
       const result = await sendTestMessageCallable({
+        companyId,
         phoneNumber,
-        message,
-        type: 'text'
+        type: 'template',
+        templateName: message,
       });
       return result.data;
     } catch (error: any) {
@@ -63,20 +65,6 @@ export const integrationService = {
       }
     }
   },
-
-  async sendTemplateMessage(phoneNumber: string, templateName: string = 'hello_world') {
-    try {
-      const result = await sendTestMessageCallable({
-        phoneNumber,
-        type: 'template',
-        templateName
-      });
-      return result.data;
-    } catch (error: any) {
-      console.error('Error sending template message:', error);
-      throw new Error(error.message || 'Erro ao enviar mensagem de template.');
-    }
-  }
 };
 
 // Aliases para compatibilidade com o código existente

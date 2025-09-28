@@ -165,7 +165,7 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
     const onSubmit = async (values: FormValues) => {
         setIsLoading(true);
         try {
-          const result = await saveWhatsAppCredentials(values);
+          const result = await saveWhatsAppCredentials(company.id, values);
           
           toast({ 
             title: "Sucesso!", 
@@ -219,7 +219,7 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
                 return;
             }
 
-            const result = await sendTestMessage(testPhone, "🚀 Mensagem de teste do Gerenty\n\nEsta é uma mensagem de teste para verificar a integração com o WhatsApp Business API.");
+            const result = await sendTestMessage(company.id, testPhone);
 
             toast({
                 title: "Teste Enviado!",
@@ -451,17 +451,6 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
                         </CardContent>
                         <CardFooter className="flex justify-between border-t px-6 py-4">
                             <div className="flex gap-2">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={handleTestConnection}
-                                    disabled={!integration || integration.status !== 'connected' || isTesting || isLoading}
-                                >
-                                    {isTesting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    <TestTube2 className="mr-2 h-4 w-4" />
-                                    Testar Conexão
-                                </Button>
-
                                 {isEditing && integration && (
                                     <Button
                                         type="button"

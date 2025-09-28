@@ -14,7 +14,7 @@ export class SecurityService {
         this.db = admin.firestore();
     }
 
-    async validateCallableRequest(request: CallableRequest): Promise<ValidationResult> {
+    async validateCallableRequest(request: CallableRequest<any>): Promise<ValidationResult> {
         try {
             // Verifica se o request está autenticado
             if (!request.auth) {
@@ -22,25 +22,29 @@ export class SecurityService {
             }
 
             const userId = request.auth.uid;
-
-            // Obtém o companyId do usuário
-            const userDoc = await this.db.collection('users').doc(userId).get();
-            if (!userDoc.exists) {
-                return { isValid: false, error: 'User not found' };
-            }
-
-            const userData = userDoc.data();
-            const companyId = userData?.companyId;
+            // O companyId agora vem do payload da requisição
+            const companyId = request.data.companyId;
 
             if (!companyId) {
-                return { isValid: false, error: 'User not associated with any company' };
+                return { isValid: false, error: 'Company ID not provided in the request' };
             }
 
-            // Verifica se a empresa existe
+            // Opcional: Verifique se o usuário tem permissão para agir nesta empresa.
+            // Para isso, precisaríamos de uma estrutura que ligue usuários a empresas
+            // (por exemplo, um array 'authorizedUsers' no documento da empresa).
+            // Por enquanto, vamos confiar que se o usuário está autenticado, ele pode agir.
+            // Em um cenário de produção, esta verificação é crucial.
             const companyDoc = await this.db.collection('companies').doc(companyId).get();
-            if (!companyDoc.exists) {
+            if (!companyDoc.exists()) {
                 return { isValid: false, error: 'Company not found' };
             }
+            // Verifica se o dono da empresa é o usuário que faz a requisição
+            if (companyDoc.data()?.ownerId !== userId) {
+                 // Se não for o dono, verifica se é um funcionário com permissão
+                 // (essa lógica pode ser expandida)
+                 return { isValid: false, error: 'User does not have permission for this company' };
+            }
+
 
             return { isValid: true, companyId };
         } catch (error) {
