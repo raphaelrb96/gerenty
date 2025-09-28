@@ -1,7 +1,9 @@
+
 // functions/src/services/validationService.ts
 import * as crypto from 'crypto';
 import * as functions from 'firebase-functions';
 import { WhatsAppCredentials } from '../types/whatsapp';
+import * as admin from 'firebase-admin';
 
 export class ValidationService {
   static validateWebhookSignature(payload: any, signature: string, appSecret: string): boolean {
@@ -18,26 +20,25 @@ export class ValidationService {
 
   static async authenticateRequest(authHeader: string | undefined): Promise<{ userId: string; companyId: string }> {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new Error('Token de autenticação não fornecido ou mal formatado.');
+      throw new functions.https.HttpsError('unauthenticated', 'A requisição precisa ser autenticada.');
     }
 
     const token = authHeader.split('Bearer ')[1];
     
     try {
-      const admin = await import('firebase-admin');
       const decodedToken = await admin.auth().verifyIdToken(token);
       
       if (!decodedToken.companyId) {
-        throw new Error('Company ID não encontrado no token.');
+        throw new functions.https.HttpsError('failed-precondition', 'Company ID não encontrado no token.');
       }
 
       return {
         userId: decodedToken.uid,
         companyId: decodedToken.companyId,
       };
-    } catch (error) {
+    } catch (error: any) {
       functions.logger.error('Erro na autenticação:', error);
-      throw new Error('Token inválido ou expirado.');
+      throw new functions.https.HttpsError('unauthenticated', error.message || 'Token inválido ou expirado.');
     }
   }
 

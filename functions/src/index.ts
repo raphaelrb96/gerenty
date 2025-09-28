@@ -13,5 +13,5 @@ export const whatsappWebhook = whatsappWebhookListener;
 // Callable function para envio de mensagens
 export const sendMessage = sendWhatsAppMessage;
 
-// HTTP function para teste de envio (pode ser convertida para callable também se preferir)
+// Callable function para teste de envio
 export const whatsappSendTest = sendTestMessage;

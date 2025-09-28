@@ -2,12 +2,10 @@
 // functions/src/functions/messageFunctions.ts
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import * as functions from 'firebase-functions';
-import { ValidationService } from '../services/validationService';
 import { SecretManagerService } from '../services/secretManager';
 import { FirestoreService } from '../services/firestoreService';
 import { WhatsAppService } from '../services/whatsappService';
 import { SendMessagePayload, MessageData } from '../types/whatsapp';
-import * as admin from 'firebase-admin';
 
 // Interface para o token de autenticação customizado
 interface CustomAuthToken {
