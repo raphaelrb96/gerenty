@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { PageHeader } from "@/components/common/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import Link from "next/link";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResponseLibraryForm } from "@/components/automation/response-library-form";
 import { ResponseCard } from "@/components/automation/response-card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -74,7 +73,7 @@ function FlowBuilderTab() {
     const { toast } = useToast();
     const [flowToDelete, setFlowToDelete] = useState<Flow | null>(null);
 
-    const fetchFlows = () => {
+    const fetchFlows = useCallback(() => {
         if (activeCompany) {
             setLoading(true);
             getFlowsByCompany(activeCompany.id)
@@ -82,11 +81,11 @@ function FlowBuilderTab() {
                 .catch(() => toast({ variant: "destructive", title: "Erro ao buscar fluxos" }))
                 .finally(() => setLoading(false));
         }
-    }
+    }, [activeCompany, toast]);
     
     useEffect(() => {
         fetchFlows();
-    }, [activeCompany, toast]);
+    }, [fetchFlows]);
 
     const handleDeleteFlow = async () => {
         if (!flowToDelete) return;
@@ -196,7 +195,7 @@ function TemplatesTab() {
   const [templateToEdit, setTemplateToEdit] = useState<MessageTemplate | null>(null);
   const [templateToDelete, setTemplateToDelete] = useState<MessageTemplate | null>(null);
 
-  const fetchTemplates = async () => {
+  const fetchTemplates = useCallback(async () => {
     if (activeCompany) {
       setLoading(true);
       try {
@@ -211,11 +210,11 @@ function TemplatesTab() {
       setTemplates([]);
       setLoading(false);
     }
-  };
+  }, [activeCompany, toast]);
 
   useEffect(() => {
     fetchTemplates();
-  }, [activeCompany]);
+  }, [fetchTemplates]);
 
   const handleOpenForm = (template: MessageTemplate | null = null) => {
     setTemplateToEdit(template);
@@ -240,35 +239,39 @@ function TemplatesTab() {
     }
 
     return (
-        <div className="mt-6">
-            <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold font-headline">Biblioteca de Templates</h2>
-                <Button variant="outline" onClick={() => handleOpenForm()}>
+        <Card>
+            <CardHeader>
+                <CardTitle>Biblioteca de Templates</CardTitle>
+                <CardDescription>Crie e gerencie seus templates de mensagem para iniciar conversas com clientes (requer aprovação da Meta).</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {templates.length === 0 ? (
+                    <EmptyState
+                        icon={<LayoutGrid className="h-16 w-16" />}
+                        title="Nenhum template encontrado"
+                        description="Comece criando seus modelos de mensagem para iniciar conversas com clientes."
+                        action={<Button onClick={() => handleOpenForm()}>Criar primeiro template</Button>}
+                    />
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {templates.map(template => (
+                            <TemplateCard 
+                                key={template.id} 
+                                template={template} 
+                                onViewDetails={() => setSelectedTemplate(template)}
+                                onEdit={() => handleOpenForm(template)}
+                                onDelete={() => setTemplateToDelete(template)}
+                            />
+                        ))}
+                    </div>
+                )}
+            </CardContent>
+             <CardFooter>
+                <Button onClick={() => handleOpenForm()}>
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Criar Template
                 </Button>
-            </div>
-            
-            {templates.length === 0 ? (
-                <EmptyState
-                    icon={<LayoutGrid className="h-16 w-16" />}
-                    title="Nenhum template encontrado"
-                    description="Comece criando seus modelos de mensagem para iniciar conversas com clientes."
-                    action={<Button onClick={() => handleOpenForm()}>Criar primeiro template</Button>}
-                />
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {templates.map(template => (
-                        <TemplateCard 
-                            key={template.id} 
-                            template={template} 
-                            onViewDetails={() => setSelectedTemplate(template)}
-                            onEdit={() => handleOpenForm(template)}
-                            onDelete={() => setTemplateToDelete(template)}
-                        />
-                    ))}
-                </div>
-            )}
+            </CardFooter>
         
             <TemplatePreviewModal 
                 template={selectedTemplate}
@@ -299,7 +302,7 @@ function TemplatesTab() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </div>
+        </Card>
     )
 }
 
@@ -312,7 +315,7 @@ function LibraryTab() {
     const [messageToEdit, setMessageToEdit] = useState<LibraryMessage | null>(null);
     const [messageToDelete, setMessageToDelete] = useState<LibraryMessage | null>(null);
 
-    const fetchMessages = async () => {
+    const fetchMessages = useCallback(async () => {
         if (activeCompany) {
             setLoading(true);
             try {
@@ -327,11 +330,11 @@ function LibraryTab() {
             setMessages([]);
             setLoading(false);
         }
-    };
+    }, [activeCompany, toast]);
 
     useEffect(() => {
         fetchMessages();
-    }, [activeCompany]);
+    }, [fetchMessages]);
 
     const handleOpenForm = (message: LibraryMessage | null = null) => {
         setMessageToEdit(message);
@@ -416,17 +419,6 @@ function LibraryTab() {
     );
 }
 
-function FlowsManagementTab() {
-  return (
-    <div className="space-y-6 mt-6">
-      <FlowBuilderTab />
-      <AutomationRulesTab />
-      <LibraryTab />
-    </div>
-  );
-}
-
-
 export default function AutomationPage() {
   const { activeCompany, loading } = useCompany();
 
@@ -454,20 +446,12 @@ export default function AutomationPage() {
         description="Crie fluxos de trabalho, gerencie modelos de mensagem e respostas rápidas."
       />
       
-      <Tabs defaultValue="flows">
-        <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="flows"><Workflow className="mr-2 h-4 w-4" />Fluxos de Conversa</TabsTrigger>
-            <TabsTrigger value="templates"><LayoutGrid className="mr-2 h-4 w-4" />Modelos de Mensagem</TabsTrigger>
-        </TabsList>
-        <TabsContent value="flows">
-             <FlowsManagementTab />
-        </TabsContent>
-        <TabsContent value="templates">
-            <TemplatesTab />
-        </TabsContent>
-      </Tabs>
+      <div className="space-y-6">
+        <FlowBuilderTab />
+        <TemplatesTab />
+        <AutomationRulesTab />
+        <LibraryTab />
+      </div>
     </div>
   );
 }
-
-    
