@@ -104,22 +104,46 @@ export function TemplateForm({ isOpen, onClose, onFinished, template }: Template
     }
     setIsSaving(true);
     try {
-      if (template) {
-        await updateTemplate(activeCompany.id, template.id, values as any);
-        toast({ title: "Template atualizado com sucesso!" });
-      } else {
-        await addTemplate(activeCompany.id, values as any);
-        toast({ title: "Template criado com sucesso!" });
-      }
-      onFinished();
-      onClose();
+        const formattedComponents = values.components.map(component => {
+            if (component.type === 'BUTTONS' && component.buttons) {
+                return {
+                    ...component,
+                    buttons: component.buttons.map(button => {
+                        const baseButton = { type: button.type, text: button.text };
+                        if (button.type === 'URL' && button.url) {
+                            return { ...baseButton, url: button.url, example: [button.url] };
+                        }
+                        if (button.type === 'PHONE_NUMBER' && button.phone_number) {
+                            return { ...baseButton, phone_number: button.phone_number };
+                        }
+                        return baseButton; // For QUICK_REPLY
+                    })
+                };
+            }
+            return component;
+        });
+
+        const templatePayload = {
+            ...values,
+            components: formattedComponents,
+        };
+
+        if (template) {
+            await updateTemplate(activeCompany.id, template.id, templatePayload as any);
+            toast({ title: "Template atualizado com sucesso!" });
+        } else {
+            await addTemplate(activeCompany.id, templatePayload as any);
+            toast({ title: "Template criado com sucesso!" });
+        }
+        onFinished();
+        onClose();
     } catch (error: any) {
-      console.error("Error saving template:", error);
-      toast({ variant: "destructive", title: "Erro ao salvar template.", description: error.message });
+        console.error("Error saving template:", error);
+        toast({ variant: "destructive", title: "Erro ao salvar template.", description: error.message });
     } finally {
-      setIsSaving(false);
+        setIsSaving(false);
     }
-  };
+};
 
   const handleAddComponent = (type: 'HEADER' | 'FOOTER' | 'BUTTONS') => {
       if (fields.some(f => f.type === type)) return;
@@ -239,3 +263,4 @@ export function TemplateForm({ isOpen, onClose, onFinished, template }: Template
     </Sheet>
   );
 }
+
