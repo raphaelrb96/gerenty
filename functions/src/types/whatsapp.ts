@@ -128,3 +128,38 @@ export interface WhatsAppApiResponse {
   messages?: Array<{ id: string }>;
   error?: WhatsAppApiError;
 }
+
+export interface MessageTemplateComponent {
+  type: 'HEADER' | 'BODY' | 'FOOTER' | 'BUTTONS';
+  text?: string;
+  example?: {
+    body_text?: string[][];
+    header_text?: string[];
+    header_handle?: string[];
+  };
+  buttons?: Array<{
+    type: 'QUICK_REPLY' | 'URL';
+    text: string;
+    url?: string;
+    example?: string[];
+  }>;
+}
+
+export interface MessageTemplate {
+  id: string;
+  name: string;
+  category: 'UTILITY' | 'MARKETING' | 'AUTHENTICATION';
+  language: string;
+  status: 'approved' | 'pending' | 'rejected' | 'disabled';
+  components?: MessageTemplateComponent[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MetaTemplate {
+  name: string;
+  category: 'UTILITY' | 'MARKETING' | 'AUTHENTICATION';
+  language: string;
+  status: 'APPROVED' | 'PENDING' | 'REJECTED' | 'DISABLED';
+  components: MessageTemplateComponent[];
+}

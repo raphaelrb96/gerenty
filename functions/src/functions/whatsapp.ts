@@ -413,6 +413,8 @@ export const apiSyncWhatsAppTemplates = functions.https.onCall(async (request: C
 
     const { companyId } = request.data;
 
+    functions.logger.log('Test Sync WhatsApp templates - CompanyId: ', companyId);
+
     try {
         const accessToken = await secretManager.getWhatsAppToken(companyId);
         const integrationDoc = await admin.firestore().collection('companies').doc(companyId).collection('integrations').doc('whatsapp').get();
@@ -421,10 +423,14 @@ export const apiSyncWhatsAppTemplates = functions.https.onCall(async (request: C
             throw new functions.https.HttpsError('not-found', 'Integração do WhatsApp não encontrada para esta empresa.');
         }
 
+        functions.logger.log('Test Sync WhatsApp templates - IntegrationDoc Exists: ', JSON.stringify(integrationDoc.data()));
+
         const wabaId = integrationDoc.data()?.whatsAppId;
         if (!wabaId) {
             throw new functions.https.HttpsError('not-found', 'ID da Conta do WhatsApp Business não encontrado.');
         }
+
+        functions.logger.log('Test Sync WhatsApp templates - WABA ID: ', wabaId);
 
         // Fetch templates from Meta API
         const response = await fetch(`https://graph.facebook.com/v17.0/${wabaId}/message_templates`, {
@@ -436,7 +442,11 @@ export const apiSyncWhatsAppTemplates = functions.https.onCall(async (request: C
             throw new functions.https.HttpsError('internal', `Erro ao buscar templates da Meta: ${errorData.error.message}`);
         }
 
+
+
         const { data: metaTemplates } = await response.json();
+
+        functions.logger.log('Test Sync WhatsApp templates - Busca de Templetes na Meta: ', metaTemplates);
 
         // Fetch existing templates from Firestore
         const firestoreTemplatesRef = admin.firestore().collection('companies').doc(companyId).collection('messageTemplates');
@@ -450,13 +460,17 @@ export const apiSyncWhatsAppTemplates = functions.https.onCall(async (request: C
 
         for (const metaTemplate of metaTemplates) {
             const existingTemplate = firestoreTemplates.find(ft => ft.name === metaTemplate.name && ft.language === metaTemplate.language);
-            
+
+
+            // Sanitiza os componentes antes de salvar
+            const sanitizedComponents = sanitizeMetaTemplateComponents(metaTemplate.components);
+
             const templatePayload: Omit<MessageTemplate, 'id' | 'createdAt' | 'updatedAt'> = {
                 name: metaTemplate.name,
                 category: metaTemplate.category.toLowerCase(),
                 language: metaTemplate.language,
                 status: metaTemplate.status.toLowerCase(),
-                components: metaTemplate.components,
+                components: sanitizedComponents, // Usa os componentes sanitizados
             };
 
             if (existingTemplate) {
@@ -469,11 +483,13 @@ export const apiSyncWhatsAppTemplates = functions.https.onCall(async (request: C
             } else {
                 // Add new template
                 const docRef = firestoreTemplatesRef.doc();
+                functions.logger.log('Test Sync WhatsApp templates - Novo Templete adicionado: ', templatePayload);
                 batch.set(docRef, { ...templatePayload, createdAt: admin.firestore.FieldValue.serverTimestamp(), updatedAt: admin.firestore.FieldValue.serverTimestamp() });
                 addedCount++;
             }
         }
 
+        functions.logger.log('Test Sync WhatsApp templates - Resumo: ', addedCount, updatedCount);
         await batch.commit();
 
         return { success: true, added: addedCount, updated: updatedCount };
@@ -690,3 +706,83 @@ async function processMessageStatus(companyId: string, status: any): Promise<voi
         throw error;
     }
 }
+
+function sanitizeMetaTemplateComponents(components: any[]): any[] {
+    return components.map(component => {
+        const sanitizedComponent = { ...component };
+
+        // Sanitiza o campo text se contiver padrões {{ }} ou [[ ]]
+        if (sanitizedComponent.text && typeof sanitizedComponent.text === 'string') {
+            sanitizedComponent.text = sanitizeMetaPatterns(sanitizedComponent.text);
+        }
+
+        // Sanitiza o exemplo se existir
+        if (sanitizedComponent.example) {
+            const sanitizedExample: any = {};
+
+            // Sanitiza body_text (remove padrões [[ ]])
+            if (sanitizedComponent.example.body_text) {
+                sanitizedExample.body_text = sanitizedComponent.example.body_text.map((innerArray: any[]) =>
+                    innerArray.map(item =>
+                        sanitizeMetaPatterns(typeof item === 'string' ? item : String(item))
+                    )
+                );
+            }
+
+            // Sanitiza header_text
+            if (sanitizedComponent.example.header_text) {
+                sanitizedExample.header_text = sanitizedComponent.example.header_text.map((item: any) =>
+                    sanitizeMetaPatterns(typeof item === 'string' ? item : String(item))
+                );
+            }
+
+            // Sanitiza header_handle  
+            if (sanitizedComponent.example.header_handle) {
+                sanitizedExample.header_handle = sanitizedComponent.example.header_handle.map((item: any) =>
+                    sanitizeMetaPatterns(typeof item === 'string' ? item : String(item))
+                );
+            }
+
+            sanitizedComponent.example = {};
+        }
+
+        // Sanitiza buttons se existirem
+        if (sanitizedComponent.buttons) {
+            sanitizedComponent.buttons = sanitizedComponent.buttons.map((button: any) => {
+                const sanitizedButton = { ...button };
+
+                // Sanitiza text do botão
+                if (sanitizedButton.text && typeof sanitizedButton.text === 'string') {
+                    sanitizedButton.text = sanitizeMetaPatterns(sanitizedButton.text);
+                }
+
+                // Sanitiza example nos botões
+                if (sanitizedButton.example) {
+                    sanitizedButton.example = Array.isArray(sanitizedButton.example)
+                        ? sanitizedButton.example.map((item: any) =>
+                            sanitizeMetaPatterns(typeof item === 'string' ? item : String(item))
+                        )
+                        : sanitizeMetaPatterns(String(sanitizedButton.example));
+                }
+
+                return sanitizedButton;
+            });
+        }
+
+        return sanitizedComponent;
+    });
+}
+
+// Função específica para lidar com padrões da Meta
+function sanitizeMetaPatterns(text: string): string {
+    if (typeof text !== 'string') return text;
+
+    // Remove ou substitui padrões problemáticos
+    return text
+        // Mantém {{1}}, {{2}} etc. (variáveis de template) - são válidas
+        // Mas remove [[ ]] que são problemáticos
+        .replace(/\[\[.*?\]\]/g, '')
+        // Garante que não haja caracteres inválidos
+        .replace(/[^\x20-\x7E\u00C0-\u00FF]/g, '');
+}
+
