@@ -933,10 +933,20 @@ export interface MessageResult {
   messageType?: 'conversation' | 'template';
 }
 
+interface TemplateErrorInfo {
+  needsTemplateSetup: boolean;
+  errorCode?: number;
+  errorMessage?: string;
+  wabaId?: string;
+  phoneNumberId?: string;
+  templateName?: string;
+}
+
 export interface TestMessageResponse {
   success: boolean;
   messageId?: string;
   message: string;
   messageType?: 'conversation' | 'template';
+  templateError?: TemplateErrorInfo;
 }
     

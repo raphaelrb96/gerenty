@@ -43,6 +43,7 @@ import { useTranslation } from "@/context/i18n-context";
 import { useCompany as useCompanyContext } from "@/context/company-context";
 import Link from "next/link";
 import { EmptyState } from "../common/empty-state";
+import { TemplateSetupGuide } from "./TemplateSetupGuide";
 
 
 // Schema atualizado para corresponder ao back-end
@@ -115,6 +116,8 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
     const { user } = useAuth();
     const [isTestModalOpen, setIsTestModalOpen] = useState(false);
     const [testPhoneNumber, setTestPhoneNumber] = useState("");
+    const [showTemplateSetup, setShowTemplateSetup] = useState(false); // ← Novo estado
+    const [templateError, setTemplateError] = useState<any>(null); // ← Novo estado
 
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -297,20 +300,21 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
         try {
             const testMessage = `🚀 Mensagem de teste do Gerenty\n\nEsta é uma mensagem de teste para verificar a integração com o WhatsApp Business API.\n\n✅ Integração funcionando!\n⏰ ${new Date().toLocaleString('pt-BR')}`;
 
-            const result = await sendTestMessage(testPhoneNumber, company.id, testMessage);
+            const result = await sendTestMessage(testPhoneNumber, company.id,  testMessage);
 
             if (result.success && result.messageId) {
-                let description = `Mensagem enviada para ${testPhoneNumber}. ID: ${result.messageId}`;
+                let description = `Mensagem enviada para ${testPhoneNumber}`;
 
-                // Adiciona informação sobre o tipo de mensagem
                 if (result.messageType === 'template') {
                     description += '\n📋 Enviado como template (fora da janela de 24h)';
-                } else {
-                    description += '\n💬 Enviado como mensagem de conversação';
+                } else if (result.messageType === 'conversation') {
+                    description += '\n💬 Enviado como mensagem de conversação (dentro da janela de 24h)';
                 }
 
+                description += `\n🆔 ID: ${result.messageId}`;
+
                 toast({
-                    title: "Teste Enviado!",
+                    title: "✅ Teste Enviado!",
                     description,
                     variant: "default"
                 });
@@ -322,42 +326,44 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
         } catch (error: any) {
             console.error('Error sending test message:', error);
 
-            let errorMessage = error.message || "Não foi possível enviar a mensagem de teste.";
+            // Verifica se há informações de template error nos detalhes
+            if (error.details?.templateError?.needsTemplateSetup) {
+                setTemplateError(error.details.templateError);
+                setShowTemplateSetup(true);
+                setIsTestModalOpen(false);
+            } else {
+                let errorMessage = error.message || "Não foi possível enviar a mensagem de teste.";
 
-            if (error.message.includes('outside_24h_window')) {
-                errorMessage = `
-                    Fora da janela de 24h. 
-                    
-                    O sistema tentou criar um template automaticamente para resolver este problema.
-                    Se a mensagem ainda não foi enviada, pode levar alguns minutos para o template ser aprovado.
-                    
-                    💡 Dica: Para testes imediatos, use números de teste da Meta.
-                    `.replace(/\n\s+/g, '\n').trim();
-                    
-            } else if (error.message.includes('template') || error.message.includes('Template')) {
-                errorMessage = `
-                    Sistema de templates em ação:
-                    
-                    ✅ Tentamos criar um template automaticamente
-                    ⏰ Pode levar alguns minutos para aprovação
-                    🔄 Tente novamente em 2-3 minutos
-                    
-                    Para configuração manual:
-                    1. Acesse WhatsApp → Configuração da API → Gerenciar Templates
-                    2. Crie o template 'test_send'
-                    3. Categoria: UTILITY
-                    `.replace(/\n\s+/g, '\n').trim();
+                if (error.message.includes('outside_24h_window')) {
+                    errorMessage = "Fora da janela de 24h. Configure templates aprovados no painel da Meta.";
+                } else if (error.message.includes('número') || error.message.includes('number')) {
+                    errorMessage = "Número de telefone inválido. Verifique o formato (ex: 5511999999999).";
+                }
+
+                toast({
+                    variant: "destructive",
+                    title: "❌ Erro no Teste",
+                    description: errorMessage
+                });
             }
-
-            toast({
-                variant: "destructive",
-                title: "🔄 Processando Templates",
-                description: errorMessage
-            });
         } finally {
             setIsTesting(false);
         }
     };
+
+    // Se precisa mostrar a configuração de templates
+    if (showTemplateSetup) {
+        return (
+            <TemplateSetupGuide
+                templateError={templateError}
+                companyId={company.id}
+                onBack={() => {
+                    setShowTemplateSetup(false);
+                    setTemplateError(null);
+                }}
+            />
+        );
+    }
 
     const webhookUrl = integration?.webhookUrl;
 

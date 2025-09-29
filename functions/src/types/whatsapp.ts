@@ -63,13 +63,6 @@ export interface WebhookPayload {
   }>;
 }
 
-export interface SendMessagePayload {
-  phoneNumber: string;
-  message: string;
-  type?: 'text' | 'template';
-  templateName?: string;
-}
-
 export interface ValidationResult {
   isValid: boolean;
   companyId?: string;
@@ -82,13 +75,6 @@ export interface ApiResponse<T = any> {
   error?: string;
 }
 
-export interface MessageResult {
-  success: boolean;
-  messageId?: string;
-  error?: string;
-  messageType?: 'conversation' | 'template';
-}
-
 export interface TestMessageResponse {
   success: boolean;
   messageId?: string;
@@ -96,3 +82,49 @@ export interface TestMessageResponse {
   messageType?: 'conversation' | 'template';
 }
 
+// src/types/whatsapp.ts - Corrija e complete as interfaces
+export interface TemplateErrorInfo {
+  needsTemplateSetup: boolean;
+  errorCode?: number;
+  errorMessage?: string;
+  wabaId?: string;
+  phoneNumberId?: string;
+  templateName?: string;
+}
+
+export interface MessageResult {
+  success: boolean;
+  messageId?: string;
+  error?: string;
+  messageType?: 'conversation' | 'template';
+  templateError?: TemplateErrorInfo;
+}
+
+export interface TestMessageResponse {
+  success: boolean;
+  messageId?: string;
+  message: string;
+  messageType?: 'conversation' | 'template';
+  templateError?: TemplateErrorInfo;
+}
+
+export interface SendMessagePayload {
+  phoneNumber: string;
+  message: string;
+  type?: 'text' | 'template';
+  templateName?: string;
+}
+
+// Adicione também o tipo para a resposta da API do WhatsApp
+export interface WhatsAppApiError {
+  code: number;
+  message: string;
+  error_data?: {
+    details?: string;
+  };
+}
+
+export interface WhatsAppApiResponse {
+  messages?: Array<{ id: string }>;
+  error?: WhatsAppApiError;
+}

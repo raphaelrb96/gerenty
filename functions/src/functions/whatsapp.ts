@@ -7,6 +7,7 @@ import { WhatsAppService } from '../services/whatsAppService';
 import {
     CallableRequest,
     SendMessagePayload,
+    TemplateErrorInfo,
     WebhookPayload,
     WhatsAppCredentials,
     WhatsAppIntegration
@@ -230,6 +231,7 @@ export const whatsappWebhookListener = functions.https.onRequest(
 /**
  * 3. sendTestMessage - Utilitário Multi-Tenant
  */
+// src/functions/whatsapp.ts - Corrija a tipagem e tratamento de erro
 export const sendTestMessage = functions.https.onCall(
     async (request: CallableRequest<{
         phoneNumber: string;
@@ -242,6 +244,7 @@ export const sendTestMessage = functions.https.onCall(
         messageId?: string;
         message: string;
         messageType?: 'conversation' | 'template';
+        templateError?: TemplateErrorInfo;
     }> => {
         try {
             const validation = await securityService.validateCallableRequest(request);
@@ -263,25 +266,29 @@ export const sendTestMessage = functions.https.onCall(
                     success: true,
                     messageId: result.messageId,
                     message: 'Message sent successfully',
-                    messageType: result.messageType
+                    messageType: result.messageType,
+                    templateError: result.templateError
                 };
             } else {
-                // Propaga o messageType mesmo no erro para debugging
-                const errorResponse: any = {
+                // Cria um objeto de erro com templateError
+                const errorDetails: any = {
                     success: false,
                     message: result.error || 'Failed to send message'
                 };
 
-                if (result.messageType) {
-                    errorResponse.messageType = result.messageType;
+                // Inclui templateError se existir
+                if (result.templateError) {
+                    errorDetails.templateError = result.templateError;
                 }
 
-                throw new functions.https.HttpsError('internal', result.error || 'Failed to send message');
+                // Lança erro com detalhes
+                throw new functions.https.HttpsError('internal', result.error || 'Failed to send message', errorDetails);
             }
         } catch (error: any) {
             functions.logger.error('[sendTestMessage] Error:', error);
 
             if (error instanceof functions.https.HttpsError) {
+                // Se já é um HttpsError, propaga com os detalhes originais
                 throw error;
             }
 

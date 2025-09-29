@@ -1,15 +1,8 @@
 // src/services/whatsAppService.ts
 import { SecretManagerService } from './secretManager';
-import { SendMessagePayload } from '../types/whatsapp';
+import { MessageResult, SendMessagePayload, TemplateErrorInfo, WhatsAppApiResponse } from '../types/whatsapp';
 import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
-
-interface MessageResult {
-  success: boolean;
-  messageId?: string;
-  error?: string;
-  messageType?: 'conversation' | 'template';
-}
 
 export class WhatsAppService {
   private secretManager: SecretManagerService;
@@ -166,13 +159,15 @@ export class WhatsAppService {
     }
   }
 
+  // src/services/whatsAppService.ts - Corrija a tipagem
   private async tryTemplateMessage(
     phoneNumberId: string,
     accessToken: string,
     payload: SendMessagePayload
   ): Promise<MessageResult> {
     try {
-      // Usa template padrão para testes
+      functions.logger.info(`[WhatsAppService] 🚀 Starting template message process`);
+
       const templateName = 'test_send';
 
       const messageData = {
@@ -199,7 +194,7 @@ export class WhatsAppService {
         }
       );
 
-      const result = await response.json();
+      const result = await response.json() as WhatsAppApiResponse;
 
       functions.logger.info(`[WhatsAppService] Template API response:`, {
         status: response.status,
@@ -208,64 +203,56 @@ export class WhatsAppService {
 
       if (response.ok && result.messages?.[0]?.id) {
         const messageId = result.messages[0].id;
-        functions.logger.info(`[WhatsAppService] Template message accepted for delivery, ID: ${messageId}`);
+        functions.logger.info(`[WhatsAppService] ✅ Template message accepted for delivery, ID: ${messageId}`);
 
-        // Verifica o status do template
-        const statusResult = await this.checkMessageStatus(phoneNumberId, accessToken, messageId);
-
-        if (statusResult.delivered) {
-          functions.logger.info(`[WhatsAppService] Template message delivered successfully`);
-          return {
-            success: true,
-            messageId: messageId,
-            messageType: 'template'
-          };
-        } else {
-          functions.logger.error(`[WhatsAppService] Template message failed to deliver: ${statusResult.error}`);
-          return {
-            success: false,
-            error: statusResult.error || 'Template message delivery failed',
-            messageType: 'template'
-          };
-        }
+        return {
+          success: true,
+          messageId: messageId,
+          messageType: 'template'
+        };
       } else {
-        functions.logger.error('[WhatsAppService] Template message rejected by API:', result.error);
+        functions.logger.error('[WhatsAppService] ❌ Template message rejected by API:', result.error);
 
-        let errorMessage = 'Failed to send template message';
-        let shouldCreateTemplate = false;
+        let errorMessage = 'Falha ao enviar template';
+        let templateError: TemplateErrorInfo | undefined = undefined;
 
-        if (result.error?.code === 131058) {
-          errorMessage = 'Template não autorizado. Tentando criar template automaticamente...';
-          shouldCreateTemplate = true;
-        } else if (result.error?.code === 131056) {
-          errorMessage = 'Template não encontrado. Tentando criar template automaticamente...';
-          shouldCreateTemplate = true;
-        } else if (result.error?.code === 132001) {
-          errorMessage = 'Template não encontrado. Tentando criar template automaticamente...';
-          shouldCreateTemplate = true;
-        } else if (result.error?.code === 132000) {
-          errorMessage = 'Número de telefone inválido para template.';
+        // Verifica se é erro de template não encontrado/não autorizado
+        if (result.error?.code === 131058 || result.error?.code === 131056) {
+          errorMessage = `Template "${templateName}" não configurado. Configure templates no painel da Meta.`;
+
+          // Informações detalhadas para o front-end
+          templateError = {
+            needsTemplateSetup: true,
+            errorCode: result.error.code,
+            errorMessage: result.error.message,
+            phoneNumberId: phoneNumberId,
+            templateName: templateName
+          };
+
+          functions.logger.info(`[WhatsAppService] 📋 Template setup required: ${templateName}`);
         } else if (result.error?.message) {
-          errorMessage = result.error.message;
-        }
-
-        // Se deve tentar criar o template e reenviar
-        if (shouldCreateTemplate) {
-          functions.logger.info(`[WhatsAppService] Attempting to create template and retry...`);
-          return await this.createTemplateAndRetry(phoneNumberId, accessToken, payload, templateName);
+          templateError = {
+            needsTemplateSetup: true,
+            errorCode: result.error.code,
+            errorMessage: result.error.message,
+            phoneNumberId: phoneNumberId,
+            templateName: templateName
+          };
+          errorMessage = `${result.error.message} (Code: ${result.error.code})`;
         }
 
         return {
           success: false,
           error: errorMessage,
-          messageType: 'template'
+          messageType: 'template',
+          templateError: templateError
         };
       }
-    } catch (error) {
-      functions.logger.error('[WhatsAppService] Error sending template message:', error);
+    } catch (error: any) {
+      functions.logger.error('[WhatsAppService] 💥 Error in template message:', error);
       return {
         success: false,
-        error: 'Template message failed',
+        error: `Erro no template: ${error.message}`,
         messageType: 'template'
       };
     }
@@ -499,7 +486,7 @@ export class WhatsAppService {
   ): Promise<{ success: boolean; error?: string }> {
     try {
       functions.logger.info(`[WhatsAppService] Attempting to create template: ${templateName}`);
-  
+
       // Primeiro, precisamos do WhatsApp Business Account ID (WABA ID)
       // O phoneNumberId não é o WABA ID, precisamos buscar o WABA ID correto
       const wabaResponse = await fetch(
@@ -512,24 +499,24 @@ export class WhatsAppService {
           },
         }
       );
-  
+
       const wabaResult = await wabaResponse.json();
       functions.logger.info(`[WhatsAppService] WABA lookup result:`, wabaResult);
-  
+
       if (!wabaResponse.ok) {
         functions.logger.error('[WhatsAppService] Failed to get WABA info:', wabaResult.error);
         return { success: false, error: 'Cannot access WhatsApp Business Account' };
       }
-  
+
       const wabaId = wabaResult.connected_waba?.id;
-      
+
       if (!wabaId) {
         functions.logger.error('[WhatsAppService] No WABA ID found in response');
         return { success: false, error: 'WhatsApp Business Account ID not found' };
       }
-  
+
       functions.logger.info(`[WhatsAppService] Found WABA ID: ${wabaId}`);
-  
+
       // Estrutura correta do template para a API
       const templateData = {
         name: templateName,
@@ -550,7 +537,7 @@ export class WhatsAppService {
                 text: '👍 Funcionou'
               },
               {
-                type: 'QUICK_REPLY', 
+                type: 'QUICK_REPLY',
                 text: '🔄 Testar Novamente'
               }
             ]
@@ -558,9 +545,9 @@ export class WhatsAppService {
         ],
         language: 'pt_BR'
       };
-  
+
       functions.logger.info(`[WhatsAppService] Creating template with data:`, templateData);
-  
+
       const createResponse = await fetch(
         `https://graph.facebook.com/v17.0/${wabaId}/message_templates`,
         {
@@ -572,21 +559,21 @@ export class WhatsAppService {
           body: JSON.stringify(templateData),
         }
       );
-  
+
       const createResult = await createResponse.json();
-  
+
       functions.logger.info(`[WhatsAppService] Template creation response:`, {
         status: createResponse.status,
         statusText: createResponse.statusText,
         result: createResult
       });
-  
+
       if (createResponse.ok && createResult.id) {
         functions.logger.info(`[WhatsAppService] Template ${templateName} created successfully, ID: ${createResult.id}`);
         return { success: true };
       } else {
         functions.logger.error('[WhatsAppService] Failed to create template:', createResult.error);
-  
+
         let errorMsg = 'Failed to create template';
         if (createResult.error?.code === 131073) {
           errorMsg = 'Template com este nome já existe';
@@ -599,7 +586,7 @@ export class WhatsAppService {
         } else if (createResult.error?.message) {
           errorMsg = createResult.error.message;
         }
-  
+
         return { success: false, error: errorMsg };
       }
     } catch (error) {

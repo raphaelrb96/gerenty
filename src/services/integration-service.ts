@@ -12,18 +12,13 @@ const validateAndSaveCredentialsCallable = httpsCallable<WhatsAppCredentials & {
   companyId: string;
 }>(functions, 'validateAndSaveCredentials');
 
-  const sendTestMessageCallable = httpsCallable<{ 
-    phoneNumber: string; 
-    message?: string; 
-    type?: 'text' | 'template';
-    templateName?: string;
-    companyId: string;
-  }, {
-    success: boolean;
-    messageId?: string;
-    message: string;
-    messageType?: 'conversation' | 'template'; // ← Adicione aqui
-  }>(functions, 'sendTestMessage');
+const sendTestMessageCallable = httpsCallable<{
+  phoneNumber: string;
+  message?: string;
+  type?: 'text' | 'template';
+  templateName?: string;
+  companyId: string;
+}, TestMessageResponse>(functions, 'sendTestMessage');
 
 const checkWhatsAppIntegrationCallable = httpsCallable<{
   companyId: string;
@@ -66,25 +61,29 @@ export const integrationService = {
     }
   },
 
-  async sendTestMessage(phoneNumber: string, companyId: string, message: string = 'Mensagem de teste do Gerenty') {
+  async sendTestMessage(phoneNumber: string, companyId: string, message: string = 'Mensagem de teste do Gerenty'): Promise<TestMessageResponse> {
     try {
       const result = await sendTestMessageCallable({
         phoneNumber,
         message,
-        type: 'text', // Mude para 'text' em vez de 'template'
+        type: 'text',
         companyId
       });
       return result.data;
     } catch (error: any) {
       console.error('Error sending test message:', error);
-
+      
+      // Propaga o erro com os detalhes originais
+      if (error.details) {
+        throw error;
+      }
+      
       if (error.code === 'unauthenticated') {
         throw new Error('Usuário não autenticado. Faça login novamente.');
       } else if (error.code === 'invalid-argument') {
         throw new Error('Número de telefone inválido.');
       } else if (error.code === 'internal') {
-        // Se falhar com mensagem de texto, tenta enviar uma mensagem simples
-        throw new Error('Erro ao enviar mensagem de teste. Verifique se o número está correto e se a integração está configurada.');
+        throw new Error(error.message || 'Erro ao enviar mensagem de teste.');
       } else {
         throw new Error(error.message || 'Erro ao enviar mensagem de teste.');
       }
@@ -110,7 +109,7 @@ export const integrationService = {
       throw new Error(error.message || 'Erro ao obter status da integração');
     }
   },
-  
+
 };
 
 // Aliases para compatibilidade com o código existente
