@@ -41,7 +41,7 @@ function AutomationRulesTab() {
         <Card>
             <CardHeader>
                 <CardTitle>Construtor de Regras de Automação</CardTitle>
-                <CardDescription>Crie regras no formato "Se (gatilho), então (ação)" para automatizar tarefas.</CardDescription>
+                <CardDescription>Crie regras no formato "Se (gatilho), então (ação)" para automatizar tarefas. Ideal para ações simples e diretas que não necessitam de um fluxograma complexo, como enviar uma notificação de boas-vindas quando um novo cliente se cadastra.</CardDescription>
             </CardHeader>
             <CardContent>
                 {rules.length === 0 ? (
@@ -107,7 +107,7 @@ function FlowBuilderTab() {
         <Card>
             <CardHeader>
                 <CardTitle>Fluxos de Conversa</CardTitle>
-                <CardDescription>Crie e gerencie fluxos de conversa interativos para o WhatsApp.</CardDescription>
+                <CardDescription>Crie e gerencie fluxos de conversa interativos e visuais para o WhatsApp. Use o construtor de arrastar e soltar para desenhar conversas complexas, capturar dados de clientes, criar condições lógicas e muito mais.</CardDescription>
             </CardHeader>
             <CardContent>
                  {flows.length === 0 ? (
@@ -356,34 +356,38 @@ function LibraryTab() {
     }
 
     return (
-        <div className="mt-6">
-            <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold font-headline">Biblioteca de Respostas</h2>
-                <Button variant="outline" onClick={() => handleOpenForm(null)}>
+        <Card>
+            <CardHeader>
+                <CardTitle>Biblioteca de Respostas</CardTitle>
+                <CardDescription>Crie mensagens prontas (texto, imagem, botões, etc.) para usar em seus fluxos de conversa. Isso economiza tempo e garante consistência na comunicação.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                 {messages.length === 0 ? (
+                    <EmptyState
+                        icon={<Library className="h-16 w-16" />}
+                        title="Nenhuma resposta encontrada"
+                        description="Crie respostas rápidas com texto, imagens, vídeos e arquivos para usar em suas automações."
+                        action={<Button onClick={() => handleOpenForm(null)}>Criar primeira resposta</Button>}
+                    />
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {messages.map(message => (
+                            <ResponseCard
+                                key={message.id}
+                                message={message}
+                                onEdit={() => handleOpenForm(message)}
+                                onDelete={() => setMessageToDelete(message)}
+                            />
+                        ))}
+                    </div>
+                )}
+            </CardContent>
+             <CardFooter>
+                 <Button onClick={() => handleOpenForm(null)}>
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Nova Resposta
                 </Button>
-            </div>
-            
-             {messages.length === 0 ? (
-                <EmptyState
-                    icon={<Library className="h-16 w-16" />}
-                    title="Nenhuma resposta encontrada"
-                    description="Crie respostas rápidas com texto, imagens, vídeos e arquivos para usar em suas automações."
-                    action={<Button onClick={() => handleOpenForm(null)}>Criar primeira resposta</Button>}
-                />
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {messages.map(message => (
-                        <ResponseCard
-                            key={message.id}
-                            message={message}
-                            onEdit={() => handleOpenForm(message)}
-                            onDelete={() => setMessageToDelete(message)}
-                        />
-                    ))}
-                </div>
-            )}
+            </CardFooter>
 
             <ResponseLibraryForm
                 isOpen={isFormOpen}
@@ -408,7 +412,7 @@ function LibraryTab() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </div>
+        </Card>
     );
 }
 
