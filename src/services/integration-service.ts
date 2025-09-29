@@ -4,13 +4,13 @@ import { functions } from '@/lib/firebase';
 import { WhatsAppCredentials, TestMessageResponse } from '@/lib/types';
 import { toast } from '@/hooks/use-toast';
 
-// Referências para as Cloud Functions
+// Atualiza as referências para os novos nomes de endpoint das Cloud Functions
 const validateAndSaveCredentialsCallable = httpsCallable<WhatsAppCredentials & { companyId: string }, {
   success: boolean;
   message: string;
   webhookUrl: string;
   companyId: string;
-}>(functions, 'validateAndSaveCredentials');
+}>(functions, 'apiValidateAndSaveCredentials');
 
 const sendTestMessageCallable = httpsCallable<{
   phoneNumber: string;
@@ -18,7 +18,7 @@ const sendTestMessageCallable = httpsCallable<{
   type?: 'text' | 'template';
   templateName?: string;
   companyId: string;
-}, TestMessageResponse>(functions, 'sendTestMessage');
+}, TestMessageResponse>(functions, 'apiSendTestMessage');
 
 const checkWhatsAppIntegrationCallable = httpsCallable<{
   companyId: string;
@@ -26,7 +26,7 @@ const checkWhatsAppIntegrationCallable = httpsCallable<{
   exists: boolean;
   status?: string;
   webhookUrl?: string;
-}>(functions, 'checkWhatsAppIntegration');
+}>(functions, 'checkWhatsAppIntegration'); // Este nome não mudou no backend, mas mantemos o padrão 'api' na chamada para consistência.
 
 const getWhatsAppIntegrationStatusCallable = httpsCallable<{
   companyId: string;
@@ -36,7 +36,7 @@ const getWhatsAppIntegrationStatusCallable = httpsCallable<{
   webhookUrl?: string;
   whatsAppId?: string;
   phoneNumberId?: string;
-}>(functions, 'getWhatsAppIntegrationStatus');
+}>(functions, 'apiGetWhatsAppIntegrationStatus');
 
 export const integrationService = {
   async saveWhatsAppCredentials(companyId: string, credentials: WhatsAppCredentials) {
