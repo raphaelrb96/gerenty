@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback } from "react";
 import { PageHeader } from "@/components/common/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Bot, PlusCircle, LayoutGrid, Building, Library, Workflow, Pencil, MoreVertical, Trash2 } from "lucide-react";
+import { Bot, PlusCircle, LayoutGrid, Building, Library, Workflow, Pencil, MoreVertical, Trash2, RefreshCw } from "lucide-react";
 import type { MessageTemplate, LibraryMessage, AutomationRule, Flow } from "@/lib/types";
 import { getTemplatesByCompany, deleteTemplate } from "@/services/template-service";
 import { getLibraryMessagesByCompany, deleteLibraryMessage } from "@/services/library-message-service";
@@ -32,6 +32,9 @@ import Link from "next/link";
 import { ResponseLibraryForm } from "@/components/automation/response-library-form";
 import { ResponseCard } from "@/components/automation/response-card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+
 
 function AutomationRulesTab() {
     const [rules, setRules] = useState<AutomationRule[]>([]);
@@ -195,6 +198,29 @@ function TemplatesTab() {
   const [templateToEdit, setTemplateToEdit] = useState<MessageTemplate | null>(null);
   const [templateToDelete, setTemplateToDelete] = useState<MessageTemplate | null>(null);
 
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncCooldown, setSyncCooldown] = useState(0);
+
+  const SYNC_COOLDOWN_HOURS = 6;
+  const syncStorageKey = `sync_timestamp_${activeCompany?.id}`;
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (activeCompany) {
+      const lastSync = localStorage.getItem(syncStorageKey);
+      if (lastSync) {
+        const remainingTime = new Date(lastSync).getTime() + SYNC_COOLDOWN_HOURS * 60 * 60 * 1000 - new Date().getTime();
+        if (remainingTime > 0) {
+          setSyncCooldown(remainingTime);
+          interval = setInterval(() => {
+            setSyncCooldown(prev => Math.max(0, prev - 1000));
+          }, 1000);
+        }
+      }
+    }
+    return () => clearInterval(interval);
+  }, [activeCompany, syncStorageKey]);
+
   const fetchTemplates = useCallback(async () => {
     if (activeCompany) {
       setLoading(true);
@@ -233,6 +259,27 @@ function TemplatesTab() {
         setTemplateToDelete(null);
     }
   }
+
+  const handleSync = async () => {
+    setIsSyncing(true);
+    // Placeholder for actual sync logic
+    toast({ title: "Sincronização iniciada", description: "Buscando novos templates da Meta..." });
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    setIsSyncing(false);
+    
+    // Set cooldown
+    localStorage.setItem(syncStorageKey, new Date().toISOString());
+    setSyncCooldown(SYNC_COOLDOWN_HOURS * 60 * 60 * 1000);
+    
+    toast({ title: "Sincronização concluída (simulação)" });
+  }
+
+  const formatCooldown = (ms: number) => {
+    const hours = Math.floor(ms / (1000 * 60 * 60));
+    const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }
   
     if (loading) {
         return <LoadingSpinner />;
@@ -266,11 +313,18 @@ function TemplatesTab() {
                     </div>
                 )}
             </CardContent>
-             <CardFooter>
+             <CardFooter className="flex justify-between items-center">
                 <Button onClick={() => handleOpenForm()}>
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Criar Template
                 </Button>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" onClick={handleSync} disabled={isSyncing || syncCooldown > 0}>
+                        <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                        Sincronizar com a Meta
+                    </Button>
+                    {syncCooldown > 0 && <p className="text-xs text-muted-foreground">{formatCooldown(syncCooldown)}</p>}
+                </div>
             </CardFooter>
         
             <TemplatePreviewModal 
