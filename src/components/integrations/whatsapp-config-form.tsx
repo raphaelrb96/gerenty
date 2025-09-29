@@ -18,7 +18,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, Eye, EyeOff, Copy, CheckCircle, AlertCircle, XCircle, Info, TestTube2, ExternalLink } from "lucide-react";
+import { Loader2, Eye, EyeOff, Copy, CheckCircle, AlertCircle, XCircle, Info, TestTube2, ExternalLink, ChevronsUpDown, Building } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/auth-context";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
@@ -33,6 +33,17 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useTranslation } from "@/context/i18n-context";
+import { useCompany as useCompanyContext } from "@/context/company-context";
+import Link from "next/link";
+import { EmptyState } from "../common/empty-state";
+
 
 // Schema atualizado para corresponder ao back-end
 const formSchema = z.object({
@@ -43,6 +54,54 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+
+function CompanySelector() {
+    const { t } = useTranslation();
+    const { companies, activeCompany, setActiveCompany } = useCompanyContext();
+
+    const getDisplayName = () => {
+        if (!activeCompany) {
+            return "Selecione uma empresa";
+        }
+        return activeCompany.name;
+    };
+
+    if (companies.length === 0) {
+        return null;
+    }
+
+    return (
+        <Card className="mb-6">
+            <CardContent className="p-4 flex items-center justify-between">
+                 <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-md bg-muted">
+                        <Building className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <div>
+                        <p className="text-xs text-muted-foreground">Empresa Ativa</p>
+                        <h2 className="text-lg font-bold">{getDisplayName()}</h2>
+                    </div>
+                </div>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline">
+                            Trocar Empresa
+                            <ChevronsUpDown className="ml-2 h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        {companies.map((company) => (
+                            <DropdownMenuItem key={company.id} onSelect={() => setActiveCompany(company)}>
+                                {company.name}
+                            </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </CardContent>
+        </Card>
+    );
+}
 
 export function WhatsAppConfigForm({ company }: { company: Company }) {
     const { toast } = useToast();
@@ -332,7 +391,7 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
                             <AccordionContent className="space-y-4 pt-4">
                                 <p>Agora você precisa adicionar um número de telefone que será usado para enviar e receber mensagens.</p>
                                 <ul className="list-decimal list-inside space-y-2 text-muted-foreground">
-                                    <li>No painel do seu aplicativo, vá para a seção <span className="font-mono text-xs bg-muted p-1 rounded">WhatsApp {'>'} Configuração da API</span>.</li>
+                                    <li>No painel do seu aplicativo, vá para a seção <a href="https://developers.facebook.com/docs/whatsapp/cloud-api/get-started" target="_blank" rel="noopener noreferrer" className="text-primary underline font-mono text-xs bg-muted p-1 rounded">WhatsApp {'>'} Configuração da API <ExternalLink className="inline h-3 w-3"/></a>.</li>
                                     <li>Você pode usar um número de teste fornecido pela Meta para desenvolvimento ou clicar em "Adicionar número de telefone" para registrar um número seu.</li>
                                     <li><strong>Importante:</strong> O número que você registrar não pode estar sendo usado em uma conta normal ou Business do WhatsApp no seu celular. Ele será dedicado à API.</li>
                                     <li>Siga os passos de verificação do número por SMS ou chamada de voz.</li>
@@ -345,7 +404,7 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
                             <AccordionContent className="space-y-4 pt-4">
                                 <p>Com tudo configurado, agora você precisa copiar as credenciais e colá-las no formulário abaixo.</p>
                                 <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
-                                    <li><b>ID da Conta do WhatsApp Business:</b> Na tela <span className="font-mono text-xs bg-muted p-1 rounded">WhatsApp {'>'} Configuração da API</span>, você encontrará este ID no topo.</li>
+                                    <li><b>ID da Conta do WhatsApp Business:</b> Na tela <a href="https://developers.facebook.com/docs/whatsapp/cloud-api/get-started" target="_blank" rel="noopener noreferrer" className="text-primary underline font-mono text-xs bg-muted p-1 rounded">WhatsApp {'>'} Configuração da API <ExternalLink className="inline h-3 w-3"/></a>, você encontrará este ID no topo.</li>
                                     <li><b>ID do Número de Telefone:</b> Na mesma tela, na seção "Enviar e receber mensagens", copie o ID do número de telefone que você configurou.</li>
                                     <li><b>Token de Acesso Permanente:</b> Na mesma seção, clique em "Gerar token". <strong>Importante:</strong> Você deve gerar um token de acesso permanente, pois o token temporário expira em 24 horas.</li>
                                     <li><b>Meta App Secret (Segredo do Aplicativo):</b> No menu lateral esquerdo, vá para <span className="font-mono text-xs bg-muted p-1 rounded">Configurações do aplicativo {'>'} Básico</span>. Clique em "Mostrar" ao lado de "Segredo do Aplicativo" e copie o valor.</li>
@@ -359,7 +418,7 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
                                 <p className="text-muted-foreground">O Webhook é o "endereço" para onde o WhatsApp enviará as mensagens que seus clientes mandarem.</p>
                                 <ol className="list-decimal list-inside space-y-2">
                                     <li>Primeiro, preencha e salve as 4 credenciais do passo anterior neste formulário. A URL do Webhook será gerada automaticamente.</li>
-                                    <li>Volte ao painel da Meta, em <span className="font-mono text-xs bg-muted p-1 rounded">WhatsApp {'>'} Configuração da API</span> e clique em "Editar" na seção de Webhooks.</li>
+                                    <li>Volte ao painel da Meta, em <a href="https://developers.facebook.com/docs/whatsapp/cloud-api/get-started" target="_blank" rel="noopener noreferrer" className="text-primary underline font-mono text-xs bg-muted p-1 rounded">WhatsApp {'>'} Configuração da API <ExternalLink className="inline h-3 w-3"/></a> e clique em "Editar" na seção de Webhooks.</li>
                                     <li>Cole a URL de Webhook fornecida abaixo no campo "URL de Retorno de Chamada".</li>
                                     <li>No campo "Token de Verificação", cole o seu <strong>Meta App Secret</strong> (a mesma credencial do campo "Segredo do Aplicativo" deste formulário).</li>
                                     <li>Clique em "Verificar e Salvar". Se tudo estiver correto, uma mensagem de sucesso aparecerá.</li>
@@ -538,3 +597,5 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
         </div>
     );
 }
+
+    
