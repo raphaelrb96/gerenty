@@ -9,7 +9,7 @@ import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 import type { Company, WhatsAppIntegration } from "@/lib/types";
-import { saveWhatsAppCredentials, sendTestMessage } from "@/services/integration-service";
+import { checkWhatsAppIntegration, saveWhatsAppCredentials, sendTestMessage } from "@/services/integration-service";
 import { onSnapshot, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
@@ -127,45 +127,78 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
 
     useEffect(() => {
         if (!company?.id) return;
-
-        // Real-time listener para o status da integração
-        const unsub = onSnapshot(
-            doc(db, 'companies', company.id, 'integrations', 'whatsapp'),
-            (doc) => {
-                if (doc.exists()) {
+      
+        const checkAndSetupIntegration = async () => {
+          try {
+            // Primeiro verifica se a integração existe
+            const integrationCheck = await checkWhatsAppIntegration(company.id);
+            
+            if (integrationCheck.exists) {
+              // Se existe, configura o listener em tempo real
+              const unsub = onSnapshot(
+                doc(db, 'companies', company.id, 'integrations', 'whatsapp'),
+                (doc) => {
+                  if (doc.exists()) {
                     const data = doc.data() as WhatsAppIntegration;
                     setIntegration(data);
-
+      
                     // Preenche o formulário apenas com os dados não sensíveis
                     form.reset({
-                        whatsAppBusinessId: data.whatsAppId || "",
-                        phoneNumberId: data.phoneNumberId || "",
-                        // Não preenchemos accessToken e metaAppSecret pois estão no Secret Manager
-                        accessToken: "",
-                        metaAppSecret: ""
+                      whatsAppBusinessId: data.whatsAppId || "",
+                      phoneNumberId: data.phoneNumberId || "",
+                      accessToken: "",
+                      metaAppSecret: ""
                     });
-                } else {
-                    setIntegration(null);
-                    form.reset({
-                        whatsAppBusinessId: "",
-                        phoneNumberId: "",
-                        accessToken: "",
-                        metaAppSecret: ""
-                    });
-                }
-            },
-            (error) => {
-                console.error("Error listening to integration:", error);
-                toast({
+                  }
+                },
+                (error) => {
+                  console.error("Error listening to integration:", error);
+                  toast({
                     variant: "destructive",
                     title: "Erro de conexão",
                     description: "Não foi possível carregar os dados da integração."
-                });
+                  });
+                }
+              );
+      
+              return unsub;
+            } else {
+              // Se não existe, limpa o estado
+              setIntegration(null);
+              form.reset({
+                whatsAppBusinessId: "",
+                phoneNumberId: "",
+                accessToken: "",
+                metaAppSecret: ""
+              });
             }
-        );
-
-        return () => unsub();
-    }, [company.id, form, toast]);
+          } catch (error) {
+            console.error('Error checking integration:', error);
+            // Em caso de erro, assume que não existe integração
+            setIntegration(null);
+            form.reset({
+              whatsAppBusinessId: "",
+              phoneNumberId: "",
+              accessToken: "",
+              metaAppSecret: ""
+            });
+          }
+        };
+      
+        const setup = checkAndSetupIntegration();
+        
+        // Retorna uma função de cleanup se necessário
+        return () => {
+          // Se setup for uma função de unsubscribe, chama ela
+          if (setup && typeof setup.then === 'function') {
+            setup.then((unsub) => {
+              if (unsub && typeof unsub === 'function') {
+                unsub();
+              }
+            });
+          }
+        };
+      }, [company.id, form, toast]);
 
     useEffect(() => {
         if (integration) {
@@ -585,7 +618,7 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
 
                             <Button
                                 type="submit"
-                                disabled={isLoading || (integration && !isEditing)}
+                                disabled={isLoading || (integration != null && !isEditing) as boolean}
                             >
                                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 {integration ? (isEditing ? 'Atualizar Credenciais' : 'Credenciais Salvas') : 'Salvar Credenciais'}

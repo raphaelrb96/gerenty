@@ -1,13 +1,14 @@
 // src/services/secretManager.ts
-import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
+import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
-
-const client = new SecretManagerServiceClient();
 
 export class SecretManagerService {
   private static instance: SecretManagerService;
+  private db: admin.firestore.Firestore;
 
-  private constructor() {}
+  private constructor() {
+    this.db = admin.firestore();
+  }
 
   static getInstance(): SecretManagerService {
     if (!SecretManagerService.instance) {
@@ -18,66 +19,64 @@ export class SecretManagerService {
 
   async storeSecret(secretName: string, secretValue: string): Promise<void> {
     try {
-      const projectId = process.env.GCLOUD_PROJECT;
-      const parent = `projects/${projectId}`;
-      
-      // Cria o secret se não existir
-      try {
-        await client.createSecret({
-          parent,
-          secretId: secretName,
-          secret: {
-            replication: {
-              automatic: {},
-            },
-          },
-        });
-      } catch (error: any) {
-        // Secret já existe, continua
-        if (error.code !== 6) { // 6 = ALREADY_EXISTS
-          throw error;
-        }
-      }
+      // Salva no Firestore em uma coleção segura
+      await this.db.collection('whatsapp_secrets')
+        .doc(secretName)
+        .set({
+          value: secretValue,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          encrypted: true // Marcar como encriptado (opcional)
+        }, { merge: true });
 
-      // Adiciona a versão do secret
-      await client.addSecretVersion({
-        parent: `${parent}/secrets/${secretName}`,
-        payload: {
-          data: Buffer.from(secretValue, 'utf8'),
-        },
-      });
-
-      functions.logger.info(`Secret ${secretName} stored successfully`);
+      functions.logger.info(`Secret ${secretName} stored successfully in Firestore`);
     } catch (error) {
-      functions.logger.error('Error storing secret:', error);
+      functions.logger.error('Error storing secret in Firestore:', error);
       throw new Error('Failed to store secret');
     }
   }
 
   async getSecret(secretName: string): Promise<string> {
     try {
-      const projectId = process.env.GCLOUD_PROJECT;
-      const name = `projects/${projectId}/secrets/${secretName}/versions/latest`;
+      const doc = await this.db.collection('whatsapp_secrets')
+        .doc(secretName)
+        .get();
 
-      const [version] = await client.accessSecretVersion({ name });
-      
-      if (!version.payload?.data) {
-        throw new Error('Secret not found or empty');
+      if (!doc.exists) {
+        functions.logger.error(`Secret ${secretName} not found in Firestore`);
+        throw new Error('Secret not found');
       }
 
-      return version.payload.data.toString();
+      const data = doc.data();
+      if (!data?.value) {
+        functions.logger.error(`Secret ${secretName} has no value`);
+        throw new Error('Secret value is empty');
+      }
+
+      functions.logger.info(`Secret ${secretName} retrieved successfully from Firestore`);
+      return data.value;
     } catch (error) {
-      functions.logger.error('Error retrieving secret:', error);
+      functions.logger.error(`Error retrieving secret ${secretName}:`, error);
       throw new Error('Failed to retrieve secret');
+    }
+  }
+
+  async secretExists(secretName: string): Promise<boolean> {
+    try {
+      const doc = await this.db.collection('whatsapp_secrets')
+        .doc(secretName)
+        .get();
+      return doc.exists && !!doc.data()?.value;
+    } catch (error) {
+      functions.logger.error(`Error checking secret existence ${secretName}:`, error);
+      return false;
     }
   }
 
   async deleteSecret(secretName: string): Promise<void> {
     try {
-      const projectId = process.env.GCLOUD_PROJECT;
-      const name = `projects/${projectId}/secrets/${secretName}`;
-
-      await client.deleteSecret({ name });
+      await this.db.collection('whatsapp_secrets')
+        .doc(secretName)
+        .delete();
       functions.logger.info(`Secret ${secretName} deleted successfully`);
     } catch (error) {
       functions.logger.error('Error deleting secret:', error);
@@ -104,5 +103,10 @@ export class SecretManagerService {
   async getWhatsAppSecret(companyId: string): Promise<string> {
     const secretName = `WHATSAPP_${companyId}_SECRET`;
     return await this.getSecret(secretName);
+  }
+
+  async whatsAppSecretExists(companyId: string): Promise<boolean> {
+    const secretName = `WHATSAPP_${companyId}_SECRET`;
+    return await this.secretExists(secretName);
   }
 }

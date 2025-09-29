@@ -19,6 +19,14 @@ const sendTestMessageCallable = httpsCallable<{
   templateName?: string;
 }, TestMessageResponse>(functions, 'sendTestMessage');
 
+const checkWhatsAppIntegrationCallable = httpsCallable<{ 
+  companyId: string;
+}, {
+  exists: boolean;
+  status?: string;
+  webhookUrl?: string;
+}>(functions, 'checkWhatsAppIntegration');
+
 export const integrationService = {
   async saveWhatsAppCredentials(companyId: string, credentials: WhatsAppCredentials) {
     try {
@@ -65,8 +73,19 @@ export const integrationService = {
       }
     }
   },
+
+  async checkWhatsAppIntegration(companyId: string) {
+    try {
+      const result = await checkWhatsAppIntegrationCallable({ companyId });
+      return result.data;
+    } catch (error: any) {
+      console.error('Error checking WhatsApp integration:', error);
+      throw new Error(error.message || 'Erro ao verificar integração');
+    }
+  }
 };
 
 // Aliases para compatibilidade com o código existente
 export const saveWhatsAppCredentials = integrationService.saveWhatsAppCredentials;
 export const sendTestMessage = integrationService.sendTestMessage;
+export const checkWhatsAppIntegration = integrationService.checkWhatsAppIntegration;

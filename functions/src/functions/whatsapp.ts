@@ -7,7 +7,9 @@ import { WhatsAppService } from '../services/whatsAppService';
 import {
     CallableRequest,
     SendMessagePayload,
-    WhatsAppCredentials
+    WebhookPayload,
+    WhatsAppCredentials,
+    WhatsAppIntegration
 } from '../types/whatsapp';
 
 // Inicializa o Firebase Admin
@@ -103,6 +105,7 @@ export const validateAndSaveCredentials = functions.https.onCall(
 /**
  * 2. whatsappWebhookListener - Processamento de Eventos Multi-Tenant
  */
+// src/functions/whatsapp.ts
 export const whatsappWebhookListener = functions.https.onRequest(
     async (req: functions.https.Request, res) => {
         // Suporte para verificação do webhook (GET)
@@ -115,26 +118,44 @@ export const whatsappWebhookListener = functions.https.onRequest(
             const pathParts = req.path.split('/');
             const companyId = pathParts[pathParts.length - 1];
 
+            functions.logger.info(`Webhook verification attempt for company: ${companyId}, mode: ${mode}`);
+
             if (!companyId) {
+                functions.logger.error('Company ID not found in webhook URL');
                 res.status(400).send('Company ID not found in webhook URL');
                 return;
             }
 
             try {
+                // Verifica se o secret existe antes de tentar acessá-lo
+                const secretExists = await secretManager.whatsAppSecretExists(companyId);
+                if (!secretExists) {
+                    functions.logger.error(`WhatsApp secret not found for company: ${companyId}`);
+                    res.status(404).send('WhatsApp integration not configured for this company');
+                    return;
+                }
+
                 // Verifica o token usando o secret da empresa
-                // No painel da Meta, o 'Verify Token' deve ser o mesmo que o 'metaAppSecret'
                 const appSecret = await secretManager.getWhatsAppSecret(companyId);
 
                 if (mode === 'subscribe' && token === appSecret) {
                     functions.logger.info(`Webhook verified for company: ${companyId}`);
                     res.status(200).send(challenge);
                 } else {
-                    functions.logger.error(`Webhook verification failed for company ${companyId}. Mode: ${mode}, Token: ${token}`);
+                    functions.logger.error(`Webhook verification failed for company ${companyId}. Mode: ${mode}, Token provided: ${token}, Expected: ${appSecret}`);
                     res.status(403).send('Verification failed');
                 }
-            } catch (error) {
+            } catch (error: any) {
                 functions.logger.error('Error verifying webhook:', error);
-                res.status(500).send('Internal server error');
+                
+                // Respostas mais específicas baseadas no erro
+                if (error.message.includes('not found')) {
+                    res.status(404).send('WhatsApp integration not configured');
+                } else if (error.message.includes('Permission denied')) {
+                    res.status(500).send('Configuration error');
+                } else {
+                    res.status(500).send('Internal server error');
+                }
             }
             return;
         }
@@ -146,6 +167,8 @@ export const whatsappWebhookListener = functions.https.onRequest(
                 const pathParts = req.path.split('/');
                 const companyId = pathParts[pathParts.length - 1];
 
+                functions.logger.info(`Webhook event received for company: ${companyId}`);
+
                 if (!companyId) {
                     res.status(400).send('Company ID not found in webhook URL');
                     return;
@@ -153,7 +176,16 @@ export const whatsappWebhookListener = functions.https.onRequest(
 
                 const signature = req.headers['x-hub-signature-256'] as string;
                 if (!signature) {
+                    functions.logger.warn('Missing signature in webhook request');
                     res.status(401).send('Missing signature');
+                    return;
+                }
+
+                // Verifica se a integração existe antes de processar
+                const secretExists = await secretManager.whatsAppSecretExists(companyId);
+                if (!secretExists) {
+                    functions.logger.error(`WhatsApp integration not found for company: ${companyId}`);
+                    res.status(404).send('WhatsApp integration not configured');
                     return;
                 }
 
@@ -171,15 +203,22 @@ export const whatsappWebhookListener = functions.https.onRequest(
                     return;
                 }
 
-                const payload = req.body;
+                const payload: WebhookPayload = req.body;
+
+                functions.logger.info(`Processing webhook events for company ${companyId}, entries: ${payload.entry?.length || 0}`);
 
                 // Processa os eventos do webhook
                 await processWebhookEvents(companyId, payload);
 
                 res.status(200).send('EVENT_RECEIVED');
-            } catch (error) {
+            } catch (error: any) {
                 functions.logger.error('Error processing webhook:', error);
-                res.status(500).send('Internal server error');
+                
+                if (error.message.includes('not found')) {
+                    res.status(404).send('WhatsApp integration not configured');
+                } else {
+                    res.status(500).send('Internal server error');
+                }
             }
             return;
         }
@@ -246,6 +285,57 @@ export const sendTestMessage = functions.https.onCall(
         }
     }
 );
+
+/**
+ * 4. checkWhatsAppIntegration - Verifica o status da integração
+ */
+export const checkWhatsAppIntegration = functions.https.onCall(
+    async (request: CallableRequest<{ companyId: string }>): Promise<{
+      exists: boolean;
+      status?: string;
+      webhookUrl?: string;
+    }> => {
+      try {
+        const validation = await securityService.validateCallableRequest(request);
+        if (!validation.isValid) {
+          throw new functions.https.HttpsError('unauthenticated', validation.error || 'Validation failed');
+        }
+  
+        const { companyId } = request.data;
+  
+        // Verifica se os secrets existem
+        const tokenExists = await secretManager.whatsAppSecretExists(companyId);
+        const secretExists = await secretManager.whatsAppSecretExists(companyId);
+  
+        if (!tokenExists || !secretExists) {
+          return { exists: false };
+        }
+  
+        // Obtém os dados do Firestore
+        const integrationDoc = await admin.firestore()
+          .collection('companies')
+          .doc(companyId)
+          .collection('integrations')
+          .doc('whatsapp')
+          .get();
+  
+        if (!integrationDoc.exists) {
+          return { exists: false };
+        }
+  
+        const integrationData = integrationDoc.data() as WhatsAppIntegration;
+  
+        return {
+          exists: true,
+          status: integrationData.status,
+          webhookUrl: integrationData.webhookUrl
+        };
+      } catch (error: any) {
+        functions.logger.error('Error checking WhatsApp integration:', error);
+        throw new functions.https.HttpsError('internal', 'Failed to check integration status');
+      }
+    }
+  );
 
 /**
  * Função auxiliar para registrar webhook no Meta

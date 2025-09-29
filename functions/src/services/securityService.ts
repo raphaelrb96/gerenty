@@ -53,29 +53,6 @@ export class SecurityService {
         }
     }
 
-    async validateWebhookSignature(
-        companyId: string,
-        payload: string,
-        signature: string
-    ): Promise<boolean> {
-        try {
-            const appSecret = await this.secretManager.getWhatsAppSecret(companyId);
-
-            const expectedSignature = crypto
-                .createHmac('sha256', appSecret)
-                .update(payload)
-                .digest('hex');
-
-            return crypto.timingSafeEqual(
-                Buffer.from(signature),
-                Buffer.from(expectedSignature)
-            );
-        } catch (error) {
-            functions.logger.error('Error validating webhook signature:', error);
-            return false;
-        }
-    }
-
     async verifyWhatsAppCredentials(
         accessToken: string,
         phoneNumberId: string
@@ -98,4 +75,35 @@ export class SecurityService {
             return false;
         }
     }
+
+    async validateWebhookSignature(
+        companyId: string,
+        payload: string,
+        signature: string
+      ): Promise<boolean> {
+        try {
+          functions.logger.info(`Validating webhook signature for company: ${companyId}`);
+          
+          const appSecret = await this.secretManager.getWhatsAppSecret(companyId);
+          
+          const expectedSignature = crypto
+            .createHmac('sha256', appSecret)
+            .update(payload)
+            .digest('hex');
+      
+          functions.logger.info(`Signature validation - Received: ${signature.substring(0, 10)}..., Expected: ${expectedSignature.substring(0, 10)}...`);
+          
+          const isValid = crypto.timingSafeEqual(
+            Buffer.from(signature),
+            Buffer.from(expectedSignature)
+          );
+      
+          functions.logger.info(`Signature validation result: ${isValid}`);
+          
+          return isValid;
+        } catch (error) {
+          functions.logger.error('Error validating webhook signature:', error);
+          return false;
+        }
+      }
 }
