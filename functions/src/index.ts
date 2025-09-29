@@ -2,5 +2,6 @@
 export {
     validateAndSaveCredentials,
     whatsappWebhookListener,
-    sendTestMessage
+    sendTestMessage,
+    getWhatsAppIntegrationStatus  
 } from './functions/whatsapp';

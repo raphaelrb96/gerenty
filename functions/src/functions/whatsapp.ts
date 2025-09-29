@@ -147,7 +147,7 @@ export const whatsappWebhookListener = functions.https.onRequest(
                 }
             } catch (error: any) {
                 functions.logger.error('Error verifying webhook:', error);
-                
+
                 // Respostas mais específicas baseadas no erro
                 if (error.message.includes('not found')) {
                     res.status(404).send('WhatsApp integration not configured');
@@ -213,7 +213,7 @@ export const whatsappWebhookListener = functions.https.onRequest(
                 res.status(200).send('EVENT_RECEIVED');
             } catch (error: any) {
                 functions.logger.error('Error processing webhook:', error);
-                
+
                 if (error.message.includes('not found')) {
                     res.status(404).send('WhatsApp integration not configured');
                 } else {
@@ -231,32 +231,25 @@ export const whatsappWebhookListener = functions.https.onRequest(
  * 3. sendTestMessage - Utilitário Multi-Tenant
  */
 export const sendTestMessage = functions.https.onCall(
-    async (request: CallableRequest<SendMessagePayload & { companyId: string }>): Promise<{
+    async (request: CallableRequest<{
+        phoneNumber: string;
+        message?: string;
+        type?: 'text' | 'template';
+        templateName?: string;
+        companyId: string;
+    }>): Promise<{
         success: boolean;
         messageId?: string;
         message: string;
+        messageType?: 'conversation' | 'template';
     }> => {
         try {
-            // Valida a requisição e obtém o companyId
             const validation = await securityService.validateCallableRequest(request);
-            if (!validation.isValid || !validation.companyId) {
+            if (!validation.isValid) {
                 throw new functions.https.HttpsError('unauthenticated', validation.error || 'Validation failed');
             }
 
-            const companyId = validation.companyId;
-            const { phoneNumber, message, type = 'text', templateName } = request.data;
-
-            if (!phoneNumber) {
-                throw new functions.https.HttpsError('invalid-argument', 'Phone number is required');
-            }
-
-            if (type === 'text' && !message) {
-                throw new functions.https.HttpsError('invalid-argument', 'Message text is required for text messages');
-            }
-
-            if (type === 'template' && !templateName) {
-                throw new functions.https.HttpsError('invalid-argument', 'Template name is required for template messages');
-            }
+            const { phoneNumber, message, type = 'text', templateName, companyId } = request.data;
 
             const result = await whatsAppService.sendMessage(companyId, {
                 phoneNumber,
@@ -270,12 +263,23 @@ export const sendTestMessage = functions.https.onCall(
                     success: true,
                     messageId: result.messageId,
                     message: 'Message sent successfully',
+                    messageType: result.messageType
                 };
             } else {
+                // Propaga o messageType mesmo no erro para debugging
+                const errorResponse: any = {
+                    success: false,
+                    message: result.error || 'Failed to send message'
+                };
+
+                if (result.messageType) {
+                    errorResponse.messageType = result.messageType;
+                }
+
                 throw new functions.https.HttpsError('internal', result.error || 'Failed to send message');
             }
         } catch (error: any) {
-            functions.logger.error('Error sending test message:', error);
+            functions.logger.error('[sendTestMessage] Error:', error);
 
             if (error instanceof functions.https.HttpsError) {
                 throw error;
@@ -291,51 +295,103 @@ export const sendTestMessage = functions.https.onCall(
  */
 export const checkWhatsAppIntegration = functions.https.onCall(
     async (request: CallableRequest<{ companyId: string }>): Promise<{
-      exists: boolean;
-      status?: string;
-      webhookUrl?: string;
+        exists: boolean;
+        status?: string;
+        webhookUrl?: string;
     }> => {
-      try {
-        const validation = await securityService.validateCallableRequest(request);
-        if (!validation.isValid) {
-          throw new functions.https.HttpsError('unauthenticated', validation.error || 'Validation failed');
+        try {
+            const validation = await securityService.validateCallableRequest(request);
+            if (!validation.isValid) {
+                throw new functions.https.HttpsError('unauthenticated', validation.error || 'Validation failed');
+            }
+
+            const { companyId } = request.data;
+
+            // Verifica se os secrets existem
+            const tokenExists = await secretManager.whatsAppSecretExists(companyId);
+            const secretExists = await secretManager.whatsAppSecretExists(companyId);
+
+            if (!tokenExists || !secretExists) {
+                return { exists: false };
+            }
+
+            // Obtém os dados do Firestore
+            const integrationDoc = await admin.firestore()
+                .collection('companies')
+                .doc(companyId)
+                .collection('integrations')
+                .doc('whatsapp')
+                .get();
+
+            if (!integrationDoc.exists) {
+                return { exists: false };
+            }
+
+            const integrationData = integrationDoc.data() as WhatsAppIntegration;
+
+            return {
+                exists: true,
+                status: integrationData.status,
+                webhookUrl: integrationData.webhookUrl
+            };
+        } catch (error: any) {
+            functions.logger.error('Error checking WhatsApp integration:', error);
+            throw new functions.https.HttpsError('internal', 'Failed to check integration status');
         }
-  
-        const { companyId } = request.data;
-  
-        // Verifica se os secrets existem
-        const tokenExists = await secretManager.whatsAppSecretExists(companyId);
-        const secretExists = await secretManager.whatsAppSecretExists(companyId);
-  
-        if (!tokenExists || !secretExists) {
-          return { exists: false };
-        }
-  
-        // Obtém os dados do Firestore
-        const integrationDoc = await admin.firestore()
-          .collection('companies')
-          .doc(companyId)
-          .collection('integrations')
-          .doc('whatsapp')
-          .get();
-  
-        if (!integrationDoc.exists) {
-          return { exists: false };
-        }
-  
-        const integrationData = integrationDoc.data() as WhatsAppIntegration;
-  
-        return {
-          exists: true,
-          status: integrationData.status,
-          webhookUrl: integrationData.webhookUrl
-        };
-      } catch (error: any) {
-        functions.logger.error('Error checking WhatsApp integration:', error);
-        throw new functions.https.HttpsError('internal', 'Failed to check integration status');
-      }
     }
-  );
+);
+
+/**
+* 5. getWhatsAppIntegrationStatus - Obtém o status da integração
+*/
+export const getWhatsAppIntegrationStatus = functions.https.onCall(
+    async (request: CallableRequest<{ companyId: string }>): Promise<{
+        exists: boolean;
+        status?: string;
+        webhookUrl?: string;
+        whatsAppId?: string;
+        phoneNumberId?: string;
+    }> => {
+        try {
+            const validation = await securityService.validateCallableRequest(request);
+            if (!validation.isValid) {
+                throw new functions.https.HttpsError('unauthenticated', validation.error || 'Validation failed');
+            }
+
+            const { companyId } = request.data;
+
+            // Verifica se os secrets existem
+            const secretManager = SecretManagerService.getInstance();
+            const tokenExists = await secretManager.whatsAppSecretExists(companyId);
+            const appSecretExists = await secretManager.whatsAppSecretExists(companyId);
+
+            // Obtém os dados do Firestore
+            const integrationDoc = await admin.firestore()
+                .collection('companies')
+                .doc(companyId)
+                .collection('integrations')
+                .doc('whatsapp')
+                .get();
+
+            if (!integrationDoc.exists || !tokenExists || !appSecretExists) {
+                return { exists: false };
+            }
+
+            const integrationData = integrationDoc.data() as WhatsAppIntegration;
+
+            return {
+                exists: true,
+                status: integrationData.status,
+                webhookUrl: integrationData.webhookUrl,
+                whatsAppId: integrationData.whatsAppId,
+                phoneNumberId: integrationData.phoneNumberId
+            };
+        } catch (error: any) {
+            functions.logger.error('Error getting WhatsApp integration status:', error);
+            throw new functions.https.HttpsError('internal', 'Failed to get integration status');
+        }
+    }
+);
 
 /**
  * Função auxiliar para registrar webhook no Meta
@@ -359,7 +415,7 @@ async function registerWebhookWithMeta(
                 }),
             }
         );
-        
+
         if (!response.ok) {
             const errorData = await response.json();
             functions.logger.error(`Error registering webhook for company ${companyId}:`, errorData);
@@ -538,4 +594,4 @@ async function processMessageStatus(companyId: string, status: any): Promise<voi
         throw error;
     }
 }
-    
+

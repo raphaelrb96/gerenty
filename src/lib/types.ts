@@ -925,9 +925,18 @@ export interface WhatsAppCredentials {
   metaAppSecret: string;
 }
 
+
+export interface MessageResult {
+  success: boolean;
+  messageId?: string;
+  error?: string;
+  messageType?: 'conversation' | 'template';
+}
+
 export interface TestMessageResponse {
   success: boolean;
   messageId?: string;
   message: string;
+  messageType?: 'conversation' | 'template';
 }
     

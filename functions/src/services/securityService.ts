@@ -22,30 +22,38 @@ export class SecurityService {
             }
 
             const userId = request.auth.uid;
-            // O companyId agora vem do payload da requisição
-            const companyId = request.data.companyId;
+            const companyId = request.data?.companyId;
 
             if (!companyId) {
                 return { isValid: false, error: 'Company ID not provided in the request' };
             }
 
-            // Opcional: Verifique se o usuário tem permissão para agir nesta empresa.
-            // Para isso, precisaríamos de uma estrutura que ligue usuários a empresas
-            // (por exemplo, um array 'authorizedUsers' no documento da empresa).
-            // Por enquanto, vamos confiar que se o usuário está autenticado, ele pode agir.
-            // Em um cenário de produção, esta verificação é crucial.
+            // Verifica se a empresa existe
             const companyDoc = await this.db.collection('companies').doc(companyId).get();
-            if (!companyDoc) {
+            if (!companyDoc.exists) {
                 return { isValid: false, error: 'Company not found' };
             }
-            // Verifica se o dono da empresa é o usuário que faz a requisição
-            if (companyDoc.data()?.ownerId !== userId) {
-                 // Se não for o dono, verifica se é um funcionário com permissão
-                 // (essa lógica pode ser expandida)
-                 return { isValid: false, error: 'User does not have permission for this company' };
+
+            const companyData = companyDoc.data();
+
+            // Verifica se o usuário tem acesso à empresa
+            // Estrutura flexível que suporta diferentes modelos de permissão
+            const hasAccess =
+                // Se a empresa tem um ownerId e é o usuário atual
+                companyData?.ownerId === userId ||
+                // Se a empresa tem um array de users/members que inclui o usuário
+                (companyData?.users && companyData.users.includes(userId)) ||
+                // Se a empresa tem um array de authorizedUsers que inclui o usuário
+                (companyData?.authorizedUsers && companyData.authorizedUsers.includes(userId)) ||
+                // Se a empresa tem um campo createdBy que é o usuário atual
+                companyData?.createdBy === userId;
+
+            if (!hasAccess) {
+                functions.logger.warn(`User ${userId} attempted to access company ${companyId} without permission`);
+                return { isValid: false, error: 'User does not have permission for this company' };
             }
 
-
+            functions.logger.info(`User ${userId} authorized for company ${companyId}`);
             return { isValid: true, companyId };
         } catch (error) {
             functions.logger.error('Error validating request:', error);
@@ -80,30 +88,30 @@ export class SecurityService {
         companyId: string,
         payload: string,
         signature: string
-      ): Promise<boolean> {
+    ): Promise<boolean> {
         try {
-          functions.logger.info(`Validating webhook signature for company: ${companyId}`);
-          
-          const appSecret = await this.secretManager.getWhatsAppSecret(companyId);
-          
-          const expectedSignature = crypto
-            .createHmac('sha256', appSecret)
-            .update(payload)
-            .digest('hex');
-      
-          functions.logger.info(`Signature validation - Received: ${signature.substring(0, 10)}..., Expected: ${expectedSignature.substring(0, 10)}...`);
-          
-          const isValid = crypto.timingSafeEqual(
-            Buffer.from(signature),
-            Buffer.from(expectedSignature)
-          );
-      
-          functions.logger.info(`Signature validation result: ${isValid}`);
-          
-          return isValid;
+            functions.logger.info(`Validating webhook signature for company: ${companyId}`);
+
+            const appSecret = await this.secretManager.getWhatsAppSecret(companyId);
+
+            const expectedSignature = crypto
+                .createHmac('sha256', appSecret)
+                .update(payload)
+                .digest('hex');
+
+            functions.logger.info(`Signature validation - Received: ${signature.substring(0, 10)}..., Expected: ${expectedSignature.substring(0, 10)}...`);
+
+            const isValid = crypto.timingSafeEqual(
+                Buffer.from(signature),
+                Buffer.from(expectedSignature)
+            );
+
+            functions.logger.info(`Signature validation result: ${isValid}`);
+
+            return isValid;
         } catch (error) {
-          functions.logger.error('Error validating webhook signature:', error);
-          return false;
+            functions.logger.error('Error validating webhook signature:', error);
+            return false;
         }
-      }
+    }
 }
