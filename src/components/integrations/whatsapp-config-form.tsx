@@ -22,6 +22,17 @@ import { Loader2, Eye, EyeOff, Copy, CheckCircle, AlertCircle, XCircle, Info, Te
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/auth-context";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 // Schema atualizado para corresponder ao back-end
 const formSchema = z.object({
@@ -42,6 +53,8 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
     const [isEditing, setIsEditing] = useState(false);
     const [integration, setIntegration] = useState<WhatsAppIntegration | null>(null);
     const { user } = useAuth();
+    const [isTestModalOpen, setIsTestModalOpen] = useState(false);
+    const [testPhoneNumber, setTestPhoneNumber] = useState("");
 
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -192,43 +205,31 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
       };
 
     const handleTestConnection = async () => {
-        if (!integration || integration.status !== 'connected') {
+        if (!testPhoneNumber) {
+             toast({ variant: "destructive", title: "Campo obrigatório", description: "Por favor, insira um número de telefone." });
+             return;
+        }
+        
+        // Validação básica do número
+        if (!testPhoneNumber.match(/^\d{10,15}$/)) {
             toast({
                 variant: "destructive",
-                title: "Integração não configurada",
-                description: "Configure e valide a integração primeiro."
+                title: "Número inválido",
+                description: "Use apenas números no formato internacional (ex: 5511999999999)."
             });
             return;
         }
-
+        
         setIsTesting(true);
         try {
-            const testPhone = prompt("Digite um número de telefone para teste (formato internacional, ex: 5511999999999):");
-
-            if (!testPhone) {
-                setIsTesting(false);
-                return;
-            }
-
-            // Validação básica do número
-            if (!testPhone.match(/^\d{10,15}$/)) {
-                toast({
-                    variant: "destructive",
-                    title: "Número inválido",
-                    description: "Use apenas números no formato internacional (ex: 5511999999999)."
-                });
-                setIsTesting(false);
-                return;
-            }
-
-            const result = await sendTestMessage(company.id, testPhone);
-
+            const result = await sendTestMessage(company.id, testPhoneNumber);
             toast({
                 title: "Teste Enviado!",
-                description: `Mensagem enviada para ${testPhone}. ID: ${result.messageId}`,
+                description: `Mensagem enviada para ${testPhoneNumber}. ID: ${result.messageId}`,
                 variant: "default"
             });
-
+            setIsTestModalOpen(false); // Fecha o modal em caso de sucesso
+            setTestPhoneNumber(""); // Limpa o campo
         } catch (error: any) {
             toast({
                 variant: "destructive",
@@ -252,22 +253,45 @@ export function WhatsAppConfigForm({ company }: { company: Company }) {
                         <AlertDescription>{statusContent.description}</AlertDescription>
                     </div>
                     {integration?.status === 'connected' && (
-                        <Button
+                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={handleTestConnection}
+                            onClick={() => setIsTestModalOpen(true)}
                             disabled={isTesting}
                         >
-                            {isTesting ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                                <TestTube2 className="mr-2 h-4 w-4" />
-                            )}
+                            <TestTube2 className="mr-2 h-4 w-4" />
                             Testar
                         </Button>
                     )}
                 </div>
             </Alert>
+            
+            <AlertDialog open={isTestModalOpen} onOpenChange={setIsTestModalOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Enviar Mensagem de Teste</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Digite um número de telefone completo com código do país para enviar uma mensagem de teste do modelo 'hello_world'.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="py-4">
+                        <Label htmlFor="test-phone-number">Número de Telefone</Label>
+                        <Input 
+                            id="test-phone-number" 
+                            placeholder="Ex: 5511999999999"
+                            value={testPhoneNumber}
+                            onChange={(e) => setTestPhoneNumber(e.target.value)}
+                        />
+                    </div>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleTestConnection} disabled={isTesting}>
+                             {isTesting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                             Enviar Teste
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
             <Card>
                 <CardHeader>
