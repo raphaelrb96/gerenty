@@ -1,3 +1,4 @@
+
 // src/services/integration-service.ts
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '@/lib/firebase';
@@ -37,6 +38,15 @@ const getWhatsAppIntegrationStatusCallable = httpsCallable<{
   whatsAppId?: string;
   phoneNumberId?: string;
 }>(functions, 'getWhatsAppIntegrationStatus');
+
+const apiSyncWhatsAppTemplatesCallable = httpsCallable<{
+    companyId: string;
+}, {
+    success: boolean;
+    added: number;
+    updated: number;
+}>(functions, 'apiSyncWhatsAppTemplates');
+
 
 export const integrationService = {
   async saveWhatsAppCredentials(companyId: string, credentials: WhatsAppCredentials) {
@@ -109,6 +119,16 @@ export const integrationService = {
       throw new Error(error.message || 'Erro ao obter status da integração');
     }
   },
+  
+  async syncWhatsAppTemplates(companyId: string) {
+    try {
+        const result = await apiSyncWhatsAppTemplatesCallable({ companyId });
+        return result.data;
+    } catch (error: any) {
+        console.error('Error syncing WhatsApp templates:', error);
+        throw new Error(error.message || 'Erro ao sincronizar templates');
+    }
+  },
 
 };
 
@@ -117,3 +137,4 @@ export const saveWhatsAppCredentials = integrationService.saveWhatsAppCredential
 export const sendTestMessage = integrationService.sendTestMessage;
 export const checkWhatsAppIntegration = integrationService.checkWhatsAppIntegration;
 export const getWhatsAppIntegrationStatus = integrationService.getWhatsAppIntegrationStatus;
+export const syncWhatsAppTemplates = integrationService.syncWhatsAppTemplates;

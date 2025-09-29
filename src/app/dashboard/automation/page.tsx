@@ -34,6 +34,7 @@ import { ResponseCard } from "@/components/automation/response-card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { syncWhatsAppTemplates } from "@/services/integration-service";
 
 
 function AutomationRulesTab() {
@@ -260,19 +261,28 @@ function TemplatesTab() {
     }
   }
 
-  const handleSync = async () => {
-    setIsSyncing(true);
-    // Placeholder for actual sync logic
-    toast({ title: "Sincronização iniciada", description: "Buscando novos templates da Meta..." });
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setIsSyncing(false);
-    
-    // Set cooldown
-    localStorage.setItem(syncStorageKey, new Date().toISOString());
-    setSyncCooldown(SYNC_COOLDOWN_HOURS * 60 * 60 * 1000);
-    
-    toast({ title: "Sincronização concluída (simulação)" });
-  }
+    const handleSync = async () => {
+        if (!activeCompany) {
+            toast({ variant: "destructive", title: "Nenhuma empresa selecionada" });
+            return;
+        }
+        setIsSyncing(true);
+        try {
+            const result = await syncWhatsAppTemplates(activeCompany.id);
+            toast({
+                title: "Sincronização Concluída",
+                description: `${result.added} templates adicionados, ${result.updated} atualizados.`
+            });
+            fetchTemplates(); // Refresh the list
+            localStorage.setItem(syncStorageKey, new Date().toISOString());
+            setSyncCooldown(SYNC_COOLDOWN_HOURS * 60 * 60 * 1000);
+        } catch (error: any) {
+            toast({ variant: "destructive", title: "Erro ao Sincronizar", description: error.message });
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
 
   const formatCooldown = (ms: number) => {
     const hours = Math.floor(ms / (1000 * 60 * 60));

@@ -1,3 +1,4 @@
+
 // src/functions/whatsapp.ts
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
@@ -10,11 +11,15 @@ import {
     TemplateErrorInfo,
     WebhookPayload,
     WhatsAppCredentials,
-    WhatsAppIntegration
+    WhatsAppIntegration,
+    MessageTemplate
 } from '../types/whatsapp';
 
 // Inicializa o Firebase Admin
-admin.initializeApp();
+if (admin.apps.length === 0) {
+    admin.initializeApp();
+}
+
 
 const secretManager = SecretManagerService.getInstance();
 const securityService = new SecurityService();
@@ -400,6 +405,90 @@ export const getWhatsAppIntegrationStatus = functions.https.onCall(
     }
 );
 
+export const apiSyncWhatsAppTemplates = functions.https.onCall(async (request: CallableRequest<{ companyId: string }>) => {
+    const validation = await securityService.validateCallableRequest(request);
+    if (!validation.isValid || !validation.companyId) {
+        throw new functions.https.HttpsError('unauthenticated', validation.error || 'Validation failed');
+    }
+
+    const { companyId } = request.data;
+
+    try {
+        const accessToken = await secretManager.getWhatsAppToken(companyId);
+        const integrationDoc = await admin.firestore().collection('companies').doc(companyId).collection('integrations').doc('whatsapp').get();
+
+        if (!integrationDoc.exists) {
+            throw new functions.https.HttpsError('not-found', 'Integração do WhatsApp não encontrada para esta empresa.');
+        }
+
+        const wabaId = integrationDoc.data()?.whatsAppId;
+        if (!wabaId) {
+            throw new functions.https.HttpsError('not-found', 'ID da Conta do WhatsApp Business não encontrado.');
+        }
+
+        // Fetch templates from Meta API
+        const response = await fetch(`https://graph.facebook.com/v17.0/${wabaId}/message_templates`, {
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new functions.https.HttpsError('internal', `Erro ao buscar templates da Meta: ${errorData.error.message}`);
+        }
+
+        const { data: metaTemplates } = await response.json();
+
+        // Fetch existing templates from Firestore
+        const firestoreTemplatesRef = admin.firestore().collection('companies').doc(companyId).collection('messageTemplates');
+        const firestoreSnapshot = await firestoreTemplatesRef.get();
+        const firestoreTemplates = firestoreSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as (MessageTemplate & { id: string })[];
+
+        let addedCount = 0;
+        let updatedCount = 0;
+
+        const batch = admin.firestore().batch();
+
+        for (const metaTemplate of metaTemplates) {
+            const existingTemplate = firestoreTemplates.find(ft => ft.name === metaTemplate.name && ft.language === metaTemplate.language);
+            
+            const templatePayload: Omit<MessageTemplate, 'id' | 'createdAt' | 'updatedAt'> = {
+                name: metaTemplate.name,
+                category: metaTemplate.category.toLowerCase(),
+                language: metaTemplate.language,
+                status: metaTemplate.status.toLowerCase(),
+                components: metaTemplate.components,
+            };
+
+            if (existingTemplate) {
+                // Update if status is different
+                if (existingTemplate.status !== metaTemplate.status.toLowerCase()) {
+                    const docRef = firestoreTemplatesRef.doc(existingTemplate.id);
+                    batch.update(docRef, { status: metaTemplate.status.toLowerCase(), updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+                    updatedCount++;
+                }
+            } else {
+                // Add new template
+                const docRef = firestoreTemplatesRef.doc();
+                batch.set(docRef, { ...templatePayload, createdAt: admin.firestore.FieldValue.serverTimestamp(), updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+                addedCount++;
+            }
+        }
+
+        await batch.commit();
+
+        return { success: true, added: addedCount, updated: updatedCount };
+
+    } catch (error: any) {
+        functions.logger.error('Error syncing WhatsApp templates:', error);
+        if (error instanceof functions.https.HttpsError) {
+            throw error;
+        }
+        throw new functions.https.HttpsError('internal', 'Falha ao sincronizar templates do WhatsApp.');
+    }
+});
+
+
+
 /**
  * Função auxiliar para registrar webhook no Meta
  */
@@ -601,4 +690,3 @@ async function processMessageStatus(companyId: string, status: any): Promise<voi
         throw error;
     }
 }
-

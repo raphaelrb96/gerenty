@@ -1,11 +1,7 @@
 
 
 // src/index.ts
-import * as functions from 'firebase-functions';
-import { validateAndSaveCredentials } from './functions/whatsapp';
-import { whatsappWebhookListener } from './functions/whatsapp';
-import { sendTestMessage } from './functions/whatsapp';
-import { getWhatsAppIntegrationStatus } from './functions/whatsapp';
+import { validateAndSaveCredentials, whatsappWebhookListener, sendTestMessage, getWhatsAppIntegrationStatus, apiSyncWhatsAppTemplates } from './functions/whatsapp';
 
 // Exporte as funções individualmente
 export {
@@ -13,4 +9,5 @@ export {
   whatsappWebhookListener,
   sendTestMessage,
   getWhatsAppIntegrationStatus,
+  apiSyncWhatsAppTemplates
 };
