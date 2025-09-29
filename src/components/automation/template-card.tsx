@@ -52,7 +52,7 @@ export function TemplateCard({ template, onViewDetails, onEdit, onDelete }: Temp
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
                             <DropdownMenuItem onSelect={onViewDetails}><Eye className="mr-2 h-4 w-4" />Ver Prévia</DropdownMenuItem>
-                            <DropdownMenuItem onSelect={onEdit}><Pencil className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={onEdit} disabled><Pencil className="mr-2 h-4 w-4" />Editar (em breve)</DropdownMenuItem>
                             <DropdownMenuItem onSelect={onDelete} className="text-destructive focus:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Excluir</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>

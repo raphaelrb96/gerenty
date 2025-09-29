@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Bot, PlusCircle, LayoutGrid, Building, Library, Workflow, Pencil, MoreVertical, Trash2, RefreshCw } from "lucide-react";
 import type { MessageTemplate, LibraryMessage, AutomationRule, Flow } from "@/lib/types";
-import { getTemplatesByCompany, deleteTemplate } from "@/services/template-service";
+import { getTemplatesByCompany, deleteTemplate as deleteTemplateService } from "@/services/template-service";
 import { getLibraryMessagesByCompany, deleteLibraryMessage } from "@/services/library-message-service";
 import { getFlowsByCompany, deleteFlow } from "@/services/flow-service";
 import { useCompany } from "@/context/company-context";
@@ -251,7 +251,7 @@ function TemplatesTab() {
   const handleDelete = async () => {
     if (!templateToDelete || !activeCompany) return;
     try {
-        await deleteTemplate(activeCompany.id, templateToDelete.id);
+        await deleteTemplateService(activeCompany.id, templateToDelete.name);
         toast({ title: "Template excluído com sucesso!" });
         fetchTemplates();
     } catch (error) {
@@ -288,7 +288,7 @@ function TemplatesTab() {
     const hours = Math.floor(ms / (1000 * 60 * 60));
     const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((ms % (1000 * 60)) / 1000);
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   }
   
     if (loading) {
@@ -355,7 +355,7 @@ function TemplatesTab() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Esta ação não pode ser desfeita. Isso excluirá permanentemente o template "{templateToDelete?.name}".
+                            Esta ação não pode ser desfeita. Isso excluirá permanentemente o template "{templateToDelete?.name}" da Meta e do Gerenty.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

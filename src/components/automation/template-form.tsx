@@ -46,7 +46,7 @@ const componentSchema = z.object({
 const formSchema = z.object({
   name: z.string().min(2, "Nome do template é obrigatório.").regex(/^[a-z0-9_]+$/, "Apenas letras minúsculas, números e underscores."),
   language: z.string().min(2, "Idioma é obrigatório (ex: pt_BR)."),
-  category: z.enum(['marketing', 'utility', 'authentication']),
+  category: z.enum(['UTILITY', 'MARKETING', 'AUTHENTICATION']),
   components: z.array(componentSchema).min(1, "O template deve ter pelo menos um corpo (BODY)."),
 });
 
@@ -62,7 +62,7 @@ export function TemplateForm({ isOpen, onClose, onFinished, template }: Template
     defaultValues: {
       name: "",
       language: "pt_BR",
-      category: "utility",
+      category: "UTILITY",
       components: [{ type: 'BODY', text: '' }],
     },
   });
@@ -80,18 +80,18 @@ export function TemplateForm({ isOpen, onClose, onFinished, template }: Template
   });
 
   React.useEffect(() => {
-    if (template) {
+    if (template && isOpen) {
       form.reset({
         name: template.name,
         language: template.language,
-        category: template.category,
+        category: template.category.toUpperCase() as any,
         components: template.components.length > 0 ? template.components : [{ type: 'BODY', text: '' }],
       });
-    } else {
+    } else if (!template && isOpen) {
       form.reset({
         name: "",
         language: "pt_BR",
-        category: "utility",
+        category: "UTILITY",
         components: [{ type: 'BODY', text: '' }],
       });
     }
@@ -105,7 +105,7 @@ export function TemplateForm({ isOpen, onClose, onFinished, template }: Template
     setIsSaving(true);
     try {
       if (template) {
-        await updateTemplate(activeCompany.id, template.id, values);
+        await updateTemplate(activeCompany.id, template.id, values as any);
         toast({ title: "Template atualizado com sucesso!" });
       } else {
         await addTemplate(activeCompany.id, values as any);
@@ -113,9 +113,9 @@ export function TemplateForm({ isOpen, onClose, onFinished, template }: Template
       }
       onFinished();
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving template:", error);
-      toast({ variant: "destructive", title: "Erro ao salvar template." });
+      toast({ variant: "destructive", title: "Erro ao salvar template.", description: error.message });
     } finally {
       setIsSaving(false);
     }
@@ -146,10 +146,10 @@ export function TemplateForm({ isOpen, onClose, onFinished, template }: Template
                     <CardHeader><CardTitle>Informações Gerais</CardTitle></CardHeader>
                     <CardContent className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
-                            <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Nome do Template</FormLabel><FormControl><Input placeholder="ex: boas_vindas" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Nome do Template</FormLabel><FormControl><Input placeholder="ex: boas_vindas" {...field} disabled={!!template} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={form.control} name="language" render={({ field }) => (<FormItem><FormLabel>Idioma</FormLabel><FormControl><Input placeholder="pt_BR" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         </div>
-                        <FormField control={form.control} name="category" render={({ field }) => (<FormItem><FormLabel>Categoria</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="marketing">Marketing</SelectItem><SelectItem value="utility">Utilidade</SelectItem><SelectItem value="authentication">Autenticação</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="category" render={({ field }) => (<FormItem><FormLabel>Categoria</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="MARKETING">Marketing</SelectItem><SelectItem value="UTILITY">Utilidade</SelectItem><SelectItem value="AUTHENTICATION">Autenticação</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
                     </CardContent>
                 </Card>
                 
@@ -230,7 +230,7 @@ export function TemplateForm({ isOpen, onClose, onFinished, template }: Template
               <Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button>
               <Button type="submit" disabled={isSaving}>
                 {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Salvar Template
+                {template ? 'Salvar Alterações' : 'Criar Template'}
               </Button>
             </SheetFooter>
           </form>
