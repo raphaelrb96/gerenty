@@ -115,8 +115,7 @@ export class TemplateService {
     async updateTemplateStatusInFirestore(companyId: string, templateName: string, newStatus: string): Promise<void> {
         try {
             const templatesCollection = this.db.collection('companies').doc(companyId).collection('messageTemplates');
-            const q = query(templatesCollection, where('name', '==', templateName));
-            const querySnapshot = await getDocs(q);
+            const querySnapshot = await templatesCollection.where('name', '==', templateName).get();
 
             if (querySnapshot.empty) {
                 functions.logger.warn(`Template status update received for non-existent template: ${templateName} in company ${companyId}`);
@@ -213,8 +212,7 @@ export class TemplateService {
 
             // Also delete from Firestore
             const templatesCollection = this.db.collection('companies').doc(companyId).collection('messageTemplates');
-            const q = query(templatesCollection, where('name', '==', templateName));
-            const querySnapshot = await getDocs(q);
+            const querySnapshot = await templatesCollection.where('name', '==', templateName).get();
             if (!querySnapshot.empty) {
                 await querySnapshot.docs[0].ref.delete();
             }
