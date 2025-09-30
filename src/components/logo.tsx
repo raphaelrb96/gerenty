@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Building2 } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 type LogoProps = {
@@ -16,7 +16,7 @@ export function Logo({ href = "/", className }: LogoProps) {
         className
       )}
     >
-      <Building2 className="h-6 w-6" />
+      <Image src="/favicon.svg" alt="Gerenty Logo" width={28} height={28} />
       <span className="font-headline text-2xl ml-1 font-bold">Gerenty</span>
     </Link>
   );
