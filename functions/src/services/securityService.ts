@@ -23,7 +23,7 @@ export class SecurityService {
 
             functions.logger.log('validateCallableRequest:', 'Request Autenticado');
 
-            const userId = request.auth.uid || request.data?.uid;
+            const userId = request.auth?.uid || request.data?.uid;
             const companyId = request.data?.companyId;
 
             if (!companyId) {

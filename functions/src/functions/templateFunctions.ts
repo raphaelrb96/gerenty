@@ -27,10 +27,10 @@ export const createTemplate = functions.https.onCall(async (request: CallableReq
 
     functions.logger.log('Creating template.. uid: ', JSON.stringify(request.auth?.uid));
 
-    // if (!validation.isValid || !validation.companyId) {
-    //     functions.logger.error('Creating template Error...', JSON.stringify(validation));
-    //     throw new functions.https.HttpsError('unauthenticated', validation.error || 'Validation failed');
-    // }
+    if (!validation.isValid || !validation.companyId) {
+        functions.logger.error('Creating template Error...', JSON.stringify(validation));
+        throw new functions.https.HttpsError('unauthenticated', validation.error || 'Validation failed');
+    }
 
     functions.logger.log('Creating template auth is Valid..');
 
@@ -42,6 +42,16 @@ export const createTemplate = functions.https.onCall(async (request: CallableReq
             language,
             components,
         });
+
+        // ✅  Salvar no Firestore após criar na Meta
+        await templateService.saveTemplateInFirestore(companyId, {
+            name,
+            category: category as 'UTILITY' | 'MARKETING' | 'AUTHENTICATION',
+            language,
+            components,
+            status: result.status, // Usar o status retornado pela Meta
+        });
+        
         return {
             success: true,
             id: result.id || `template-${Date.now()}`,
@@ -71,9 +81,9 @@ interface UpdateTemplateRequest {
 
 export const updateTemplate = functions.https.onCall(async (request: functions.https.CallableRequest<UpdateTemplateRequest>) => {
     const validation = await securityService.validateCallableRequest(request);
-    // if (!validation.isValid || !validation.companyId) {
-    //     throw new functions.https.HttpsError('unauthenticated', validation.error || 'Validation failed');
-    // }
+    if (!validation.isValid || !validation.companyId) {
+        throw new functions.https.HttpsError('unauthenticated', validation.error || 'Validation failed');
+    }
 
     // ✅ CORREÇÃO: Agora pegamos todos os 3 parâmetros do request.data
     const { templateName, data, companyId } = request.data;
@@ -100,9 +110,9 @@ interface DeleteTemplateRequest {
 
 export const deleteTemplate = functions.https.onCall(async (request: CallableRequest<DeleteTemplateRequest>) => {
     const validation = await securityService.validateCallableRequest(request);
-    // if (!validation.isValid) {
-    //     throw new functions.https.HttpsError('unauthenticated', validation.error || 'Validation failed');
-    // }
+    if (!validation.isValid) {
+        throw new functions.https.HttpsError('unauthenticated', validation.error || 'Validation failed');
+    }
 
     const { templateName, companyId } = request.data;
 

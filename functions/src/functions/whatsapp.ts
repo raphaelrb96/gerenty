@@ -5,6 +5,7 @@ import * as admin from 'firebase-admin';
 import { SecretManagerService } from '../services/secretManager';
 import { SecurityService } from '../services/securityService';
 import { WhatsAppService } from '../services/whatsAppService';
+import { TemplateService } from '../services/template-service';
 import {
     CallableRequest,
     SendMessagePayload,
@@ -24,6 +25,7 @@ if (admin.apps.length === 0) {
 const secretManager = SecretManagerService.getInstance();
 const securityService = new SecurityService();
 const whatsAppService = new WhatsAppService();
+const templateService = new TemplateService();
 
 /**
  * 1. validateAndSaveCredentials - Configuração Segura Multi-Tenant
@@ -523,7 +525,7 @@ async function registerWebhookWithMeta(
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    subscribed_fields: ['messages', 'message_deliveries', 'message_reads'],
+                    subscribed_fields: ['messages', 'message_template_status_update', 'message_deliveries', 'message_reads'],
                 }),
             }
         );
@@ -562,6 +564,11 @@ async function processWebhookEvents(companyId: string, payload: any): Promise<vo
                     for (const status of value.statuses) {
                         await processMessageStatus(companyId, status);
                     }
+                }
+
+                // ✅ NOVO: Processa atualização de status do template
+                if (value.message_template_status_update) {
+                    await processTemplateStatusUpdate(companyId, value.message_template_status_update);
                 }
             }
         }
@@ -707,6 +714,30 @@ async function processMessageStatus(companyId: string, status: any): Promise<voi
     }
 }
 
+
+/**
+ * ✅ NOVO: Processa atualizações de status de template
+ */
+async function processTemplateStatusUpdate(companyId: string, update: any): Promise<void> {
+    try {
+        const { message_template_name: templateName, event } = update;
+
+        if (!templateName || !event) {
+            functions.logger.warn(`Template status update missing data for company ${companyId}`, update);
+            return;
+        }
+
+        functions.logger.info(`Template status update for ${templateName}: ${event}`, { companyId, update });
+
+        await templateService.updateTemplateStatusInFirestore(companyId, templateName, event);
+
+    } catch (error) {
+        functions.logger.error('Error processing template status update:', error);
+        // Não relança o erro para não parar o processamento de outros webhooks
+    }
+}
+
+
 function sanitizeMetaTemplateComponents(components: any[]): any[] {
     return components.map(component => {
         const sanitizedComponent = { ...component };
@@ -785,4 +816,5 @@ function sanitizeMetaPatterns(text: string): string {
         // Garante que não haja caracteres inválidos
         .replace(/[^\x20-\x7E\u00C0-\u00FF]/g, '');
 }
+
 
