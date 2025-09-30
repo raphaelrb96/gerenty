@@ -1,12 +1,15 @@
 {
   "hosting": {
     "source": ".",
-    "site": "gerenty",
+    "site": "gerenty-app",
     "ignore": [
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
-    ]
+    ],
+    "frameworksBackend": {
+      "region": "us-central1"
+    }
   },
   "functions": [
     {
@@ -21,4 +24,5 @@
       ]
     }
   ]
+  
 }

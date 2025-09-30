@@ -10,6 +10,9 @@ import { CurrencyProvider } from "@/context/currency-context";
 export const metadata: Metadata = {
   title: "Gerenty",
   description: "Simplify your business operations.",
+  icons: {
+    icon: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({

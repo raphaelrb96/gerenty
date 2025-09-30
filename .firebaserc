@@ -1,8 +1,5 @@
 {
   "projects": {
-    "default": "gerenty-app",
-    "production": "gerenty-app"
-  },
-  "targets": {},
-  "etags": {}
+    "default": "gerenty-app"
+  }
 }
