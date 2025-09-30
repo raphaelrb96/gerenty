@@ -1,7 +1,7 @@
 // src/lib/template-service.ts (ou onde estiver seu código front-end)
 'use server';
 
-import { db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { collection, getDocs, query, where, doc, getDoc, updateDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
 import type { MessageTemplate } from "@/lib/types";
 import { httpsCallable } from 'firebase/functions';
@@ -31,6 +31,7 @@ const createTemplateCallable = httpsCallable<{
     language: string;
     components: any[];
     companyId: string;
+    uid?: string;
 }, CreateTemplateResponse>(functions, 'createTemplate');
 
 const updateTemplateCallable = httpsCallable<{
@@ -42,6 +43,7 @@ const updateTemplateCallable = httpsCallable<{
         language?: string;
     };
     companyId: string;
+    uid?: string;
 }, {
     success: boolean;
     message?: string;
@@ -50,6 +52,7 @@ const updateTemplateCallable = httpsCallable<{
 const deleteTemplateCallable = httpsCallable<{
     templateName: string;
     companyId: string;
+    uid?: string;
 }, DeleteTemplateResponse>(functions, 'deleteTemplate');
 
 const getTemplatesCollection = (companyId: string) =>
@@ -124,7 +127,8 @@ export async function addTemplate(
     try {
         const result = await createTemplateCallable({
             ...templateData,
-            companyId
+            companyId,
+            uid: auth.currentUser?.uid
         });
 
         if (!result.data.success) {
@@ -168,7 +172,8 @@ export async function updateTemplate(
         const result = await updateTemplateCallable({
             templateName,    // Nome do template
             data: templateData, // Dados para atualizar
-            companyId        // ID da empresa
+            companyId,        // ID da empresa
+            uid: auth.currentUser?.uid
         });
 
         if (!result.data.success) {
@@ -198,7 +203,8 @@ export async function deleteTemplate(companyId: string, templateName: string): P
     try {
         const result = await deleteTemplateCallable({
             templateName,
-            companyId
+            companyId,
+            uid: auth.currentUser?.uid
         });
 
         if (!result.data.success) {

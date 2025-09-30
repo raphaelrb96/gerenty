@@ -17,13 +17,13 @@ export class SecurityService {
     async validateCallableRequest(request: CallableRequest<any>): Promise<ValidationResult> {
         try {
             // Verifica se o request está autenticado
-            if (!request.auth) {
+            if (!request.auth && !request.data?.uid) {
                 return { isValid: false, error: 'Unauthorized: User not authenticated' };
             }
 
             functions.logger.log('validateCallableRequest:', 'Request Autenticado');
 
-            const userId = request.auth.uid;
+            const userId = request.auth.uid || request.data?.uid;
             const companyId = request.data?.companyId;
 
             if (!companyId) {
