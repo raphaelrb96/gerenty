@@ -129,21 +129,6 @@ export interface WhatsAppApiResponse {
   error?: WhatsAppApiError;
 }
 
-export interface MessageTemplateComponent {
-  type: 'HEADER' | 'BODY' | 'FOOTER' | 'BUTTONS';
-  text?: string;
-  example?: {
-    body_text?: string[][];
-    header_text?: string[];
-    header_handle?: string[];
-  };
-  buttons?: Array<{
-    type: 'QUICK_REPLY' | 'URL';
-    text: string;
-    url?: string;
-    example?: string[];
-  }>;
-}
 
 export interface MessageTemplate {
   id: string;
@@ -162,4 +147,21 @@ export interface MetaTemplate {
   language: string;
   status: 'APPROVED' | 'PENDING' | 'REJECTED' | 'DISABLED';
   components: MessageTemplateComponent[];
+}
+
+export interface MessageTemplateComponent {
+  type: 'HEADER' | 'BODY' | 'FOOTER' | 'BUTTONS';
+  text?: string;
+  format?: 'TEXT' | 'IMAGE' | 'VIDEO' | 'DOCUMENT';
+  example?: {
+      body_text?: string[][];
+      header_text?: string[];
+      header_handle?: string[];
+  };
+  buttons?: Array<{
+      type: 'QUICK_REPLY' | 'URL';
+      text: string;
+      url?: string;
+      example?: string[];
+  }>;
 }

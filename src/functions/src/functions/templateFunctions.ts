@@ -24,7 +24,7 @@ interface CreateTemplateRequest {
 export const createTemplate = functions.https.onCall(async (request: CallableRequest<CreateTemplateRequest>) => {
     const validation = await securityService.validateCallableRequest(request);
 
-    functions.logger.log('Creating template.. uid: ', request);
+    functions.logger.log('Creating template.. uid: ', request.auth.uid);
 
     if (!validation.isValid || !validation.companyId) {
         functions.logger.error('Creating template Error...', JSON.stringify(validation));

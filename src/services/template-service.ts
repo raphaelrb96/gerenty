@@ -1,38 +1,107 @@
-
+// src/lib/template-service.ts (ou onde estiver seu código front-end)
 'use server';
 
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where, addDoc, serverTimestamp, doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { collection, getDocs, query, where, doc, getDoc, updateDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
 import type { MessageTemplate } from "@/lib/types";
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '@/lib/firebase';
 
-const createTemplateCallable = httpsCallable<Omit<MessageTemplate, 'id' | 'status'>, { success: boolean, id: string }>(functions, 'createTemplate');
-const updateTemplateCallable = httpsCallable<{ templateId: string, data: Partial<MessageTemplate> }, { success: boolean }>(functions, 'updateTemplate');
-const deleteTemplateCallable = httpsCallable<{ templateName: string, companyId: string }, { success: boolean }>(functions, 'deleteTemplate');
+// ✅ CORREÇÃO: Interfaces alinhadas com o back-end
+interface CreateTemplateResponse {
+    success: boolean;
+    id: string;
+    message?: string;
+}
 
+interface UpdateTemplateResponse {
+    success: boolean;
+    message?: string;
+}
 
-const getTemplatesCollection = (companyId: string) => collection(db, `companies/${companyId}/messageTemplates`);
+interface DeleteTemplateResponse {
+    success: boolean;
+    message?: string;
+}
 
+// ✅ CORREÇÃO: Tipos alinhados com as Cloud Functions
+const createTemplateCallable = httpsCallable<{
+    name: string;
+    category: string;
+    language: string;
+    components: any[];
+    companyId: string;
+}, CreateTemplateResponse>(functions, 'createTemplate');
+
+const updateTemplateCallable = httpsCallable<{
+    templateName: string;
+    data: {
+        name?: string;
+        category?: 'UTILITY' | 'MARKETING' | 'AUTHENTICATION';
+        components?: any[];
+        language?: string;
+    };
+    companyId: string;
+}, {
+    success: boolean;
+    message?: string;
+}>(functions, 'updateTemplate');
+
+const deleteTemplateCallable = httpsCallable<{
+    templateName: string;
+    companyId: string;
+}, DeleteTemplateResponse>(functions, 'deleteTemplate');
+
+const getTemplatesCollection = (companyId: string) =>
+    collection(db, `companies/${companyId}/messageTemplates`);
+
+// ✅ CORREÇÃO: Função de conversão mais robusta
 const convertTemplateTimestamps = (data: any): MessageTemplate => {
-    const template = { id: data.id, ...data };
+    const template = {
+        id: data.id,
+        name: data.name || '',
+        category: data.category || 'utility',
+        language: data.language || 'pt_BR',
+        status: data.status || 'pending',
+        components: data.components || [],
+        createdAt: '',
+        updatedAt: '',
+        ...data
+    };
+
+    // Converte timestamps do Firestore
     for (const key of ['createdAt', 'updatedAt']) {
-        if (template[key]?.toDate) {
-            template[key] = template[key].toDate().toISOString();
+        if (data[key]?.toDate) {
+            template[key] = data[key].toDate().toISOString();
+        } else if (data[key]) {
+            template[key] = data[key];
+        } else {
+            template[key] = new Date().toISOString();
         }
     }
+
     return template as MessageTemplate;
 };
 
 export async function getTemplatesByCompany(companyId: string): Promise<MessageTemplate[]> {
     try {
         const templatesCollection = getTemplatesCollection(companyId);
-        const q = query(templatesCollection); 
+        const q = query(templatesCollection);
         const querySnapshot = await getDocs(q);
         const templates: MessageTemplate[] = [];
+
         querySnapshot.forEach((doc) => {
-            templates.push(convertTemplateTimestamps({ id: doc.id, ...doc.data() }));
+            try {
+                const templateData = convertTemplateTimestamps({
+                    id: doc.id,
+                    ...doc.data()
+                });
+                templates.push(templateData);
+            } catch (error) {
+                console.error(`Error processing template ${doc.id}:`, error);
+            }
         });
+
         return templates;
     } catch (error) {
         console.error("Error getting message templates: ", error);
@@ -40,45 +109,114 @@ export async function getTemplatesByCompany(companyId: string): Promise<MessageT
     }
 }
 
-export async function addTemplate(companyId: string, templateData: Omit<MessageTemplate, 'id' | 'status'>): Promise<{ id: string }> {
+// ✅ CORREÇÃO: Interface para criação de template
+interface CreateTemplateData {
+    name: string;
+    category: string;
+    language: string;
+    components: any[];
+}
+
+export async function addTemplate(
+    companyId: string,
+    templateData: CreateTemplateData
+): Promise<{ id: string }> {
     try {
-        // We call the cloud function which calls the Meta API.
-        // We don't save directly to Firestore anymore, the sync function will do that.
-        const result = await createTemplateCallable({ ...templateData, companyId });
+        const result = await createTemplateCallable({
+            ...templateData,
+            companyId
+        });
+
         if (!result.data.success) {
-            throw new Error("Cloud function failed to create template in Meta.");
+            throw new Error(result.data.message || "Failed to create template in Meta.");
         }
+
         return { id: result.data.id };
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error adding template: ", error);
-        if (error instanceof Error && 'details' in error) {
-             const details = (error as any).details;
-             throw new Error(details?.message || "Failed to add template via cloud function.");
+
+        let errorMessage = "Failed to add template.";
+        if (error?.details?.message) {
+            errorMessage = error.details.message;
+        } else if (error?.message) {
+            errorMessage = error.message;
         }
-        throw new Error("Failed to add template.");
+
+        throw new Error(errorMessage);
     }
 }
 
-export async function updateTemplate(companyId: string, templateId: string, templateData: Partial<Omit<MessageTemplate, 'id'>>): Promise<void> {
+// ✅ CORREÇÃO: Interface para atualização
+interface UpdateTemplateData {
+    name?: string;
+    category?: string;
+    components?: any[];
+}
+
+export async function updateTemplate(
+    companyId: string,
+    templateName: string, // Mude de templateId para templateName
+    templateData: {
+        name?: string;
+        category?: 'UTILITY' | 'MARKETING' | 'AUTHENTICATION';
+        components?: any[];
+        language?: string;
+    }
+): Promise<void> {
     try {
-        // Updating templates via API is complex (delete/create). 
-        // For now, we'll just update our local copy.
-        const templateDoc = doc(db, `companies/${companyId}/messageTemplates`, templateId);
-        await updateDoc(templateDoc, {
-            ...templateData,
-            updatedAt: serverTimestamp(),
+        // ✅ CORREÇÃO: Envie todos os parâmetros necessários
+        const result = await updateTemplateCallable({
+            templateName,    // Nome do template
+            data: templateData, // Dados para atualizar
+            companyId        // ID da empresa
         });
-    } catch (error) {
+
+        if (!result.data.success) {
+            throw new Error(result.data.message || "Failed to update template in Meta.");
+        }
+
+        // Atualização local no Firestore se necessário
+        const templatesCollection = getTemplatesCollection(companyId);
+        const q = query(templatesCollection, where('name', '==', templateName));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+            const templateDoc = querySnapshot.docs[0];
+            await updateDoc(templateDoc.ref, {
+                ...templateData,
+                updatedAt: serverTimestamp(),
+            });
+        }
+
+    } catch (error: any) {
         console.error("Error updating template: ", error);
-        throw new Error("Failed to update template.");
+        throw new Error(error.message || "Failed to update template.");
     }
 }
 
 export async function deleteTemplate(companyId: string, templateName: string): Promise<void> {
     try {
-        await deleteTemplateCallable({ templateName, companyId });
-    } catch (error) {
+        const result = await deleteTemplateCallable({
+            templateName,
+            companyId
+        });
+
+        if (!result.data.success) {
+            throw new Error(result.data.message || "Failed to delete template in Meta.");
+        }
+
+        // Também remove localmente
+        const templatesCollection = getTemplatesCollection(companyId);
+        const q = query(templatesCollection, where('name', '==', templateName));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+            const templateDoc = querySnapshot.docs[0];
+            await deleteDoc(templateDoc.ref);
+        }
+
+    } catch (error: any) {
         console.error("Error deleting template: ", error);
-        throw new Error("Failed to delete template.");
+        throw new Error(error.message || "Failed to delete template.");
     }
 }
