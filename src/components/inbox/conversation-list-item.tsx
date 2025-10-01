@@ -51,9 +51,9 @@ export function ConversationListItem({ conversation, consumer, isSelected, onSel
                             </span>
                         }
                     </div>
-                    <div className="flex justify-between items-start mt-1">
-                        <p className="text-xs text-muted-foreground truncate pr-2">{conversation.lastMessage}</p>
-                         <p className="text-xs text-muted-foreground whitespace-nowrap">
+                     <p className="text-xs text-muted-foreground truncate pr-2 mt-1">{conversation.lastMessage}</p>
+                    <div className="flex justify-end mt-1">
+                        <p className="text-xs text-muted-foreground whitespace-nowrap">
                             {formatDistanceToNow(lastMessageDate, { addSuffix: true, locale: ptBR })}
                         </p>
                     </div>
