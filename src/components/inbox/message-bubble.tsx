@@ -67,7 +67,7 @@ const AudioPlayer = ({ src }: { src: string }) => {
             <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={handlePlayPause}>
                 {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
             </Button>
-            <div className="flex-1 flex items-center gap-2">
+            <div className="w-full flex items-center gap-2">
                  <Progress value={progress} className="h-2 w-full [&>div]:bg-primary" />
                 <span className="text-xs font-mono w-12 text-right text-muted-foreground">
                     {formatTime(currentTime)}
