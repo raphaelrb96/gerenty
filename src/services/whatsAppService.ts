@@ -1,150 +1,348 @@
-// src/services/integration-service.ts
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '@/lib/firebase';
-import { WhatsAppCredentials, TestMessageResponse } from '@/lib/types';
 
-// Referências para as Cloud Functions
-const validateAndSaveCredentialsCallable = httpsCallable<WhatsAppCredentials & { companyId: string }, {
-  success: boolean;
-  message: string;
-  webhookUrl: string;
-  companyId: string;
-}>(functions, 'validateAndSaveCredentials');
+// src/services/whatsAppService.ts
+import { SecretManagerService } from './secretManager';
+import { MessageResult, SendMessagePayload, TemplateErrorInfo, WhatsAppApiResponse } from '../types/whatsapp';
+import * as admin from 'firebase-admin';
+import * as functions from 'firebase-functions';
 
-const sendMessageCallable = httpsCallable<{
-  phoneNumber: string;
-  message?: string;
-  type?: 'text' | 'template';
-  templateName?: string;
-  companyId: string;
-}, TestMessageResponse>(functions, 'sendMessage');
+export class WhatsAppService {
+  private secretManager: SecretManagerService;
+  private db: admin.firestore.Firestore;
 
-const checkWhatsAppIntegrationCallable = httpsCallable<{
-  companyId: string;
-}, {
-  exists: boolean;
-  status?: string;
-  webhookUrl?: string;
-}>(functions, 'checkWhatsAppIntegration');
-
-const getWhatsAppIntegrationStatusCallable = httpsCallable<{
-  companyId: string;
-}, {
-  exists: boolean;
-  status?: string;
-  webhookUrl?: string;
-  whatsAppId?: string;
-  phoneNumberId?: string;
-}>(functions, 'getWhatsAppIntegrationStatus');
-
-const apiSyncWhatsAppTemplatesCallable = httpsCallable<{
-    companyId: string;
-}, {
-    success: boolean;
-    added: number;
-    updated: number;
-}>(functions, 'apiSyncWhatsAppTemplates');
-
-
-export const integrationService = {
-  async saveWhatsAppCredentials(companyId: string, credentials: WhatsAppCredentials) {
+  constructor() {
+    this.secretManager = SecretManagerService.getInstance();
+    this.db = admin.firestore();
+  }
+  
+  async fetchMediaUrl(mediaId: string, companyId: string): Promise<string | null> {
     try {
-      const result = await validateAndSaveCredentialsCallable({ ...credentials, companyId });
-      return result.data;
-    } catch (error: any) {
-      console.error('Error saving WhatsApp credentials:', error);
-
-      if (error.code === 'unauthenticated') {
-        throw new Error('Usuário não autenticado. Faça login novamente.');
-      } else if (error.code === 'invalid-argument') {
-        throw new Error('Dados inválidos. Verifique se todos os campos estão preenchidos corretamente.');
-      } else if (error.code === 'failed-precondition') {
-        throw new Error('Credenciais inválidas. Verifique se os dados estão corretos.');
-      } else if (error.code === 'internal') {
-        throw new Error('Erro interno do servidor. Tente novamente mais tarde.');
-      } else {
-        throw new Error(error.message || 'Erro ao salvar credenciais.');
-      }
+        const accessToken = await this.secretManager.getWhatsAppToken(companyId);
+        const response = await fetch(`https://graph.facebook.com/v17.0/${mediaId}`, {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+            },
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            functions.logger.error(`[WhatsAppService] Failed to fetch media URL for ID ${mediaId}`, { error: errorData, companyId });
+            return null;
+        }
+        const mediaData = await response.json();
+        return mediaData.url || null;
+    } catch (error) {
+        functions.logger.error(`[WhatsAppService] Exception fetching media URL for ID ${mediaId}`, { error, companyId });
+        return null;
     }
-  },
+}
 
-  async sendMessage(phoneNumber: string, companyId: string, message: string, type: 'text' | 'template'): Promise<TestMessageResponse> {
+  // src/services/whatsAppService.ts - Atualize completamente a função sendMessage
+  async sendMessage(
+    companyId: string,
+    payload: SendMessagePayload
+  ): Promise<MessageResult> {
     try {
-      const payload: {
-        phoneNumber: string;
-        companyId: string;
-        type: 'text' | 'template';
-        message?: string;
-        templateName?: string;
-      } = {
-        phoneNumber,
-        companyId,
-        type,
+      functions.logger.info(`[WhatsAppService] Starting message send to ${payload.phoneNumber}`);
+
+      const accessToken = await this.secretManager.getWhatsAppToken(companyId);
+      const integration = await this.getCompanyIntegration(companyId);
+
+      if (!integration) {
+        return {
+          success: false,
+          error: 'WhatsApp integration not found'
+        };
+      }
+
+      let result: MessageResult;
+      if (payload.type === 'template') {
+          result = await this.tryTemplateMessage(integration.phoneNumberId, accessToken, payload);
+      } else {
+          result = await this.tryConversationMessage(integration.phoneNumberId, accessToken, payload);
+      }
+
+      // ✅  Salvar a mensagem enviada no Firestore se for bem-sucedida
+      if (result.success && result.messageId) {
+        await this.saveOutboundMessage(companyId, payload, result.messageId);
+      }
+
+      return result;
+
+    } catch (error) {
+      functions.logger.error('[WhatsAppService] Error sending WhatsApp message:', error);
+      return {
+        success: false,
+        error: 'Internal server error'
+      };
+    }
+  }
+
+  // Atualize as assinaturas das funções
+  private async tryConversationMessage(
+    phoneNumberId: string,
+    accessToken: string,
+    payload: SendMessagePayload
+  ): Promise<MessageResult> {
+    try {
+      const messageData = {
+        messaging_product: 'whatsapp',
+        to: payload.phoneNumber,
+        type: 'text',
+        text: {
+          body: payload.message || 'Mensagem de teste do Gerenty'
+        }
       };
 
-      if (type === 'text') {
-        payload.message = message;
+      functions.logger.info(`[WhatsAppService] Sending conversation message to ${payload.phoneNumber}`);
+
+      const response = await fetch(
+        `https://graph.facebook.com/v17.0/${phoneNumberId}/messages`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(messageData),
+        }
+      );
+
+      const result: WhatsAppApiResponse = await response.json();
+
+      functions.logger.info(`[WhatsAppService] Conversation API response:`, {
+        status: response.status,
+        result: result
+      });
+
+      if (response.ok && result.messages?.[0]?.id) {
+        const messageId = result.messages[0].id;
+        functions.logger.info(`[WhatsAppService] Message accepted for delivery, ID: ${messageId}`);
+        return {
+            success: true,
+            messageId: messageId,
+            messageType: 'conversation'
+        };
       } else {
-        payload.templateName = message;
-      }
+        // Se a API já rejeitou imediatamente
+        functions.logger.error('[WhatsAppService] Conversation message rejected by API:', result.error);
 
-      const result = await sendMessageCallable(payload);
-      return result.data;
-    } catch (error: any) {
-      console.error('Error sending message:', error);
-      
-      if (error.details) {
-        throw error;
+        if (result.error?.code === 131047 || result.error?.message.includes("24 hour")) {
+          functions.logger.info(`[WhatsAppService] Outside 24h window (immediate rejection)`);
+          return {
+            success: false,
+            error: 'outside_24h_window',
+            messageType: 'conversation'
+          };
+        }
+
+        return {
+          success: false,
+          error: result.error?.message || 'Failed to send conversation message',
+          messageType: 'conversation'
+        };
       }
-      
-      if (error.code === 'unauthenticated') {
-        throw new Error('Usuário não autenticado. Faça login novamente.');
-      } else if (error.code === 'invalid-argument') {
-        throw new Error('Número de telefone inválido.');
-      } else if (error.code === 'internal') {
-        throw new Error(error.message || 'Erro ao enviar mensagem.');
+    } catch (error: any) {
+      functions.logger.error('[WhatsAppService] Error sending conversation message:', error);
+      return {
+        success: false,
+        error: error.message || 'Conversation message failed',
+        messageType: 'conversation'
+      };
+    }
+  }
+
+  // src/services/whatsAppService.ts - Corrija a tipagem
+  private async tryTemplateMessage(
+    phoneNumberId: string,
+    accessToken: string,
+    payload: SendMessagePayload
+  ): Promise<MessageResult> {
+    try {
+      functions.logger.info(`[WhatsAppService] 🚀 Starting template message process`);
+
+      const templateName = payload.templateName || 'hello_world'; // Fallback to a common template
+
+      const messageData = {
+        messaging_product: 'whatsapp',
+        to: payload.phoneNumber,
+        type: 'template',
+        template: {
+          name: templateName,
+          language: { code: 'pt_BR' }, // This might need to be dynamic in the future
+        }
+      };
+
+      functions.logger.info(`[WhatsAppService] Sending template: ${templateName} to ${payload.phoneNumber}`);
+
+      const response = await fetch(
+        `https://graph.facebook.com/v17.0/${phoneNumberId}/messages`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(messageData),
+        }
+      );
+
+      const result = await response.json() as WhatsAppApiResponse;
+
+      functions.logger.info(`[WhatsAppService] Template API response:`, {
+        status: response.status,
+        result: result
+      });
+
+      if (response.ok && result.messages?.[0]?.id) {
+        const messageId = result.messages[0].id;
+        functions.logger.info(`[WhatsAppService] ✅ Template message accepted for delivery, ID: ${messageId}`);
+
+        return {
+          success: true,
+          messageId: messageId,
+          messageType: 'template'
+        };
       } else {
-        throw new Error(error.message || 'Erro ao enviar mensagem.');
+        functions.logger.error('[WhatsAppService] ❌ Template message rejected by API:', result.error);
+
+        let errorMessage = 'Falha ao enviar template';
+        let templateError: TemplateErrorInfo | undefined = undefined;
+
+        if (result.error?.code === 132001 || result.error?.message.includes("does not exist")) {
+          errorMessage = `Template "${templateName}" não existe ou não foi aprovado.`;
+          templateError = {
+            needsTemplateSetup: true,
+            errorCode: result.error.code,
+            errorMessage: result.error.message,
+            phoneNumberId: phoneNumberId,
+            templateName: templateName
+          };
+          functions.logger.info(`[WhatsAppService] 📋 Template setup required: ${templateName}`);
+        } else if (result.error?.message) {
+          templateError = {
+            needsTemplateSetup: false,
+            errorCode: result.error.code,
+            errorMessage: result.error.message,
+            phoneNumberId: phoneNumberId,
+            templateName: templateName
+          };
+          errorMessage = `${result.error.message} (Code: ${result.error.code})`;
+        }
+
+        return {
+          success: false,
+          error: errorMessage,
+          messageType: 'template',
+          templateError: templateError
+        };
       }
-    }
-  },
-
-  async checkWhatsAppIntegration(companyId: string) {
-    try {
-      const result = await checkWhatsAppIntegrationCallable({ companyId });
-      return result.data;
     } catch (error: any) {
-      console.error('Error checking WhatsApp integration:', error);
-      throw new Error(error.message || 'Erro ao verificar integração');
+      functions.logger.error('[WhatsAppService] 💥 Error in template message:', error);
+      return {
+        success: false,
+        error: `Erro no template: ${error.message}`,
+        messageType: 'template'
+      };
     }
-  },
+  }
 
-  async getWhatsAppIntegrationStatus(companyId: string) {
+  async getCompanyIntegration(companyId: string): Promise<any> {
     try {
-      const result = await getWhatsAppIntegrationStatusCallable({ companyId });
-      return result.data;
-    } catch (error: any) {
-      console.error('Error getting WhatsApp integration status:', error);
-      throw new Error(error.message || 'Erro ao obter status da integração');
+      const doc = await this.db.collection('companies')
+        .doc(companyId)
+        .collection('integrations')
+        .doc('whatsapp')
+        .get();
+
+      return doc.exists ? doc.data() : null;
+    } catch (error) {
+      functions.logger.error('Error getting company integration:', error);
+      return null;
     }
-  },
-  
-  async syncWhatsAppTemplates(companyId: string) {
+  }
+
+  private async saveOutboundMessage(companyId: string, payload: SendMessagePayload, messageId: string): Promise<void> {
     try {
-        const result = await apiSyncWhatsAppTemplatesCallable({ companyId });
-        return result.data;
-    } catch (error: any) {
-        console.error('Error syncing WhatsApp templates:', error);
-        throw new Error(error.message || 'Erro ao sincronizar templates');
+        const consumerQuery = await this.db.collection('companies')
+            .doc(companyId)
+            .collection('consumers')
+            .where('phone', '==', payload.phoneNumber)
+            .limit(1)
+            .get();
+
+        if (consumerQuery.empty) {
+            functions.logger.warn(`[saveOutboundMessage] Consumer not found for phone ${payload.phoneNumber}. Cannot save message.`);
+            return;
+        }
+
+        const consumerId = consumerQuery.docs[0].id;
+        const conversationQuery = await this.db.collection('companies')
+            .doc(companyId)
+            .collection('conversations')
+            .where('consumerId', '==', consumerId)
+            .where('status', 'in', ['open', 'pending'])
+            .limit(1)
+            .get();
+        
+        let conversationId: string;
+        const now = admin.firestore.Timestamp.now();
+        const lastMessageText = payload.message || `[Template: ${payload.templateName}]`;
+
+        if (conversationQuery.empty) {
+             const conversationRef = await this.db.collection('companies')
+                .doc(companyId)
+                .collection('conversations')
+                .add({
+                    consumerId,
+                    status: 'open',
+                    unreadMessagesCount: 0, // Outbound message doesn't make it unread
+                    lastMessage: lastMessageText,
+                    lastMessageTimestamp: now,
+                    createdAt: now,
+                    updatedAt: now,
+                });
+            conversationId = conversationRef.id;
+        } else {
+            conversationId = conversationQuery.docs[0].id;
+            await this.db.collection('companies')
+                .doc(companyId)
+                .collection('conversations')
+                .doc(conversationId)
+                .update({
+                    lastMessage: lastMessageText,
+                    lastMessageTimestamp: now,
+                    updatedAt: now,
+                    // Reset unread count if we are replying
+                    unreadMessagesCount: 0
+                });
+        }
+
+        const messageContent: any = {
+            id: messageId,
+            direction: 'outbound',
+            type: payload.type,
+            timestamp: now,
+            status: 'sent', // Initial status
+            createdAt: now,
+        };
+
+        if (payload.type === 'text') {
+            messageContent.content = { text: { body: payload.message } };
+        } else if (payload.type === 'template') {
+            messageContent.content = { template: { name: payload.templateName, language: { code: 'pt_BR' } } };
+        }
+
+        await this.db.collection('companies')
+            .doc(companyId)
+            .collection('conversations')
+            .doc(conversationId)
+            .collection('messages')
+            .add(messageContent);
+        
+        functions.logger.info(`[saveOutboundMessage] Saved outbound message ${messageId} to conversation ${conversationId}`);
+
+    } catch (error) {
+        functions.logger.error(`[saveOutboundMessage] Error saving outbound message:`, error);
+        // Do not throw, as the message was already sent to the user.
     }
-  },
-
-};
-
-// Aliases for easier use and to avoid breaking changes if the original functions were used directly
-export const { saveWhatsAppCredentials, sendMessage, checkWhatsAppIntegration, getWhatsAppIntegrationStatus, syncWhatsAppTemplates } = integrationService;
-
-// Specific alias for test message to avoid confusion
-export const sendTestMessage = async (phoneNumber: string, companyId: string, message: string) => {
-    return integrationService.sendMessage(phoneNumber, companyId, message, 'text');
-};
+}
+}

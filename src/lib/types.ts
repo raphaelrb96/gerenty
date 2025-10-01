@@ -783,6 +783,11 @@ export type InteractiveMessage = {
       id: string;
       title: string;
   };
+   list_reply?: {
+      id: string;
+      title: string;
+      description: string;
+  };
 };
 
 export type TemplateMessage = { name: string; language: string; components: Array<{ type: 'body' | 'header'; parameters: Array<{ type: string; text?: string }> }> };
@@ -958,4 +963,91 @@ export interface TestMessageResponse {
   messageType?: 'conversation' | 'template';
   templateError?: TemplateErrorInfo;
 }
+
+
+// Tipos para o Webhook do WhatsApp (refatorado e completo)
+export type MessageContact = {
+    profile: { name: string; };
+    wa_id: string;
+};
+
+export type MessageMetadata = {
+    display_phone_number: string;
+    phone_number_id: string;
+};
+
+export type IncomingMessage = {
+    from: string;
+    id: string;
+    timestamp: string;
+    type: MessageType;
+    text?: { body: string; };
+    image?: { caption?: string; id: string; mime_type: string; url?: string; };
+    video?: { caption?: string; id: string; mime_type: string; url?: string; };
+    audio?: { id: string; mime_type: string; url?: string; };
+    document?: { caption?: string; filename: string; id: string; mime_type: string; url?: string; };
+    location?: { latitude: number; longitude: number; name?: string; address?: string; };
+    interactive?: InteractiveMessage;
+};
+
+export type WebhookPayload = {
+    object: string;
+    entry: Array<{
+        id: string;
+        changes: Array<{
+            value: {
+                messaging_product: string;
+                metadata: MessageMetadata;
+                contacts?: MessageContact[];
+                messages?: IncomingMessage[];
+                statuses?: MessageStatus[];
+                message_template_status_update?: TemplateStatusUpdate;
+            };
+            field: string;
+        }>;
+    }>;
+};
+
+export type TemplateStatusUpdate = {
+    message_template_id: string;
+    message_template_name: string;
+    message_template_language: string;
+    event: 'APPROVED' | 'REJECTED' | 'PENDING' | 'DISABLED';
+    reason?: string;
+};
+
+export type ValidationResult = {
+    isValid: boolean;
+    companyId?: string;
+    error?: string;
+};
+
+export type ApiResponse<T = any> = {
+    success: boolean;
+    data?: T;
+    error?: string;
+};
+
+export type SendMessagePayload = {
+    phoneNumber: string;
+    message: string;
+    type?: 'text' | 'template';
+    templateName?: string;
+};
+
+export interface WhatsAppApiError {
+    code: number;
+    message: string;
+    error_data?: { details?: string; };
+}
+
+export interface WhatsAppApiResponse {
+    messages?: Array<{ id: string; }>;
+    error?: WhatsAppApiError;
+}
+
+export type CallableRequest<T = any> = {
+    auth?: { uid: string; token: string; };
+    data: T;
+};
     
