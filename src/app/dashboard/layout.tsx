@@ -19,12 +19,14 @@ export default function DashboardLayout({
             <div className="flex w-full min-h-screen bg-muted/40">
               <MainSidebar />
               <SidebarInset>
-                <Header />
-                <main className="flex-1 overflow-y-auto">
-                  <div className="w-full p-6 md:p-8">
-                    {children}
-                  </div>
-                </main>
+                <div className="flex flex-col h-screen">
+                  <Header />
+                  <main className="flex-1 overflow-y-auto">
+                    <div className="w-full h-full p-6 md:p-8">
+                      {children}
+                    </div>
+                  </main>
+                </div>
               </SidebarInset>
             </div>
           </SidebarProvider>

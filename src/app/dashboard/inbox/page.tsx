@@ -31,30 +31,28 @@ export default function InboxPage() {
     useEffect(() => {
         if (activeCompany && effectiveOwnerId) {
             setLoading(true);
-            Promise.all([
-                getConversations(activeCompany.id),
-                getConsumersByCompany(activeCompany.id),
-                getStagesByUser(effectiveOwnerId)
-            ]).then(([convos, consumerList, userStages]) => {
+            const unsubscribeConvos = getConversations(activeCompany.id, (convos) => {
                 setConversations(convos);
-                
-                const consumerMap = consumerList.reduce((acc, consumer) => {
+                if (convos.length > 0 && !selectedConversation) {
+                    setSelectedConversation(convos[0]);
+                }
+                setLoading(false);
+            });
+
+            const unsubscribeConsumers = getConsumersByCompany(activeCompany.id, (consumerList) => {
+                 const consumerMap = consumerList.reduce((acc, consumer) => {
                     acc[consumer.id] = consumer;
                     return acc;
                 }, {} as Record<string, Consumer>);
                 setConsumers(consumerMap);
-
-                setStages(userStages);
-
-                if (convos.length > 0 && !selectedConversation) {
-                    setSelectedConversation(convos[0]);
-                }
-
-                setLoading(false);
-            }).catch(error => {
-                console.error("Failed to fetch inbox data:", error);
-                setLoading(false);
             });
+
+            getStagesByUser(effectiveOwnerId).then(setStages);
+
+            return () => {
+                unsubscribeConvos();
+                unsubscribeConsumers();
+            };
         } else {
             setConversations([]);
             setConsumers({});
@@ -142,7 +140,7 @@ export default function InboxPage() {
 
     return (
         <>
-            <ResizablePanelGroup direction="horizontal" className="h-full max-h-[calc(100vh-8rem)] w-full">
+            <ResizablePanelGroup direction="horizontal" className="h-full w-full">
                 <ResizablePanel defaultSize={35} minSize={25} maxSize={40}>
                     <ConversationList
                         conversations={conversations}

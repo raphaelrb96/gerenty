@@ -33,7 +33,7 @@ export function ConversationListItem({ conversation, consumer, stages, isSelecte
         ? consumer.name 
         : consumer?.phone || "Desconhecido";
 
-    const lastMessageDate = conversation.lastMessageTimestamp ? new Date(conversation.lastMessageTimestamp as any) : new Date();
+    const lastMessageDate = conversation.lastMessageTimestamp ? new Date(conversation.lastMessageTimestamp) : new Date();
 
     const getTypeConfig = (type: Consumer['type'] | undefined) => {
         switch (type) {
