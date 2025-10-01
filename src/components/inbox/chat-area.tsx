@@ -120,10 +120,14 @@ export function ChatArea({ conversation, consumer }: ChatAreaProps) {
         );
     }
     
+    const displayName = consumer.name && consumer.name.toLowerCase() !== 'unknown' 
+        ? consumer.name 
+        : consumer.phone;
+
     return (
         <div className="flex flex-col h-full bg-background">
             <header className="p-4 border-b flex-shrink-0">
-                <h2 className="font-semibold">{consumer.name || consumer.phone}</h2>
+                <h2 className="font-semibold">{displayName}</h2>
                 <p className="text-xs text-muted-foreground">{consumer.phone}</p>
             </header>
 

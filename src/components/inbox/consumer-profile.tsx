@@ -18,6 +18,7 @@ export function ConsumerProfile({ consumer }: ConsumerProfileProps) {
     const { formatCurrency } = useCurrency();
 
     const getInitials = (name: string) => {
+        if (!name || name.trim().toLowerCase() === 'unknown') return '?';
         const names = name.split(' ');
         if (names.length > 1) {
             return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
@@ -35,6 +36,10 @@ export function ConsumerProfile({ consumer }: ConsumerProfileProps) {
         );
     }
     
+    const displayName = consumer.name && consumer.name.toLowerCase() !== 'unknown' 
+        ? consumer.name 
+        : consumer.phone;
+
     return (
         <div className="flex flex-col h-full bg-muted/50 border-l">
             <header className="p-4 border-b text-center space-y-3">
@@ -42,7 +47,7 @@ export function ConsumerProfile({ consumer }: ConsumerProfileProps) {
                     <AvatarFallback className="text-2xl">{getInitials(consumer.name)}</AvatarFallback>
                 </Avatar>
                 <div>
-                    <h2 className="font-semibold text-lg">{consumer.name}</h2>
+                    <h2 className="font-semibold text-lg">{displayName}</h2>
                     <p className="text-sm text-muted-foreground">{consumer.phone}</p>
                 </div>
                 <div className="flex justify-center gap-2">
