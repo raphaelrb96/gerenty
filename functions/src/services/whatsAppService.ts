@@ -372,5 +372,3 @@ export class WhatsAppService {
     }
 }
 }
-
-    
