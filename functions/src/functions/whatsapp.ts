@@ -1,3 +1,4 @@
+
 // src/functions/whatsapp.ts
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
@@ -801,63 +802,60 @@ async function processTemplateStatusUpdate(companyId: string, update: TemplateSt
 
 
 function sanitizeMetaTemplateComponents(components: any[]): any[] {
+    if (!Array.isArray(components)) return [];
+
     return components.map(component => {
         const sanitizedComponent = { ...component };
 
-        // Sanitiza o campo text se contiver padrões {{ }} ou [[ ]]
+        // Sanitize 'text' field if it's a string
         if (sanitizedComponent.text && typeof sanitizedComponent.text === 'string') {
             sanitizedComponent.text = sanitizeMetaPatterns(sanitizedComponent.text);
         }
 
-        // Sanitiza o exemplo se existir
+        // Sanitize 'example' field if it exists
         if (sanitizedComponent.example) {
             const sanitizedExample: any = {};
 
-            // Sanitiza body_text (remove padrões [[ ]])
-            if (sanitizedComponent.example.body_text) {
+            // Sanitize 'body_text' which can be an array of arrays
+            if (Array.isArray(sanitizedComponent.example.body_text)) {
                 sanitizedExample.body_text = sanitizedComponent.example.body_text.map((innerArray: any[]) =>
-                    innerArray.map(item =>
-                        sanitizeMetaPatterns(typeof item === 'string' ? item : String(item))
-                    )
+                    Array.isArray(innerArray)
+                        ? innerArray.map(item => sanitizeMetaPatterns(String(item)))
+                        : sanitizeMetaPatterns(String(innerArray))
                 );
             }
 
-            // Sanitiza header_text
-            if (sanitizedComponent.example.header_text) {
+            // Sanitize 'header_text' which is an array of strings
+            if (Array.isArray(sanitizedComponent.example.header_text)) {
                 sanitizedExample.header_text = sanitizedComponent.example.header_text.map((item: any) =>
-                    sanitizeMetaPatterns(typeof item === 'string' ? item : String(item))
+                    sanitizeMetaPatterns(String(item))
                 );
             }
-
-            // Sanitiza header_handle  
-            if (sanitizedComponent.example.header_handle) {
+            
+            // Sanitize 'header_handle' which is an array of strings
+             if (Array.isArray(sanitizedComponent.example.header_handle)) {
                 sanitizedExample.header_handle = sanitizedComponent.example.header_handle.map((item: any) =>
-                    sanitizeMetaPatterns(typeof item === 'string' ? item : String(item))
+                    sanitizeMetaPatterns(String(item))
                 );
             }
 
-            sanitizedComponent.example = {};
+            // Assign the sanitized example back to the component
+            sanitizedComponent.example = sanitizedExample;
         }
 
-        // Sanitiza buttons se existirem
-        if (sanitizedComponent.buttons) {
+        // Sanitize 'buttons' if they exist
+        if (Array.isArray(sanitizedComponent.buttons)) {
             sanitizedComponent.buttons = sanitizedComponent.buttons.map((button: any) => {
                 const sanitizedButton = { ...button };
-
-                // Sanitiza text do botão
                 if (sanitizedButton.text && typeof sanitizedButton.text === 'string') {
                     sanitizedButton.text = sanitizeMetaPatterns(sanitizedButton.text);
                 }
-
-                // Sanitiza example nos botões
-                if (sanitizedButton.example) {
-                    sanitizedButton.example = Array.isArray(sanitizedButton.example)
-                        ? sanitizedButton.example.map((item: any) =>
-                            sanitizeMetaPatterns(typeof item === 'string' ? item : String(item))
-                        )
-                        : sanitizeMetaPatterns(String(sanitizedButton.example));
+                // The 'example' in buttons is an array of strings
+                if (Array.isArray(sanitizedButton.example)) {
+                     sanitizedButton.example = sanitizedButton.example.map((item: any) =>
+                        sanitizeMetaPatterns(String(item))
+                    );
                 }
-
                 return sanitizedButton;
             });
         }
@@ -866,17 +864,11 @@ function sanitizeMetaTemplateComponents(components: any[]): any[] {
     });
 }
 
-// Função específica para lidar com padrões da Meta
 function sanitizeMetaPatterns(text: string): string {
     if (typeof text !== 'string') return text;
-
-    // Remove ou substitui padrões problemáticos
-    return text
-        // Mantém {{1}}, {{2}} etc. (variáveis de template) - são válidas
-        // Mas remove [[ ]] que são problemáticos
-        .replace(/\[\[.*?\]\]/g, '')
-        // Garante que não haja caracteres inválidos
-        .replace(/[^\x20-\x7E\u00C0-\u00FF]/g, '');
+    // Replace problematic patterns like [[...]] but keep valid template variables like {{1}}
+    return text.replace(/\[\[.*?\]\]/g, '').trim();
 }
+    
 
     
