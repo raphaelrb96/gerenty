@@ -4,9 +4,10 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useCompany } from "@/context/company-context";
-import type { Conversation, Consumer, Customer } from "@/lib/types";
+import type { Conversation, Consumer, Customer, Stage } from "@/lib/types";
 import { getConversations } from "@/services/conversation-service";
 import { getConsumersByCompany } from "@/services/consumer-service";
+import { getStagesByUser } from "@/services/stage-service";
 
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { ConversationList } from "@/components/inbox/conversation-list";
@@ -19,20 +20,23 @@ import { CreateCustomerModal } from "@/components/crm/create-customer-modal";
 
 export default function InboxPage() {
     const { activeCompany } = useCompany();
+    const { effectiveOwnerId } = useAuth();
     const [loading, setLoading] = useState(true);
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [consumers, setConsumers] = useState<Record<string, Consumer>>({});
+    const [stages, setStages] = useState<Stage[]>([]);
     const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
     const [isCustomerModalOpen, setCustomerModalOpen] = useState(false);
     const [customerToEdit, setCustomerToEdit] = useState<Customer | null>(null);
 
     useEffect(() => {
-        if (activeCompany) {
+        if (activeCompany && effectiveOwnerId) {
             setLoading(true);
             Promise.all([
                 getConversations(activeCompany.id),
-                getConsumersByCompany(activeCompany.id)
-            ]).then(([convos, consumerList]) => {
+                getConsumersByCompany(activeCompany.id),
+                getStagesByUser(effectiveOwnerId)
+            ]).then(([convos, consumerList, userStages]) => {
                 setConversations(convos);
                 
                 const consumerMap = consumerList.reduce((acc, consumer) => {
@@ -41,13 +45,17 @@ export default function InboxPage() {
                 }, {} as Record<string, Consumer>);
                 setConsumers(consumerMap);
 
+                setStages(userStages);
+
                 setLoading(false);
             }).catch(error => {
                 console.error("Failed to fetch inbox data:", error);
                 setLoading(false);
             });
+        } else {
+            setLoading(false);
         }
-    }, [activeCompany]);
+    }, [activeCompany, effectiveOwnerId]);
     
     const handleEditConsumer = (consumer: Consumer | null) => {
         if (!consumer) return;
@@ -77,11 +85,20 @@ export default function InboxPage() {
             name: savedCustomer.name,
             email: savedCustomer.email,
             phone: savedCustomer.phone,
+            type: savedCustomer.status as any, // Update type from customer status
         };
         setConsumers(prev => ({
             ...prev,
             [savedCustomer.id]: updatedConsumer
         }));
+
+        // Also update the consumer object associated with the selected conversation
+        if (selectedConversation && selectedConversation.consumerId === savedCustomer.id) {
+             const updatedSelectedConsumer = { ...selectedConsumer, ...updatedConsumer };
+             // This might not directly trigger a re-render of ConsumerProfile if it relies on its own state.
+             // It's better to pass the updated consumer directly or ensure the parent component re-renders with new props.
+        }
+
         setCustomerModalOpen(false);
     };
 
@@ -136,7 +153,11 @@ export default function InboxPage() {
                 </ResizablePanel>
                 <ResizableHandle withHandle />
                 <ResizablePanel defaultSize={25} minSize={20} maxSize={30}>
-                    <ConsumerProfile consumer={selectedConsumer} onEdit={() => handleEditConsumer(selectedConsumer)} />
+                    <ConsumerProfile 
+                        consumer={selectedConsumer} 
+                        stages={stages} 
+                        onEdit={() => handleEditConsumer(selectedConsumer)} 
+                    />
                 </ResizablePanel>
             </ResizablePanelGroup>
             

@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { Consumer } from "@/lib/types";
+import type { Consumer, Stage } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -14,10 +14,11 @@ import { Button } from "../ui/button";
 
 type ConsumerProfileProps = {
     consumer: Consumer | null;
+    stages: Stage[];
     onEdit: () => void;
 }
 
-export function ConsumerProfile({ consumer, onEdit }: ConsumerProfileProps) {
+export function ConsumerProfile({ consumer, stages, onEdit }: ConsumerProfileProps) {
     const { formatCurrency } = useCurrency();
 
     const getTypeConfig = (type?: Consumer['type']) => {
@@ -49,11 +50,13 @@ export function ConsumerProfile({ consumer, onEdit }: ConsumerProfileProps) {
         
     const typeConfig = getTypeConfig(consumer?.type);
 
+    const stage = stages.find(s => s.id === consumer.type);
+
     return (
         <div className="flex flex-col h-full bg-muted/50 border-l">
             <header className="p-4 border-b text-center space-y-3">
                 <div className="relative w-20 h-20 mx-auto">
-                    <Avatar className="h-20 w-20 border-2 border-background">
+                    <Avatar className="h-20 w-20 border-2 border-background ring-1 ring-border">
                         <AvatarFallback className="text-2xl bg-background">
                             <User className={cn("h-10 w-10", typeConfig.color)} />
                         </AvatarFallback>
@@ -66,11 +69,11 @@ export function ConsumerProfile({ consumer, onEdit }: ConsumerProfileProps) {
                     <h2 className="font-semibold text-lg">{displayName}</h2>
                     <p className="text-sm text-muted-foreground">{consumer.phone}</p>
                 </div>
-                <div className="flex justify-center gap-2">
-                    <Badge variant={consumer.isCustomer ? "default" : "secondary"}>
-                        {consumer.type}
-                    </Badge>
-                </div>
+                {stage && (
+                    <div className="flex justify-center gap-2">
+                        <Badge variant="secondary">{stage.name}</Badge>
+                    </div>
+                )}
             </header>
             <ScrollArea className="flex-1">
                 <div className="p-4 space-y-6">
