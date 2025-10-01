@@ -746,6 +746,7 @@ export type Conversation = {
   lastMessageTimestamp: Timestamp;
   status: 'open' | 'closed';
   unreadMessagesCount: number;
+  lastMessage: string;
 };
 
 export type MessageType = 
@@ -758,7 +759,7 @@ export type MessageType =
 export type MessageStatus = 'sent' | 'delivered' | 'read' | 'failed';
 
 export type TextMessage = { body: string; preview_url?: boolean };
-export type MediaMessage = { id: string; mime_type: string; url?: string; caption?: string };
+export type MediaMessage = { id: string; mime_type: string; url?: string; caption?: string; filename?: string };
 export type LocationMessage = { latitude: number; longitude: number; name?: string; address?: string };
 export type ContactMessage = { contacts: Array<{ name: { first_name: string }; phones: Array<{ phone: string; type: string }> }> };
 export type ProductMessage = { body?: string; catalog_id?: string; section_id?: string; product_retailer_id: string };
@@ -786,9 +787,9 @@ export type Message = {
   id: string; // WhatsApp Message ID
   direction: 'inbound' | 'outbound';
   type: MessageType;
-  from: string;
-  to: string;
-  timestamp: Timestamp;
+  from?: string; // Not always present on outbound
+  to?: string; // Not always present on inbound
+  timestamp: Timestamp | string | Date;
   status: MessageStatus;
   content: {
     text?: TextMessage;

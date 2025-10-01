@@ -6,7 +6,6 @@ import type { Message } from "@/lib/types";
 import { format } from "date-fns";
 import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
-import Link from 'next/link';
 import { MapPin } from "lucide-react";
 
 type MessageBubbleProps = {
@@ -42,19 +41,30 @@ export function MessageBubble({ message }: MessageBubbleProps) {
     const renderMessageContent = () => {
         const { type, content } = message;
 
-        if (type === 'text' && content?.text?.body) {
+        // Ensure content exists before trying to access its properties
+        if (!content) {
+            return <p className="text-sm italic text-muted-foreground">[{type}] Conteúdo indisponível</p>;
+        }
+
+        if (type === 'text' && content.text?.body) {
             return <p className="text-sm whitespace-pre-wrap">{content.text.body}</p>;
         }
-        if (type === 'image' && content?.image?.url) {
-            return <Image src={content.image.url} alt={content.image.caption || 'Imagem recebida'} width={300} height={200} className="rounded-md object-cover" />;
+        if (type === 'image' && content.image?.id) {
+            // NOTE: The URL for media is not directly available and needs to be fetched via Meta's API.
+            // For this prototype, we'll show a placeholder indicating an image was received.
+            // In a real implementation, you would have a backend service to get a temporary URL for the media ID.
+            return <div className="p-2 bg-muted-foreground/20 rounded-md text-center text-xs">Imagem recebida (ID: ...{content.image.id.slice(-10)})</div>;
         }
-        if (type === 'audio' && content?.audio?.url) {
-            return <audio controls src={content.audio.url} className="w-full" />;
+        if (type === 'audio' && content.audio?.id) {
+             return <div className="p-2 bg-muted-foreground/20 rounded-md text-center text-xs">Áudio recebido (ID: ...{content.audio.id.slice(-10)})</div>;
         }
-        if (type === 'video' && content?.video?.url) {
-            return <video controls src={content.video.url} className="rounded-md max-w-full" />;
+        if (type === 'video' && content.video?.id) {
+             return <div className="p-2 bg-muted-foreground/20 rounded-md text-center text-xs">Vídeo recebido (ID: ...{content.video.id.slice(-10)})</div>;
         }
-        if (type === 'location' && content?.location) {
+        if (type === 'document' && content.document?.id) {
+             return <div className="p-2 bg-muted-foreground/20 rounded-md text-center text-xs">Documento: {content.document.filename || 'Arquivo'}</div>;
+        }
+        if (type === 'location' && content.location) {
             const { latitude, longitude } = content.location;
             const mapUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
             return (
@@ -86,4 +96,3 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         </div>
     );
 }
-
