@@ -17,23 +17,43 @@ export class WhatsAppService {
   async fetchMediaUrl(mediaId: string, companyId: string): Promise<string | null> {
     try {
         const accessToken = await this.secretManager.getWhatsAppToken(companyId);
-        const response = await fetch(`https://graph.facebook.com/v17.0/${mediaId}`, {
+        const mediaDetailsResponse = await fetch(`https://graph.facebook.com/v17.0/${mediaId}`, {
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
             },
         });
-        if (!response.ok) {
-            const errorData = await response.json();
-            functions.logger.error(`[WhatsAppService] Failed to fetch media URL for ID ${mediaId}`, { error: errorData, companyId });
+
+        if (!mediaDetailsResponse.ok) {
+            const errorData = await mediaDetailsResponse.json();
+            functions.logger.error(`[WhatsAppService] Failed to fetch media details for ID ${mediaId}`, { error: errorData, companyId });
             return null;
         }
-        const mediaData = await response.json();
         
-        // ✅ CORREÇÃO: Anexa o token de acesso à URL da mídia para autenticação.
-        if (mediaData.url) {
-            return `${mediaData.url}&access_token=${accessToken}`;
+        const mediaDetails = await mediaDetailsResponse.json();
+        const mediaUrl = mediaDetails.url;
+        const mimeType = mediaDetails.mime_type;
+
+        if (!mediaUrl || !mimeType) {
+            functions.logger.error(`[WhatsAppService] Media URL or MIME type not found for ID ${mediaId}`, { mediaDetails });
+            return null;
         }
-        return null;
+        
+        const mediaDataResponse = await fetch(mediaUrl, {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+            },
+        });
+
+        if (!mediaDataResponse.ok) {
+             const errorText = await mediaDataResponse.text();
+             functions.logger.error(`[WhatsAppService] Failed to download media content from URL ${mediaUrl}`, { status: mediaDataResponse.status, error: errorText, companyId });
+             return null;
+        }
+
+        const buffer = await mediaDataResponse.arrayBuffer();
+        const base64Data = Buffer.from(buffer).toString('base64');
+        
+        return `data:${mimeType};base64,${base64Data}`;
 
     } catch (error) {
         functions.logger.error(`[WhatsAppService] Exception fetching media URL for ID ${mediaId}`, { error, companyId });
@@ -352,3 +372,5 @@ export class WhatsAppService {
     }
 }
 }
+
+    
