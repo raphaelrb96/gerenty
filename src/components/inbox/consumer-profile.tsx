@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, ShoppingCart } from "lucide-react";
 import { useCurrency } from "@/context/currency-context";
 import { Separator } from "../ui/separator";
+import { cn } from "@/lib/utils";
 
 type ConsumerProfileProps = {
     consumer: Consumer | null;
@@ -17,14 +18,18 @@ type ConsumerProfileProps = {
 export function ConsumerProfile({ consumer }: ConsumerProfileProps) {
     const { formatCurrency } = useCurrency();
 
-    const getInitials = (name: string) => {
-        if (!name || name.trim().toLowerCase() === 'unknown') return '?';
-        const names = name.split(' ');
-        if (names.length > 1) {
-            return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
+    const getTypeConfig = (type: Consumer['type']) => {
+        switch (type) {
+            case 'lead':
+                return { color: 'text-blue-500' };
+            case 'buyer':
+                return { color: 'text-green-500' };
+            case 'contact':
+                return { color: 'text-purple-500' };
+            default:
+                return { color: 'text-gray-500' };
         }
-        return name.substring(0, 2).toUpperCase();
-    }
+    };
 
     if (!consumer) {
         return (
@@ -39,12 +44,16 @@ export function ConsumerProfile({ consumer }: ConsumerProfileProps) {
     const displayName = consumer.name && consumer.name.toLowerCase() !== 'unknown' 
         ? consumer.name 
         : consumer.phone;
+        
+    const typeConfig = getTypeConfig(consumer.type);
 
     return (
         <div className="flex flex-col h-full bg-muted/50 border-l">
             <header className="p-4 border-b text-center space-y-3">
                 <Avatar className="h-20 w-20 border-2 border-background mx-auto">
-                    <AvatarFallback className="text-2xl">{getInitials(consumer.name)}</AvatarFallback>
+                    <AvatarFallback className="text-2xl bg-background">
+                         <User className={cn("h-10 w-10", typeConfig.color)} />
+                    </AvatarFallback>
                 </Avatar>
                 <div>
                     <h2 className="font-semibold text-lg">{displayName}</h2>
