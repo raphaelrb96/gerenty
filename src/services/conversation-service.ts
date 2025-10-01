@@ -1,6 +1,3 @@
-
-'use server';
-
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, orderBy, onSnapshot, Unsubscribe } from "firebase/firestore";
 import type { Conversation, Timestamp } from "@/lib/types";
