@@ -34,6 +34,12 @@ export function ChatArea({ conversation, consumer }: ChatAreaProps) {
     const [isOutsideWindow, setIsOutsideWindow] = useState(false);
     const scrollViewportRef = useRef<HTMLDivElement>(null);
 
+    const scrollToBottom = useCallback(() => {
+        if (scrollViewportRef.current) {
+            scrollViewportRef.current.scrollTop = scrollViewportRef.current.scrollHeight;
+        }
+    }, []);
+
     useEffect(() => {
         if (conversation?.lastMessageTimestamp) {
             const lastMessageTime = (conversation.lastMessageTimestamp as any).toDate ? 
@@ -83,12 +89,13 @@ export function ChatArea({ conversation, consumer }: ChatAreaProps) {
     }, [conversation, activeCompany, toast]);
     
     useEffect(() => {
-        if (scrollViewportRef.current) {
-            setTimeout(() => {
-                 scrollViewportRef.current!.scrollTop = scrollViewportRef.current!.scrollHeight;
-            }, 100);
+        if (!loading && messages.length > 0) {
+            // Using requestAnimationFrame ensures the DOM has been updated before scrolling
+            requestAnimationFrame(() => {
+                scrollToBottom();
+            });
         }
-    }, [messages, conversation]);
+    }, [messages, loading, scrollToBottom]);
 
     const handleSendMessage = useCallback(async (messageContent: string, type: 'text' | 'template' = 'text') => {
         if (!consumer || !activeCompany) return;
