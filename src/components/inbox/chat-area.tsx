@@ -93,7 +93,7 @@ export function ChatArea({ conversation, consumer }: ChatAreaProps) {
 
         setIsSending(true);
         try {
-            await sendMessage(consumer.phone, activeCompany.id, messageContent, type);
+            await sendMessage(activeCompany.id, consumer.phone, messageContent, type);
         } catch (error: any) {
             console.error("Error sending message:", error);
             toast({
