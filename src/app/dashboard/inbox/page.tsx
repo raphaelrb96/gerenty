@@ -12,7 +12,6 @@ import { getStagesByUser } from "@/services/stage-service";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { ConversationList } from "@/components/inbox/conversation-list";
 import { ChatArea } from "@/components/inbox/chat-area";
-import { ConsumerProfile } from "@/components/inbox/consumer-profile";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { EmptyState } from "@/components/common/empty-state";
 import { MessageSquare } from "lucide-react";
@@ -136,24 +135,18 @@ export default function InboxPage() {
     return (
         <>
             <ResizablePanelGroup direction="horizontal" className="h-full max-h-[calc(100vh-8rem)] w-full">
-                <ResizablePanel defaultSize={25} minSize={20} maxSize={30}>
+                <ResizablePanel defaultSize={35} minSize={25} maxSize={40}>
                     <ConversationList
                         conversations={conversations}
                         consumers={consumers}
                         onSelectConversation={setSelectedConversation}
                         selectedConversationId={selectedConversation?.id}
+                        stages={stages}
+                        onEditConsumer={handleEditConsumer}
                     />
                 </ResizablePanel>
                 <ResizableHandle withHandle />
-                 <ResizablePanel defaultSize={25} minSize={20} maxSize={35}>
-                    <ConsumerProfile 
-                        consumer={selectedConsumer} 
-                        stages={stages} 
-                        onEdit={() => handleEditConsumer(selectedConsumer)} 
-                    />
-                </ResizablePanel>
-                <ResizableHandle withHandle />
-                <ResizablePanel defaultSize={50} minSize={30}>
+                <ResizablePanel defaultSize={65} minSize={30}>
                     <ChatArea 
                         conversation={selectedConversation} 
                         consumer={selectedConsumer}

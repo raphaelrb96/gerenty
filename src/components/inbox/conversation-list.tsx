@@ -4,25 +4,31 @@
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search } from "lucide-react";
-import type { Conversation, Consumer } from "@/lib/types";
+import type { Conversation, Consumer, Stage } from "@/lib/types";
 import { ConversationListItem } from "./conversation-list-item";
 import { useState } from "react";
+import { AnimatePresence } from "framer-motion";
 
 type ConversationListProps = {
     conversations: Conversation[];
     consumers: Record<string, Consumer>;
+    stages: Stage[];
     onSelectConversation: (conversation: Conversation) => void;
     selectedConversationId?: string | null;
+    onEditConsumer: (consumer: Consumer | null) => void;
 }
 
-export function ConversationList({ conversations, consumers, onSelectConversation, selectedConversationId }: ConversationListProps) {
+export function ConversationList({ conversations, consumers, stages, onSelectConversation, selectedConversationId, onEditConsumer }: ConversationListProps) {
     const [searchTerm, setSearchTerm] = useState("");
 
     const filteredConversations = conversations.filter(convo => {
         const consumer = consumers[convo.consumerId];
         if (!consumer) return false;
-        return consumer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-               consumer.phone.includes(searchTerm);
+        const name = consumer.name?.toLowerCase() || '';
+        const phone = consumer.phone || '';
+        const term = searchTerm.toLowerCase();
+
+        return name.includes(term) || phone.includes(term);
     });
 
     return (
@@ -40,15 +46,19 @@ export function ConversationList({ conversations, consumers, onSelectConversatio
             </div>
             <ScrollArea className="flex-1">
                 <div className="p-2 space-y-1">
-                    {filteredConversations.map(convo => (
-                        <ConversationListItem
-                            key={convo.id}
-                            conversation={convo}
-                            consumer={consumers[convo.consumerId]}
-                            isSelected={selectedConversationId === convo.id}
-                            onSelect={() => onSelectConversation(convo)}
-                        />
-                    ))}
+                    <AnimatePresence initial={false}>
+                        {filteredConversations.map(convo => (
+                            <ConversationListItem
+                                key={convo.id}
+                                conversation={convo}
+                                consumer={consumers[convo.consumerId]}
+                                stages={stages}
+                                isSelected={selectedConversationId === convo.id}
+                                onSelect={() => onSelectConversation(convo)}
+                                onEditConsumer={onEditConsumer}
+                            />
+                        ))}
+                    </AnimatePresence>
                 </div>
             </ScrollArea>
         </div>

@@ -53,8 +53,8 @@ export function ConsumerProfile({ consumer, stages, onEdit }: ConsumerProfilePro
     const stage = stages.find(s => s.id === consumer.type);
 
     return (
-        <div className="flex flex-col h-full bg-muted/50 border-l">
-            <header className="p-4 border-b text-center space-y-3">
+        <div className="flex flex-col h-full bg-muted/20 border-t">
+            <header className="p-4 text-center space-y-3">
                 <div className="relative w-20 h-20 mx-auto">
                     <Avatar className="h-20 w-20 border-2 border-background ring-1 ring-border">
                         <AvatarFallback className="text-2xl bg-background">
