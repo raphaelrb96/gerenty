@@ -14,6 +14,7 @@ import { MessageSquare } from "lucide-react";
 import { useCompany } from "@/context/company-context";
 import { useToast } from "@/hooks/use-toast";
 import { TemplateMessageSelector } from "./template-message-selector";
+import { ScrollArea } from "../ui/scroll-area";
 
 type ChatAreaProps = {
     conversation: Conversation | null;
