@@ -32,7 +32,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
                 "max-w-[75%] p-3 rounded-lg",
                 isOutbound ? "bg-primary text-primary-foreground" : "bg-muted"
             )}>
-                <p className="text-sm whitespace-pre-wrap">{message.content.text?.body}</p>
+                <p className="text-sm whitespace-pre-wrap">{message.content?.text || '[Mensagem sem texto]'}</p>
                  <p className={cn(
                      "text-xs mt-1",
                      isOutbound ? "text-primary-foreground/70" : "text-muted-foreground/70"

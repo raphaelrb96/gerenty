@@ -11,6 +11,7 @@ import { Paperclip, Send, MessageSquare } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { LoadingSpinner } from "../common/loading-spinner";
 import { MessageBubble } from "./message-bubble";
+import { useCompany } from "@/context/company-context";
 
 type ChatAreaProps = {
     conversation: Conversation | null;
@@ -18,18 +19,19 @@ type ChatAreaProps = {
 }
 
 export function ChatArea({ conversation, consumer }: ChatAreaProps) {
+    const { activeCompany } = useCompany();
     const [messages, setMessages] = useState<Message[]>([]);
     const [loading, setLoading] = useState(false);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (!conversation) {
+        if (!conversation || !activeCompany) {
             setMessages([]);
             return;
         }
         
         setLoading(true);
-        const messagesCol = collection(db, `companies/${consumer?.ownerId}/conversations/${conversation.id}/messages`);
+        const messagesCol = collection(db, `companies/${activeCompany.id}/conversations/${conversation.id}/messages`);
         const q = query(messagesCol, orderBy("timestamp", "asc"));
 
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -50,7 +52,7 @@ export function ChatArea({ conversation, consumer }: ChatAreaProps) {
         });
 
         return () => unsubscribe();
-    }, [conversation]);
+    }, [conversation, activeCompany]);
     
     useEffect(() => {
         // Scroll to bottom when new messages arrive
