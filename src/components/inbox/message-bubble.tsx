@@ -49,10 +49,44 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         if (type === 'text' && content.text?.body) {
             return <p className="text-sm whitespace-pre-wrap">{content.text.body}</p>;
         }
+        
+        if (type === 'interactive') {
+            if (content.interactive?.button_reply?.title) {
+                return <p className="text-sm italic text-muted-foreground">Resposta: "{content.interactive.button_reply.title}"</p>;
+            }
+            if (content.interactive?.list_reply?.title) {
+                return <p className="text-sm italic text-muted-foreground">Resposta da Lista: "{content.interactive.list_reply.title}"</p>;
+            }
+        }
+        
+        if (type === 'image' && content.image?.url) {
+            return <Image src={content.image.url} alt={content.image.caption || "Imagem enviada"} width={300} height={200} className="rounded-md object-cover" />;
+        }
+        if (type === 'audio' && content.audio?.url) {
+            return <audio controls src={content.audio.url} className="w-full" />;
+        }
+        if (type === 'video' && content.video?.url) {
+             return <video controls src={content.video.url} className="rounded-md w-full max-w-xs" />;
+        }
+        if (type === 'document' && content.document?.url) {
+             return <a href={content.document.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:underline">Baixar Documento: {content.document.filename || 'Arquivo'}</a>;
+        }
+        if (type === 'location' && content.location) {
+            const { latitude, longitude, name, address } = content.location;
+            const mapUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+            return (
+                <a href={mapUrl} target="_blank" rel="noopener noreferrer" className="flex flex-col gap-1 hover:underline">
+                    <div className="flex items-center gap-2 font-semibold">
+                        <MapPin className="h-4 w-4" />
+                        <span>{name || 'Localização'}</span>
+                    </div>
+                    {address && <p className="text-xs">{address}</p>}
+                </a>
+            )
+        }
+        
+        // Fallbacks for media if URL is not yet available but ID is
         if (type === 'image' && content.image?.id) {
-            // NOTE: The URL for media is not directly available and needs to be fetched via Meta's API.
-            // For this prototype, we'll show a placeholder indicating an image was received.
-            // In a real implementation, you would have a backend service to get a temporary URL for the media ID.
             return <div className="p-2 bg-muted-foreground/20 rounded-md text-center text-xs">Imagem recebida (ID: ...{content.image.id.slice(-10)})</div>;
         }
         if (type === 'audio' && content.audio?.id) {
@@ -63,16 +97,6 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         }
         if (type === 'document' && content.document?.id) {
              return <div className="p-2 bg-muted-foreground/20 rounded-md text-center text-xs">Documento: {content.document.filename || 'Arquivo'}</div>;
-        }
-        if (type === 'location' && content.location) {
-            const { latitude, longitude } = content.location;
-            const mapUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
-            return (
-                <a href={mapUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:underline">
-                    <MapPin className="h-4 w-4" />
-                    <span>Ver Localização</span>
-                </a>
-            )
         }
 
         // Fallback for other types or missing content

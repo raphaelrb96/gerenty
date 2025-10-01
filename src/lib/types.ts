@@ -763,6 +763,7 @@ export type MediaMessage = { id: string; mime_type: string; url?: string; captio
 export type LocationMessage = { latitude: number; longitude: number; name?: string; address?: string };
 export type ContactMessage = { contacts: Array<{ name: { first_name: string }; phones: Array<{ phone: string; type: string }> }> };
 export type ProductMessage = { body?: string; catalog_id?: string; section_id?: string; product_retailer_id: string };
+
 export type InteractiveMessage = {
   type: 'button' | 'list' | 'product' | 'product_list';
   header?: { type: 'text' | 'video' | 'image' | 'document'; text?: string, media_id?: string };
@@ -778,7 +779,12 @@ export type InteractiveMessage = {
     }>;
     button?: string;
   };
+  button_reply?: {
+      id: string;
+      title: string;
+  };
 };
+
 export type TemplateMessage = { name: string; language: string; components: Array<{ type: 'body' | 'header'; parameters: Array<{ type: string; text?: string }> }> };
 export type ReactionMessage = { message_id: string; emoji: string };
 export type SystemMessage = { body: string; wa_id: string };

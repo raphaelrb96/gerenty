@@ -14,7 +14,8 @@ import {
     WebhookPayload,
     WhatsAppCredentials,
     WhatsAppIntegration,
-    MessageTemplate
+    MessageTemplate,
+    InteractiveMessage
 } from '../types/whatsapp';
 
 // Inicializa o Firebase Admin
@@ -660,7 +661,14 @@ async function processIncomingMessage(
                 lastMessageText = '[Localização]';
                 break;
             case 'interactive':
-                lastMessageText = '[Resposta interativa]';
+                const interactive: InteractiveMessage = message.interactive;
+                if (interactive.type === 'button_reply') {
+                    lastMessageText = interactive.button_reply.title;
+                } else if (interactive.type === 'list_reply') {
+                    lastMessageText = interactive.list_reply.title;
+                } else {
+                    lastMessageText = '[Resposta interativa]';
+                }
                 break;
             default:
                 lastMessageText = `[${message.type}]`;
