@@ -24,7 +24,7 @@ export default function InboxPage() {
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [consumers, setConsumers] = useState<Record<string, Consumer>>({});
     const [stages, setStages] = useState<Stage[]>([]);
-    const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+    const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
     const [isCustomerModalOpen, setCustomerModalOpen] = useState(false);
     const [customerToEdit, setCustomerToEdit] = useState<Customer | null>(null);
 
@@ -33,8 +33,9 @@ export default function InboxPage() {
             setLoading(true);
             const unsubscribeConvos = getConversations(activeCompany.id, (convos) => {
                 setConversations(convos);
-                if (convos.length > 0 && !selectedConversation) {
-                    setSelectedConversation(convos[0]);
+                // Only set selected conversation if none is selected and there are conversations
+                if (convos.length > 0 && !selectedConversationId) {
+                    setSelectedConversationId(convos[0].id);
                 }
                 setLoading(false);
             });
@@ -57,16 +58,16 @@ export default function InboxPage() {
             setConversations([]);
             setConsumers({});
             setStages([]);
-            setSelectedConversation(null);
+            setSelectedConversationId(null);
             setLoading(false);
         }
     }, [activeCompany, effectiveOwnerId]);
     
     const handleSelectConversation = (conversation: Conversation) => {
-        if (selectedConversation?.id === conversation.id) {
-            setSelectedConversation(null); // Deselect if the same one is clicked
+        if (selectedConversationId === conversation.id) {
+            setSelectedConversationId(null); // Deselect if the same one is clicked
         } else {
-            setSelectedConversation(conversation);
+            setSelectedConversationId(conversation.id);
         }
     };
     
@@ -136,6 +137,7 @@ export default function InboxPage() {
         )
     }
 
+    const selectedConversation = conversations.find(c => c.id === selectedConversationId) || null;
     const selectedConsumer = selectedConversation ? consumers[selectedConversation.consumerId] : null;
 
     return (
@@ -146,7 +148,7 @@ export default function InboxPage() {
                         conversations={conversations}
                         consumers={consumers}
                         onSelectConversation={handleSelectConversation}
-                        selectedConversationId={selectedConversation?.id}
+                        selectedConversationId={selectedConversationId}
                         stages={stages}
                         onEditConsumer={handleEditConsumer}
                     />
