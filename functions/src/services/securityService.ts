@@ -92,7 +92,7 @@ export class SecurityService {
 
     async validateWebhookSignature(
         companyId: string,
-        payload: string,
+        payload: Buffer,
         signature: string
     ): Promise<boolean> {
         try {
@@ -108,8 +108,8 @@ export class SecurityService {
             functions.logger.info(`Signature validation - Received: ${signature.substring(0, 10)}..., Expected: ${expectedSignature.substring(0, 10)}...`);
 
             const isValid = crypto.timingSafeEqual(
-                Buffer.from(signature),
-                Buffer.from(expectedSignature)
+                Buffer.from(signature, 'hex'),
+                Buffer.from(expectedSignature, 'hex')
             );
 
             functions.logger.info(`Signature validation result: ${isValid}`);

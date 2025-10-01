@@ -20,6 +20,7 @@ import {
     MessageContact,
     MessageMetadata
 } from '../types/whatsapp';
+import { FieldValue } from 'firebase-admin/firestore';
 
 // Inicializa o Firebase Admin
 if (admin.apps.length === 0) {
@@ -203,10 +204,9 @@ export const whatsappWebhookListener = functions.https.onRequest(
                 }
 
                 // Valida a assinatura do webhook
-                const rawBody = JSON.stringify(req.body);
                 const isValidSignature = await securityService.validateWebhookSignature(
                     companyId,
-                    rawBody,
+                    req.rawBody,
                     signature.replace('sha256=', '')
                 );
 
@@ -883,3 +883,4 @@ function sanitizeMetaPatterns(text: string): string {
     
 
     
+
