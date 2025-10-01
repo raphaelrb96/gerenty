@@ -33,7 +33,7 @@ export function ConversationList({ conversations, consumers, stages, onSelectCon
 
     return (
         <div className="flex flex-col h-full bg-muted/50 border-r">
-            <div className="p-4 border-b">
+            <div className="p-4 border-b flex-shrink-0">
                 <div className="relative">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input 
@@ -44,7 +44,7 @@ export function ConversationList({ conversations, consumers, stages, onSelectCon
                     />
                 </div>
             </div>
-            <ScrollArea className="flex-1">
+            <ScrollArea className="flex-1 h-full">
                 <div className="p-2 space-y-1">
                     <AnimatePresence initial={false}>
                         {filteredConversations.map(convo => (
