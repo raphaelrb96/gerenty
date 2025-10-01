@@ -141,9 +141,8 @@ export const integrationService = {
 
 };
 
-// Aliases
+// Aliases for easier use and to avoid breaking changes if the original functions were used directly
 export const { saveWhatsAppCredentials, sendMessage, checkWhatsAppIntegration, getWhatsAppIntegrationStatus, syncWhatsAppTemplates } = integrationService;
-
 
 // Specific alias for test message to avoid confusion
 export const sendTestMessage = async (phoneNumber: string, companyId: string, message: string) => {

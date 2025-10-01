@@ -1,5 +1,3 @@
-
-
 // src/functions/whatsapp.ts
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
@@ -600,6 +598,18 @@ async function processIncomingMessage(
         // Find contact name from the webhook payload
         const contactProfile = contacts.find(c => c.wa_id === phoneNumber);
         const contactName = contactProfile?.profile?.name || 'Unknown';
+        
+         // Enrich message with media URL if it's a media message
+        if (message.image?.id) {
+            message.image.url = await whatsAppService.fetchMediaUrl(message.image.id, companyId) || undefined;
+        } else if (message.video?.id) {
+            message.video.url = await whatsAppService.fetchMediaUrl(message.video.id, companyId) || undefined;
+        } else if (message.audio?.id) {
+            message.audio.url = await whatsAppService.fetchMediaUrl(message.audio.id, companyId) || undefined;
+        } else if (message.document?.id) {
+            message.document.url = await whatsAppService.fetchMediaUrl(message.document.id, companyId) || undefined;
+        }
+
 
         // Busca ou cria o consumer
         const consumerQuery = await db.collection('companies')
@@ -868,12 +878,3 @@ function sanitizeMetaPatterns(text: string): string {
         // Garante que não haja caracteres inválidos
         .replace(/[^\x20-\x7E\u00C0-\u00FF]/g, '');
 }
-
-
-
-
-
-    
-
-
-    

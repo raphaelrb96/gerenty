@@ -13,6 +13,27 @@ export class WhatsAppService {
     this.secretManager = SecretManagerService.getInstance();
     this.db = admin.firestore();
   }
+  
+  async fetchMediaUrl(mediaId: string, companyId: string): Promise<string | null> {
+    try {
+        const accessToken = await this.secretManager.getWhatsAppToken(companyId);
+        const response = await fetch(`https://graph.facebook.com/v17.0/${mediaId}`, {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+            },
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            functions.logger.error(`[WhatsAppService] Failed to fetch media URL for ID ${mediaId}`, { error: errorData, companyId });
+            return null;
+        }
+        const mediaData = await response.json();
+        return mediaData.url || null;
+    } catch (error) {
+        functions.logger.error(`[WhatsAppService] Exception fetching media URL for ID ${mediaId}`, { error, companyId });
+        return null;
+    }
+}
 
   // src/services/whatsAppService.ts - Atualize completamente a função sendMessage
   async sendMessage(
