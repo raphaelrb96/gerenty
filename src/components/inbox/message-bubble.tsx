@@ -192,7 +192,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
     return (
         <div className={cn("flex items-end gap-2", isOutbound ? "justify-end" : "justify-start")}>
             <div className={cn(
-                "max-w-[75%] p-3 rounded-lg shadow-sm",
+                "max-w-[75%] p-3 rounded-lg shadow-sm min-w-[100px]",
                 isOutbound ? "bg-primary text-primary-foreground" : "bg-muted"
             )}>
                 {renderMessageContent()}
