@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef } from "react";
 import type { Conversation, Consumer, Message } from "@/lib/types";
 import { db } from "@/lib/firebase";
-import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Paperclip, Send, MessageSquare } from "lucide-react";
@@ -41,7 +41,8 @@ export function ChatArea({ conversation, consumer }: ChatAreaProps) {
                 newMessages.push({
                     id: doc.id,
                     ...data,
-                    timestamp: data.timestamp.toDate()
+                    // Convert Firestore Timestamp to JS Date object
+                    timestamp: (data.timestamp as Timestamp)?.toDate() || new Date()
                 } as Message);
             });
             setMessages(newMessages);
