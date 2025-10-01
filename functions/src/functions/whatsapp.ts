@@ -878,3 +878,5 @@ function sanitizeMetaPatterns(text: string): string {
         // Garante que não haja caracteres inválidos
         .replace(/[^\x20-\x7E\u00C0-\u00FF]/g, '');
 }
+
+    

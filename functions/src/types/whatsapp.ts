@@ -75,21 +75,13 @@ export interface IncomingMessage {
   };
 }
 
-export interface MessageStatus {
-  id: string;
-  status: 'sent' | 'delivered' | 'read' | 'failed' | 'warning';
-  timestamp: string;
-  recipient_id: string;
-  conversation?: {
-    id: string;
-    origin: { type: string };
-  };
-  pricing?: {
-    billable: boolean;
-    pricing_model: string;
-    category: string;
-  };
-}
+export type MessageStatus =
+  | 'sent'
+  | 'delivered'
+  | 'read'
+  | 'failed'
+  | 'warning';
+
 
 export interface TemplateStatusUpdate {
   message_template_id: string;
@@ -195,5 +187,7 @@ export interface MessageTemplateComponent {
       example?: string[];
   }>;
 }
+
+    
 
     
