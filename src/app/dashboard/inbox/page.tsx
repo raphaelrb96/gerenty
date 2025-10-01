@@ -46,7 +46,7 @@ export default function InboxPage() {
 
                 setStages(userStages);
 
-                if (convos.length > 0) {
+                if (convos.length > 0 && !selectedConversation) {
                     setSelectedConversation(convos[0]);
                 }
 
@@ -63,6 +63,14 @@ export default function InboxPage() {
             setLoading(false);
         }
     }, [activeCompany, effectiveOwnerId]);
+    
+    const handleSelectConversation = (conversation: Conversation) => {
+        if (selectedConversation?.id === conversation.id) {
+            setSelectedConversation(null); // Deselect if the same one is clicked
+        } else {
+            setSelectedConversation(conversation);
+        }
+    };
     
     const handleEditConsumer = (consumer: Consumer | null) => {
         if (!consumer || !activeCompany) return;
@@ -139,7 +147,7 @@ export default function InboxPage() {
                     <ConversationList
                         conversations={conversations}
                         consumers={consumers}
-                        onSelectConversation={setSelectedConversation}
+                        onSelectConversation={handleSelectConversation}
                         selectedConversationId={selectedConversation?.id}
                         stages={stages}
                         onEditConsumer={handleEditConsumer}
