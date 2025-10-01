@@ -1,3 +1,4 @@
+
 // src/types/whatsapp.ts
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
@@ -43,13 +44,40 @@ export interface WebhookPayload {
           from: string;
           id: string;
           timestamp: string;
-          type: string;
+          type: 'text' | 'image' | 'video' | 'audio' | 'document' | 'location' | 'interactive' | 'sticker' | 'unknown';
           text?: {
             body: string;
           };
-          image?: any;
-          document?: any;
-          video?: any;
+          image?: {
+            caption?: string;
+            id: string;
+            mime_type: string;
+            url?: string;
+          };
+          video?: {
+            caption?: string;
+            id: string;
+            mime_type: string;
+            url?: string;
+          };
+          audio?: {
+            id: string;
+            mime_type: string;
+            url?: string;
+          };
+          document?: {
+            caption?: string;
+            filename: string;
+            id: string;
+            mime_type: string;
+            url?: string;
+          };
+          location?: {
+            latitude: number;
+            longitude: number;
+            name?: string;
+            address?: string;
+          };
         }>;
         statuses?: Array<{
           id: string;

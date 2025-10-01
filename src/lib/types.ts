@@ -792,7 +792,10 @@ export type Message = {
   status: MessageStatus;
   content: {
     text?: TextMessage;
-    media?: MediaMessage;
+    image?: MediaMessage;
+    audio?: MediaMessage;
+    video?: MediaMessage;
+    document?: MediaMessage;
     location?: LocationMessage;
     contact?: ContactMessage;
     product_message?: ProductMessage;
@@ -803,7 +806,6 @@ export type Message = {
   };
   context?: Record<string, any>;
   error?: Record<string, any>;
-  payload: Record<string, any>; // Full API payload
 };
 
 export type MessageTemplate = {

@@ -636,7 +636,35 @@ async function processIncomingMessage(
             .get();
 
         let conversationId: string;
-        const lastMessageText = message.text?.body || '[Media message]';
+
+        // Determine a friendly last message summary based on message type
+        let lastMessageText = '[Mensagem desconhecida]';
+        switch (message.type) {
+            case 'text':
+                lastMessageText = message.text?.body || '[Mensagem de texto vazia]';
+                break;
+            case 'image':
+                lastMessageText = message.image?.caption || '[Imagem]';
+                break;
+            case 'video':
+                lastMessageText = message.video?.caption || '[Vídeo]';
+                break;
+            case 'audio':
+                lastMessageText = '[Áudio]';
+                break;
+            case 'document':
+                lastMessageText = message.document?.caption || '[Documento]';
+                break;
+            case 'location':
+                lastMessageText = '[Localização]';
+                break;
+            case 'interactive':
+                lastMessageText = '[Resposta interativa]';
+                break;
+            default:
+                lastMessageText = `[${message.type}]`;
+        }
+
         const messageTimestamp = admin.firestore.Timestamp.fromMillis(parseInt(message.timestamp) * 1000);
 
         if (conversationQuery.empty) {
@@ -669,7 +697,7 @@ async function processIncomingMessage(
                 });
         }
 
-        // Salva a mensagem
+        // Salva a mensagem completa
         await db.collection('companies')
             .doc(companyId)
             .collection('conversations')
@@ -679,7 +707,7 @@ async function processIncomingMessage(
                 id: message.id,
                 direction: 'inbound',
                 type: message.type,
-                content: message, // Store the entire message content
+                content: message, // Store the entire message object
                 timestamp: messageTimestamp,
                 status: 'delivered',
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),
