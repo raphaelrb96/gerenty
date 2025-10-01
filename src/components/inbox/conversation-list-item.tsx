@@ -16,6 +16,7 @@ type ConversationListItemProps = {
 
 export function ConversationListItem({ conversation, consumer, isSelected, onSelect }: ConversationListItemProps) {
     const getInitials = (name: string) => {
+        if (!name || name.trim().toLowerCase() === 'unknown') return '?';
         const names = name.split(' ');
         if (names.length > 1) {
             return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
@@ -23,6 +24,10 @@ export function ConversationListItem({ conversation, consumer, isSelected, onSel
         return name.substring(0, 2).toUpperCase();
     }
     
+    const displayName = consumer?.name && consumer.name.toLowerCase() !== 'unknown' 
+        ? consumer.name 
+        : consumer?.phone || "Desconhecido";
+
     const lastMessageDate = conversation.lastMessageTimestamp ? new Date(conversation.lastMessageTimestamp as string) : new Date();
 
     return (
@@ -39,18 +44,18 @@ export function ConversationListItem({ conversation, consumer, isSelected, onSel
                 </Avatar>
                 <div className="flex-1 overflow-hidden">
                     <div className="flex justify-between items-center">
-                        <p className="font-semibold text-sm truncate">{consumer?.name || "Desconhecido"}</p>
-                        <p className="text-xs text-muted-foreground whitespace-nowrap">
-                            {formatDistanceToNow(lastMessageDate, { addSuffix: true, locale: ptBR })}
-                        </p>
-                    </div>
-                    <div className="flex justify-between items-start mt-1">
-                        <p className="text-xs text-muted-foreground truncate pr-2">{/* Placeholder for last message */}</p>
-                        {conversation.unreadMessagesCount > 0 && 
-                            <span className="bg-primary text-primary-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                        <p className="font-semibold text-sm truncate">{displayName}</p>
+                         {conversation.unreadMessagesCount > 0 && 
+                            <span className="bg-primary text-primary-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center flex-shrink-0">
                                 {conversation.unreadMessagesCount}
                             </span>
                         }
+                    </div>
+                    <div className="flex justify-between items-start mt-1">
+                        <p className="text-xs text-muted-foreground truncate pr-2">{conversation.lastMessage}</p>
+                         <p className="text-xs text-muted-foreground whitespace-nowrap">
+                            {formatDistanceToNow(lastMessageDate, { addSuffix: true, locale: ptBR })}
+                        </p>
                     </div>
                 </div>
             </div>
