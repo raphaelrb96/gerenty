@@ -1,10 +1,9 @@
-
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useCompany } from "@/context/company-context";
-import type { Conversation, Consumer, Stage, Customer } from "@/lib/types";
+import type { Conversation, Consumer, Stage } from "@/lib/types";
 import { getConversations } from "@/services/conversation-service";
 import { getConsumersByCompany } from "@/services/consumer-service";
 import { getStagesByUser } from "@/services/stage-service";
@@ -33,10 +32,18 @@ export default function InboxPage() {
             setLoading(true);
             const unsubscribeConvos = getConversations(activeCompany.id, (convos) => {
                 setConversations(convos);
-                // Only set selected conversation if none is selected and there are conversations
-                if (convos.length > 0 && !selectedConversationId) {
-                    setSelectedConversationId(convos[0].id);
-                }
+                
+                // Auto-select the first conversation only if no conversation is currently selected.
+                // This prevents the selection from changing on new messages.
+                setSelectedConversationId(prevId => {
+                    if (prevId && convos.some(c => c.id === prevId)) {
+                        return prevId;
+                    }
+                    if (!prevId && convos.length > 0) {
+                        return convos[0].id;
+                    }
+                    return prevId;
+                });
                 setLoading(false);
             });
 
@@ -64,11 +71,7 @@ export default function InboxPage() {
     }, [activeCompany, effectiveOwnerId]);
     
     const handleSelectConversation = (conversation: Conversation) => {
-        if (selectedConversationId === conversation.id) {
-            setSelectedConversationId(null); // Deselect if the same one is clicked
-        } else {
-            setSelectedConversationId(conversation.id);
-        }
+        setSelectedConversationId(conversation.id);
     };
     
     const handleEditConsumer = (consumer: Consumer | null) => {
@@ -108,6 +111,13 @@ export default function InboxPage() {
         setCustomerModalOpen(false);
     };
 
+    const selectedConversation = useMemo(() => {
+        return conversations.find(c => c.id === selectedConversationId) || null;
+    }, [conversations, selectedConversationId]);
+
+    const selectedConsumer = useMemo(() => {
+        return selectedConversation ? consumers[selectedConversation.consumerId] : null;
+    }, [selectedConversation, consumers]);
 
     if (loading) {
         return <LoadingSpinner />;
@@ -125,7 +135,7 @@ export default function InboxPage() {
         );
     }
     
-    if (conversations.length === 0) {
+    if (conversations.length === 0 && !loading) {
         return (
             <div className="flex items-center justify-center h-full">
                 <EmptyState
@@ -136,9 +146,6 @@ export default function InboxPage() {
             </div>
         )
     }
-
-    const selectedConversation = conversations.find(c => c.id === selectedConversationId) || null;
-    const selectedConsumer = selectedConversation ? consumers[selectedConversation.consumerId] : null;
 
     return (
         <>
