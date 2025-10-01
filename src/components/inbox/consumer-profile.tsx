@@ -54,35 +54,17 @@ export function ConsumerProfile({ consumer, stages, onEdit }: ConsumerProfilePro
 
     return (
         <div className="flex flex-col h-full bg-muted/20 border-t">
-            <header className="p-4 text-center space-y-3">
-                <div className="relative w-20 h-20 mx-auto">
-                    <Avatar className="h-20 w-20 border-2 border-background ring-1 ring-border">
-                        <AvatarFallback className="text-2xl bg-background">
-                            <User className={cn("h-10 w-10", typeConfig.color)} />
-                        </AvatarFallback>
-                    </Avatar>
-                    <Button size="icon" className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full" onClick={onEdit}>
-                        <Pencil className="h-4 w-4" />
-                    </Button>
-                </div>
-                <div>
-                    <h2 className="font-semibold text-lg">{displayName}</h2>
-                    <p className="text-sm text-muted-foreground">{consumer.phone}</p>
-                </div>
-                {stage && (
-                    <div className="flex justify-center gap-2">
-                        <Badge variant="secondary">{stage.name}</Badge>
-                    </div>
-                )}
-            </header>
             <ScrollArea className="flex-1">
                 <div className="p-4 space-y-6">
                     <Card>
-                        <CardHeader>
+                        <CardHeader className="flex flex-row items-center justify-between">
                             <CardTitle className="text-base flex items-center gap-2">
                                 <User className="h-4 w-4"/>
                                 Informações
                             </CardTitle>
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={onEdit}>
+                                <Pencil className="h-4 w-4" />
+                            </Button>
                         </CardHeader>
                         <CardContent className="text-sm space-y-2">
                              <div className="flex justify-between">
