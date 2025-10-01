@@ -609,7 +609,7 @@ async function processIncomingMessage(
         const contactProfile = contacts.find(c => c.wa_id === phoneNumber);
         const contactName = contactProfile?.profile?.name || 'Unknown';
         
-         // Enrich message with media URL if it's a media message
+        // CORREÇÃO: Processa a URL da mídia ANTES de qualquer operação de escrita
         if (message.image?.id) {
             message.image.url = await whatsAppService.fetchMediaUrl(message.image.id, companyId) || undefined;
         } else if (message.video?.id) {
@@ -739,7 +739,7 @@ async function processIncomingMessage(
                 id: message.id,
                 direction: 'inbound',
                 type: message.type,
-                content: message, // Store the entire message object
+                content: message, // O objeto message agora contém a URL Base64
                 timestamp: messageTimestamp,
                 status: 'delivered',
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),

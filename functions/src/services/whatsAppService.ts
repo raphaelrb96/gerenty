@@ -17,6 +17,8 @@ export class WhatsAppService {
   async fetchMediaUrl(mediaId: string, companyId: string): Promise<string | null> {
     try {
         const accessToken = await this.secretManager.getWhatsAppToken(companyId);
+        
+        // 1. Get media details including the temporary URL
         const mediaDetailsResponse = await fetch(`https://graph.facebook.com/v17.0/${mediaId}`, {
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
@@ -38,7 +40,7 @@ export class WhatsAppService {
             return null;
         }
         
-        // Authenticated request to download the actual media content
+        // 2. Download the actual media content using the authenticated URL
         const mediaDataResponse = await fetch(mediaUrl, {
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
@@ -51,6 +53,7 @@ export class WhatsAppService {
              return null;
         }
 
+        // 3. Convert the downloaded content to a Base64 data URI
         const buffer = await mediaDataResponse.arrayBuffer();
         const base64Data = Buffer.from(buffer).toString('base64');
         
