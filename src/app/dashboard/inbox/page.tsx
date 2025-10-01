@@ -47,30 +47,37 @@ export default function InboxPage() {
 
                 setStages(userStages);
 
+                if (convos.length > 0) {
+                    setSelectedConversation(convos[0]);
+                }
+
                 setLoading(false);
             }).catch(error => {
                 console.error("Failed to fetch inbox data:", error);
                 setLoading(false);
             });
         } else {
+            setConversations([]);
+            setConsumers({});
+            setStages([]);
+            setSelectedConversation(null);
             setLoading(false);
         }
     }, [activeCompany, effectiveOwnerId]);
     
     const handleEditConsumer = (consumer: Consumer | null) => {
-        if (!consumer) return;
+        if (!consumer || !activeCompany) return;
         // The modal expects a Customer object. We need to map the Consumer to it.
         const customerData: Customer = {
             id: consumer.id,
-            ownerId: activeCompany?.ownerId || '',
+            ownerId: activeCompany.ownerId,
             name: consumer.name,
             email: consumer.email,
             phone: consumer.phone,
             status: consumer.type, // Map consumer type to a default status if needed
-            // Fill other fields from consumer if they exist, or with defaults
             document: '',
             tags: [],
-            createdAt: consumer.createdAt,
+            createdAt: consumer.createdAt as any,
             updatedAt: new Date().toISOString(),
         };
         setCustomerToEdit(customerData);
@@ -91,14 +98,7 @@ export default function InboxPage() {
             ...prev,
             [savedCustomer.id]: updatedConsumer
         }));
-
-        // Also update the consumer object associated with the selected conversation
-        if (selectedConversation && selectedConversation.consumerId === savedCustomer.id) {
-             const updatedSelectedConsumer = { ...selectedConsumer, ...updatedConsumer };
-             // This might not directly trigger a re-render of ConsumerProfile if it relies on its own state.
-             // It's better to pass the updated consumer directly or ensure the parent component re-renders with new props.
-        }
-
+        
         setCustomerModalOpen(false);
     };
 
@@ -135,7 +135,7 @@ export default function InboxPage() {
 
     return (
         <>
-            <ResizablePanelGroup direction="horizontal" className="h-full w-full">
+            <ResizablePanelGroup direction="horizontal" className="h-full max-h-[calc(100vh-8rem)] w-full">
                 <ResizablePanel defaultSize={25} minSize={20} maxSize={30}>
                     <ConversationList
                         conversations={conversations}
@@ -145,18 +145,18 @@ export default function InboxPage() {
                     />
                 </ResizablePanel>
                 <ResizableHandle withHandle />
-                <ResizablePanel defaultSize={50} minSize={30}>
-                    <ChatArea 
-                        conversation={selectedConversation} 
-                        consumer={selectedConsumer}
-                    />
-                </ResizablePanel>
-                <ResizableHandle withHandle />
-                <ResizablePanel defaultSize={25} minSize={20} maxSize={30}>
+                 <ResizablePanel defaultSize={25} minSize={20} maxSize={35}>
                     <ConsumerProfile 
                         consumer={selectedConsumer} 
                         stages={stages} 
                         onEdit={() => handleEditConsumer(selectedConsumer)} 
+                    />
+                </ResizablePanel>
+                <ResizableHandle withHandle />
+                <ResizablePanel defaultSize={50} minSize={30}>
+                    <ChatArea 
+                        conversation={selectedConversation} 
+                        consumer={selectedConsumer}
                     />
                 </ResizablePanel>
             </ResizablePanelGroup>
@@ -166,7 +166,7 @@ export default function InboxPage() {
                 onClose={() => setCustomerModalOpen(false)}
                 onCustomerSaved={handleCustomerSave}
                 customer={customerToEdit}
-                allTags={[]} // You might want to fetch all tags for the dropdown
+                allTags={[]}
             />
         </>
     );

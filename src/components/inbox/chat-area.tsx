@@ -43,7 +43,6 @@ export function ChatArea({ conversation, consumer }: ChatAreaProps) {
             const timeDiff = Date.now() - lastMessageTime;
             setIsOutsideWindow(timeDiff > TWENTY_FOUR_HOURS_MS);
         } else {
-             // If there's no last message, assume it's a new conversation (within window)
             setIsOutsideWindow(false);
         }
     }, [conversation]);
@@ -76,7 +75,6 @@ export function ChatArea({ conversation, consumer }: ChatAreaProps) {
             setLoading(false);
         });
 
-        // Fetch templates for the template selector
         getTemplatesByCompany(activeCompany.id)
             .then(setTemplates)
             .catch(() => toast({ variant: "destructive", title: "Erro ao carregar templates" }));
@@ -96,7 +94,6 @@ export function ChatArea({ conversation, consumer }: ChatAreaProps) {
         setIsSending(true);
         try {
             await sendMessage(consumer.phone, activeCompany.id, messageContent, type);
-            // The message will appear automatically via the onSnapshot listener
         } catch (error: any) {
             console.error("Error sending message:", error);
             toast({
@@ -125,7 +122,7 @@ export function ChatArea({ conversation, consumer }: ChatAreaProps) {
         : consumer.phone;
 
     return (
-        <div className="flex flex-col h-full bg-background">
+        <div className="flex flex-col h-full bg-background border rounded-lg">
             <header className="p-4 border-b flex-shrink-0">
                 <h2 className="font-semibold">{displayName}</h2>
                 <p className="text-xs text-muted-foreground">{consumer.phone}</p>
