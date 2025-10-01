@@ -665,9 +665,9 @@ async function processIncomingMessage(
                 lastMessageText = message.location?.name || '[Localização]';
                 break;
             case 'interactive':
-                if (message.interactive.type === 'button_reply') {
+                if (message.interactive?.type === 'button_reply') {
                     lastMessageText = message.interactive.button_reply.title;
-                } else if (message.interactive.type === 'list_reply') {
+                } else if (message.interactive?.type === 'list_reply') {
                     lastMessageText = message.interactive.list_reply.title;
                 } else {
                     lastMessageText = '[Resposta interativa]';
@@ -871,6 +871,9 @@ function sanitizeMetaPatterns(text: string): string {
 
 
 
+
+
+    
 
 
     

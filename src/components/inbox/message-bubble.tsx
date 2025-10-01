@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { cn } from "@/lib/utils";
@@ -139,3 +140,5 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         </div>
     );
 }
+
+    
