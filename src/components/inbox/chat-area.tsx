@@ -32,7 +32,7 @@ export function ChatArea({ conversation, consumer }: ChatAreaProps) {
     const [loading, setLoading] = useState(false);
     const [isSending, setIsSending] = useState(false);
     const [isOutsideWindow, setIsOutsideWindow] = useState(false);
-    const scrollAreaRef = useRef<HTMLDivElement>(null);
+    const scrollViewportRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (conversation?.lastMessageTimestamp) {
@@ -83,10 +83,12 @@ export function ChatArea({ conversation, consumer }: ChatAreaProps) {
     }, [conversation, activeCompany, toast]);
     
     useEffect(() => {
-        if (scrollAreaRef.current) {
-            scrollAreaRef.current.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: 'smooth' });
+        if (scrollViewportRef.current) {
+            setTimeout(() => {
+                 scrollViewportRef.current!.scrollTop = scrollViewportRef.current!.scrollHeight;
+            }, 100);
         }
-    }, [messages]);
+    }, [messages, conversation]);
 
     const handleSendMessage = useCallback(async (messageContent: string, type: 'text' | 'template' = 'text') => {
         if (!consumer || !activeCompany) return;
@@ -129,7 +131,7 @@ export function ChatArea({ conversation, consumer }: ChatAreaProps) {
             </header>
 
             <div className="flex-1 overflow-hidden relative">
-                <ScrollArea className="h-full" ref={scrollAreaRef as any}>
+                <ScrollArea className="h-full" viewportRef={scrollViewportRef}>
                     <div className="p-6 space-y-4">
                         {loading ? (
                             <LoadingSpinner />
