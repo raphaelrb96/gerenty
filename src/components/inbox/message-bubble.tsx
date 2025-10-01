@@ -63,7 +63,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
             return <Image src={content.image.url} alt={content.image.caption || "Imagem enviada"} width={300} height={200} className="rounded-md object-cover" />;
         }
         if (type === 'audio' && content.audio?.url) {
-            return <audio controls src={content.audio.url} className="w-full" />;
+            return <audio controls src={content.audio.url} className="w-full max-w-xs" />;
         }
         if (type === 'video' && content.video?.url) {
              return <video controls src={content.video.url} className="rounded-md w-full max-w-xs" />;
