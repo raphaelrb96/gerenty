@@ -38,6 +38,7 @@ export class WhatsAppService {
             return null;
         }
         
+        // Authenticated request to download the actual media content
         const mediaDataResponse = await fetch(mediaUrl, {
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
