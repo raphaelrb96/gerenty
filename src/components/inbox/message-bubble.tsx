@@ -62,15 +62,15 @@ const AudioPlayer = ({ src }: { src: string }) => {
     const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
     return (
-        <div className="flex items-center gap-3 w-full max-w-xs">
+        <div className="flex items-center gap-2 w-full max-w-xs">
             <audio ref={audioRef} src={src} preload="metadata" />
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handlePlayPause}>
+            <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={handlePlayPause}>
                 {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
             </Button>
             <div className="flex-1 flex items-center gap-2">
-                <Progress value={progress} className="h-2 w-full" />
-                <span className="text-xs font-mono w-12 text-right">
-                    {formatTime(currentTime)} / {formatTime(duration)}
+                 <Progress value={progress} className="h-2 w-full [&>div]:bg-primary" />
+                <span className="text-xs font-mono w-12 text-right text-muted-foreground">
+                    {formatTime(currentTime)}
                 </span>
             </div>
         </div>
