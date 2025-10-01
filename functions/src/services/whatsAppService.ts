@@ -32,12 +32,19 @@ export class WhatsAppService {
         };
       }
 
+      let result: MessageResult;
       if (payload.type === 'template') {
-          return this.tryTemplateMessage(integration.phoneNumberId, accessToken, payload);
+          result = await this.tryTemplateMessage(integration.phoneNumberId, accessToken, payload);
+      } else {
+          result = await this.tryConversationMessage(integration.phoneNumberId, accessToken, payload);
       }
 
-      // Default to conversation message
-      return this.tryConversationMessage(integration.phoneNumberId, accessToken, payload);
+      // ✅  Salvar a mensagem enviada no Firestore se for bem-sucedida
+      if (result.success && result.messageId) {
+        await this.saveOutboundMessage(companyId, payload, result.messageId);
+      }
+
+      return result;
 
     } catch (error) {
       functions.logger.error('[WhatsAppService] Error sending WhatsApp message:', error);
@@ -231,4 +238,90 @@ export class WhatsAppService {
       return null;
     }
   }
+
+  private async saveOutboundMessage(companyId: string, payload: SendMessagePayload, messageId: string): Promise<void> {
+    try {
+        const consumerQuery = await this.db.collection('companies')
+            .doc(companyId)
+            .collection('consumers')
+            .where('phone', '==', payload.phoneNumber)
+            .limit(1)
+            .get();
+
+        if (consumerQuery.empty) {
+            functions.logger.warn(`[saveOutboundMessage] Consumer not found for phone ${payload.phoneNumber}. Cannot save message.`);
+            return;
+        }
+
+        const consumerId = consumerQuery.docs[0].id;
+        const conversationQuery = await this.db.collection('companies')
+            .doc(companyId)
+            .collection('conversations')
+            .where('consumerId', '==', consumerId)
+            .where('status', 'in', ['open', 'pending'])
+            .limit(1)
+            .get();
+        
+        let conversationId: string;
+        const now = admin.firestore.Timestamp.now();
+        const lastMessageText = payload.message || `[Template: ${payload.templateName}]`;
+
+        if (conversationQuery.empty) {
+             const conversationRef = await this.db.collection('companies')
+                .doc(companyId)
+                .collection('conversations')
+                .add({
+                    consumerId,
+                    status: 'open',
+                    unreadMessagesCount: 0, // Outbound message doesn't make it unread
+                    lastMessage: lastMessageText,
+                    lastMessageTimestamp: now,
+                    createdAt: now,
+                    updatedAt: now,
+                });
+            conversationId = conversationRef.id;
+        } else {
+            conversationId = conversationQuery.docs[0].id;
+            await this.db.collection('companies')
+                .doc(companyId)
+                .collection('conversations')
+                .doc(conversationId)
+                .update({
+                    lastMessage: lastMessageText,
+                    lastMessageTimestamp: now,
+                    updatedAt: now,
+                    // Reset unread count if we are replying
+                    unreadMessagesCount: 0
+                });
+        }
+
+        const messageContent: any = {
+            id: messageId,
+            direction: 'outbound',
+            type: payload.type,
+            timestamp: now,
+            status: 'sent', // Initial status
+            createdAt: now,
+        };
+
+        if (payload.type === 'text') {
+            messageContent.content = { text: { body: payload.message } };
+        } else if (payload.type === 'template') {
+            messageContent.content = { template: { name: payload.templateName, language: { code: 'pt_BR' } } };
+        }
+
+        await this.db.collection('companies')
+            .doc(companyId)
+            .collection('conversations')
+            .doc(conversationId)
+            .collection('messages')
+            .add(messageContent);
+        
+        functions.logger.info(`[saveOutboundMessage] Saved outbound message ${messageId} to conversation ${conversationId}`);
+
+    } catch (error) {
+        functions.logger.error(`[saveOutboundMessage] Error saving outbound message:`, error);
+        // Do not throw, as the message was already sent to the user.
+    }
+}
 }

@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useCompany } from "@/context/company-context";
-import type { Conversation, Consumer, Stage } from "@/lib/types";
+import type { Conversation, Consumer, Stage, Customer } from "@/lib/types";
 import { getConversations } from "@/services/conversation-service";
 import { getConsumersByCompany } from "@/services/consumer-service";
 import { getStagesByUser } from "@/services/stage-service";
