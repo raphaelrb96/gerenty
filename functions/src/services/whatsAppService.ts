@@ -28,7 +28,13 @@ export class WhatsAppService {
             return null;
         }
         const mediaData = await response.json();
-        return mediaData.url || null;
+        
+        // ✅ CORREÇÃO: Anexa o token de acesso à URL da mídia para autenticação.
+        if (mediaData.url) {
+            return `${mediaData.url}&access_token=${accessToken}`;
+        }
+        return null;
+
     } catch (error) {
         functions.logger.error(`[WhatsAppService] Exception fetching media URL for ID ${mediaId}`, { error, companyId });
         return null;
