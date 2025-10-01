@@ -15,7 +15,11 @@ import {
     WhatsAppCredentials,
     WhatsAppIntegration,
     MessageTemplate,
-    InteractiveMessage
+    IncomingMessage,
+    MessageStatus,
+    TemplateStatusUpdate,
+    MessageContact,
+    MessageMetadata
 } from '../types/whatsapp';
 
 // Inicializa o Firebase Admin
@@ -585,9 +589,9 @@ async function processWebhookEvents(companyId: string, payload: any): Promise<vo
  */
 async function processIncomingMessage(
     companyId: string,
-    message: any,
-    metadata: any,
-    contacts: any[]
+    message: IncomingMessage,
+    metadata: MessageMetadata,
+    contacts: MessageContact[]
 ): Promise<void> {
     try {
         const db = admin.firestore();
@@ -658,14 +662,13 @@ async function processIncomingMessage(
                 lastMessageText = message.document?.caption || '[Documento]';
                 break;
             case 'location':
-                lastMessageText = '[Localização]';
+                lastMessageText = message.location?.name || '[Localização]';
                 break;
             case 'interactive':
-                const interactive: InteractiveMessage = message.interactive;
-                if (interactive.type === 'button_reply') {
-                    lastMessageText = interactive.button_reply.title;
-                } else if (interactive.type === 'list_reply') {
-                    lastMessageText = interactive.list_reply.title;
+                if (message.interactive.type === 'button_reply') {
+                    lastMessageText = message.interactive.button_reply.title;
+                } else if (message.interactive.type === 'list_reply') {
+                    lastMessageText = message.interactive.list_reply.title;
                 } else {
                     lastMessageText = '[Resposta interativa]';
                 }
@@ -732,7 +735,7 @@ async function processIncomingMessage(
 /**
  * Processa status de mensagens
  */
-async function processMessageStatus(companyId: string, status: any): Promise<void> {
+async function processMessageStatus(companyId: string, status: MessageStatus): Promise<void> {
     try {
         const db = admin.firestore();
 
@@ -741,15 +744,22 @@ async function processMessageStatus(companyId: string, status: any): Promise<voi
             .where('id', '==', status.id)
             .get();
 
-        for (const doc of messagesQuery.docs) {
-            await doc.ref.update({
-                status: status.status,
-                statusTimestamp: admin.firestore.Timestamp.fromMillis(parseInt(status.timestamp) * 1000),
-                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-            });
+        if (messagesQuery.empty) {
+            functions.logger.warn(`Message status update received for non-existent message ID: ${status.id} in company ${companyId}`);
+            return;
         }
 
-        functions.logger.info(`Message status updated for company ${companyId}, message ${status.id}`);
+        for (const doc of messagesQuery.docs) {
+            // Check if the companyId matches to avoid updating messages from other companies if 'id' is not unique across all.
+            if (doc.ref.parent.parent?.parent?.parent?.id === companyId) {
+                await doc.ref.update({
+                    status: status.status,
+                    statusTimestamp: admin.firestore.Timestamp.fromMillis(parseInt(status.timestamp) * 1000),
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                });
+                 functions.logger.info(`Message status updated for company ${companyId}, message ${status.id} to ${status.status}`);
+            }
+        }
     } catch (error) {
         functions.logger.error('Error processing message status:', error);
         throw error;
@@ -760,7 +770,7 @@ async function processMessageStatus(companyId: string, status: any): Promise<voi
 /**
  * ✅ NOVO: Processa atualizações de status de template
  */
-async function processTemplateStatusUpdate(companyId: string, update: any): Promise<void> {
+async function processTemplateStatusUpdate(companyId: string, update: TemplateStatusUpdate): Promise<void> {
     try {
         const { message_template_name: templateName, event } = update;
 

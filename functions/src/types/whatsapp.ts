@@ -22,6 +22,7 @@ export interface WhatsAppIntegration {
   companyId: string;
   createdAt: admin.firestore.Timestamp;
   updatedAt: admin.firestore.Timestamp;
+  error?: string;
 }
 
 export interface WebhookPayload {
@@ -31,66 +32,73 @@ export interface WebhookPayload {
     changes: Array<{
       value: {
         messaging_product: string;
-        metadata: {
-          display_phone_number: string;
-          phone_number_id: string;
-        };
-        contacts?: Array<{
-          profile: {
-            name: string;
-          };
-          wa_id: string;
-        }>;
-        messages?: Array<{
-          from: string;
-          id: string;
-          timestamp: string;
-          type: 'text' | 'image' | 'video' | 'audio' | 'document' | 'location' | 'interactive' | 'sticker' | 'unknown';
-          text?: {
-            body: string;
-          };
-          image?: {
-            caption?: string;
-            id: string;
-            mime_type: string;
-            url?: string;
-          };
-          video?: {
-            caption?: string;
-            id: string;
-            mime_type: string;
-            url?: string;
-          };
-          audio?: {
-            id: string;
-            mime_type: string;
-            url?: string;
-          };
-          document?: {
-            caption?: string;
-            filename: string;
-            id: string;
-            mime_type: string;
-            url?: string;
-          };
-          location?: {
-            latitude: number;
-            longitude: number;
-            name?: string;
-            address?: string;
-          };
-        }>;
-        statuses?: Array<{
-          id: string;
-          status: string;
-          timestamp: string;
-          recipient_id: string;
-        }>;
+        metadata: MessageMetadata;
+        contacts?: MessageContact[];
+        messages?: IncomingMessage[];
+        statuses?: MessageStatus[];
+        message_template_status_update?: TemplateStatusUpdate;
       };
       field: string;
     }>;
   }>;
 }
+
+export interface MessageMetadata {
+  display_phone_number: string;
+  phone_number_id: string;
+}
+
+export interface MessageContact {
+  profile: {
+    name: string;
+  };
+  wa_id: string;
+}
+
+export type MessageType = 'text' | 'image' | 'video' | 'audio' | 'document' | 'location' | 'interactive' | 'sticker' | 'unknown' | 'reaction' | 'button';
+
+export interface IncomingMessage {
+  from: string;
+  id: string;
+  timestamp: string;
+  type: MessageType;
+  text?: { body: string; };
+  image?: { caption?: string; id: string; mime_type: string; url?: string; };
+  video?: { caption?: string; id: string; mime_type: string; url?: string; };
+  audio?: { id: string; mime_type: string; url?: string; };
+  document?: { caption?: string; filename: string; id: string; mime_type: string; url?: string; };
+  location?: { latitude: number; longitude: number; name?: string; address?: string; };
+  interactive?: {
+    type: 'button_reply' | 'list_reply';
+    button_reply: { id: string; title: string };
+    list_reply: { id: string; title: string; description: string };
+  };
+}
+
+export interface MessageStatus {
+  id: string;
+  status: 'sent' | 'delivered' | 'read' | 'failed' | 'warning';
+  timestamp: string;
+  recipient_id: string;
+  conversation?: {
+    id: string;
+    origin: { type: string };
+  };
+  pricing?: {
+    billable: boolean;
+    pricing_model: string;
+    category: string;
+  };
+}
+
+export interface TemplateStatusUpdate {
+  message_template_id: string;
+  message_template_name: string;
+  message_template_language: string;
+  event: 'APPROVED' | 'REJECTED' | 'PENDING' | 'DISABLED';
+  reason?: string;
+}
+
 
 export interface ValidationResult {
   isValid: boolean;
@@ -102,13 +110,6 @@ export interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
   error?: string;
-}
-
-export interface TestMessageResponse {
-  success: boolean;
-  messageId?: string;
-  message: string;
-  messageType?: 'conversation' | 'template';
 }
 
 // src/types/whatsapp.ts - Corrija e complete as interfaces
