@@ -6,7 +6,7 @@ import type { Message } from "@/lib/types";
 import { format } from "date-fns";
 import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
-import { MapPin } from "lucide-react";
+import { MapPin, Check, CheckCheck } from "lucide-react";
 
 type MessageBubbleProps = {
     message: Message;
@@ -38,6 +38,22 @@ export function MessageBubble({ message }: MessageBubbleProps) {
     const timestamp = getTimestamp();
     const timeFormatted = format(timestamp, "HH:mm");
 
+    const renderMessageStatus = () => {
+        if (!isOutbound) return null;
+
+        const status = message.status;
+        if (status === 'read') {
+            return <CheckCheck className="h-4 w-4 ml-1 text-blue-500" />;
+        }
+        if (status === 'delivered') {
+            return <CheckCheck className="h-4 w-4 ml-1" />;
+        }
+        if (status === 'sent') {
+            return <Check className="h-4 w-4 ml-1" />;
+        }
+        return null;
+    }
+
     const renderMessageContent = () => {
         const { type, content } = message;
 
@@ -51,11 +67,11 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         }
         
         if (type === 'interactive') {
-            if (content.interactive?.button_reply?.title) {
-                return <p className="text-sm italic text-muted-foreground">Resposta: "{content.interactive.button_reply.title}"</p>;
+             if (content.interactive?.button_reply?.title) {
+                return <p className="text-sm italic text-muted-foreground">Resposta do botão: "{content.interactive.button_reply.title}"</p>;
             }
             if (content.interactive?.list_reply?.title) {
-                return <p className="text-sm italic text-muted-foreground">Resposta da Lista: "{content.interactive.list_reply.title}"</p>;
+                return <p className="text-sm italic text-muted-foreground">Resposta da lista: "{content.interactive.list_reply.title}"</p>;
             }
         }
         
@@ -110,12 +126,15 @@ export function MessageBubble({ message }: MessageBubbleProps) {
                 isOutbound ? "bg-primary text-primary-foreground" : "bg-muted"
             )}>
                 {renderMessageContent()}
-                 <p className={cn(
-                     "text-xs mt-1 text-right",
-                     isOutbound ? "text-primary-foreground/70" : "text-muted-foreground/70"
-                 )}>
-                    {timeFormatted}
-                </p>
+                <div className="flex items-center justify-end mt-1">
+                    <p className={cn(
+                        "text-xs",
+                        isOutbound ? "text-primary-foreground/70" : "text-muted-foreground/70"
+                    )}>
+                        {timeFormatted}
+                    </p>
+                    {renderMessageStatus()}
+                 </div>
             </div>
         </div>
     );
