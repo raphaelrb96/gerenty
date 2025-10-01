@@ -40,6 +40,12 @@ const nextConfig: NextConfig = {
         hostname: 'gerenty.appspot.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'lookaside.fbsbx.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
