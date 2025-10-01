@@ -1,28 +1,52 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import type { Conversation, Consumer, Message } from "@/lib/types";
+import { useState, useEffect, useRef, useCallback } from "react";
+import type { Conversation, Consumer, Message, MessageTemplate } from "@/lib/types";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Paperclip, Send, MessageSquare } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { LoadingSpinner } from "../common/loading-spinner";
 import { MessageBubble } from "./message-bubble";
+import { ChatInput } from "./chat-input";
+import { getTemplatesByCompany } from "@/services/template-service";
+import { sendMessage } from "@/services/integration-service";
+import { MessageSquare } from "lucide-react";
 import { useCompany } from "@/context/company-context";
+import { useToast } from "@/hooks/use-toast";
+import { TemplateMessageSelector } from "./template-message-selector";
 
 type ChatAreaProps = {
     conversation: Conversation | null;
     consumer: Consumer | null;
 }
 
+// 24 hours in milliseconds
+const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+
 export function ChatArea({ conversation, consumer }: ChatAreaProps) {
     const { activeCompany } = useCompany();
+    const { toast } = useToast();
     const [messages, setMessages] = useState<Message[]>([]);
+    const [templates, setTemplates] = useState<MessageTemplate[]>([]);
     const [loading, setLoading] = useState(false);
+    const [isSending, setIsSending] = useState(false);
+    const [isOutsideWindow, setIsOutsideWindow] = useState(false);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (conversation?.lastMessageTimestamp) {
+            const lastMessageTime = (conversation.lastMessageTimestamp as any).toDate ? 
+                (conversation.lastMessageTimestamp as any).toDate().getTime() : 
+                new Date(conversation.lastMessageTimestamp as any).getTime();
+
+            const timeDiff = Date.now() - lastMessageTime;
+            setIsOutsideWindow(timeDiff > TWENTY_FOUR_HOURS_MS);
+        } else {
+             // If there's no last message, assume it's a new conversation (within window)
+            setIsOutsideWindow(false);
+        }
+    }, [conversation]);
+
 
     useEffect(() => {
         if (!conversation || !activeCompany) {
@@ -41,7 +65,6 @@ export function ChatArea({ conversation, consumer }: ChatAreaProps) {
                 newMessages.push({
                     id: doc.id,
                     ...data,
-                    // Convert Firestore Timestamp to JS Date object
                     timestamp: (data.timestamp as Timestamp)?.toDate() || new Date()
                 } as Message);
             });
@@ -52,15 +75,38 @@ export function ChatArea({ conversation, consumer }: ChatAreaProps) {
             setLoading(false);
         });
 
+        // Fetch templates for the template selector
+        getTemplatesByCompany(activeCompany.id)
+            .then(setTemplates)
+            .catch(() => toast({ variant: "destructive", title: "Erro ao carregar templates" }));
+
         return () => unsubscribe();
-    }, [conversation, activeCompany]);
+    }, [conversation, activeCompany, toast]);
     
     useEffect(() => {
-        // Scroll to bottom when new messages arrive
         if (scrollAreaRef.current) {
             scrollAreaRef.current.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: 'smooth' });
         }
     }, [messages]);
+
+    const handleSendMessage = useCallback(async (messageContent: string, type: 'text' | 'template' = 'text') => {
+        if (!consumer || !activeCompany) return;
+
+        setIsSending(true);
+        try {
+            await sendMessage(consumer.phone, activeCompany.id, messageContent, type);
+            // The message will appear automatically via the onSnapshot listener
+        } catch (error: any) {
+            console.error("Error sending message:", error);
+            toast({
+                variant: "destructive",
+                title: "Erro ao Enviar Mensagem",
+                description: error.message || "Não foi possível enviar a mensagem."
+            });
+        } finally {
+            setIsSending(false);
+        }
+    }, [consumer, activeCompany, toast]);
 
 
     if (!conversation || !consumer) {
@@ -76,7 +122,7 @@ export function ChatArea({ conversation, consumer }: ChatAreaProps) {
     return (
         <div className="flex flex-col h-full bg-background">
             <header className="p-4 border-b flex-shrink-0">
-                <h2 className="font-semibold">{consumer.name}</h2>
+                <h2 className="font-semibold">{consumer.name || consumer.phone}</h2>
                 <p className="text-xs text-muted-foreground">{consumer.phone}</p>
             </header>
 
@@ -97,13 +143,15 @@ export function ChatArea({ conversation, consumer }: ChatAreaProps) {
             </div>
             
             <footer className="p-4 border-t bg-background/95 flex-shrink-0">
-                <div className="relative">
-                    <Input placeholder="Digite sua mensagem..." className="pr-20" disabled />
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-2">
-                         <Button variant="ghost" size="icon" disabled><Paperclip className="h-5 w-5" /></Button>
-                         <Button size="icon" disabled><Send className="h-5 w-5" /></Button>
-                    </div>
-                </div>
+                {isOutsideWindow ? (
+                     <TemplateMessageSelector
+                        templates={templates}
+                        onSendTemplate={handleSendMessage}
+                        isSending={isSending}
+                    />
+                ) : (
+                    <ChatInput onSendMessage={handleSendMessage} isSending={isSending} />
+                )}
             </footer>
         </div>
     );

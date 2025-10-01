@@ -1,12 +1,13 @@
+
 // src/index.ts
-import { validateAndSaveCredentials, whatsappWebhookListener, sendTestMessage, getWhatsAppIntegrationStatus, apiSyncWhatsAppTemplates } from './functions/whatsapp';
+import { validateAndSaveCredentials, whatsappWebhookListener, sendMessage, getWhatsAppIntegrationStatus, apiSyncWhatsAppTemplates } from './functions/whatsapp';
 import { createTemplate, updateTemplate, deleteTemplate } from './functions/templateFunctions';
 
 // Exporte as funções individualmente
 export {
   validateAndSaveCredentials,
   whatsappWebhookListener,
-  sendTestMessage,
+  sendMessage,
   getWhatsAppIntegrationStatus,
   apiSyncWhatsAppTemplates,
   createTemplate,

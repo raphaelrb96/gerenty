@@ -28,18 +28,18 @@ export function ConversationListItem({ conversation, consumer, isSelected, onSel
         ? consumer.name 
         : consumer?.phone || "Desconhecido";
 
-    const lastMessageDate = conversation.lastMessageTimestamp ? new Date(conversation.lastMessageTimestamp as string) : new Date();
+    const lastMessageDate = conversation.lastMessageTimestamp ? new Date(conversation.lastMessageTimestamp as any) : new Date();
 
     return (
         <button 
             className={cn(
-                "w-full text-left p-3 rounded-lg hover:bg-muted transition-colors",
-                isSelected && "bg-background shadow-sm"
+                "w-full text-left p-3 rounded-lg hover:bg-muted transition-colors border",
+                isSelected ? "bg-background shadow-sm border-primary/50" : "border-transparent"
             )}
             onClick={onSelect}
         >
             <div className="flex items-start gap-3">
-                <Avatar className="h-10 w-10 border">
+                <Avatar className="h-10 w-10 border-2 border-background ring-1 ring-border">
                     <AvatarFallback>{consumer ? getInitials(consumer.name) : '?'}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 overflow-hidden">

@@ -3,7 +3,6 @@
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '@/lib/firebase';
 import { WhatsAppCredentials, TestMessageResponse } from '@/lib/types';
-import { toast } from '@/hooks/use-toast';
 
 // Referências para as Cloud Functions
 const validateAndSaveCredentialsCallable = httpsCallable<WhatsAppCredentials & { companyId: string }, {
@@ -13,13 +12,13 @@ const validateAndSaveCredentialsCallable = httpsCallable<WhatsAppCredentials & {
   companyId: string;
 }>(functions, 'validateAndSaveCredentials');
 
-const sendTestMessageCallable = httpsCallable<{
+const sendMessageCallable = httpsCallable<{
   phoneNumber: string;
   message?: string;
   type?: 'text' | 'template';
   templateName?: string;
   companyId: string;
-}, TestMessageResponse>(functions, 'sendTestMessage');
+}, TestMessageResponse>(functions, 'sendMessage');
 
 const checkWhatsAppIntegrationCallable = httpsCallable<{
   companyId: string;
@@ -56,7 +55,6 @@ export const integrationService = {
     } catch (error: any) {
       console.error('Error saving WhatsApp credentials:', error);
 
-      // Tratamento específico de erros do Firebase
       if (error.code === 'unauthenticated') {
         throw new Error('Usuário não autenticado. Faça login novamente.');
       } else if (error.code === 'invalid-argument') {
@@ -71,19 +69,31 @@ export const integrationService = {
     }
   },
 
-  async sendTestMessage(phoneNumber: string, companyId: string, message: string = 'Mensagem de teste do Gerenty'): Promise<TestMessageResponse> {
+  async sendMessage(phoneNumber: string, companyId: string, message: string, type: 'text' | 'template'): Promise<TestMessageResponse> {
     try {
-      const result = await sendTestMessageCallable({
+      const payload: {
+        phoneNumber: string;
+        companyId: string;
+        type: 'text' | 'template';
+        message?: string;
+        templateName?: string;
+      } = {
         phoneNumber,
-        message,
-        type: 'text',
-        companyId
-      });
+        companyId,
+        type,
+      };
+
+      if (type === 'text') {
+        payload.message = message;
+      } else {
+        payload.templateName = message;
+      }
+
+      const result = await sendMessageCallable(payload);
       return result.data;
     } catch (error: any) {
-      console.error('Error sending test message:', error);
+      console.error('Error sending message:', error);
       
-      // Propaga o erro com os detalhes originais
       if (error.details) {
         throw error;
       }
@@ -93,9 +103,9 @@ export const integrationService = {
       } else if (error.code === 'invalid-argument') {
         throw new Error('Número de telefone inválido.');
       } else if (error.code === 'internal') {
-        throw new Error(error.message || 'Erro ao enviar mensagem de teste.');
+        throw new Error(error.message || 'Erro ao enviar mensagem.');
       } else {
-        throw new Error(error.message || 'Erro ao enviar mensagem de teste.');
+        throw new Error(error.message || 'Erro ao enviar mensagem.');
       }
     }
   },
@@ -132,9 +142,5 @@ export const integrationService = {
 
 };
 
-// Aliases para compatibilidade com o código existente
-export const saveWhatsAppCredentials = integrationService.saveWhatsAppCredentials;
-export const sendTestMessage = integrationService.sendTestMessage;
-export const checkWhatsAppIntegration = integrationService.checkWhatsAppIntegration;
-export const getWhatsAppIntegrationStatus = integrationService.getWhatsAppIntegrationStatus;
-export const syncWhatsAppTemplates = integrationService.syncWhatsAppTemplates;
+// Aliases
+export const { saveWhatsAppCredentials, sendMessage, checkWhatsAppIntegration, getWhatsAppIntegrationStatus, syncWhatsAppTemplates } = integrationService;

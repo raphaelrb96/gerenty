@@ -236,10 +236,10 @@ export const whatsappWebhookListener = functions.https.onRequest(
 );
 
 /**
- * 3. sendTestMessage - Utilitário Multi-Tenant
+ * 3. sendMessage - Utilitário Multi-Tenant
  */
 // src/functions/whatsapp.ts - Corrija a tipagem e tratamento de erro
-export const sendTestMessage = functions.https.onCall(
+export const sendMessage = functions.https.onCall(
     async (request: CallableRequest<{
         phoneNumber: string;
         message?: string;
@@ -292,7 +292,7 @@ export const sendTestMessage = functions.https.onCall(
                 throw new functions.https.HttpsError('internal', result.error || 'Failed to send message', errorDetails);
             }
         } catch (error: any) {
-            functions.logger.error('[sendTestMessage] Error:', error);
+            functions.logger.error('[sendMessage] Error:', error);
 
             if (error instanceof functions.https.HttpsError) {
                 // Se já é um HttpsError, propaga com os detalhes originais
@@ -555,7 +555,7 @@ async function processWebhookEvents(companyId: string, payload: any): Promise<vo
                 // Processa mensagens recebidas
                 if (value.messages) {
                     for (const message of value.messages) {
-                        await processIncomingMessage(companyId, message, value.metadata);
+                        await processIncomingMessage(companyId, message, value.metadata, value.contacts);
                     }
                 }
 
@@ -584,11 +584,16 @@ async function processWebhookEvents(companyId: string, payload: any): Promise<vo
 async function processIncomingMessage(
     companyId: string,
     message: any,
-    metadata: any
+    metadata: any,
+    contacts: any[]
 ): Promise<void> {
     try {
         const db = admin.firestore();
         const phoneNumber = message.from;
+        
+        // Find contact name from the webhook payload
+        const contactProfile = contacts.find(c => c.wa_id === phoneNumber);
+        const contactName = contactProfile?.profile?.name || 'Unknown';
 
         // Busca ou cria o consumer
         const consumerQuery = await db.collection('companies')
@@ -599,7 +604,6 @@ async function processIncomingMessage(
             .get();
 
         let consumerId: string;
-        let consumerName = 'Unknown';
 
         if (consumerQuery.empty) {
             // Cria novo consumer
@@ -607,7 +611,7 @@ async function processIncomingMessage(
                 .doc(companyId)
                 .collection('consumers')
                 .add({
-                    name: consumerName,
+                    name: contactName,
                     phone: phoneNumber,
                     type: 'lead',
                     createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -616,7 +620,10 @@ async function processIncomingMessage(
             consumerId = consumerRef.id;
         } else {
             consumerId = consumerQuery.docs[0].id;
-            consumerName = consumerQuery.docs[0].data().name || consumerName;
+            // Update name if it was 'Unknown' before
+            if (consumerQuery.docs[0].data().name === 'Unknown' && contactName !== 'Unknown') {
+                 await db.collection('companies').doc(companyId).collection('consumers').doc(consumerId).update({ name: contactName });
+            }
         }
 
         // Busca ou cria a conversa
@@ -629,6 +636,8 @@ async function processIncomingMessage(
             .get();
 
         let conversationId: string;
+        const lastMessageText = message.text?.body || '[Media message]';
+        const messageTimestamp = admin.firestore.Timestamp.fromMillis(parseInt(message.timestamp) * 1000);
 
         if (conversationQuery.empty) {
             // Cria nova conversa
@@ -639,8 +648,8 @@ async function processIncomingMessage(
                     consumerId,
                     status: 'open',
                     unreadMessagesCount: 1,
-                    lastMessage: message.text?.body || '[Media message]',
-                    lastMessageTimestamp: admin.firestore.FieldValue.serverTimestamp(),
+                    lastMessage: lastMessageText,
+                    lastMessageTimestamp: messageTimestamp,
                     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
                     createdAt: admin.firestore.FieldValue.serverTimestamp(),
                 });
@@ -654,8 +663,8 @@ async function processIncomingMessage(
                 .doc(conversationId)
                 .update({
                     unreadMessagesCount: admin.firestore.FieldValue.increment(1),
-                    lastMessage: message.text?.body || '[Media message]',
-                    lastMessageTimestamp: admin.firestore.FieldValue.serverTimestamp(),
+                    lastMessage: lastMessageText,
+                    lastMessageTimestamp: messageTimestamp,
                     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
                 });
         }
@@ -670,12 +679,8 @@ async function processIncomingMessage(
                 id: message.id,
                 direction: 'inbound',
                 type: message.type,
-                content: {
-                    text: message.text?.body,
-                    mediaUrl: message.image?.url || message.document?.url || message.video?.url,
-                    caption: message.image?.caption || message.document?.caption || message.video?.caption,
-                },
-                timestamp: admin.firestore.Timestamp.fromDate(new Date(parseInt(message.timestamp) * 1000)),
+                content: message, // Store the entire message content
+                timestamp: messageTimestamp,
                 status: 'delivered',
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),
             });
@@ -702,7 +707,7 @@ async function processMessageStatus(companyId: string, status: any): Promise<voi
         for (const doc of messagesQuery.docs) {
             await doc.ref.update({
                 status: status.status,
-                statusTimestamp: admin.firestore.Timestamp.fromDate(new Date(parseInt(status.timestamp) * 1000)),
+                statusTimestamp: admin.firestore.Timestamp.fromMillis(parseInt(status.timestamp) * 1000),
                 updatedAt: admin.firestore.FieldValue.serverTimestamp(),
             });
         }
