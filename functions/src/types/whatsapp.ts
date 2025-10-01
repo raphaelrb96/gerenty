@@ -20,28 +20,36 @@ export interface WhatsAppIntegration {
   webhookUrl: string;
   status: 'connected' | 'error' | 'disconnected';
   companyId: string;
-  createdAt: admin.firestore.Timestamp;
-  updatedAt: admin.firestore.Timestamp;
+  createdAt: string;
+  updatedAt: string;
   error?: string;
 }
 
-export interface WebhookPayload {
-  object: string;
-  entry: Array<{
-    id: string;
-    changes: Array<{
-      value: {
-        messaging_product: string;
-        metadata: MessageMetadata;
-        contacts?: MessageContact[];
-        messages?: IncomingMessage[];
-        statuses?: MessageStatus[];
-        message_template_status_update?: TemplateStatusUpdate;
-      };
-      field: string;
-    }>;
-  }>;
-}
+export type WebhookChangeValue = {
+  messaging_product: string;
+  metadata: MessageMetadata;
+  contacts?: MessageContact[];
+  messages?: IncomingMessage[];
+  statuses?: MessageStatus[];
+  errors?: any[];
+  message_template_status_update?: TemplateStatusUpdate;
+};
+
+export type WebhookChange = {
+  value: WebhookChangeValue;
+  field: 'messages';
+};
+
+export type WebhookEntry = {
+  id: string; // WhatsApp Business Account ID
+  changes: WebhookChange[];
+};
+
+export type WebhookPayload = {
+  object: 'whatsapp_business_account';
+  entry: WebhookEntry[];
+};
+
 
 export interface MessageMetadata {
   display_phone_number: string;
@@ -75,12 +83,21 @@ export interface IncomingMessage {
   };
 }
 
-export type MessageStatus =
-  | 'sent'
-  | 'delivered'
-  | 'read'
-  | 'failed'
-  | 'warning';
+export type MessageStatus = {
+  id: string;
+  status: 'sent' | 'delivered' | 'read' | 'failed' | 'warning';
+  timestamp: string;
+  recipient_id: string;
+  conversation?: {
+    id: string;
+    origin: { type: 'user_initiated' | 'business_initiated' };
+  };
+  pricing?: {
+    billable: boolean;
+    pricing_model: 'CBP';
+    category: 'user_initiated' | 'business_initiated';
+  };
+};
 
 
 export interface TemplateStatusUpdate {

@@ -73,7 +73,7 @@ export const validateAndSaveCredentials = functions.https.onCall(
             const webhookUrl = `https://${region}-${projectId}.cloudfunctions.net/whatsappWebhookListener/${companyId}`;
 
             // Salva informações não sensíveis no Firestore
-            const integrationData = {
+            const integrationData: Omit<WhatsAppIntegration, 'createdAt' | 'updatedAt'> & { createdAt: FieldValue, updatedAt: FieldValue } = {
                 whatsAppId: whatsAppBusinessId,
                 phoneNumberId,
                 webhookUrl,
@@ -551,16 +551,24 @@ async function registerWebhookWithMeta(
 /**
  * Função auxiliar para processar eventos do webhook
  */
-async function processWebhookEvents(companyId: string, payload: any): Promise<void> {
+async function processWebhookEvents(companyId: string, payload: WebhookPayload): Promise<void> {
     try {
+        if (!payload.entry) {
+            functions.logger.warn(`Webhook payload for company ${companyId} has no 'entry' field.`, { payload });
+            return;
+        }
+
         for (const entry of payload.entry) {
+            if (!entry.changes) continue;
+
             for (const change of entry.changes) {
                 const value = change.value;
+                if (!value) continue;
 
                 // Processa mensagens recebidas
-                if (value.messages) {
+                if (value.messages && value.metadata) {
                     for (const message of value.messages) {
-                        await processIncomingMessage(companyId, message, value.metadata, value.contacts);
+                        await processIncomingMessage(companyId, message, value.metadata, value.contacts || []);
                     }
                 }
 
@@ -578,10 +586,11 @@ async function processWebhookEvents(companyId: string, payload: any): Promise<vo
             }
         }
     } catch (error) {
-        functions.logger.error('Error processing webhook events:', error);
-        throw error;
+        functions.logger.error(`Error processing webhook events for company ${companyId}:`, { error, payload });
+        // Não relança o erro para que a Meta não desative o webhook por falhas consecutivas.
     }
 }
+
 
 /**
  * Processa mensagens recebidas
@@ -750,7 +759,7 @@ async function processMessageStatus(companyId: string, status: MessageStatus): P
     try {
         const db = admin.firestore();
 
-        // Atualiza o status da mensagem no Firestore
+        // Encontra a conversa que contém a mensagem com base no ID da mensagem
         const messagesQuery = await db.collectionGroup('messages')
             .where('id', '==', status.id)
             .get();
@@ -761,21 +770,23 @@ async function processMessageStatus(companyId: string, status: MessageStatus): P
         }
 
         for (const doc of messagesQuery.docs) {
-            // Check if the companyId matches to avoid updating messages from other companies if 'id' is not unique across all.
-            if (doc.ref.parent.parent?.parent?.parent?.id === companyId) {
+            // Garante que estamos atualizando a mensagem da empresa correta
+            const conversationRef = doc.ref.parent.parent;
+            if (conversationRef?.parent?.id === 'companies' && conversationRef?.parent?.parent?.id === companyId) {
                 await doc.ref.update({
                     status: status.status,
                     statusTimestamp: admin.firestore.Timestamp.fromMillis(parseInt(status.timestamp) * 1000),
                     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
                 });
-                 functions.logger.info(`Message status updated for company ${companyId}, message ${status.id} to ${status.status}`);
+                functions.logger.info(`Message status updated for company ${companyId}, message ${status.id} to ${status.status}`);
             }
         }
     } catch (error) {
-        functions.logger.error('Error processing message status:', error);
-        throw error;
+        functions.logger.error('Error processing message status:', { companyId, status, error });
+        // Não relança o erro para evitar falhas no webhook
     }
 }
+
 
 
 /**
@@ -812,16 +823,16 @@ function sanitizeMetaTemplateComponents(components: any[]): any[] {
             sanitizedComponent.text = sanitizeMetaPatterns(sanitizedComponent.text);
         }
 
-        // Sanitize 'example' field if it exists
+        // Sanitize 'example' field if it exists, but don't delete it
         if (sanitizedComponent.example) {
             const sanitizedExample: any = {};
 
-            // Sanitize 'body_text' which can be an array of arrays
+            // Sanitize 'body_text' which can be an array of arrays of strings
             if (Array.isArray(sanitizedComponent.example.body_text)) {
                 sanitizedExample.body_text = sanitizedComponent.example.body_text.map((innerArray: any[]) =>
                     Array.isArray(innerArray)
                         ? innerArray.map(item => sanitizeMetaPatterns(String(item)))
-                        : sanitizeMetaPatterns(String(innerArray))
+                        : [sanitizeMetaPatterns(String(innerArray))]
                 );
             }
 
@@ -833,7 +844,7 @@ function sanitizeMetaTemplateComponents(components: any[]): any[] {
             }
             
             // Sanitize 'header_handle' which is an array of strings
-             if (Array.isArray(sanitizedComponent.example.header_handle)) {
+            if (Array.isArray(sanitizedComponent.example.header_handle)) {
                 sanitizedExample.header_handle = sanitizedComponent.example.header_handle.map((item: any) =>
                     sanitizeMetaPatterns(String(item))
                 );
