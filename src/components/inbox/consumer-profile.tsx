@@ -6,19 +6,21 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, ShoppingCart } from "lucide-react";
+import { User, ShoppingCart, Pencil } from "lucide-react";
 import { useCurrency } from "@/context/currency-context";
 import { Separator } from "../ui/separator";
 import { cn } from "@/lib/utils";
+import { Button } from "../ui/button";
 
 type ConsumerProfileProps = {
     consumer: Consumer | null;
+    onEdit: () => void;
 }
 
-export function ConsumerProfile({ consumer }: ConsumerProfileProps) {
+export function ConsumerProfile({ consumer, onEdit }: ConsumerProfileProps) {
     const { formatCurrency } = useCurrency();
 
-    const getTypeConfig = (type: Consumer['type']) => {
+    const getTypeConfig = (type?: Consumer['type']) => {
         switch (type) {
             case 'lead':
                 return { color: 'text-blue-500' };
@@ -45,16 +47,21 @@ export function ConsumerProfile({ consumer }: ConsumerProfileProps) {
         ? consumer.name 
         : consumer.phone;
         
-    const typeConfig = getTypeConfig(consumer.type);
+    const typeConfig = getTypeConfig(consumer?.type);
 
     return (
         <div className="flex flex-col h-full bg-muted/50 border-l">
             <header className="p-4 border-b text-center space-y-3">
-                <Avatar className="h-20 w-20 border-2 border-background mx-auto">
-                    <AvatarFallback className="text-2xl bg-background">
-                         <User className={cn("h-10 w-10", typeConfig.color)} />
-                    </AvatarFallback>
-                </Avatar>
+                <div className="relative w-20 h-20 mx-auto">
+                    <Avatar className="h-20 w-20 border-2 border-background">
+                        <AvatarFallback className="text-2xl bg-background">
+                            <User className={cn("h-10 w-10", typeConfig.color)} />
+                        </AvatarFallback>
+                    </Avatar>
+                    <Button size="icon" className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full" onClick={onEdit}>
+                        <Pencil className="h-4 w-4" />
+                    </Button>
+                </div>
                 <div>
                     <h2 className="font-semibold text-lg">{displayName}</h2>
                     <p className="text-sm text-muted-foreground">{consumer.phone}</p>

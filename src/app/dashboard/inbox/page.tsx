@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useCompany } from "@/context/company-context";
-import type { Conversation, Consumer } from "@/lib/types";
+import type { Conversation, Consumer, Customer } from "@/lib/types";
 import { getConversations } from "@/services/conversation-service";
 import { getConsumersByCompany } from "@/services/consumer-service";
 
@@ -15,6 +15,7 @@ import { ConsumerProfile } from "@/components/inbox/consumer-profile";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { EmptyState } from "@/components/common/empty-state";
 import { MessageSquare } from "lucide-react";
+import { CreateCustomerModal } from "@/components/crm/create-customer-modal";
 
 export default function InboxPage() {
     const { activeCompany } = useCompany();
@@ -22,6 +23,8 @@ export default function InboxPage() {
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [consumers, setConsumers] = useState<Record<string, Consumer>>({});
     const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+    const [isCustomerModalOpen, setCustomerModalOpen] = useState(false);
+    const [customerToEdit, setCustomerToEdit] = useState<Customer | null>(null);
 
     useEffect(() => {
         if (activeCompany) {
@@ -45,6 +48,43 @@ export default function InboxPage() {
             });
         }
     }, [activeCompany]);
+    
+    const handleEditConsumer = (consumer: Consumer | null) => {
+        if (!consumer) return;
+        // The modal expects a Customer object. We need to map the Consumer to it.
+        const customerData: Customer = {
+            id: consumer.id,
+            ownerId: activeCompany?.ownerId || '',
+            name: consumer.name,
+            email: consumer.email,
+            phone: consumer.phone,
+            status: consumer.type, // Map consumer type to a default status if needed
+            // Fill other fields from consumer if they exist, or with defaults
+            document: '',
+            tags: [],
+            createdAt: consumer.createdAt,
+            updatedAt: new Date().toISOString(),
+        };
+        setCustomerToEdit(customerData);
+        setCustomerModalOpen(true);
+    };
+
+    const handleCustomerSave = (savedCustomer: Customer) => {
+        // Update the consumer map in state to reflect the changes
+        const updatedConsumer: Consumer = {
+            ...consumers[savedCustomer.id],
+            id: savedCustomer.id,
+            name: savedCustomer.name,
+            email: savedCustomer.email,
+            phone: savedCustomer.phone,
+        };
+        setConsumers(prev => ({
+            ...prev,
+            [savedCustomer.id]: updatedConsumer
+        }));
+        setCustomerModalOpen(false);
+    };
+
 
     if (loading) {
         return <LoadingSpinner />;
@@ -77,26 +117,36 @@ export default function InboxPage() {
     const selectedConsumer = selectedConversation ? consumers[selectedConversation.consumerId] : null;
 
     return (
-        <ResizablePanelGroup direction="horizontal" className="h-full w-full">
-            <ResizablePanel defaultSize={25} minSize={20} maxSize={30}>
-                <ConversationList
-                    conversations={conversations}
-                    consumers={consumers}
-                    onSelectConversation={setSelectedConversation}
-                    selectedConversationId={selectedConversation?.id}
-                />
-            </ResizablePanel>
-            <ResizableHandle withHandle />
-            <ResizablePanel defaultSize={50} minSize={30}>
-                 <ChatArea 
-                    conversation={selectedConversation} 
-                    consumer={selectedConsumer}
-                 />
-            </ResizablePanel>
-            <ResizableHandle withHandle />
-            <ResizablePanel defaultSize={25} minSize={20} maxSize={30}>
-                <ConsumerProfile consumer={selectedConsumer} />
-            </ResizablePanel>
-        </ResizablePanelGroup>
+        <>
+            <ResizablePanelGroup direction="horizontal" className="h-full w-full">
+                <ResizablePanel defaultSize={25} minSize={20} maxSize={30}>
+                    <ConversationList
+                        conversations={conversations}
+                        consumers={consumers}
+                        onSelectConversation={setSelectedConversation}
+                        selectedConversationId={selectedConversation?.id}
+                    />
+                </ResizablePanel>
+                <ResizableHandle withHandle />
+                <ResizablePanel defaultSize={50} minSize={30}>
+                    <ChatArea 
+                        conversation={selectedConversation} 
+                        consumer={selectedConsumer}
+                    />
+                </ResizablePanel>
+                <ResizableHandle withHandle />
+                <ResizablePanel defaultSize={25} minSize={20} maxSize={30}>
+                    <ConsumerProfile consumer={selectedConsumer} onEdit={() => handleEditConsumer(selectedConsumer)} />
+                </ResizablePanel>
+            </ResizablePanelGroup>
+            
+            <CreateCustomerModal
+                isOpen={isCustomerModalOpen}
+                onClose={() => setCustomerModalOpen(false)}
+                onCustomerSaved={handleCustomerSave}
+                customer={customerToEdit}
+                allTags={[]} // You might want to fetch all tags for the dropdown
+            />
+        </>
     );
 }
