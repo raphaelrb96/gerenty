@@ -55,8 +55,9 @@ export function ChatArea({ conversation, consumer }: ChatAreaProps) {
 
 
     useEffect(() => {
-        if (!conversation || !activeCompany) {
+        if (!conversation?.id || !activeCompany?.id) {
             setMessages([]);
+            setLoading(false);
             return;
         }
         
@@ -86,14 +87,11 @@ export function ChatArea({ conversation, consumer }: ChatAreaProps) {
             .catch(() => toast({ variant: "destructive", title: "Erro ao carregar templates" }));
 
         return () => unsubscribe();
-    }, [conversation, activeCompany, toast]);
+    }, [conversation?.id, activeCompany?.id, toast]);
     
     useEffect(() => {
-        if (!loading && messages.length > 0) {
-            // Using requestAnimationFrame ensures the DOM has been updated before scrolling
-            requestAnimationFrame(() => {
-                scrollToBottom();
-            });
+        if (!loading) {
+            scrollToBottom();
         }
     }, [messages, loading, scrollToBottom]);
 
