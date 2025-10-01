@@ -165,3 +165,5 @@ export interface MessageTemplateComponent {
       example?: string[];
   }>;
 }
+
+    
