@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -151,7 +152,7 @@ function FlowBuilderTab() {
                                         </p>
                                     </CardHeader>
                                     <CardContent className="flex-1 space-y-3">
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex flex-col items-start gap-2">
                                             <Badge variant="outline" className={cn(
                                                 "flex items-center gap-1.5 w-fit",
                                                 flow.status === 'published' ? "text-green-600 border-green-600/30" : "text-yellow-600 border-yellow-600/30"
