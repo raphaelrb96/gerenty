@@ -54,7 +54,6 @@ export class WhatsAppService {
       }
 
       // 3. Convert the downloaded content to a Base64 data URI
-      const mediaDownloaded = await mediaDataResponse.json();
       const buffer = await mediaDataResponse.arrayBuffer();
       const base64Data = Buffer.from(buffer).toString('base64');
 

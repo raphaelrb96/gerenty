@@ -746,6 +746,7 @@ async function processIncomingMessage(
                  // Se não houver próxima etapa, o fluxo terminou.
                 if (!currentStepId) {
                     activeFlowId = null;
+                    functions.logger.info(`[Flow] Flow ${activeFlow.id} finished for conversation ${conversationRef.id}.`);
                 }
             }
         }
