@@ -30,7 +30,7 @@ if (admin.apps.length === 0) {
     admin.initializeApp();
 }
 
-
+const db = admin.firestore();
 const secretManager = SecretManagerService.getInstance();
 const securityService = new SecurityService();
 const whatsAppService = new WhatsAppService();
@@ -844,7 +844,7 @@ async function processFlowStep(
     }
 
     functions.logger.info(`[Flow] Processing step ${currentStepId} of type ${currentNode.data.type}`);
-    
+
     // Se o nó atual é para capturar dados, salve a resposta do usuário
     if (currentNode.data.type === 'captureData' && userMessage?.text?.body) {
         const variableName = currentNode.data.captureVariable;
@@ -856,19 +856,59 @@ async function processFlowStep(
             functions.logger.info(`[Flow] Captured data for variable "${variableName}"`);
         }
     }
-    
-    // Encontra a próxima conexão a partir do nó atual
-    // TODO: Adicionar lógica para múltiplos `sourceHandle` em nós condicionais
-    const nextEdge = flow.edges.find(e => e.source === currentNode.id);
-    if (!nextEdge) {
+
+    // --- LÓGICA DE DECISÃO DE PRÓXIMO NÓ ---
+    let nextNode: FlowNode | null = null;
+    if (currentNode.data.type === 'conditional') {
+        const conditions = currentNode.data.conditions || [];
+        const consumerDoc = await consumerRef.get();
+        const consumerData = consumerDoc.data() || {};
+        const userText = userMessage?.text?.body.toLowerCase().trim();
+
+        let satisfiedEdgeId: string | null = null;
+
+        for (const cond of conditions) {
+            const variableValue = consumerData.flowData?.[cond.variable] || userText;
+            const comparisonValue = cond.value?.toLowerCase().trim();
+            if (!variableValue) continue;
+
+            let isMatch = false;
+            switch (cond.operator) {
+                case '==': isMatch = variableValue === comparisonValue; break;
+                case '!=': isMatch = variableValue !== comparisonValue; break;
+                case '>': isMatch = Number(variableValue) > Number(comparisonValue); break;
+                case '<': isMatch = Number(variableValue) < Number(comparisonValue); break;
+                case 'contains': isMatch = variableValue.includes(comparisonValue); break;
+                default: isMatch = false;
+            }
+
+            if (isMatch) {
+                satisfiedEdgeId = flow.edges.find(e => e.source === currentNode.id && e.sourceHandle === cond.id)?.target || null;
+                break; // Use a primeira condição satisfeita
+            }
+        }
+        
+        if (satisfiedEdgeId) {
+            nextNode = flow.nodes.find(n => n.id === satisfiedEdgeId) || null;
+        } else {
+            // Se nenhuma condição for satisfeita, usa a saída "else"
+            const elseTargetId = flow.edges.find(e => e.source === currentNode.id && e.sourceHandle === 'else')?.target;
+            if (elseTargetId) {
+                nextNode = flow.nodes.find(n => n.id === elseTargetId) || null;
+            }
+        }
+    } else {
+        // Para nós não condicionais, há apenas uma saída
+        const nextEdge = flow.edges.find(e => e.source === currentNode.id);
+        if (nextEdge) {
+            nextNode = flow.nodes.find(n => n.id === nextEdge.target) || null;
+        }
+    }
+    // --- FIM DA LÓGICA DE DECISÃO ---
+
+    if (!nextNode) {
         functions.logger.info(`[Flow] No outgoing edge from node ${currentStepId}. Ending flow.`);
         return null; // Fim do fluxo
-    }
-    
-    const nextNode = flow.nodes.find(n => n.id === nextEdge.target);
-    if (!nextNode) {
-        functions.logger.warn(`[Flow] Next node ${nextEdge.target} not found. Ending flow.`);
-        return null;
     }
 
     functions.logger.info(`[Flow] Next node is ${nextNode.id} of type ${nextNode.data.type}`);
@@ -897,7 +937,6 @@ async function processFlowStep(
             break;
 
         case 'captureData':
-            // Apenas envia a mensagem de solicitação, a captura acontece na próxima interação
             const captureMessage = nextNode.data.captureMessage;
             if (captureMessage) {
                  const consumerDoc = await consumerRef.get();
@@ -913,7 +952,31 @@ async function processFlowStep(
             }
             break;
 
-        // TODO: Implementar outras ações (conditional, internalAction, etc.)
+        case 'internalAction':
+            const actionType = nextNode.data.actionType;
+            const actionValue = nextNode.data.actionValue;
+            if (actionType && actionValue) {
+                if (actionType === 'addTag') {
+                    await consumerRef.update({ tags: FieldValue.arrayUnion(actionValue) });
+                    functions.logger.info(`[Flow] Added tag "${actionValue}" to consumer ${consumerRef.id}`);
+                }
+                if (actionType === 'removeTag') {
+                    await consumerRef.update({ tags: FieldValue.arrayRemove(actionValue) });
+                     functions.logger.info(`[Flow] Removed tag "${actionValue}" from consumer ${consumerRef.id}`);
+                }
+                if (actionType === 'moveCrmStage') {
+                    await consumerRef.update({ status: actionValue }); // 'status' in consumer is the stageId
+                    functions.logger.info(`[Flow] Moved consumer ${consumerRef.id} to stage "${actionValue}"`);
+                }
+            }
+            break;
+            
+        case 'conditional':
+             // A lógica condicional já foi tratada acima para encontrar este nó.
+             // Agora, precisamos encontrar o PRÓXIMO nó a partir daqui, que será a próxima ação.
+             return await processFlowStep(companyId, consumerRef, flow, nextNode.id, userMessage);
+
+
         default:
             functions.logger.info(`[Flow] Node type ${nextNode.data.type} not implemented yet.`);
             break;
