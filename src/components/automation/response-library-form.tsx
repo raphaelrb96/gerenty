@@ -36,16 +36,10 @@ const formSchema = z.object({
   name: z.string().min(2, "O nome da resposta é obrigatório."),
   type: z.enum(['text', 'image', 'video', 'audio', 'file', 'location', 'interactive', 'product']),
   
-  // text
   text_body: z.string().optional(),
-  
-  // media
   media_caption: z.string().optional(),
-  
-  // product
   product_retailer_id: z.string().optional(),
 
-  // interactive
   interactive_type: z.enum(['button', 'list', 'product', 'product_list']).optional(),
   interactive_header_text: z.string().optional(),
   interactive_body_text: z.string().optional(),
@@ -54,7 +48,7 @@ const formSchema = z.object({
     id: z.string().min(1, "ID do botão é obrigatório"),
     title: z.string().min(1, "Texto do botão é obrigatório"),
   })).optional(),
-   interactive_list_button_text: z.string().optional(),
+  interactive_list_button_text: z.string().optional(),
   interactive_list_sections: z.array(z.object({
     title: z.string().min(1, "Título da seção é obrigatório."),
     rows: z.array(z.object({
@@ -62,8 +56,26 @@ const formSchema = z.object({
       title: z.string().min(1, "Título do item é obrigatório."),
       description: z.string().optional(),
     })).min(1, "A seção deve ter pelo menos um item.").max(10, "Uma seção não pode ter mais de 10 itens."),
-  })).min(1, "A lista deve ter pelo menos uma seção.").optional(),
+  })).optional(),
+}).superRefine((data, ctx) => {
+    if (data.type === 'interactive' && data.interactive_type === 'list') {
+        if (!data.interactive_list_button_text || data.interactive_list_button_text.trim() === '') {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "O texto do botão da lista é obrigatório.",
+                path: ["interactive_list_button_text"],
+            });
+        }
+        if (!data.interactive_list_sections || data.interactive_list_sections.length === 0) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Adicione pelo menos uma seção à lista.",
+                path: ["interactive_list_sections"],
+            });
+        }
+    }
 });
+
 
 type FormValues = z.infer<typeof formSchema>;
 
@@ -104,13 +116,22 @@ function InteractiveListSection({ sectionIndex, removeSection, isAddRowDisabled 
                                 </FormItem>
                             )}
                         />
-                        <FormField
+                         <FormField
                             control={control}
                             name={`interactive_list_sections.${sectionIndex}.rows.${rowIndex}.description`}
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormControl><Input placeholder="Descrição (opcional)" {...field} /></FormControl>
+                                    <FormControl><Input placeholder="Descrição (opcional)" {...field} value={field.value || ''} /></FormControl>
                                     <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                         <FormField
+                            control={control}
+                            name={`interactive_list_sections.${sectionIndex}.rows.${rowIndex}.id`}
+                            render={({ field }) => (
+                                <FormItem className="hidden">
+                                    <FormControl><Input {...field} /></FormControl>
                                 </FormItem>
                             )}
                         />
@@ -141,7 +162,20 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { name: "", type: "text", interactive_buttons: [], interactive_list_sections: [] },
+    defaultValues: { 
+        name: "", 
+        type: "text",
+        text_body: "",
+        media_caption: "",
+        product_retailer_id: "",
+        interactive_type: "button",
+        interactive_header_text: "",
+        interactive_body_text: "",
+        interactive_footer_text: "",
+        interactive_buttons: [], 
+        interactive_list_button_text: "",
+        interactive_list_sections: [],
+    },
   });
   
   const watchedListSections = useWatch({
@@ -173,27 +207,25 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
    React.useEffect(() => {
     if (isOpen) {
       if (message) {
-        // Populate form for editing
         form.reset({
-          name: message.name,
-          type: message.type,
-          text_body: message.content.text?.body,
-          media_caption: message.content.media?.caption,
-          product_retailer_id: message.content.product_message?.product_retailer_id,
-          interactive_type: message.content.interactive?.type,
-          interactive_header_text: message.content.interactive?.header?.text,
-          interactive_body_text: message.content.interactive?.body.text,
-          interactive_footer_text: message.content.interactive?.footer?.text,
-          interactive_buttons: message.content.interactive?.action.buttons?.map(b => ({id: b.reply.id, title: b.reply.title})),
-          interactive_list_button_text: message.content.interactive?.action.button,
+          name: message.name || "",
+          type: message.type || "text",
+          text_body: message.content.text?.body || "",
+          media_caption: message.content.media?.caption || "",
+          product_retailer_id: message.content.product_message?.product_retailer_id || "",
+          interactive_type: message.content.interactive?.type || "button",
+          interactive_header_text: message.content.interactive?.header?.text || "",
+          interactive_body_text: message.content.interactive?.body.text || "",
+          interactive_footer_text: message.content.interactive?.footer?.text || "",
+          interactive_buttons: message.content.interactive?.action.buttons?.map(b => ({id: b.reply.id, title: b.reply.title})) || [],
+          interactive_list_button_text: message.content.interactive?.action.button || "",
           interactive_list_sections: message.content.interactive?.action.sections?.map(s => ({
             title: s.title || '',
             rows: s.rows?.map(r => ({id: r.id, title: r.title, description: r.description || ''})) || []
-          })),
+          })) || [],
         });
         setFileName(message.content.media?.url ? message.content.media.url.split('/').pop()?.split('?')[0] || 'Arquivo existente' : null);
       } else {
-        // Reset form for creation
         form.reset({
           name: "",
           type: "text",
@@ -235,10 +267,12 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
         if (values.type === 'text') {
             messageContent.text = { body: values.text_body || '' };
         } else if (isMediaType) {
-            let mediaUrl = message && !fileToUpload ? message.content.media?.url || '' : '';
+             let mediaUrl = message && !fileToUpload ? message.content.media?.url || '' : '';
              if(fileToUpload) {
                 const path = `libraryMessages/${activeCompany.id}/${Date.now()}-${fileToUpload.name}`;
                 mediaUrl = await uploadFile(fileToUpload, path);
+             } else if (!message) { // Creating new media message but no file
+                mediaUrl = '';
              }
              messageContent.media = { id: '', mime_type: fileToUpload?.type || '', url: mediaUrl, caption: values.media_caption };
         } else if (values.type === 'product') {
@@ -356,9 +390,9 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
                         
                         <Card>
                             <CardContent className="pt-6 space-y-4">
-                                <FormField control={form.control} name="interactive_header_text" render={({ field }) => (<FormItem><FormLabel>Cabeçalho (Opcional)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="interactive_body_text" render={({ field }) => (<FormItem><FormLabel>Corpo da Mensagem</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="interactive_footer_text" render={({ field }) => (<FormItem><FormLabel>Rodapé (Opcional)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="interactive_header_text" render={({ field }) => (<FormItem><FormLabel>Cabeçalho (Opcional)</FormLabel><FormControl><Input {...field} value={field.value || ''}/></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="interactive_body_text" render={({ field }) => (<FormItem><FormLabel>Corpo da Mensagem</FormLabel><FormControl><Textarea {...field} value={field.value || ''}/></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="interactive_footer_text" render={({ field }) => (<FormItem><FormLabel>Rodapé (Opcional)</FormLabel><FormControl><Input {...field} value={field.value || ''}/></FormControl><FormMessage /></FormItem>)} />
                                 
                                 <Separator />
                                 
@@ -377,7 +411,7 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
                                 
                                 {watchedInteractiveType === 'list' && (
                                     <div className="space-y-4">
-                                        <FormField control={form.control} name="interactive_list_button_text" render={({ field }) => (<FormItem><FormLabel>Texto do Botão da Lista</FormLabel><FormControl><Input placeholder="Ex: Ver Opções" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={form.control} name="interactive_list_button_text" render={({ field }) => (<FormItem><FormLabel>Texto do Botão da Lista</FormLabel><FormControl><Input placeholder="Ex: Ver Opções" {...field} value={field.value || ''}/></FormControl><FormMessage /></FormItem>)} />
                                         <Label>Seções e Itens da Lista (Total Máx. 10 Itens)</Label>
                                          {sectionFields.map((section, sectionIndex) => (
                                              <InteractiveListSection key={section.id} sectionIndex={sectionIndex} removeSection={removeSection} isAddRowDisabled={isListLimitReached} />
@@ -392,7 +426,7 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
                 )}
               </div>
             </ScrollArea>
-             <SheetFooter className="px-6 py-4 border-t mt-auto">
+            <SheetFooter className="px-6 py-4 border-t flex-shrink-0">
               <Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button>
               <Button type="submit" disabled={isSaving}>
                 {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
