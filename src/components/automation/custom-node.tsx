@@ -24,7 +24,6 @@ export function CustomNode({ data, selected }: NodeProps<{
   transferTo?: string,
   conditions?: any[],
   isDeletable?: boolean,
-  isMainTrigger?: boolean,
   onConfigure: () => void,
   onDelete: () => void,
   onQuickAdd: (sourceHandle?: string) => void,
@@ -60,7 +59,7 @@ export function CustomNode({ data, selected }: NodeProps<{
   };
   
   const isDeletable = data.isDeletable !== false;
-  const isMainTrigger = data.isMainTrigger === true;
+  const isMainTrigger = !isDeletable;
 
   const getVerticalHandlePosition = (index: number) => {
     const headerHeight = 44; 
@@ -100,11 +99,7 @@ export function CustomNode({ data, selected }: NodeProps<{
         </>
       )}
       
-      {data.type !== 'conditional' && !isMainTrigger && (
-          <Handle type="source" position={Position.Bottom} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10 }} />
-      )}
-      
-       {isMainTrigger && (
+      {data.type !== 'conditional' && (
           <Handle type="source" position={Position.Bottom} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10 }} />
       )}
       

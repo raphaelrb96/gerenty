@@ -1,6 +1,5 @@
-
-
 import type { FieldValue, Timestamp } from "firebase/firestore";
+import type { Node, Edge } from "reactflow";
 
 export type User = {
   //dados pessoais
@@ -744,9 +743,10 @@ export type Conversation = {
   id: string; // Document ID
   consumerId: string; // Reference to the consumer
   lastMessageTimestamp: Timestamp;
-  status: 'open' | 'closed';
+  status: 'open' | 'closed' | 'pending';
   unreadMessagesCount: number;
   lastMessage: string;
+  activeFlowId?: string | null;
 };
 
 export type MessageType = 
@@ -900,13 +900,8 @@ export type Flow = {
     ownerId: string;
     companyId: string;
     name: string;
-    trigger: {
-        type: 'keyword';
-        value: string | string[]; // Can be a single string or an array of strings
-        matchType: 'exact' | 'contains' | 'regex';
-    };
-    nodes: any[]; // React Flow nodes
-    edges: any[]; // React Flow edges
+    nodes: Node[];
+    edges: Edge[];
     status: 'draft' | 'published';
     sessionConfig: {
         timeoutMinutes: number;
@@ -1041,4 +1036,3 @@ export type CallableRequest<T = any> = {
     auth?: { uid: string; token: string; };
     data: T;
 };
-```

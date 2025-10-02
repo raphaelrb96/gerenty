@@ -73,7 +73,6 @@ const enrichNodeData = (node: Node, onConfigure: (node: Node) => void, onDelete:
             onDelete: () => onDelete(node),
             onQuickAdd: (sourceHandle?: string) => onQuickAdd(node, sourceHandle),
             isDeletable: isDeletable,
-            isMainTrigger: node.id === '1',
         },
     };
 };
@@ -271,7 +270,7 @@ export default function EditConversationFlowPage() {
         try {
             // Remove the circular 'on*' functions before saving
             const nodesToSave = nodes.map(node => {
-                const { icon, color, onConfigure, onDelete, onQuickAdd, isDeletable, isMainTrigger, ...restData } = node.data;
+                const { icon, color, onConfigure, onDelete, onQuickAdd, isDeletable, ...restData } = node.data;
                 return { ...node, data: restData };
             });
             await updateFlow(flow.id, { nodes: nodesToSave, edges });

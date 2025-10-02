@@ -52,9 +52,12 @@ type NodeConfigPanelProps = {
 }
 
 function CustomLabelInput({ node, onNodeDataChange }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'] }) {
-    if (!node || node.data.isMainTrigger) {
+    const isMainTrigger = node.id === '1';
+
+    if (isMainTrigger) {
         return null;
     }
+    
     return (
         <div className="space-y-2 mb-4">
             <Label htmlFor="custom-label">Rótulo Personalizado</Label>

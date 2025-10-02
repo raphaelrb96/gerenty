@@ -1,4 +1,3 @@
-
 // src/functions/whatsapp.ts
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
@@ -18,7 +17,9 @@ import {
     MessageStatus,
     TemplateStatusUpdate,
     MessageContact,
-    MessageMetadata
+    MessageMetadata,
+    Flow,
+    Conversation
 } from '../types/whatsapp';
 import { FieldValue } from 'firebase-admin/firestore';
 
@@ -612,7 +613,7 @@ async function processIncomingMessage(
         // CORREÇÃO: Processa a URL da mídia ANTES de qualquer operação de escrita
         if (message.video?.id) {
             message.video.url = await Promise.race([
-                whatsAppService.fetchMediaVideoUrl(message.video.id, companyId),
+                whatsAppService.fetchMediaUrl(message.video.id, companyId),
                 new Promise<null>((resolve) =>
                     setTimeout(() => {
                         functions.logger.warn(`Timeout processing video ${message.video.id}`);
@@ -669,7 +670,55 @@ async function processIncomingMessage(
             .limit(1)
             .get();
 
-        let conversationId: string;
+        let conversationRef: admin.firestore.DocumentReference;
+        if (conversationQuery.empty) {
+            // Cria nova conversa
+            conversationRef = db.collection('companies').doc(companyId).collection('conversations').doc();
+        } else {
+            conversationRef = conversationQuery.docs[0].ref;
+        }
+
+        // START: Lógica de Fluxo de Automação
+        const conversationDoc = await conversationRef.get();
+        const conversationData = conversationDoc.data() as Conversation | undefined;
+        let activeFlowId = conversationData?.activeFlowId;
+
+        // Se NÃO há fluxo ativo, verifica se a mensagem aciona um novo fluxo
+        if (!activeFlowId && message.type === 'text' && message.text?.body) {
+            const userMessage = message.text.body.toLowerCase().trim();
+            const flowsSnapshot = await db.collection('flows')
+                .where('companyId', '==', companyId)
+                .where('status', '==', 'published')
+                .get();
+            
+            for (const doc of flowsSnapshot.docs) {
+                const flow = doc.data() as Flow;
+                const triggerNode = flow.nodes.find(n => n.id === '1' && n.data.type === 'keywordTrigger');
+                const keywords = triggerNode?.data.triggerKeywords || [];
+                
+                const isMatch = keywords.some((kw: { value: string, matchType: string }) => {
+                    const keyword = kw.value.toLowerCase().trim();
+                    if (kw.matchType === 'exact') return userMessage === keyword;
+                    if (kw.matchType === 'contains') return userMessage.includes(keyword);
+                    // Adicionar mais lógicas de match se necessário
+                    return false;
+                });
+
+                if (isMatch) {
+                    functions.logger.info(`[Flow] Matched flow "${flow.name}" (ID: ${doc.id}) for conversation ${conversationRef.id}`);
+                    activeFlowId = doc.id;
+                    break; // Inicia o primeiro fluxo que encontrar
+                }
+            }
+        }
+
+        if (activeFlowId) {
+            // TODO: Implementar a lógica para processar o próximo passo do fluxo
+            functions.logger.info(`[Flow] Conversation ${conversationRef.id} is in flow ${activeFlowId}. Next step processing to be implemented.`);
+            // Ex: const nextNode = findNextNode(activeFlowId, currentNodeId, message.text.body);
+            //     await executeNodeAction(nextNode, conversationRef.id);
+        }
+        // END: Lógica de Fluxo de Automação
 
         // Determine a friendly last message summary based on message type
         let lastMessageText = '[Mensagem desconhecida]';
@@ -707,35 +756,18 @@ async function processIncomingMessage(
 
         const messageTimestamp = admin.firestore.Timestamp.fromMillis(parseInt(message.timestamp) * 1000);
 
-        if (conversationQuery.empty) {
-            // Cria nova conversa
-            const conversationRef = await db.collection('companies')
-                .doc(companyId)
-                .collection('conversations')
-                .add({
-                    consumerId,
-                    status: 'open',
-                    unreadMessagesCount: 1,
-                    lastMessage: lastMessageText,
-                    lastMessageTimestamp: messageTimestamp,
-                    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-                    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-                });
-            conversationId = conversationRef.id;
-        } else {
-            conversationId = conversationQuery.docs[0].id;
-            // Atualiza contador de mensagens não lidas
-            await db.collection('companies')
-                .doc(companyId)
-                .collection('conversations')
-                .doc(conversationId)
-                .update({
-                    unreadMessagesCount: admin.firestore.FieldValue.increment(1),
-                    lastMessage: lastMessageText,
-                    lastMessageTimestamp: messageTimestamp,
-                    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-                });
-        }
+        // Cria ou atualiza a conversa
+        await conversationRef.set({
+            consumerId,
+            status: 'open',
+            unreadMessagesCount: admin.firestore.FieldValue.increment(1),
+            lastMessage: lastMessageText,
+            lastMessageTimestamp: messageTimestamp,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            activeFlowId: activeFlowId || null, // Salva o ID do fluxo ativo
+            ...(conversationQuery.empty && { createdAt: admin.firestore.FieldValue.serverTimestamp() }) // Adiciona createdAt apenas se for novo
+        }, { merge: true });
+
 
         functions.logger.info('Salvando a Mensagem: ', JSON.stringify(message));
 
@@ -743,19 +775,19 @@ async function processIncomingMessage(
         await db.collection('companies')
             .doc(companyId)
             .collection('conversations')
-            .doc(conversationId)
+            .doc(conversationRef.id)
             .collection('messages')
             .add({
                 id: message.id,
                 direction: 'inbound',
                 type: message.type,
-                content: message, // O objeto message agora contém a URL em Base64
+                content: message, // O objeto message agora contém a URL
                 timestamp: messageTimestamp,
                 status: 'delivered',
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),
             });
 
-        functions.logger.info(`Message processed for company ${companyId}, conversation ${conversationId}`);
+        functions.logger.info(`Message processed for company ${companyId}, conversation ${conversationRef.id}`);
     } catch (error) {
         functions.logger.error('Error processing incoming message:', error);
         throw error;
@@ -890,6 +922,3 @@ function sanitizeMetaPatterns(text: string): string {
     // Replace problematic patterns like [[...]] but keep valid template variables like {{1}}
     return text.replace(/\[\[.*?\]\]/g, '').trim();
 }
-
-
-
