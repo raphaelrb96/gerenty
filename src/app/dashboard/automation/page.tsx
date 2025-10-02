@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback } from "react";
 import { PageHeader } from "@/components/common/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Bot, PlusCircle, LayoutGrid, Building, Library, Workflow, Pencil, MoreVertical, Trash2, RefreshCw } from "lucide-react";
+import { Bot, PlusCircle, LayoutGrid, Building, Library, Workflow, Pencil, MoreVertical, Trash2, RefreshCw, Circle } from "lucide-react";
 import type { MessageTemplate, LibraryMessage, AutomationRule, Flow } from "@/lib/types";
 import { getTemplatesByCompany, deleteTemplate as deleteTemplateService } from "@/services/template-service";
 import { getLibraryMessagesByCompany, deleteLibraryMessage } from "@/services/library-message-service";
@@ -35,6 +35,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { syncWhatsAppTemplates } from "@/services/integration-service";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 
 function AutomationRulesTab() {
@@ -123,13 +125,16 @@ function FlowBuilderTab() {
                  ) : (
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {flows.map(flow => (
-                            <Card key={flow.id} className="flex flex-col">
+                            <Card key={flow.id} className="flex flex-col hover:shadow-lg transition-shadow">
                                 <CardHeader>
-                                    <div className="flex justify-between items-start">
-                                        <CardTitle className="text-lg">{flow.name}</CardTitle>
+                                    <div className="flex justify-between items-start gap-4">
+                                        <CardTitle className="text-lg flex items-center gap-2">
+                                            <Workflow className="h-5 w-5 text-primary" />
+                                            {flow.name}
+                                        </CardTitle>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-6 w-6 -mr-2">
+                                                <Button variant="ghost" size="icon" className="h-7 w-7 -mr-2 -mt-1">
                                                     <MoreVertical className="h-4 w-4" />
                                                 </Button>
                                             </DropdownMenuTrigger>
@@ -139,11 +144,20 @@ function FlowBuilderTab() {
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </div>
-                                    <CardDescription>Status: {flow.status}</CardDescription>
                                 </CardHeader>
-                                <CardContent className="flex-1">
+                                <CardContent className="flex-1 space-y-3">
+                                     <Badge variant="outline" className={cn(
+                                         "flex items-center gap-1.5 w-fit",
+                                         flow.status === 'published' ? "text-green-600 border-green-600/30" : "text-yellow-600 border-yellow-600/30"
+                                     )}>
+                                        <Circle className={cn(
+                                            "h-2 w-2",
+                                            flow.status === 'published' ? "fill-green-600" : "fill-yellow-600"
+                                        )} />
+                                        {flow.status === 'published' ? 'Publicado' : 'Rascunho'}
+                                    </Badge>
                                     <p className="text-sm text-muted-foreground">
-                                        Última atualização: {flow.updatedAt ? new Date(flow.updatedAt as any).toLocaleDateString() : 'N/A'}
+                                        Atualizado {flow.updatedAt ? formatDistanceToNow(new Date(flow.updatedAt as any), { addSuffix: true, locale: ptBR }) : 'N/A'}
                                     </p>
                                 </CardContent>
                                 <CardFooter>
