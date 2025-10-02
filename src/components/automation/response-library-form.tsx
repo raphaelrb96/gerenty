@@ -115,7 +115,7 @@ function InteractiveListSection({ sectionIndex, removeSection, isAddRowDisabled 
                             )}
                         />
                     </div>
-                    <Button type="button" variant="destructive" size="icon" onClick={() => removeRow(rowIndex)}><Trash2 className="h-4 w-4"/></Button>
+                    <Button type="button" variant="destructive" size="icon" onClick={() => removeRow(rowIndex)}><Trash2 className="h-4 w-4" /></Button>
                 </div>
             ))}
             <Button type="button" variant="outline" size="sm" onClick={() => appendRow({ id: `row_${Date.now()}`, title: '', description: '' })} className="mt-2" disabled={isAddRowDisabled}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Item</Button>
@@ -170,10 +170,48 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
   const watchedInteractiveType = form.watch('interactive_type');
   const isMediaType = ['image', 'video', 'audio', 'file'].includes(watchedType);
 
-  React.useEffect(() => {
-    setFileToUpload(null);
-    setFileName(null);
-    // TODO: Reset form when message or isOpen changes
+   React.useEffect(() => {
+    if (isOpen) {
+      if (message) {
+        // Populate form for editing
+        form.reset({
+          name: message.name,
+          type: message.type,
+          text_body: message.content.text?.body,
+          media_caption: message.content.media?.caption,
+          product_retailer_id: message.content.product_message?.product_retailer_id,
+          interactive_type: message.content.interactive?.type,
+          interactive_header_text: message.content.interactive?.header?.text,
+          interactive_body_text: message.content.interactive?.body.text,
+          interactive_footer_text: message.content.interactive?.footer?.text,
+          interactive_buttons: message.content.interactive?.action.buttons?.map(b => ({id: b.reply.id, title: b.reply.title})),
+          interactive_list_button_text: message.content.interactive?.action.button,
+          interactive_list_sections: message.content.interactive?.action.sections?.map(s => ({
+            title: s.title || '',
+            rows: s.rows?.map(r => ({id: r.id, title: r.title, description: r.description || ''})) || []
+          })),
+        });
+        setFileName(message.content.media?.url ? message.content.media.url.split('/').pop()?.split('?')[0] || 'Arquivo existente' : null);
+      } else {
+        // Reset form for creation
+        form.reset({
+          name: "",
+          type: "text",
+          text_body: "",
+          media_caption: "",
+          product_retailer_id: "",
+          interactive_type: "button",
+          interactive_header_text: "",
+          interactive_body_text: "",
+          interactive_footer_text: "",
+          interactive_buttons: [],
+          interactive_list_button_text: "",
+          interactive_list_sections: [],
+        });
+        setFileName(null);
+        setFileToUpload(null);
+      }
+    }
   }, [message, isOpen, form]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
