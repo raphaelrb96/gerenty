@@ -641,25 +641,28 @@ async function processIncomingMessage(
             .get();
 
         let consumerId: string;
+        let consumerRef: admin.firestore.DocumentReference;
 
         if (consumerQuery.empty) {
             // Cria novo consumer
-            const consumerRef = await db.collection('companies')
+            consumerRef = db.collection('companies')
                 .doc(companyId)
                 .collection('consumers')
-                .add({
-                    name: contactName,
-                    phone: phoneNumber,
-                    type: 'lead',
-                    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-                    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-                });
+                .doc();
+            await consumerRef.set({
+                name: contactName,
+                phone: phoneNumber,
+                type: 'lead',
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
             consumerId = consumerRef.id;
         } else {
-            consumerId = consumerQuery.docs[0].id;
+            consumerRef = consumerQuery.docs[0].ref;
+            consumerId = consumerRef.id;
             // Update name if it was 'Unknown' before
             if (consumerQuery.docs[0].data().name === 'Unknown' && contactName !== 'Unknown') {
-                await db.collection('companies').doc(companyId).collection('consumers').doc(consumerId).update({ name: contactName });
+                await consumerRef.update({ name: contactName });
             }
         }
 
@@ -722,45 +725,28 @@ async function processIncomingMessage(
         }
 
         if (activeFlowId && currentStepId) {
-            // Se um novo fluxo foi acionado, execute a primeira ação imediatamente.
-            if (flowTriggered && activeFlow) {
-                const triggerNode = activeFlow.nodes.find(n => n.id === currentStepId);
-                const firstEdge = activeFlow.edges.find(e => e.source === triggerNode?.id);
-                
-                if (firstEdge) {
-                    const nextNodeId = firstEdge.target;
-                    const nextNode = activeFlow.nodes.find(n => n.id === nextNodeId);
-
-                    if (nextNode?.data.type === 'message') {
-                        const messageId = nextNode.data.messageId;
-                        if (messageId) {
-                            // Fetch a mensagem da biblioteca para obter o conteúdo
-                            const libraryMessageDoc = await db.collection('libraryMessages').doc(messageId).get();
-                            if(libraryMessageDoc.exists()) {
-                                const libraryMessage = libraryMessageDoc.data();
-                                // Utiliza o whatsAppService para enviar a mensagem
-                                await whatsAppService.sendMessage(companyId, {
-                                    phoneNumber: phoneNumber,
-                                    // Assumindo que a biblioteca armazena a mensagem de texto no formato esperado
-                                    message: libraryMessage?.content.text.body || "Mensagem padrão", 
-                                    type: 'text' // ou o tipo correto da mensagem
-                                });
-
-                                // Atualiza a conversa com o novo stepId
-                                currentStepId = nextNodeId; 
-                                functions.logger.info(`[Flow] Executed message node ${nextNodeId} and updated step.`);
-                            } else {
-                                functions.logger.warn(`[Flow] Library message with ID ${messageId} not found.`);
-                            }
-                        }
-                    } else {
-                        // TODO: Implementar outras ações de nós (capturar dados, condição, etc.)
-                        functions.logger.info(`[Flow] Next node is of type ${nextNode?.data.type}. Action not implemented yet.`);
-                    }
+            // Carrega o fluxo se ele ainda não foi carregado (caso de um fluxo já ativo)
+            if (!activeFlow) {
+                const flowDoc = await db.collection('flows').doc(activeFlowId).get();
+                if (flowDoc.exists) {
+                    activeFlow = { id: flowDoc.id, ...flowDoc.data() } as Flow;
                 }
-            } else {
-                // TODO: Implementar a lógica para processar o próximo passo de um fluxo já ativo
-                functions.logger.info(`[Flow] Conversation ${conversationRef.id} is in flow ${activeFlowId} at step ${currentStepId}. Next step processing to be implemented.`);
+            }
+
+            if (activeFlow) {
+                // Processa a etapa atual e obtém a próxima
+                const nextStep = await processFlowStep(
+                    companyId,
+                    consumerRef,
+                    activeFlow,
+                    currentStepId,
+                    flowTriggered ? null : message // Só passa a mensagem se não for o gatilho inicial
+                );
+                currentStepId = nextStep?.id || null; // Atualiza o stepId para a próxima etapa
+                 // Se não houver próxima etapa, o fluxo terminou.
+                if (!currentStepId) {
+                    activeFlowId = null;
+                }
             }
         }
         // END: Lógica de Fluxo de Automação
@@ -839,6 +825,104 @@ async function processIncomingMessage(
         throw error;
     }
 }
+
+/**
+ * Processa a etapa atual de um fluxo e executa a próxima ação.
+ * @returns O ID do próximo nó no fluxo, ou null se o fluxo terminar.
+ */
+async function processFlowStep(
+    companyId: string,
+    consumerRef: admin.firestore.DocumentReference,
+    flow: Flow,
+    currentStepId: string,
+    userMessage: IncomingMessage | null
+): Promise<FlowNode | null> {
+    const currentNode = flow.nodes.find(n => n.id === currentStepId);
+    if (!currentNode) {
+        functions.logger.warn(`[Flow] Node ${currentStepId} not found in flow ${flow.id}. Ending flow.`);
+        return null;
+    }
+
+    functions.logger.info(`[Flow] Processing step ${currentStepId} of type ${currentNode.data.type}`);
+    
+    // Se o nó atual é para capturar dados, salve a resposta do usuário
+    if (currentNode.data.type === 'captureData' && userMessage?.text?.body) {
+        const variableName = currentNode.data.captureVariable;
+        if (variableName) {
+            await consumerRef.update({
+                [`flowData.${variableName}`]: userMessage.text.body,
+                updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+            functions.logger.info(`[Flow] Captured data for variable "${variableName}"`);
+        }
+    }
+    
+    // Encontra a próxima conexão a partir do nó atual
+    // TODO: Adicionar lógica para múltiplos `sourceHandle` em nós condicionais
+    const nextEdge = flow.edges.find(e => e.source === currentNode.id);
+    if (!nextEdge) {
+        functions.logger.info(`[Flow] No outgoing edge from node ${currentStepId}. Ending flow.`);
+        return null; // Fim do fluxo
+    }
+    
+    const nextNode = flow.nodes.find(n => n.id === nextEdge.target);
+    if (!nextNode) {
+        functions.logger.warn(`[Flow] Next node ${nextEdge.target} not found. Ending flow.`);
+        return null;
+    }
+
+    functions.logger.info(`[Flow] Next node is ${nextNode.id} of type ${nextNode.data.type}`);
+
+    // Executa a ação do próximo nó
+    switch (nextNode.data.type) {
+        case 'message':
+            const messageId = nextNode.data.messageId;
+            if (messageId) {
+                const libraryMessageDoc = await db.collection('companies').doc(companyId).collection('libraryMessages').doc(messageId).get();
+                if (libraryMessageDoc.exists) {
+                    const libraryMessage = libraryMessageDoc.data();
+                    const consumerDoc = await consumerRef.get();
+                    const phoneNumber = consumerDoc.data()?.phone;
+
+                    if (phoneNumber && libraryMessage) {
+                        await whatsAppService.sendMessage(companyId, {
+                            phoneNumber: phoneNumber,
+                            message: libraryMessage.content.text?.body || "Mensagem padrão",
+                            type: 'text' // TODO: Suportar outros tipos de mensagem da biblioteca
+                        });
+                        functions.logger.info(`[Flow] Executed message node ${nextNode.id}.`);
+                    }
+                }
+            }
+            break;
+
+        case 'captureData':
+            // Apenas envia a mensagem de solicitação, a captura acontece na próxima interação
+            const captureMessage = nextNode.data.captureMessage;
+            if (captureMessage) {
+                 const consumerDoc = await consumerRef.get();
+                 const phoneNumber = consumerDoc.data()?.phone;
+                 if (phoneNumber) {
+                     await whatsAppService.sendMessage(companyId, {
+                         phoneNumber: phoneNumber,
+                         message: captureMessage,
+                         type: 'text'
+                     });
+                     functions.logger.info(`[Flow] Sent capture data prompt from node ${nextNode.id}.`);
+                 }
+            }
+            break;
+
+        // TODO: Implementar outras ações (conditional, internalAction, etc.)
+        default:
+            functions.logger.info(`[Flow] Node type ${nextNode.data.type} not implemented yet.`);
+            break;
+    }
+
+    // Retorna o nó que foi executado, para que o chamador saiba qual é o novo `currentStepId`
+    return nextNode;
+}
+
 
 /**
  * Processa status de mensagens

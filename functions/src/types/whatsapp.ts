@@ -1,7 +1,7 @@
 // src/types/whatsapp.ts
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
-import type { Node, Edge } from 'reactflow';
+import type { Node as FlowNode, Edge as FlowEdge } from 'reactflow';
 
 
 // Remove a definição customizada e usa a do Firebase
