@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback } from "react";
 import { PageHeader } from "@/components/common/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Bot, PlusCircle, LayoutGrid, Building, Library, Workflow, Pencil, MoreVertical, Trash2, RefreshCw, Circle } from "lucide-react";
+import { Bot, PlusCircle, LayoutGrid, Building, Library, Workflow, Pencil, MoreVertical, Trash2, RefreshCw, Circle, Key } from "lucide-react";
 import type { MessageTemplate, LibraryMessage, AutomationRule, Flow } from "@/lib/types";
 import { getTemplatesByCompany, deleteTemplate as deleteTemplateService } from "@/services/template-service";
 import { getLibraryMessagesByCompany, deleteLibraryMessage } from "@/services/library-message-service";
@@ -32,7 +32,7 @@ import Link from "next/link";
 import { ResponseLibraryForm } from "@/components/automation/response-library-form";
 import { ResponseCard } from "@/components/automation/response-card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { syncWhatsAppTemplates } from "@/services/integration-service";
 import { Badge } from "@/components/ui/badge";
@@ -124,52 +124,76 @@ function FlowBuilderTab() {
                     />
                  ) : (
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {flows.map(flow => (
-                            <Card key={flow.id} className="flex flex-col hover:shadow-lg transition-shadow">
-                                <CardHeader>
-                                    <div className="flex justify-between items-start gap-4">
-                                        <CardTitle className="text-lg flex items-center gap-2">
-                                            <Workflow className="h-5 w-5 text-primary" />
-                                            {flow.name}
-                                        </CardTitle>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-7 w-7 -mr-2 -mt-1">
-                                                    <MoreVertical className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent>
-                                                <DropdownMenuItem asChild><Link href={`/dashboard/automation/flows/edit/${flow.id}`}><Pencil className="mr-2 h-4 w-4" />Editar</Link></DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => setFlowToDelete(flow)} className="text-destructive focus:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Excluir</DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </div>
-                                </CardHeader>
-                                <CardContent className="flex-1 space-y-3">
-                                     <Badge variant="outline" className={cn(
-                                         "flex items-center gap-1.5 w-fit",
-                                         flow.status === 'published' ? "text-green-600 border-green-600/30" : "text-yellow-600 border-yellow-600/30"
-                                     )}>
-                                        <Circle className={cn(
-                                            "h-2 w-2",
-                                            flow.status === 'published' ? "fill-green-600" : "fill-yellow-600"
-                                        )} />
-                                        {flow.status === 'published' ? 'Publicado' : 'Rascunho'}
-                                    </Badge>
-                                    <p className="text-sm text-muted-foreground">
-                                        Atualizado {flow.updatedAt ? formatDistanceToNow(new Date(flow.updatedAt as any), { addSuffix: true, locale: ptBR }) : 'N/A'}
-                                    </p>
-                                </CardContent>
-                                <CardFooter>
-                                    <Button asChild className="w-full" variant="outline">
-                                        <Link href={`/dashboard/automation/flows/edit/${flow.id}`}>
-                                            <Pencil className="mr-2 h-4 w-4" />
-                                            Editar Fluxo
-                                        </Link>
-                                    </Button>
-                                </CardFooter>
-                            </Card>
-                        ))}
+                        {flows.map(flow => {
+                            const triggerNode = flow.nodes.find(n => n.id === '1');
+                            const keywords = triggerNode?.data?.triggerKeywords || [];
+                            return (
+                                <Card key={flow.id} className="flex flex-col hover:shadow-lg transition-shadow">
+                                    <CardHeader>
+                                        <div className="flex justify-between items-start gap-4">
+                                            <CardTitle className="text-lg flex items-center gap-2">
+                                                <Workflow className="h-5 w-5 text-primary" />
+                                                {flow.name}
+                                            </CardTitle>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-7 w-7 -mr-2 -mt-1">
+                                                        <MoreVertical className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent>
+                                                    <DropdownMenuItem asChild><Link href={`/dashboard/automation/flows/edit/${flow.id}`}><Pencil className="mr-2 h-4 w-4" />Editar</Link></DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => setFlowToDelete(flow)} className="text-destructive focus:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Excluir</DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+                                         <p className="text-xs text-muted-foreground pt-1">
+                                            Criado em: {flow.createdAt ? format(new Date(flow.createdAt as any), 'dd/MM/yyyy') : 'N/A'}
+                                        </p>
+                                    </CardHeader>
+                                    <CardContent className="flex-1 space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <Badge variant="outline" className={cn(
+                                                "flex items-center gap-1.5 w-fit",
+                                                flow.status === 'published' ? "text-green-600 border-green-600/30" : "text-yellow-600 border-yellow-600/30"
+                                            )}>
+                                                <Circle className={cn(
+                                                    "h-2 w-2",
+                                                    flow.status === 'published' ? "fill-green-600" : "fill-yellow-600"
+                                                )} />
+                                                {flow.status === 'published' ? 'Publicado' : 'Rascunho'}
+                                            </Badge>
+                                            <p className="text-xs text-muted-foreground">
+                                                Atualizado {flow.updatedAt ? formatDistanceToNow(new Date(flow.updatedAt as any), { addSuffix: true, locale: ptBR }) : 'N/A'}
+                                            </p>
+                                        </div>
+                                        
+                                        {keywords.length > 0 && (
+                                            <div className="space-y-2">
+                                                <h4 className="text-xs font-semibold flex items-center gap-1"><Key className="h-3 w-3" /> Gatilhos</h4>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {keywords.slice(0, 6).map((kw: any, index: number) => (
+                                                        <Badge key={index} variant="secondary">{kw.value}</Badge>
+                                                    ))}
+                                                     {keywords.length > 6 && (
+                                                        <Badge variant="secondary">+{keywords.length - 6}</Badge>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                    </CardContent>
+                                    <CardFooter>
+                                        <Button asChild className="w-full" variant="outline">
+                                            <Link href={`/dashboard/automation/flows/edit/${flow.id}`}>
+                                                <Pencil className="mr-2 h-4 w-4" />
+                                                Editar Fluxo
+                                            </Link>
+                                        </Button>
+                                    </CardFooter>
+                                </Card>
+                            )
+                        })}
                      </div>
                  )}
             </CardContent>
@@ -527,9 +551,4 @@ export default function AutomationPage() {
       <div className="space-y-6">
         <FlowBuilderTab />
         <TemplatesTab />
-        <AutomationRulesTab />
-        <LibraryTab />
-      </div>
-    </div>
-  );
-}
+        <Automation

@@ -921,8 +921,8 @@ export type Flow = {
         deactivationTime: string; // HH:mm format
         activeDays: ('sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat')[];
     };
-    createdAt: Timestamp;
-    updatedAt: Timestamp;
+    createdAt: Timestamp | Date | string;
+    updatedAt: Timestamp | Date | string;
 };
 
 export interface WhatsAppIntegration {
@@ -934,8 +934,6 @@ export interface WhatsAppIntegration {
   createdAt: string;
   updatedAt: string;
   error?: string;
-  // NOTA: accessToken e metaAppSecret NÃO estão aqui
-  // pois são armazenados no Secret Manager
 }
 
 export interface WhatsAppCredentials {
@@ -1043,3 +1041,4 @@ export type CallableRequest<T = any> = {
     auth?: { uid: string; token: string; };
     data: T;
 };
+```
