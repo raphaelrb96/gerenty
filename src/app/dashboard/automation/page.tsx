@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -551,4 +550,9 @@ export default function AutomationPage() {
       <div className="space-y-6">
         <FlowBuilderTab />
         <TemplatesTab />
-        <Automation
+        <AutomationRulesTab />
+        <LibraryTab />
+      </div>
+    </div>
+  );
+}
