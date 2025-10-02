@@ -43,8 +43,6 @@ const formSchema = z.object({
   media_caption: z.string().optional(),
   
   // product
-  product_catalog_id: z.string().optional(),
-  product_section_id: z.string().optional(),
   product_retailer_id: z.string().optional(),
 
   // interactive
