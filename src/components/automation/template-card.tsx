@@ -58,9 +58,11 @@ export function TemplateCard({ template, onViewDetails, onEdit, onDelete }: Temp
                     </DropdownMenu>
                 </div>
                  <Badge variant="secondary" className={`mt-2 w-fit ${getStatusVariant(template.status)}`}>{template.status}</Badge>
-                <CardDescription className="flex items-center gap-2 pt-2">
+                <CardDescription>
+                  <div className="flex items-center gap-2 pt-2">
                     <Badge variant="secondary" className={getCategoryVariant(template.category)}>{template.category}</Badge>
                     <Badge variant="outline">{template.language.toUpperCase()}</Badge>
+                  </div>
                 </CardDescription>
             </CardHeader>
             <CardContent className="flex-1">
