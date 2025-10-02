@@ -715,17 +715,28 @@ async function processIncomingMessage(
 
                 if (isMatch) {
                     functions.logger.info(`[Flow] Matched flow "${flow.name}" (ID: ${doc.id}) for conversation ${conversationRef.id}`);
-                    activeFlowId = doc.id;
-                    currentStepId = '1'; // Start at the beginning of the flow
-                    activeFlow = flow; // Carrega o fluxo que foi encontrado
+                    
+                    const isSingleStepFlow = flow.nodes.length <= 2 && flow.edges.length <= 1;
+
+                    activeFlow = flow;
                     flowTriggered = true;
-                    break; // Inicia o primeiro fluxo que encontrar
+
+                    const firstStep = await processFlowStep(companyId, consumerRef, activeFlow, '1', null);
+                    
+                    // Se o fluxo tem mais de um passo, rastreamos o estado
+                    if (!isSingleStepFlow) {
+                        activeFlowId = doc.id;
+                        currentStepId = firstStep?.id || null;
+                    } else {
+                         // É um fluxo de execução única, não rastreia estado
+                         activeFlowId = null;
+                         currentStepId = null;
+                    }
+                    break;
                 }
             }
-        }
-
-        if (activeFlowId && currentStepId) {
-            // Carrega o fluxo se ele ainda não foi carregado (caso de um fluxo já ativo)
+        } else if (activeFlowId && currentStepId) {
+             // Carrega o fluxo se ele ainda não foi carregado (caso de um fluxo já ativo)
             if (!activeFlow) {
                 const flowDoc = await db.collection('flows').doc(activeFlowId).get();
                 if (flowDoc.exists) {
@@ -740,7 +751,7 @@ async function processIncomingMessage(
                     consumerRef,
                     activeFlow,
                     currentStepId,
-                    flowTriggered ? null : message // Só passa a mensagem se não for o gatilho inicial
+                    message // Passa a mensagem do usuário para processamento
                 );
                 currentStepId = nextStep?.id || null; // Atualiza o stepId para a próxima etapa
                  // Se não houver próxima etapa, o fluxo terminou.
