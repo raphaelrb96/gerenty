@@ -54,7 +54,7 @@ export function ConsumerProfile({ consumer, stages, onEdit }: ConsumerProfilePro
 
     return (
         <div className="flex flex-col h-full bg-muted/20 border-t">
-            <ScrollArea className="flex-1">
+            <ScrollArea className="flex-1 pr-4">
                 <div className="p-4 space-y-6">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
