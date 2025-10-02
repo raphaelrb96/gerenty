@@ -13,8 +13,9 @@ import { sendMessage } from "@/services/integration-service";
 import { MessageSquare } from "lucide-react";
 import { useCompany } from "@/context/company-context";
 import { useToast } from "@/hooks/use-toast";
-import { TemplateMessageSelector } from "./template-message-selector";
 import { ScrollArea } from "../ui/scroll-area";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { AlertCircle } from "lucide-react";
 
 type ChatAreaProps = {
     conversation: Conversation | null;
@@ -151,16 +152,17 @@ export function ChatArea({ conversation, consumer }: ChatAreaProps) {
                 </ScrollArea>
             </div>
             
-            <footer className="p-4 border-t bg-background/95 flex-shrink-0">
-                {isOutsideWindow ? (
-                     <TemplateMessageSelector
-                        templates={templates}
-                        onSendTemplate={handleSendMessage}
-                        isSending={isSending}
-                    />
-                ) : (
-                    <ChatInput onSendMessage={handleSendMessage} isSending={isSending} />
+            <footer className="p-4 border-t bg-background/95 flex-shrink-0 space-y-2">
+                 {isOutsideWindow && (
+                    <Alert variant="default" className="bg-yellow-50 border-yellow-200 text-yellow-800">
+                        <AlertCircle className="h-4 w-4 !text-yellow-600" />
+                        <AlertTitle>Janela de 24h Expirada</AlertTitle>
+                        <AlertDescription>
+                            Apenas mensagens de template podem iniciar conversas. O sistema tentará enviar como template se uma mensagem de texto normal falhar.
+                        </AlertDescription>
+                    </Alert>
                 )}
+                <ChatInput onSendMessage={handleSendMessage} isSending={isSending} />
             </footer>
         </div>
     );
