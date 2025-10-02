@@ -739,7 +739,7 @@ async function processIncomingMessage(
                 id: message.id,
                 direction: 'inbound',
                 type: message.type,
-                content: message, // O objeto message agora contém a URL Base64
+                content: message, // O objeto message agora contém a URL em Base64
                 timestamp: messageTimestamp,
                 status: 'delivered',
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),
