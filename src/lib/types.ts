@@ -747,6 +747,7 @@ export type Conversation = {
   unreadMessagesCount: number;
   lastMessage: string;
   activeFlowId?: string | null;
+  currentStepId?: string | null;
 };
 
 export type MessageType = 
@@ -1036,3 +1037,4 @@ export type CallableRequest<T = any> = {
     auth?: { uid: string; token: string; };
     data: T;
 };
+```

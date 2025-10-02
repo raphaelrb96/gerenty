@@ -1,5 +1,3 @@
-
-
 // src/types/whatsapp.ts
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
@@ -205,6 +203,38 @@ export interface MessageTemplateComponent {
   }>;
 }
 
+export type Stage = {
+  id: string;
+  ownerId: string;
+  name: string;
+  order: number;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type Flow = {
+  id: string;
+  name: string;
+  companyId: string;
+  status: 'draft' | 'published';
+  nodes: admin.firestore.DocumentData[];
+  edges: admin.firestore.DocumentData[];
+};
+
+export type Conversation = {
+  id: string;
+  consumerId: string;
+  status: 'open' | 'pending' | 'closed';
+  unreadMessagesCount: number;
+  lastMessage: string;
+  lastMessageTimestamp: admin.firestore.Timestamp;
+  activeFlowId?: string | null;
+  currentStepId?: string | null;
+  createdAt: admin.firestore.Timestamp;
+  updatedAt: admin.firestore.Timestamp;
+};
     
 
     
+
+```

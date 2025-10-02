@@ -682,6 +682,7 @@ async function processIncomingMessage(
         const conversationDoc = await conversationRef.get();
         const conversationData = conversationDoc.data() as Conversation | undefined;
         let activeFlowId = conversationData?.activeFlowId;
+        let currentStepId = conversationData?.currentStepId;
 
         // Se NÃO há fluxo ativo, verifica se a mensagem aciona um novo fluxo
         if (!activeFlowId && message.type === 'text' && message.text?.body) {
@@ -707,16 +708,18 @@ async function processIncomingMessage(
                 if (isMatch) {
                     functions.logger.info(`[Flow] Matched flow "${flow.name}" (ID: ${doc.id}) for conversation ${conversationRef.id}`);
                     activeFlowId = doc.id;
+                    currentStepId = '1'; // Start at the beginning of the flow
                     break; // Inicia o primeiro fluxo que encontrar
                 }
             }
         }
 
-        if (activeFlowId) {
+        if (activeFlowId && currentStepId) {
             // TODO: Implementar a lógica para processar o próximo passo do fluxo
-            functions.logger.info(`[Flow] Conversation ${conversationRef.id} is in flow ${activeFlowId}. Next step processing to be implemented.`);
-            // Ex: const nextNode = findNextNode(activeFlowId, currentNodeId, message.text.body);
+            functions.logger.info(`[Flow] Conversation ${conversationRef.id} is in flow ${activeFlowId} at step ${currentStepId}. Next step processing to be implemented.`);
+            // Ex: const nextNode = findNextNode(activeFlowId, currentStepId, message.text.body);
             //     await executeNodeAction(nextNode, conversationRef.id);
+            //     currentStepId = nextNode.id;
         }
         // END: Lógica de Fluxo de Automação
 
@@ -764,8 +767,9 @@ async function processIncomingMessage(
             lastMessage: lastMessageText,
             lastMessageTimestamp: messageTimestamp,
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-            activeFlowId: activeFlowId || null, // Salva o ID do fluxo ativo
-            ...(conversationQuery.empty && { createdAt: admin.firestore.FieldValue.serverTimestamp() }) // Adiciona createdAt apenas se for novo
+            activeFlowId: activeFlowId || null, 
+            currentStepId: currentStepId || null, 
+            ...(conversationQuery.empty && { createdAt: admin.firestore.FieldValue.serverTimestamp() }) 
         }, { merge: true });
 
 
@@ -922,3 +926,4 @@ function sanitizeMetaPatterns(text: string): string {
     // Replace problematic patterns like [[...]] but keep valid template variables like {{1}}
     return text.replace(/\[\[.*?\]\]/g, '').trim();
 }
+```
