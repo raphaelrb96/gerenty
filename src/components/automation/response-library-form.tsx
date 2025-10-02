@@ -235,7 +235,7 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
         if (values.type === 'text') {
             messageContent.text = { body: values.text_body || '' };
         } else if (isMediaType) {
-             let mediaUrl = message?.content.media?.url || '';
+             let mediaUrl = message ? message.content.media?.url || '' : '';
              if(fileToUpload) {
                 const path = `libraryMessages/${activeCompany.id}/${Date.now()}-${fileToUpload.name}`;
                 mediaUrl = await uploadFile(fileToUpload, path);
