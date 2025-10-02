@@ -604,20 +604,28 @@ async function processIncomingMessage(
     try {
         const db = admin.firestore();
         const phoneNumber = message.from;
-        
+
         // Find contact name from the webhook payload
         const contactProfile = contacts.find(c => c.wa_id === phoneNumber);
-        const contactName = contactProfile?.profile?.name || 'Unknown';
-        
+        const contactName = contactProfile?.profile?.name || 'New';
+
         // CORREÇÃO: Processa a URL da mídia ANTES de qualquer operação de escrita
-        if (message.image?.id) {
-            message.image.url = await whatsAppService.fetchMediaUrl(message.image.id, companyId) || undefined;
-        } else if (message.video?.id) {
-            message.video.url = await whatsAppService.fetchMediaUrl(message.video.id, companyId) || undefined;
+        if (message.video?.id) {
+            message.video.url = await Promise.race([
+                whatsAppService.fetchMediaVideoUrl(message.video.id, companyId),
+                new Promise<null>((resolve) =>
+                    setTimeout(() => {
+                        functions.logger.warn(`Timeout processing video ${message.video.id}`);
+                        resolve(null);
+                    }, 50000) // 50 segundos timeout
+                )
+            ]);
+        } else if (message.image?.id) {
+            message.image.url = await whatsAppService.fetchMediaUrl(message.image.id, companyId);
         } else if (message.audio?.id) {
-            message.audio.url = await whatsAppService.fetchMediaUrl(message.audio.id, companyId) || undefined;
+            message.audio.url = await whatsAppService.fetchMediaUrl(message.audio.id, companyId);
         } else if (message.document?.id) {
-            message.document.url = await whatsAppService.fetchMediaUrl(message.document.id, companyId) || undefined;
+            message.document.url = await whatsAppService.fetchMediaUrl(message.document.id, companyId);
         }
 
 
@@ -648,7 +656,7 @@ async function processIncomingMessage(
             consumerId = consumerQuery.docs[0].id;
             // Update name if it was 'Unknown' before
             if (consumerQuery.docs[0].data().name === 'Unknown' && contactName !== 'Unknown') {
-                 await db.collection('companies').doc(companyId).collection('consumers').doc(consumerId).update({ name: contactName });
+                await db.collection('companies').doc(companyId).collection('consumers').doc(consumerId).update({ name: contactName });
             }
         }
 
@@ -728,6 +736,8 @@ async function processIncomingMessage(
                     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
                 });
         }
+
+        functions.logger.info('Salvando a Mensagem: ', JSON.stringify(message));
 
         // Salva a mensagem completa
         await db.collection('companies')
@@ -842,7 +852,7 @@ function sanitizeMetaTemplateComponents(components: any[]): any[] {
                     sanitizeMetaPatterns(String(item))
                 );
             }
-            
+
             // Sanitize 'header_handle' which is an array of strings
             if (Array.isArray(sanitizedComponent.example.header_handle)) {
                 sanitizedExample.header_handle = sanitizedComponent.example.header_handle.map((item: any) =>
@@ -863,7 +873,7 @@ function sanitizeMetaTemplateComponents(components: any[]): any[] {
                 }
                 // The 'example' in buttons is an array of strings
                 if (Array.isArray(sanitizedButton.example)) {
-                     sanitizedButton.example = sanitizedButton.example.map((item: any) =>
+                    sanitizedButton.example = sanitizedButton.example.map((item: any) =>
                         sanitizeMetaPatterns(String(item))
                     );
                 }
@@ -880,6 +890,6 @@ function sanitizeMetaPatterns(text: string): string {
     // Replace problematic patterns like [[...]] but keep valid template variables like {{1}}
     return text.replace(/\[\[.*?\]\]/g, '').trim();
 }
-    
 
-    
+
+
