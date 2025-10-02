@@ -1,6 +1,8 @@
 // src/types/whatsapp.ts
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
+import type { Node, Edge } from 'reactflow';
+
 
 // Remove a definição customizada e usa a do Firebase
 export type CallableRequest<T = any> = functions.https.CallableRequest<T>;
@@ -217,8 +219,8 @@ export type Flow = {
   name: string;
   companyId: string;
   status: 'draft' | 'published';
-  nodes: admin.firestore.DocumentData[];
-  edges: admin.firestore.DocumentData[];
+  nodes: FlowNode[];
+  edges: FlowEdge[];
 };
 
 export type Conversation = {
@@ -236,5 +238,3 @@ export type Conversation = {
     
 
     
-
-```

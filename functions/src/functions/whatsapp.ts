@@ -22,6 +22,8 @@ import {
     Conversation
 } from '../types/whatsapp';
 import { FieldValue } from 'firebase-admin/firestore';
+import type { Node as FlowNode, Edge as FlowEdge } from 'reactflow';
+
 
 // Inicializa o Firebase Admin
 if (admin.apps.length === 0) {
@@ -608,7 +610,7 @@ async function processIncomingMessage(
 
         // Find contact name from the webhook payload
         const contactProfile = contacts.find(c => c.wa_id === phoneNumber);
-        const contactName = contactProfile?.profile?.name || 'New';
+        const contactName = contactProfile?.profile?.name || 'Unknown';
 
         // CORREÇÃO: Processa a URL da mídia ANTES de qualquer operação de escrita
         if (message.video?.id) {
@@ -683,6 +685,9 @@ async function processIncomingMessage(
         const conversationData = conversationDoc.data() as Conversation | undefined;
         let activeFlowId = conversationData?.activeFlowId;
         let currentStepId = conversationData?.currentStepId;
+        let activeFlow: Flow | null = null;
+        let flowTriggered = false; // Flag para saber se um novo fluxo foi iniciado nesta execução
+
 
         // Se NÃO há fluxo ativo, verifica se a mensagem aciona um novo fluxo
         if (!activeFlowId && message.type === 'text' && message.text?.body) {
@@ -693,7 +698,7 @@ async function processIncomingMessage(
                 .get();
             
             for (const doc of flowsSnapshot.docs) {
-                const flow = doc.data() as Flow;
+                const flow = { id: doc.id, ...doc.data() } as Flow;
                 const triggerNode = flow.nodes.find(n => n.id === '1' && n.data.type === 'keywordTrigger');
                 const keywords = triggerNode?.data.triggerKeywords || [];
                 
@@ -709,17 +714,54 @@ async function processIncomingMessage(
                     functions.logger.info(`[Flow] Matched flow "${flow.name}" (ID: ${doc.id}) for conversation ${conversationRef.id}`);
                     activeFlowId = doc.id;
                     currentStepId = '1'; // Start at the beginning of the flow
+                    activeFlow = flow; // Carrega o fluxo que foi encontrado
+                    flowTriggered = true;
                     break; // Inicia o primeiro fluxo que encontrar
                 }
             }
         }
 
         if (activeFlowId && currentStepId) {
-            // TODO: Implementar a lógica para processar o próximo passo do fluxo
-            functions.logger.info(`[Flow] Conversation ${conversationRef.id} is in flow ${activeFlowId} at step ${currentStepId}. Next step processing to be implemented.`);
-            // Ex: const nextNode = findNextNode(activeFlowId, currentStepId, message.text.body);
-            //     await executeNodeAction(nextNode, conversationRef.id);
-            //     currentStepId = nextNode.id;
+            // Se um novo fluxo foi acionado, execute a primeira ação imediatamente.
+            if (flowTriggered && activeFlow) {
+                const triggerNode = activeFlow.nodes.find(n => n.id === currentStepId);
+                const firstEdge = activeFlow.edges.find(e => e.source === triggerNode?.id);
+                
+                if (firstEdge) {
+                    const nextNodeId = firstEdge.target;
+                    const nextNode = activeFlow.nodes.find(n => n.id === nextNodeId);
+
+                    if (nextNode?.data.type === 'message') {
+                        const messageId = nextNode.data.messageId;
+                        if (messageId) {
+                            // Fetch a mensagem da biblioteca para obter o conteúdo
+                            const libraryMessageDoc = await db.collection('libraryMessages').doc(messageId).get();
+                            if(libraryMessageDoc.exists()) {
+                                const libraryMessage = libraryMessageDoc.data();
+                                // Utiliza o whatsAppService para enviar a mensagem
+                                await whatsAppService.sendMessage(companyId, {
+                                    phoneNumber: phoneNumber,
+                                    // Assumindo que a biblioteca armazena a mensagem de texto no formato esperado
+                                    message: libraryMessage?.content.text.body || "Mensagem padrão", 
+                                    type: 'text' // ou o tipo correto da mensagem
+                                });
+
+                                // Atualiza a conversa com o novo stepId
+                                currentStepId = nextNodeId; 
+                                functions.logger.info(`[Flow] Executed message node ${nextNodeId} and updated step.`);
+                            } else {
+                                functions.logger.warn(`[Flow] Library message with ID ${messageId} not found.`);
+                            }
+                        }
+                    } else {
+                        // TODO: Implementar outras ações de nós (capturar dados, condição, etc.)
+                        functions.logger.info(`[Flow] Next node is of type ${nextNode?.data.type}. Action not implemented yet.`);
+                    }
+                }
+            } else {
+                // TODO: Implementar a lógica para processar o próximo passo de um fluxo já ativo
+                functions.logger.info(`[Flow] Conversation ${conversationRef.id} is in flow ${activeFlowId} at step ${currentStepId}. Next step processing to be implemented.`);
+            }
         }
         // END: Lógica de Fluxo de Automação
 
@@ -926,4 +968,3 @@ function sanitizeMetaPatterns(text: string): string {
     // Replace problematic patterns like [[...]] but keep valid template variables like {{1}}
     return text.replace(/\[\[.*?\]\]/g, '').trim();
 }
-```
