@@ -60,6 +60,8 @@ const AudioPlayer = ({ src }: { src: string }) => {
     };
 
     const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+    
+    const timeDisplay = isPlaying ? formatTime(currentTime) : formatTime(duration);
 
     return (
         <div className="flex items-center gap-2 w-full max-w-xs">
@@ -69,8 +71,8 @@ const AudioPlayer = ({ src }: { src: string }) => {
             </Button>
             <div className="w-full flex items-center gap-2" style={{ minWidth: '150px' }}>
                  <Progress value={progress} className="h-2 w-full [&>div]:bg-primary" />
-                <span className="text-xs font-mono w-24 text-right text-muted-foreground">
-                    {formatTime(currentTime)} / {formatTime(duration)}
+                <span className="text-xs font-mono w-16 text-right text-muted-foreground">
+                    {timeDisplay}
                 </span>
             </div>
         </div>
