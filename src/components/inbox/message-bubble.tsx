@@ -69,8 +69,8 @@ const AudioPlayer = ({ src }: { src: string }) => {
             </Button>
             <div className="w-full flex items-center gap-2" style={{ minWidth: '150px' }}>
                  <Progress value={progress} className="h-2 w-full [&>div]:bg-primary" />
-                <span className="text-xs font-mono w-12 text-right text-muted-foreground">
-                    {formatTime(currentTime)}
+                <span className="text-xs font-mono w-24 text-right text-muted-foreground">
+                    {formatTime(currentTime)} / {formatTime(duration)}
                 </span>
             </div>
         </div>
