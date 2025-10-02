@@ -760,7 +760,7 @@ export type MessageStatus = 'sent' | 'delivered' | 'read' | 'failed';
 
 export type TextMessage = { body: string; preview_url?: boolean };
 export type MediaMessage = { id: string; mime_type: string; url?: string; caption?: string; filename?: string };
-export type LocationMessage = { latitude: number; longitude: number; name?: string; address?: string };
+export type LocationMessage = { latitude: number; longitude: number; name?: string; address?: string; };
 export type ContactMessage = { contacts: Array<{ name: { first_name: string }; phones: Array<{ phone: string; type: string }> }> };
 export type ProductMessage = { body?: string; catalog_id?: string; section_id?: string; product_retailer_id: string };
 
@@ -823,32 +823,38 @@ export type Message = {
 export type MessageTemplate = {
   id: string;
   name: string;
-  category: 'marketing' | 'utility' | 'authentication';
+  category: 'UTILITY' | 'MARKETING' | 'AUTHENTICATION';
   language: string;
   status: 'approved' | 'pending' | 'rejected' | 'disabled';
-  components: Array<{
-    type: 'HEADER' | 'BODY' | 'BUTTONS' | 'FOOTER';
-    format?: 'TEXT' | 'IMAGE' | 'VIDEO' | 'DOCUMENT' | 'LOCATION';
-    text?: string;
-    buttons?: Array<{
-      type: 'PHONE_NUMBER' | 'URL' | 'QUICK_REPLY';
+  components: MessageTemplateComponent[];
+  createdAt: string | Date | Timestamp;
+  updatedAt: string | Date | Timestamp;
+};
+
+export type MetaTemplate = {
+  name: string;
+  category: 'UTILITY' | 'MARKETING' | 'AUTHENTICATION';
+  language: string;
+  status: 'APPROVED' | 'PENDING' | 'REJECTED' | 'DISABLED';
+  components: MessageTemplateComponent[];
+};
+
+export interface MessageTemplateComponent {
+  type: 'HEADER' | 'BODY' | 'FOOTER' | 'BUTTONS';
+  text?: string;
+  format?: 'TEXT' | 'IMAGE' | 'VIDEO' | 'DOCUMENT';
+  example?: {
+      body_text?: string[][];
+      header_text?: string[];
+      header_handle?: string[];
+  };
+  buttons?: Array<{
+      type: 'QUICK_REPLY' | 'URL';
       text: string;
       url?: string;
-      phone_number?: string;
-    }>;
-    parameters?: Array<{
-      type: 'text' | 'image' | 'video' | 'document' | 'currency' | 'datetime' | 'product';
-      text?: string;
-      image?: { link: string };
-      video?: { link: string };
-      document?: { link: string, filename: string };
-      currency?: { fallback_value: string, code: string, amount_1000: number };
-      datetime?: { fallback_value: string };
-    }>;
+      example?: string[];
   }>;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-};
+}
 
 export type LibraryMessageType = 'text' | 'image' | 'video' | 'audio' | 'file' | 'location' | 'interactive' | 'product';
 
@@ -939,15 +945,15 @@ export interface WhatsAppCredentials {
   metaAppSecret: string;
 }
 
-
 export interface MessageResult {
   success: boolean;
   messageId?: string;
   error?: string;
   messageType?: 'conversation' | 'template';
+  templateError?: TemplateErrorInfo;
 }
 
-interface TemplateErrorInfo {
+export interface TemplateErrorInfo {
   needsTemplateSetup: boolean;
   errorCode?: number;
   errorMessage?: string;
@@ -964,8 +970,7 @@ export interface TestMessageResponse {
   templateError?: TemplateErrorInfo;
 }
 
-
-// Tipos para o Webhook do WhatsApp (refatorado e completo)
+// Tipos para Webhook do WhatsApp adicionados
 export type MessageContact = {
     profile: { name: string; };
     wa_id: string;
@@ -1016,18 +1021,6 @@ export type TemplateStatusUpdate = {
     reason?: string;
 };
 
-export type ValidationResult = {
-    isValid: boolean;
-    companyId?: string;
-    error?: string;
-};
-
-export type ApiResponse<T = any> = {
-    success: boolean;
-    data?: T;
-    error?: string;
-};
-
 export type SendMessagePayload = {
     phoneNumber: string;
     message: string;
@@ -1050,4 +1043,3 @@ export type CallableRequest<T = any> = {
     auth?: { uid: string; token: string; };
     data: T;
 };
-    
