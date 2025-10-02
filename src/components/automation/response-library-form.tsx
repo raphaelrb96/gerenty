@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import * as React from "react";
@@ -195,7 +194,7 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
     
     setIsSaving(true);
     try {
-        let messageContent: LibraryMessage['content'] = {};
+        let messageContent: Partial<LibraryMessage['content']> = {};
 
         if (values.type === 'text') {
             messageContent.text = { body: values.text_body || '' };
@@ -238,10 +237,6 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
                         }))
                     }
                  }
-            } else {
-                 toast({ variant: 'destructive', title: 'Tipo interativo não suportado', description: 'Atualmente, apenas os tipos "botão" e "lista" são suportados.' });
-                 setIsSaving(false);
-                 return;
             }
         }
 
@@ -374,11 +369,3 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
     </Sheet>
   );
 }
-
-    
-
-    
-
-
-
-
