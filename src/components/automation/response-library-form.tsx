@@ -8,7 +8,7 @@ import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { addLibraryMessage, updateLibraryMessage } from "@/services/library-message-service";
 import { uploadFile } from "@/services/storage-service";
-import type { LibraryMessage, LibraryMessageType } from "@/lib/types";
+import type { LibraryMessage, LibraryMessageType, Product } from "@/lib/types";
 import { useCompany } from "@/context/company-context";
 import { useAuth } from "@/context/auth-context";
 
@@ -21,7 +21,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetDescrip
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, UploadCloud, PlusCircle, Trash2 } from "lucide-react";
 import { Label } from "../ui/label";
-import { getProductsByUser, Product } from "@/services/product-service";
+import { getProductsByUser } from "@/services/product-service";
 import { Card, CardContent } from "../ui/card";
 import { Separator } from "../ui/separator";
 
@@ -235,7 +235,7 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
         if (values.type === 'text') {
             messageContent.text = { body: values.text_body || '' };
         } else if (isMediaType) {
-             let mediaUrl = message ? message.content.media?.url || '' : '';
+            let mediaUrl = message && !fileToUpload ? message.content.media?.url || '' : '';
              if(fileToUpload) {
                 const path = `libraryMessages/${activeCompany.id}/${Date.now()}-${fileToUpload.name}`;
                 mediaUrl = await uploadFile(fileToUpload, path);
@@ -303,8 +303,8 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="sm:max-w-lg flex flex-col">
-        <SheetHeader className="px-6 pt-6">
+      <SheetContent className="sm:max-w-lg flex flex-col p-0">
+        <SheetHeader className="px-6 pt-6 flex-shrink-0">
           <SheetTitle>{message ? "Editar Resposta" : "Criar Nova Resposta"}</SheetTitle>
           <SheetDescription>Configure respostas para usar em suas automações.</SheetDescription>
         </SheetHeader>
@@ -392,7 +392,7 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
                 )}
               </div>
             </ScrollArea>
-            <SheetFooter className="px-6 py-4 border-t mt-auto">
+             <SheetFooter className="px-6 py-4 border-t mt-auto">
               <Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button>
               <Button type="submit" disabled={isSaving}>
                 {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
