@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -419,6 +420,18 @@ export default function EditConversationFlowPage() {
 
     const onConnect = useCallback((params: Edge | Connection) => {
         setEdges((eds) => {
+            const sourceNode = nodes.find((node) => node.id === params.source);
+            const targetNode = nodes.find((node) => node.id === params.target);
+
+            // Rule: Prevent connecting 'keywordTrigger' to 'waitForResponse' and vice-versa
+            const isTriggerToResponse = sourceNode?.data.type === 'keywordTrigger' && targetNode?.data.type === 'waitForResponse';
+            const isResponseToTrigger = sourceNode?.data.type === 'waitForResponse' && targetNode?.data.type === 'keywordTrigger';
+
+            if (isTriggerToResponse || isResponseToTrigger) {
+                toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Gatilhos e Respostas não podem se conectar entre si.' });
+                return eds;
+            }
+
             // Rule 1: Target handle can only have one connection.
             const targetHasConnection = eds.some(
                 (edge) => edge.target === params.target && edge.targetHandle === params.targetHandle
@@ -427,8 +440,6 @@ export default function EditConversationFlowPage() {
                 toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Cada ponto de entrada de uma tarefa só pode receber uma conexão.' });
                 return eds;
             }
-
-            const sourceNode = nodes.find((node) => node.id === params.source);
             
             // Rule 2: Non-conditional nodes can only have one outgoing connection.
             if (sourceNode && sourceNode.data.type !== 'conditional') {
