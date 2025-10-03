@@ -1,19 +1,22 @@
 
-
 "use client";
 
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Bot, MessageCircle, HelpCircle, Settings, GitBranch, Share2, Timer, UserCheck, CheckCircle } from "lucide-react";
+import { Bot, MessageCircle, HelpCircle, Settings, GitBranch, Share2, Timer, UserCheck, CheckCircle, Zap } from "lucide-react";
 import React from "react";
+import { Separator } from "../ui/separator";
 
-const nodeTypes = [
+const triggerNodeTypes = [
      {
         type: 'keywordTrigger' as const,
         label: "Gatilho: Palavra-Chave",
-        description: "Inicia um fluxo secundário se a palavra for dita.",
-        icon: Bot
+        description: "Inicia um fluxo se a palavra for dita.",
+        icon: Zap
     },
+];
+
+const actionNodeTypes = [
     {
         type: 'message' as const,
         label: "Enviar Mensagem",
@@ -64,11 +67,13 @@ const nodeTypes = [
     }
 ]
 
+const allNodeTypes = [...triggerNodeTypes, ...actionNodeTypes];
+const nodeTypesByName = Object.fromEntries(allNodeTypes.map(n => [n.type, n]));
+
 type NodePaletteProps = {
     onNodeAdd: (type: keyof typeof nodeTypesByName) => void;
 }
 
-const nodeTypesByName = Object.fromEntries(nodeTypes.map(n => [n.type, n]));
 
 export function NodesPalette({ onNodeAdd }: NodePaletteProps) {
 
@@ -77,19 +82,41 @@ export function NodesPalette({ onNodeAdd }: NodePaletteProps) {
             <CardHeader>
                 <CardDescription>Clique em uma tarefa para adicioná-la ao fluxo.</CardDescription>
             </CardHeader>
-            <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                    {nodeTypes.map(nodeType => (
-                        <Button 
-                            key={nodeType.type} 
-                            variant="outline" 
-                            className="h-auto p-4 flex flex-col gap-2 items-center text-center"
-                            onClick={() => onNodeAdd(nodeType.type)}
-                        >
-                            <nodeType.icon className="h-6 w-6" />
-                            <span className="text-sm font-semibold">{nodeType.label}</span>
-                        </Button>
-                    ))}
+            <CardContent className="space-y-6">
+                <div>
+                    <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Gatilhos</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                        {triggerNodeTypes.map(nodeType => (
+                            <Button 
+                                key={nodeType.type} 
+                                variant="outline" 
+                                className="h-auto p-4 flex flex-col gap-2 items-center text-center"
+                                onClick={() => onNodeAdd(nodeType.type)}
+                            >
+                                <nodeType.icon className="h-6 w-6 text-yellow-500" />
+                                <span className="text-sm font-semibold">{nodeType.label}</span>
+                            </Button>
+                        ))}
+                    </div>
+                </div>
+
+                <Separator />
+                
+                <div>
+                    <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Ações</h3>
+                     <div className="grid grid-cols-2 gap-4">
+                        {actionNodeTypes.map(nodeType => (
+                            <Button 
+                                key={nodeType.type} 
+                                variant="outline" 
+                                className="h-auto p-4 flex flex-col gap-2 items-center text-center"
+                                onClick={() => onNodeAdd(nodeType.type)}
+                            >
+                                <nodeType.icon className="h-6 w-6" />
+                                <span className="text-sm font-semibold">{nodeType.label}</span>
+                            </Button>
+                        ))}
+                    </div>
                 </div>
             </CardContent>
         </Card>
