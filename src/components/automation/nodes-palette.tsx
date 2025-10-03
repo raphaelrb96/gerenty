@@ -3,7 +3,7 @@
 
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Bot, MessageCircle, HelpCircle, Settings, GitBranch, Share2, Timer, UserCheck, CheckCircle, Zap } from "lucide-react";
+import { Bot, MessageCircle, HelpCircle, Settings, GitBranch, Share2, Timer, UserCheck, CheckCircle, Zap, MessageSquareReply } from "lucide-react";
 import React from "react";
 import { Separator } from "../ui/separator";
 
@@ -14,6 +14,12 @@ const triggerNodeTypes = [
         description: "Inicia uma etapa se a palavra for dita.",
         icon: Zap
     },
+    {
+        type: 'waitForResponse' as const,
+        label: "Aguardar Resposta",
+        description: "Pausa o fluxo e espera pela próxima mensagem do usuário.",
+        icon: MessageSquareReply
+    }
 ];
 
 const actionNodeTypes = [
@@ -84,7 +90,7 @@ export function NodesPalette({ onNodeAdd }: NodePaletteProps) {
             </CardHeader>
             <CardContent className="space-y-6">
                 <div>
-                    <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Gatilhos de Etapa</h3>
+                    <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Gatilhos e Etapas</h3>
                      <div className="grid grid-cols-2 gap-4">
                         {triggerNodeTypes.map(nodeType => (
                             <Button 

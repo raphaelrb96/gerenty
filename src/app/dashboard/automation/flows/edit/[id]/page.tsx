@@ -12,7 +12,7 @@ import type { Node, Edge, OnNodesChange, OnEdgesChange, Connection } from "react
 import { applyNodeChanges, applyEdgeChanges, addEdge } from 'reactflow';
 import { NodeConfigPanel } from "@/components/automation/node-config-panel";
 import { NodesPalette } from "@/components/automation/nodes-palette";
-import { Bot, MessageCircle, Settings, Plus, Pencil, Trash2, Save, MoreVertical, Clock, Calendar, Repeat, MessageSquareX, Forward, Send, HelpCircle, GitBranch, Share2, Timer, UserCheck, CheckCircle } from "lucide-react";
+import { Bot, MessageCircle, Settings, Plus, Pencil, Trash2, Save, MoreVertical, Clock, Calendar, Repeat, MessageSquareX, Forward, Send, HelpCircle, GitBranch, Share2, Timer, UserCheck, CheckCircle, MessageSquareReply } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import {
   Sheet,
@@ -47,6 +47,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 export const nodeTypeConfig = {
     keywordTrigger: { icon: <Bot size={20} />, color: 'bg-yellow-500', defaultData: { label: 'Gatilho: Palavra-Chave', type: 'keywordTrigger' } },
+    waitForResponse: { icon: <MessageSquareReply size={20} />, color: 'bg-yellow-500', defaultData: { label: 'Aguardar Resposta', type: 'waitForResponse' } },
     message: { icon: <MessageCircle size={20} />, color: 'bg-green-500', defaultData: { label: 'Enviar Mensagem', type: 'message' } },
     captureData: { icon: <HelpCircle size={20} />, color: 'bg-blue-500', defaultData: { label: 'Capturar Dados', type: 'captureData' } },
     internalAction: { icon: <Settings size={20} />, color: 'bg-purple-500', defaultData: { label: 'Ação Interna', type: 'internalAction' } },
