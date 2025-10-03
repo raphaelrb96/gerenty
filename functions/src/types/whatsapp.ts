@@ -297,6 +297,4 @@ export type LibraryMessage = {
   createdAt: admin.firestore.Timestamp;
   updatedAt: admin.firestore.Timestamp;
 };
-    
-
-```
+  

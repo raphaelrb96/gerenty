@@ -217,6 +217,15 @@ export class WhatsAppService {
                 footer,
                 action,
              }
+        } else if (payload.type === 'image' && payload.content?.media?.id) {
+            messageData.image = { id: payload.content.media.id };
+        } else if (payload.type === 'video' && payload.content?.media?.id) {
+            messageData.video = { id: payload.content.media.id };
+        } else if (payload.type === 'audio' && payload.content?.media?.id) {
+            messageData.audio = { id: payload.content.media.id };
+        } else if (payload.type === 'file' && payload.content?.media?.id) {
+            messageData.type = 'document'; // API uses 'document' for files
+            messageData.document = { id: payload.content.media.id, filename: payload.content.media.filename || 'arquivo' };
         } else {
             // Fallback para o comportamento antigo se `content` não estiver presente
              messageData.type = 'text';
