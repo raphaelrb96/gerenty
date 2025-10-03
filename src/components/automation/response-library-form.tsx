@@ -40,7 +40,7 @@ const formSchema = z.object({
   media_caption: z.string().optional(),
   product_retailer_id: z.string().optional(),
 
-  interactive_type: z.enum(['button', 'list', 'product', 'product_list']).optional(),
+  interactive_type: z.enum(['button', 'list', 'product', 'product_list']).default('button'),
   interactive_header_text: z.string().optional(),
   interactive_body_text: z.string().optional(),
   interactive_footer_text: z.string().optional(),
@@ -225,6 +225,7 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
           })) || [],
         });
         setFileName(message.content.media?.url ? message.content.media.url.split('/').pop()?.split('?')[0] || 'Arquivo existente' : null);
+        setFileToUpload(null);
       } else {
         form.reset({
           name: "",
@@ -267,12 +268,10 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
         if (values.type === 'text') {
             messageContent.text = { body: values.text_body || '' };
         } else if (isMediaType) {
-             let mediaUrl = message && !fileToUpload ? message.content.media?.url || '' : '';
-             if(fileToUpload) {
+             let mediaUrl = (message && !fileToUpload) ? (message.content.media?.url || '') : '';
+             if (fileToUpload) {
                 const path = `libraryMessages/${activeCompany.id}/${Date.now()}-${fileToUpload.name}`;
                 mediaUrl = await uploadFile(fileToUpload, path);
-             } else if (!message) { // Creating new media message but no file
-                mediaUrl = '';
              }
              messageContent.media = { id: '', mime_type: fileToUpload?.type || '', url: mediaUrl, caption: values.media_caption };
         } else if (values.type === 'product') {
@@ -283,34 +282,30 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
             }
             messageContent.product_message = { product_retailer_id: values.product_retailer_id };
         } else if (values.type === 'interactive') {
+            messageContent.interactive = {
+                type: values.interactive_type, // Store the subtype here
+                body: { text: values.interactive_body_text || ' ' }, // Body is mandatory
+                header: values.interactive_header_text ? { type: 'text', text: values.interactive_header_text } : undefined,
+                footer: values.interactive_footer_text ? { text: values.interactive_footer_text } : undefined,
+                action: {},
+            };
             if (values.interactive_type === 'button') {
-                messageContent.interactive = {
-                    type: 'button',
-                    body: { text: values.interactive_body_text || ' ' },
-                    action: {
-                        buttons: values.interactive_buttons?.map(b => ({ type: 'reply', reply: { id: b.id, title: b.title } })) || []
-                    },
-                    header: values.interactive_header_text ? { type: 'text', text: values.interactive_header_text } : undefined,
-                    footer: values.interactive_footer_text ? { text: values.interactive_footer_text } : undefined,
-                }
+                messageContent.interactive.action = {
+                    buttons: values.interactive_buttons?.map(b => ({ type: 'reply', reply: { id: b.id, title: b.title } })) || []
+                };
             } else if (values.interactive_type === 'list') {
-                 messageContent.interactive = {
-                    type: 'list',
-                    header: values.interactive_header_text ? { type: 'text', text: values.interactive_header_text } : undefined,
-                    body: { text: values.interactive_body_text || ' ' },
-                    footer: values.interactive_footer_text ? { text: values.interactive_footer_text } : undefined,
-                    action: {
-                        button: values.interactive_list_button_text,
-                        sections: values.interactive_list_sections?.map(s => ({
-                            title: s.title,
-                            rows: s.rows.map(r => ({ id: r.id, title: r.title, description: r.description }))
-                        }))
-                    }
-                 }
+                messageContent.interactive.action = {
+                    button: values.interactive_list_button_text,
+                    sections: values.interactive_list_sections?.map(s => ({
+                        title: s.title,
+                        rows: s.rows.map(r => ({ id: r.id, title: r.title, description: r.description }))
+                    }))
+                };
             }
         }
 
-      const messageData = {
+
+      const messageData: Omit<LibraryMessage, 'id' | 'createdAt' | 'updatedAt'> = {
           name: values.name,
           type: values.type as LibraryMessageType,
           content: messageContent,
@@ -322,7 +317,7 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
         await updateLibraryMessage(activeCompany.id, message.id, messageData);
         toast({ title: "Resposta atualizada com sucesso!" });
       } else {
-        await addLibraryMessage(activeCompany.id, messageData);
+        await addLibraryMessage(messageData);
         toast({ title: "Resposta criada com sucesso!" });
       }
       onFinished();

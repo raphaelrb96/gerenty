@@ -22,7 +22,7 @@ const convertMessageTimestamps = (data: any): LibraryMessage => {
 export async function getLibraryMessagesByCompany(companyId: string): Promise<LibraryMessage[]> {
     try {
         const messagesCollection = getLibraryMessagesCollection(companyId);
-        const q = query(messagesCollection, where("companyId", "==", companyId));
+        const q = query(messagesCollection); // Removed where clause, we filter by collection path
         const querySnapshot = await getDocs(q);
         const messages: LibraryMessage[] = [];
         querySnapshot.forEach((doc) => {
@@ -35,9 +35,9 @@ export async function getLibraryMessagesByCompany(companyId: string): Promise<Li
     }
 }
 
-export async function addLibraryMessage(companyId: string, messageData: Omit<LibraryMessage, 'id' | 'createdAt' | 'updatedAt'>): Promise<LibraryMessage> {
+export async function addLibraryMessage(messageData: Omit<LibraryMessage, 'id' | 'createdAt' | 'updatedAt'>): Promise<LibraryMessage> {
     try {
-        const messagesCollection = getLibraryMessagesCollection(companyId);
+        const messagesCollection = getLibraryMessagesCollection(messageData.companyId);
         const docRef = await addDoc(messagesCollection, {
             ...messageData,
             createdAt: serverTimestamp(),
@@ -50,6 +50,7 @@ export async function addLibraryMessage(companyId: string, messageData: Omit<Lib
         throw new Error("Failed to add library message.");
     }
 }
+
 
 export async function updateLibraryMessage(companyId: string, messageId: string, messageData: Partial<Omit<LibraryMessage, 'id'>>): Promise<void> {
     try {
@@ -88,5 +89,3 @@ export async function deleteLibraryMessage(companyId: string, messageId: string)
         throw new Error("Failed to delete library message.");
     }
 }
-
-    
