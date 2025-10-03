@@ -422,21 +422,21 @@ export default function EditConversationFlowPage() {
         setEdges((eds) => {
             const sourceNode = nodes.find((node) => node.id === params.source);
             const targetNode = nodes.find((node) => node.id === params.target);
-
+    
             // Rule: Prevent connecting 'keywordTrigger' to 'waitForResponse' and vice-versa
             const isTriggerToResponse = sourceNode?.data.type === 'keywordTrigger' && targetNode?.data.type === 'waitForResponse';
             const isResponseToTrigger = sourceNode?.data.type === 'waitForResponse' && targetNode?.data.type === 'keywordTrigger';
-
+    
             if (isTriggerToResponse || isResponseToTrigger) {
                 toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Gatilhos e Respostas não podem se conectar entre si.' });
                 return eds;
             }
-
+    
             // Rule 1: Target handle can only have one connection.
-            const targetHasConnection = eds.some(
+            const isTargetHandleOccupied = eds.some(
                 (edge) => edge.target === params.target && edge.targetHandle === params.targetHandle
             );
-            if (targetHasConnection) {
+            if (isTargetHandleOccupied) {
                 toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Cada ponto de entrada de uma tarefa só pode receber uma conexão.' });
                 return eds;
             }
@@ -449,7 +449,7 @@ export default function EditConversationFlowPage() {
                     return eds;
                 }
             }
-
+    
             // Rule 3: Conditional node handles can only have one outgoing connection each.
             if (sourceNode && sourceNode.data.type === 'conditional' && params.sourceHandle) {
                  const handleHasConnection = eds.some(edge => edge.source === params.source && edge.sourceHandle === params.sourceHandle);
@@ -482,7 +482,7 @@ export default function EditConversationFlowPage() {
                      return nds;
                  });
             }
-
+    
             return addEdge({ ...params, type: 'smoothstep' }, eds);
         });
     }, [nodes, toast]);
@@ -622,10 +622,10 @@ export default function EditConversationFlowPage() {
                                             <Select value={flowSettings.timeoutAction} onValueChange={(value) => setFlowSettings(prev => ({...prev, timeoutAction: value as any}))}>
                                                 <SelectTrigger id="timeout-action"><SelectValue /></SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="end_flow"><MessageSquareX className="h-4 w-4 mr-2" />Encerrar Fluxo</SelectItem>
-                                                    <SelectItem value="send_message"><Send className="h-4 w-4 mr-2"/>Enviar Mensagem Automática</SelectItem>
-                                                    <SelectItem value="transfer"><Bot className="h-4 w-4 mr-2"/>Transferir para Atendente</SelectItem>
-                                                    <SelectItem value="forward_flow"><Forward className="h-4 w-4 mr-2"/>Encaminhar para Outro Fluxo</SelectItem>
+                                                    <SelectItem value="end_flow"><MessageSquareX className="mr-2 h-4 w-4" />Encerrar Fluxo</SelectItem>
+                                                    <SelectItem value="send_message"><Send className="mr-2 h-4 w-4"/>Enviar Mensagem Automática</SelectItem>
+                                                    <SelectItem value="transfer"><Bot className="mr-2 h-4 w-4"/>Transferir para Atendente</SelectItem>
+                                                    <SelectItem value="forward_flow"><Forward className="mr-2 h-4 w-4"/>Encaminhar para Outro Fluxo</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <p className="text-xs text-muted-foreground pt-1">
