@@ -36,9 +36,9 @@ export async function createFlow(ownerId: string, companyId: string, name: strin
             id: '1', 
             type: 'custom', 
             data: { 
-                label: 'Gatilho: Palavra-Chave', // Mantido por compatibilidade
+                label: 'Início do Fluxo', 
                 customLabel: 'Início do Fluxo',
-                type: 'keywordTrigger',
+                type: 'keywordTrigger', // This type now acts as the master trigger
                 triggerKeywords: []
             }, 
             position: { x: 250, y: 5 } 

@@ -680,9 +680,7 @@ async function processIncomingMessage(
         let activeFlowId = conversationData?.activeFlowId;
         let currentStepId = conversationData?.currentStepId;
         let activeFlow: Flow | null = null;
-        let flowTriggered = false; // Flag para saber se um novo fluxo foi iniciado nesta execução
-
-
+        
         // Se NÃO há fluxo ativo, verifica se a mensagem aciona um novo fluxo
         if (!activeFlowId && message.type === 'text' && message.text?.body) {
             const userMessage = message.text.body.toLowerCase().trim();
@@ -710,7 +708,6 @@ async function processIncomingMessage(
                     const isSingleStepFlow = flow.nodes.length <= 2 && flow.edges.length <= 1;
 
                     activeFlow = flow;
-                    flowTriggered = true;
 
                     const firstStep = await processFlowStep(companyId, consumerRef, activeFlow, '1', null);
                     
