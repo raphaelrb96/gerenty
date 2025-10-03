@@ -679,8 +679,9 @@ async function processIncomingMessage(
         const conversationData = conversationDoc.data() as Conversation | undefined;
         let activeFlowId = conversationData?.activeFlowId;
         let currentStepId = conversationData?.currentStepId;
-        let activeFlow: Flow | null = null;
         
+        let flowTriggered = false;
+
         // Se NÃO há fluxo ativo, verifica se a mensagem aciona um novo fluxo
         if (!activeFlowId && message.type === 'text' && message.text?.body) {
             const userMessage = message.text.body.toLowerCase().trim();
@@ -691,63 +692,50 @@ async function processIncomingMessage(
             
             for (const doc of flowsSnapshot.docs) {
                 const flow = { id: doc.id, ...doc.data() } as Flow;
-                const triggerNode = flow.nodes.find(n => n.id === '1' && n.data.type === 'keywordTrigger');
-                const keywords = triggerNode?.data.triggerKeywords || [];
-                
-                const isMatch = keywords.some((kw: { value: string, matchType: string }) => {
-                    const keyword = kw.value.toLowerCase().trim();
-                    if (kw.matchType === 'exact') return userMessage === keyword;
-                    if (kw.matchType === 'contains') return userMessage.includes(keyword);
-                    // Adicionar mais lógicas de match se necessário
-                    return false;
-                });
+                const triggerNodes = flow.nodes.filter(n => n.data.type === 'keywordTrigger');
 
-                if (isMatch) {
-                    functions.logger.info(`[Flow] Matched flow "${flow.name}" (ID: ${doc.id}) for conversation ${conversationRef.id}`);
-                    
-                    const isSingleStepFlow = flow.nodes.length <= 2 && flow.edges.length <= 1;
+                for (const triggerNode of triggerNodes) {
+                    const keywords = triggerNode?.data.triggerKeywords || [];
+                    const isMatch = keywords.some((kw: { value: string, matchType: string }) => {
+                        const keyword = kw.value.toLowerCase().trim();
+                        if (kw.matchType === 'exact') return userMessage === keyword;
+                        if (kw.matchType === 'contains') return userMessage.includes(keyword);
+                        return false;
+                    });
 
-                    activeFlow = flow;
-
-                    const firstStep = await processFlowStep(companyId, consumerRef, activeFlow, '1', null);
-                    
-                    // Se o fluxo tem mais de um passo, rastreamos o estado
-                    if (!isSingleStepFlow) {
+                    if (isMatch) {
+                        functions.logger.info(`[Flow] Matched flow "${flow.name}" (ID: ${doc.id}) from trigger node ${triggerNode.id}`);
                         activeFlowId = doc.id;
-                        currentStepId = firstStep?.id || null;
-                    } else {
-                         // É um fluxo de execução única, não rastreia estado
-                         activeFlowId = null;
-                         currentStepId = null;
+                        currentStepId = triggerNode.id;
+                        flowTriggered = true;
+                        break; 
                     }
-                    break;
                 }
+                if (flowTriggered) break;
             }
-        } else if (activeFlowId && currentStepId) {
-             // Carrega o fluxo se ele ainda não foi carregado (caso de um fluxo já ativo)
-            if (!activeFlow) {
-                const flowDoc = await db.collection('flows').doc(activeFlowId).get();
-                if (flowDoc.exists) {
-                    activeFlow = { id: flowDoc.id, ...flowDoc.data() } as Flow;
-                }
-            }
-
-            if (activeFlow) {
-                // Processa a etapa atual e obtém a próxima
-                const nextStep = await processFlowStep(
-                    companyId,
-                    consumerRef,
-                    activeFlow,
-                    currentStepId,
-                    message // Passa a mensagem do usuário para processamento
-                );
-                currentStepId = nextStep?.id || null; // Atualiza o stepId para a próxima etapa
-                 // Se não houver próxima etapa, o fluxo terminou.
-                if (!currentStepId) {
+        }
+        
+        if (activeFlowId && currentStepId) {
+             const flowDoc = await db.collection('flows').doc(activeFlowId).get();
+             if (flowDoc.exists) {
+                const activeFlow = { id: flowDoc.id, ...flowDoc.data() } as Flow;
+                
+                // Se o fluxo acabou de ser acionado ou a conversa está esperando uma resposta
+                const nextStep = await processFlowStep(companyId, consumerRef, activeFlow, currentStepId, message);
+                
+                // Se o próximo passo for null, o fluxo terminou
+                if (!nextStep) {
                     activeFlowId = null;
+                    currentStepId = null;
                     functions.logger.info(`[Flow] Flow ${activeFlow.id} finished for conversation ${conversationRef.id}.`);
+                } else {
+                    currentStepId = nextStep.id;
                 }
-            }
+             } else {
+                 // O fluxo referenciado não existe mais, limpa o estado
+                 activeFlowId = null;
+                 currentStepId = null;
+             }
         }
         // END: Lógica de Fluxo de Automação
 
@@ -828,7 +816,7 @@ async function processIncomingMessage(
 
 /**
  * Processa a etapa atual de um fluxo e executa a próxima ação.
- * @returns O ID do próximo nó no fluxo, ou null se o fluxo terminar.
+ * @returns O próximo nó que requer uma parada (ex: captureData) ou null se o fluxo terminar.
  */
 async function processFlowStep(
     companyId: string,
@@ -837,15 +825,21 @@ async function processFlowStep(
     currentStepId: string,
     userMessage: IncomingMessage | null
 ): Promise<FlowNode | null> {
-    const currentNode = flow.nodes.find(n => n.id === currentStepId);
+    
+    let currentNode = flow.nodes.find(n => n.id === currentStepId);
+
     if (!currentNode) {
         functions.logger.warn(`[Flow] Node ${currentStepId} not found in flow ${flow.id}. Ending flow.`);
         return null;
     }
 
-    functions.logger.info(`[Flow] Processing step ${currentStepId} of type ${currentNode.data.type}`);
-
-    // Se o nó atual é para capturar dados, salve a resposta do usuário
+    // Se o nó atual é um gatilho, apenas o usamos como ponto de partida
+    if (currentNode.data.type !== 'keywordTrigger' && currentNode.data.type !== 'captureData') {
+         functions.logger.error(`[Flow] processFlowStep called with a non-trigger/non-capture node: ${currentNode.data.type}. This should not happen.`);
+         return null; // A lógica de execução deve sempre partir de um ponto de parada
+    }
+    
+    // Se o nó atual é para capturar dados, salve a resposta do usuário antes de continuar
     if (currentNode.data.type === 'captureData' && userMessage?.text?.body) {
         const variableName = currentNode.data.captureVariable;
         if (variableName) {
@@ -857,135 +851,144 @@ async function processFlowStep(
         }
     }
 
-    // --- LÓGICA DE DECISÃO DE PRÓXIMO NÓ ---
-    let nextNode: FlowNode | null = null;
-    if (currentNode.data.type === 'conditional') {
-        const conditions = currentNode.data.conditions || [];
-        const consumerDoc = await consumerRef.get();
-        const consumerData = consumerDoc.data() || {};
-        const userText = userMessage?.text?.body.toLowerCase().trim();
 
-        let satisfiedEdgeId: string | null = null;
+    // LOOP DE EXECUÇÃO: Começa do nó atual e executa até encontrar um ponto de parada.
+    while (currentNode) {
+        functions.logger.info(`[Flow] Executing loop for node ${currentNode.id} of type ${currentNode.data.type}`);
+        
+        let nextNode: FlowNode | null = null;
+        
+        // --- 1. LÓGICA DE DECISÃO DE PRÓXIMO NÓ ---
+        if (currentNode.data.type === 'conditional') {
+            const conditions = currentNode.data.conditions || [];
+            const consumerDoc = await consumerRef.get();
+            const consumerData = consumerDoc.data() || {};
+            const userText = userMessage?.text?.body.toLowerCase().trim();
 
-        for (const cond of conditions) {
-            const variableValue = consumerData.flowData?.[cond.variable] || userText;
-            const comparisonValue = cond.value?.toLowerCase().trim();
-            if (!variableValue) continue;
+            let satisfiedEdgeId: string | null = null;
+            for (const cond of conditions) {
+                const variableValue = consumerData.flowData?.[cond.variable] || userText;
+                const comparisonValue = cond.value?.toLowerCase().trim();
+                if (variableValue === undefined) continue;
 
-            let isMatch = false;
-            switch (cond.operator) {
-                case '==': isMatch = variableValue === comparisonValue; break;
-                case '!=': isMatch = variableValue !== comparisonValue; break;
-                case '>': isMatch = Number(variableValue) > Number(comparisonValue); break;
-                case '<': isMatch = Number(variableValue) < Number(comparisonValue); break;
-                case 'contains': isMatch = variableValue.includes(comparisonValue); break;
-                default: isMatch = false;
+                let isMatch = false;
+                switch (cond.operator) {
+                    case '==': isMatch = variableValue === comparisonValue; break;
+                    case '!=': isMatch = variableValue !== comparisonValue; break;
+                    case '>': isMatch = Number(variableValue) > Number(comparisonValue); break;
+                    case '<': isMatch = Number(variableValue) < Number(comparisonValue); break;
+                    case 'contains': isMatch = String(variableValue).includes(comparisonValue); break;
+                    default: isMatch = false;
+                }
+
+                if (isMatch) {
+                    satisfiedEdgeId = flow.edges.find(e => e.source === currentNode?.id && e.sourceHandle === cond.id)?.target || null;
+                    break;
+                }
             }
 
-            if (isMatch) {
-                satisfiedEdgeId = flow.edges.find(e => e.source === currentNode.id && e.sourceHandle === cond.id)?.target || null;
-                break; // Use a primeira condição satisfeita
+            if (satisfiedEdgeId) {
+                nextNode = flow.nodes.find(n => n.id === satisfiedEdgeId) || null;
+            } else {
+                const elseTargetId = flow.edges.find(e => e.source === currentNode?.id && e.sourceHandle === 'else')?.target;
+                if (elseTargetId) {
+                    nextNode = flow.nodes.find(n => n.id === elseTargetId) || null;
+                }
+            }
+        } else {
+            // Para todos os outros nós (incluindo gatilhos e ações)
+            const nextEdge = flow.edges.find(e => e.source === currentNode?.id);
+            if (nextEdge) {
+                nextNode = flow.nodes.find(n => n.id === nextEdge.target) || null;
             }
         }
         
-        if (satisfiedEdgeId) {
-            nextNode = flow.nodes.find(n => n.id === satisfiedEdgeId) || null;
-        } else {
-            // Se nenhuma condição for satisfeita, usa a saída "else"
-            const elseTargetId = flow.edges.find(e => e.source === currentNode.id && e.sourceHandle === 'else')?.target;
-            if (elseTargetId) {
-                nextNode = flow.nodes.find(n => n.id === elseTargetId) || null;
-            }
+        // --- 2. VERIFICAÇÃO DE PONTO DE PARADA ---
+        if (!nextNode) {
+            functions.logger.info(`[Flow] No outgoing edge from node ${currentNode.id}. Ending flow.`);
+            return null; // Fim do fluxo
         }
-    } else {
-        // Para nós não condicionais, há apenas uma saída
-        const nextEdge = flow.edges.find(e => e.source === currentNode.id);
-        if (nextEdge) {
-            nextNode = flow.nodes.find(n => n.id === nextEdge.target) || null;
-        }
-    }
-    // --- FIM DA LÓGICA DE DECISÃO ---
-
-    if (!nextNode) {
-        functions.logger.info(`[Flow] No outgoing edge from node ${currentStepId}. Ending flow.`);
-        return null; // Fim do fluxo
-    }
-
-    functions.logger.info(`[Flow] Next node is ${nextNode.id} of type ${nextNode.data.type}`);
-
-    // Executa a ação do próximo nó
-    switch (nextNode.data.type) {
-        case 'message':
-            const messageId = nextNode.data.messageId;
-            if (messageId) {
-                const libraryMessageDoc = await db.collection('companies').doc(companyId).collection('libraryMessages').doc(messageId).get();
-                if (libraryMessageDoc.exists) {
-                    const libraryMessage = libraryMessageDoc.data() as LibraryMessage;
+        
+        if (nextNode.data.type === 'captureData' || nextNode.data.type === 'keywordTrigger') {
+            functions.logger.info(`[Flow] Stopping execution at node ${nextNode.id} of type ${nextNode.data.type}. Awaiting user input.`);
+            // Ação do nó de parada (enviar a pergunta) é executada antes de retornar
+             if(nextNode.data.type === 'captureData') {
+                const captureMessage = nextNode.data.captureMessage;
+                if (captureMessage) {
                     const consumerDoc = await consumerRef.get();
                     const phoneNumber = consumerDoc.data()?.phone;
-
-                    if (phoneNumber && libraryMessage) {
-                        const payload: SendMessagePayload = {
+                    if (phoneNumber) {
+                        await whatsAppService.sendMessage(companyId, {
                             phoneNumber: phoneNumber,
-                            type: libraryMessage.type,
-                            content: libraryMessage.content
-                        };
-                        await whatsAppService.sendMessage(companyId, payload);
-
-                        functions.logger.info(`[Flow] Executed message node ${nextNode.id}.`);
+                            type: 'text',
+                            content: { text: { body: captureMessage }}
+                        });
+                        functions.logger.info(`[Flow] Sent capture data prompt from node ${nextNode.id}.`);
                     }
                 }
             }
-            break;
+            return nextNode; // Retorna o nó de parada
+        }
 
-        case 'captureData':
-            const captureMessage = nextNode.data.captureMessage;
-            if (captureMessage) {
-                 const consumerDoc = await consumerRef.get();
-                 const phoneNumber = consumerDoc.data()?.phone;
-                 if (phoneNumber) {
-                     await whatsAppService.sendMessage(companyId, {
-                         phoneNumber: phoneNumber,
-                         type: 'text',
-                         content: { text: { body: captureMessage }}
-                     });
-                     functions.logger.info(`[Flow] Sent capture data prompt from node ${nextNode.id}.`);
-                 }
-            }
-            break;
+        // --- 3. EXECUÇÃO DA AÇÃO DO PRÓXIMO NÓ ---
+        functions.logger.info(`[Flow] Next node is ${nextNode.id}, executing action of type ${nextNode.data.type}`);
+        switch (nextNode.data.type) {
+            case 'message':
+                const messageId = nextNode.data.messageId;
+                if (messageId) {
+                    const libraryMessageDoc = await db.collection('companies').doc(companyId).collection('libraryMessages').doc(messageId).get();
+                    if (libraryMessageDoc.exists) {
+                        const libraryMessage = libraryMessageDoc.data() as LibraryMessage;
+                        const consumerDoc = await consumerRef.get();
+                        const phoneNumber = consumerDoc.data()?.phone;
 
-        case 'internalAction':
-            const actionType = nextNode.data.actionType;
-            const actionValue = nextNode.data.actionValue;
-            if (actionType && actionValue) {
-                if (actionType === 'addTag') {
-                    await consumerRef.update({ tags: FieldValue.arrayUnion(actionValue) });
-                    functions.logger.info(`[Flow] Added tag "${actionValue}" to consumer ${consumerRef.id}`);
+                        if (phoneNumber && libraryMessage) {
+                            const payload: SendMessagePayload = {
+                                phoneNumber: phoneNumber,
+                                type: libraryMessage.type,
+                                content: libraryMessage.content
+                            };
+                            await whatsAppService.sendMessage(companyId, payload);
+                            functions.logger.info(`[Flow] Executed message node ${nextNode.id}.`);
+                        }
+                    }
                 }
-                if (actionType === 'removeTag') {
-                    await consumerRef.update({ tags: FieldValue.arrayRemove(actionValue) });
-                     functions.logger.info(`[Flow] Removed tag "${actionValue}" from consumer ${consumerRef.id}`);
-                }
-                if (actionType === 'moveCrmStage') {
-                    await consumerRef.update({ status: actionValue }); // 'status' in consumer is the stageId
-                    functions.logger.info(`[Flow] Moved consumer ${consumerRef.id} to stage "${actionValue}"`);
-                }
-            }
-            break;
-            
-        case 'conditional':
-             // A lógica condicional já foi tratada acima para encontrar este nó.
-             // Agora, precisamos encontrar o PRÓXIMO nó a partir daqui, que será a próxima ação.
-             return await processFlowStep(companyId, consumerRef, flow, nextNode.id, userMessage);
+                break;
 
+            case 'internalAction':
+                const actionType = nextNode.data.actionType;
+                const actionValue = nextNode.data.actionValue;
+                if (actionType && actionValue) {
+                    if (actionType === 'addTag') {
+                        await consumerRef.update({ tags: FieldValue.arrayUnion(actionValue) });
+                        functions.logger.info(`[Flow] Added tag "${actionValue}" to consumer ${consumerRef.id}`);
+                    }
+                    if (actionType === 'removeTag') {
+                        await consumerRef.update({ tags: FieldValue.arrayRemove(actionValue) });
+                        functions.logger.info(`[Flow] Removed tag "${actionValue}" from consumer ${consumerRef.id}`);
+                    }
+                    if (actionType === 'moveCrmStage') {
+                        await consumerRef.update({ status: actionValue }); // 'status' in consumer is the stageId
+                        functions.logger.info(`[Flow] Moved consumer ${consumerRef.id} to stage "${actionValue}"`);
+                    }
+                }
+                break;
 
-        default:
-            functions.logger.info(`[Flow] Node type ${nextNode.data.type} not implemented yet.`);
-            break;
+            case 'conditional':
+                // A lógica condicional já define o `nextNode`, então apenas continuamos o loop.
+                break;
+                
+            default:
+                functions.logger.info(`[Flow] Node type ${nextNode.data.type} not implemented for execution yet.`);
+                break;
+        }
+
+        // --- 4. PREPARA PARA A PRÓXIMA ITERAÇÃO ---
+        currentNode = nextNode; // O próximo nó se torna o nó atual para a próxima volta do loop.
+        userMessage = null; // A mensagem do usuário só é relevante na primeira iteração.
     }
-
-    // Retorna o nó que foi executado, para que o chamador saiba qual é o novo `currentStepId`
-    return nextNode;
+    
+    return null; // Se o loop terminar, o fluxo acabou.
 }
 
 
