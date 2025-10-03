@@ -63,7 +63,7 @@ export interface MessageContact {
   wa_id: string;
 }
 
-export type MessageType = 'text' | 'image' | 'video' | 'audio' | 'document' | 'location' | 'interactive' | 'sticker' | 'unknown' | 'reaction' | 'button';
+export type MessageType = 'text' | 'image' | 'video' | 'audio' | 'document' | 'location' | 'interactive' | 'sticker' | 'unknown' | 'reaction' | 'button' | 'product';
 
 export interface IncomingMessage {
   from: string;
@@ -148,11 +148,14 @@ export interface TestMessageResponse {
 }
 
 export interface SendMessagePayload {
-  phoneNumber: string;
-  message: string;
-  type?: 'text' | 'template';
-  templateName?: string;
+    phoneNumber: string;
+    type: LibraryMessage['type'] | 'template';
+    content?: LibraryMessage['content'];
+    // For legacy text messages or simple template calls
+    message?: string; 
+    templateName?: string;
 }
+
 
 // Adicione também o tipo para a resposta da API do WhatsApp
 export interface WhatsAppApiError {
@@ -236,5 +239,64 @@ export type Conversation = {
   updatedAt: admin.firestore.Timestamp;
 };
     
+export type LibraryMessageType = 'text' | 'image' | 'video' | 'audio' | 'file' | 'location' | 'interactive' | 'product';
 
+export type TextMessage = { body: string; preview_url?: boolean };
+export type MediaMessage = { id: string; mime_type: string; url?: string; caption?: string; filename?: string };
+export type LocationMessage = { latitude: number; longitude: number; name?: string; address?: string; };
+export type ContactMessage = { contacts: Array<{ name: { first_name: string }; phones: Array<{ phone: string; type: string }> }> };
+export type ProductMessage = { body?: string; catalog_id?: string; section_id?: string; product_retailer_id: string };
+export type InteractiveMessage = {
+  type: 'button' | 'list' | 'product' | 'product_list';
+  header?: { type: 'text' | 'video' | 'image' | 'document'; text?: string, media_id?: string };
+  body: { text: string };
+  footer?: { text: string };
+  action: {
+    buttons?: Array<{ type: 'reply'; reply: { id: string; title: string; } }>;
+    catalog_id?: string;
+    sections?: Array<{
+      title?: string;
+      product_items?: Array<{ product_retailer_id: string }>;
+      rows?: Array<{ id: string, title: string, description?: string }>;
+    }>;
+    button?: string;
+  };
+  button_reply?: {
+      id: string;
+      title: string;
+  };
+   list_reply?: {
+      id: string;
+      title: string;
+      description: string;
+  };
+};
+
+export type TemplateMessage = { name: string; language: string; components: Array<{ type: 'body' | 'header'; parameters: Array<{ type: string; text?: string }> }> };
+export type ReactionMessage = { message_id: string; emoji: string };
+export type SystemMessage = { body: string; wa_id: string };
+
+
+export type LibraryMessage = {
+  id: string;
+  ownerId: string;
+  companyId: string;
+  name: string;
+  type: LibraryMessageType;
+  content: {
+    text?: TextMessage;
+    media?: MediaMessage;
+    location?: LocationMessage;
+    contact?: ContactMessage;
+    product_message?: ProductMessage;
+    interactive?: InteractiveMessage;
+    template?: TemplateMessage;
+    reaction?: ReactionMessage;
+    system?: SystemMessage;
+  };
+  createdAt: admin.firestore.Timestamp;
+  updatedAt: admin.firestore.Timestamp;
+};
     
+
+```

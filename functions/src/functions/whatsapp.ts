@@ -19,7 +19,8 @@ import {
     MessageContact,
     MessageMetadata,
     Flow,
-    Conversation
+    Conversation,
+    LibraryMessage
 } from '../types/whatsapp';
 import { FieldValue } from 'firebase-admin/firestore';
 import type { Node as FlowNode, Edge as FlowEdge } from 'reactflow';
@@ -248,13 +249,7 @@ export const whatsappWebhookListener = functions.https.onRequest(
  */
 // src/functions/whatsapp.ts - Corrija a tipagem e tratamento de erro
 export const sendMessage = functions.https.onCall(
-    async (request: CallableRequest<{
-        phoneNumber: string;
-        message?: string;
-        type?: 'text' | 'template';
-        templateName?: string;
-        companyId: string;
-    }>): Promise<{
+    async (request: CallableRequest<SendMessagePayload & { companyId: string }>): Promise<{
         success: boolean;
         messageId?: string;
         message: string;
@@ -267,14 +262,10 @@ export const sendMessage = functions.https.onCall(
                 throw new functions.https.HttpsError('unauthenticated', validation.error || 'Validation failed');
             }
 
-            const { phoneNumber, message, type = 'text', templateName, companyId } = request.data;
+            const { phoneNumber, companyId } = request.data;
+            
+            const result = await whatsAppService.sendMessage(companyId, request.data);
 
-            const result = await whatsAppService.sendMessage(companyId, {
-                phoneNumber,
-                message: message || '',
-                type,
-                templateName,
-            });
 
             if (result.success) {
                 return {
@@ -932,16 +923,18 @@ async function processFlowStep(
             if (messageId) {
                 const libraryMessageDoc = await db.collection('companies').doc(companyId).collection('libraryMessages').doc(messageId).get();
                 if (libraryMessageDoc.exists) {
-                    const libraryMessage = libraryMessageDoc.data();
+                    const libraryMessage = libraryMessageDoc.data() as LibraryMessage;
                     const consumerDoc = await consumerRef.get();
                     const phoneNumber = consumerDoc.data()?.phone;
 
                     if (phoneNumber && libraryMessage) {
-                        await whatsAppService.sendMessage(companyId, {
+                        const payload: SendMessagePayload = {
                             phoneNumber: phoneNumber,
-                            message: libraryMessage.content.text?.body || "Mensagem padrão",
-                            type: 'text' // TODO: Suportar outros tipos de mensagem da biblioteca
-                        });
+                            type: libraryMessage.type,
+                            content: libraryMessage.content
+                        };
+                        await whatsAppService.sendMessage(companyId, payload);
+
                         functions.logger.info(`[Flow] Executed message node ${nextNode.id}.`);
                     }
                 }
@@ -956,8 +949,8 @@ async function processFlowStep(
                  if (phoneNumber) {
                      await whatsAppService.sendMessage(companyId, {
                          phoneNumber: phoneNumber,
-                         message: captureMessage,
-                         type: 'text'
+                         type: 'text',
+                         content: { text: { body: captureMessage }}
                      });
                      functions.logger.info(`[Flow] Sent capture data prompt from node ${nextNode.id}.`);
                  }
