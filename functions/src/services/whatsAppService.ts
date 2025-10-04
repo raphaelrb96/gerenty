@@ -1,4 +1,5 @@
 
+
 // src/services/whatsAppService.ts
 import { SecretManagerService } from './secretManager';
 import { MessageResult, SendMessagePayload, TemplateErrorInfo, WhatsAppApiResponse, LibraryMessage } from '../types/whatsapp';
@@ -199,14 +200,22 @@ export class WhatsAppService {
     payload: SendMessagePayload
   ): Promise<MessageResult> {
     try {
+        const contentForApi = JSON.parse(JSON.stringify(payload.content || {}));
+
+        // Remove a chave 'url' de qualquer objeto de mídia
+        if (contentForApi.image?.url) delete contentForApi.image.url;
+        if (contentForApi.video?.url) delete contentForApi.video.url;
+        if (contentForApi.audio?.url) delete contentForApi.audio.url;
+        if (contentForApi.document?.url) delete contentForApi.document.url;
+
         const messageData: any = {
             messaging_product: 'whatsapp',
             to: payload.phoneNumber,
             type: payload.type,
-            ...payload.content // Spread the content directly, as it's now in the correct API format
+            ...contentForApi 
         };
 
-        // Fallback for legacy text messages
+        // Fallback for legacy text messages without content structure
         if (payload.type === 'text' && !payload.content) {
             messageData.text = { body: payload.message || 'Mensagem de teste do Gerenty' };
         }
