@@ -47,17 +47,21 @@ export function CustomNode({ data, selected }: NodeProps<{
     const message = data.libraryMessages?.find(m => m.id === data.messageId);
     
     if (!message) {
-        return <div className="text-center text-xs p-2 italic text-muted-foreground">Nenhuma mensagem selecionada</div>;
+      if (data.type === 'delay') {
+        return <p className="p-2 text-center text-lg font-bold">{data.delaySeconds || 0}s</p>;
+      }
+      return <div className="text-center text-xs p-2 italic text-muted-foreground">Nenhuma mensagem selecionada</div>;
     }
 
     switch (message.type) {
         case 'text':
             return <p className="text-sm p-2 bg-muted rounded-md whitespace-pre-wrap">{message.content.text?.body || '[Texto vazio]'}</p>;
         case 'image':
-            if (message.content.media?.url) {
+            const imageUrl = message.content.image?.url || message.content.media?.url;
+            if (imageUrl) {
                 return (
                     <div className="relative aspect-video w-full">
-                        <Image src={message.content.media.url} alt="Pré-visualização da imagem" layout="fill" objectFit="cover" className="rounded-md" />
+                        <Image src={imageUrl} alt="Pré-visualização da imagem" layout="fill" objectFit="cover" className="rounded-md" />
                     </div>
                 );
             }
@@ -275,5 +279,7 @@ export function CustomNode({ data, selected }: NodeProps<{
 }
 
   
+
+    
 
     
