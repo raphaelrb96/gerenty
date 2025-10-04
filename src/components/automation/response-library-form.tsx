@@ -83,7 +83,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 function InteractiveListSection({ sectionIndex, removeSection, isAddRowDisabled }: { sectionIndex: number; removeSection: (index: number) => void; isAddRowDisabled: boolean; }) {
-    const { control } = useForm<FormValues>();
+    const { control } = useFormContext<FormValues>();
     const { fields: rowFields, append: appendRow, remove: removeRow } = useFieldArray({
         control: control,
         name: `interactive_list_sections.${sectionIndex}.rows`
@@ -285,19 +285,19 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
             case 'file':
                 let mediaUrl = message?.content.media?.url || '';
                 let mediaId = message?.content.media?.id || '';
-                 // Para o backend, o que importa é o ID. A URL é para preview.
                  if (fileToUpload) {
                     const path = `libraryMessages/${activeCompany.id}/${Date.now()}-${fileToUpload.name}`;
                     mediaUrl = await uploadFile(fileToUpload, path);
-                    mediaId = path; // Simulação de um ID persistente
+                    mediaId = path;
                 }
                 const mediaObject: any = { id: mediaId, url: mediaUrl };
                 if (values.media_caption) mediaObject.caption = values.media_caption;
+
                 if (values.type === 'file') {
                     mediaObject.filename = fileName || 'arquivo';
-                    messageContent = { media: mediaObject };
+                    messageContent = { [values.type as 'file']: mediaObject }; // Use 'document' for file
                 } else {
-                    messageContent = { media: mediaObject };
+                    messageContent = { [values.type]: mediaObject };
                 }
                 break;
             
@@ -370,7 +370,7 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
           <SheetTitle>{message ? "Editar Resposta" : "Criar Nova Resposta"}</SheetTitle>
           <SheetDescription>Configure respostas para usar em suas automações.</SheetDescription>
         </SheetHeader>
-        <Form {...form}>
+        <FormProvider {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 overflow-hidden flex flex-col">
             <ScrollArea className="flex-1 px-6 py-4">
               <div className="space-y-6">
@@ -463,9 +463,8 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
               </Button>
             </SheetFooter>
           </form>
-        </Form>
+        </FormProvider>
       </SheetContent>
     </Sheet>
   );
 }
-

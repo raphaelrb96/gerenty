@@ -270,6 +270,7 @@ export class WhatsAppService {
     }
   }
 
+  // src/services/whatsAppService.ts - Corrija a tipagem
   private async tryTemplateMessage(
     phoneNumberId: string,
     accessToken: string,
