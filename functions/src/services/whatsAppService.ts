@@ -1,9 +1,10 @@
+
 // src/services/whatsAppService.ts
 import { SecretManagerService } from './secretManager';
 import { MessageResult, SendMessagePayload, TemplateErrorInfo, WhatsAppApiResponse, LibraryMessage } from '../types/whatsapp';
 import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
-import fetch, { RequestInfo, RequestInit } from 'node-fetch';
+import fetch, { RequestInfo, RequestInit, Response } from 'node-fetch';
 
 
 export class WhatsAppService {
@@ -23,11 +24,13 @@ export class WhatsAppService {
             throw new Error('WhatsApp integration not found for media upload.');
         }
 
-        const mediaResponse = await fetch(mediaUrl);
+        const mediaResponse: Response = await fetch(mediaUrl);
         if (!mediaResponse.ok) {
             throw new Error(`Failed to fetch media from URL: ${mediaResponse.statusText}`);
         }
-        const mediaBuffer = await mediaResponse.buffer();
+        
+        const arrayBuffer = await mediaResponse.arrayBuffer();
+        const mediaBuffer = Buffer.from(arrayBuffer);
         
         const boundary = `----${Date.now().toString(16)}`;
         let body = `--${boundary}\r\n`;
@@ -88,8 +91,8 @@ export class WhatsAppService {
       }
 
       const mediaDetails = await mediaDetailsResponse.json();
-      const mediaUrl = mediaDetails.url;
-      const mimeType = mediaDetails.mime_type;
+      const mediaUrl = (mediaDetails as any).url;
+      const mimeType = (mediaDetails as any).mime_type;
 
       if (!mediaUrl || !mimeType) {
         functions.logger.error(`[WhatsAppService] Media URL or MIME type not found for ID ${mediaId}`, { mediaDetails });
@@ -137,8 +140,9 @@ export class WhatsAppService {
       }
 
       const mediaDetails = await mediaDetailsResponse.json();
-      const mediaUrl = mediaDetails.url;
-      const mimeType = mediaDetails.mime_type;
+      const mediaUrl = (mediaDetails as any).url;
+      //const mimeType = mediaDetails.mime_typs;
+      const mimeType = (mediaDetails as any).mime_type;
 
       if (!mediaUrl) {
         functions.logger.error(`Media URL not found for ID ${mediaId}`);
@@ -264,8 +268,11 @@ export class WhatsAppService {
             const mediaObject = contentForApi[mediaType];
             const mediaUrl = mediaObject.url;
             const filename = mediaUrl.split('/').pop().split('?')[0];
-            const mimeType = mediaObject.mime_type || 'application/octet-stream';
             
+            const mediaDetailsResponse = await fetch(mediaUrl);
+            const mediaBuffer = await mediaDetailsResponse.arrayBuffer();
+            const mimeType = mediaDetailsResponse.headers.get('content-type') || 'application/octet-stream';
+
             const uploadedMediaId = await this.uploadMediaToMeta(companyId, mediaUrl, mimeType, filename);
 
             if (!uploadedMediaId) {
@@ -321,7 +328,7 @@ export class WhatsAppService {
         };
       } else {
         // Se a API já rejeitou imediatamente
-        functions.logger.error('[WhatsAppService] Conversation message rejected by API:', result.error, JSON.stringify(messageData));
+        functions.logger.error('[WhatsAppService] Conversation message rejected by API:', result.error);
 
         if (result.error?.code === 131047 || result.error?.message.includes("24 hour")) {
           functions.logger.info(`[WhatsAppService] Outside 24h window (immediate rejection)`);
