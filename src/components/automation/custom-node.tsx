@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../ui/card
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { Badge } from '../ui/badge';
-import { Settings, Trash2, Zap, PlusCircle, GitBranch, MessageSquare, Video, File, Music, List, MessageCircle as MessageIcon } from 'lucide-react';
+import { Pencil, Settings, Trash2, Zap, PlusCircle, GitBranch, MessageSquare, Video, File, Music, List, MessageCircle as MessageIcon } from 'lucide-react';
 import { LibraryMessage } from '@/lib/types';
 import React from 'react';
 import Image from 'next/image';
@@ -46,10 +46,11 @@ export function CustomNode({ data, selected }: NodeProps<{
   const contentPreview = () => {
     const message = data.libraryMessages?.find(m => m.id === data.messageId);
     
-    if (!message) {
-      if (data.type === 'delay') {
+    if (data.type === 'delay') {
         return <p className="p-2 text-center text-lg font-bold">{data.delaySeconds || 0}s</p>;
-      }
+    }
+
+    if (!message) {
       return <div className="text-center text-xs p-2 italic text-muted-foreground">Nenhuma mensagem selecionada</div>;
     }
 
@@ -61,7 +62,7 @@ export function CustomNode({ data, selected }: NodeProps<{
             if (imageUrl) {
                 return (
                     <div className="flex justify-center p-2">
-                         <div className="relative aspect-square w-40 h-40">
+                         <div className="relative aspect-square w-24 h-24">
                             <Image src={imageUrl} alt="Pré-visualização da imagem" layout="fill" objectFit="cover" className="rounded-md" />
                         </div>
                     </div>
@@ -249,7 +250,7 @@ export function CustomNode({ data, selected }: NodeProps<{
                 className="h-7 w-7"
                 onClick={data.onConfigure}
             >
-                <Settings className="h-4 w-4"/>
+                <Pencil className="h-4 w-4"/>
                 <span className="sr-only">Configurar Tarefa</span>
             </Button>
             {data.type !== 'conditional' && data.type !== 'endFlow' && (
@@ -285,4 +286,5 @@ export function CustomNode({ data, selected }: NodeProps<{
     
 
     
+
 
