@@ -60,7 +60,7 @@ export function CustomNode({ data, selected }: NodeProps<{
             const imageUrl = message.content.image?.url || message.content.media?.url;
             if (imageUrl) {
                 return (
-                    <div className="relative aspect-video w-full">
+                    <div className="relative aspect-square w-full">
                         <Image src={imageUrl} alt="Pré-visualização da imagem" layout="fill" objectFit="cover" className="rounded-md" />
                     </div>
                 );
