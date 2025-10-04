@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { useForm, useFieldArray, useFormContext, Control, useWatch } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
@@ -38,7 +38,7 @@ const formSchema = z.object({
   
   text_body: z.string().optional(),
   
-  media_id: z.string().optional(), // Para mídias existentes
+  media_id: z.string().optional(),
   media_caption: z.string().optional(),
 
   product_retailer_id: z.string().optional(),
@@ -274,48 +274,67 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
     try {
         let messageContent: Partial<LibraryMessage['content']> = {};
 
-        if (values.type === 'text') {
-            messageContent.text = { body: values.text_body || '' };
-        } else if (isMediaType) {
-             let mediaUrl = message?.content.media?.url || '';
-             let mediaId = message?.content.media?.id || '';
+        switch (values.type) {
+            case 'text':
+                messageContent = { text: { body: values.text_body || '' } };
+                break;
+            
+            case 'image':
+            case 'video':
+            case 'audio':
+            case 'file':
+                let mediaUrl = message?.content.media?.url || '';
+                let mediaId = message?.content.media?.id || '';
+                 // Para o backend, o que importa é o ID. A URL é para preview.
+                 if (fileToUpload) {
+                    const path = `libraryMessages/${activeCompany.id}/${Date.now()}-${fileToUpload.name}`;
+                    mediaUrl = await uploadFile(fileToUpload, path);
+                    mediaId = path; // Simulação de um ID persistente
+                }
+                const mediaObject: any = { id: mediaId, url: mediaUrl };
+                if (values.media_caption) mediaObject.caption = values.media_caption;
+                if (values.type === 'file') {
+                    mediaObject.filename = fileName || 'arquivo';
+                    messageContent = { document: mediaObject };
+                } else {
+                    messageContent = { [values.type]: mediaObject };
+                }
+                break;
+            
+            case 'product':
+                 if (!values.product_retailer_id) {
+                    toast({ variant: 'destructive', title: 'Produto obrigatório', description: 'Por favor, selecione um produto.' });
+                    setIsSaving(false);
+                    return;
+                }
+                messageContent = {
+                    product_message: { product_retailer_id: values.product_retailer_id }
+                };
+                break;
+                
+            case 'interactive':
+                const interactiveContent: any = {
+                    type: values.interactive_type,
+                    body: { text: values.interactive_body_text || ' ' },
+                };
+                if (values.interactive_header_text) interactiveContent.header = { type: 'text', text: values.interactive_header_text };
+                if (values.interactive_footer_text) interactiveContent.footer = { text: values.interactive_footer_text };
 
-             if (fileToUpload) {
-                // In a real scenario, you'd upload to a service that gives you a persistent ID,
-                // like Meta's media upload API. For now, we simulate with Firebase Storage URL.
-                const path = `libraryMessages/${activeCompany.id}/${Date.now()}-${fileToUpload.name}`;
-                mediaUrl = await uploadFile(fileToUpload, path);
-                mediaId = path; // Use path as a temporary ID
-             }
-             messageContent.media = { id: mediaId, mime_type: fileToUpload?.type || message?.content.media?.mime_type || '', url: mediaUrl, caption: values.media_caption };
-        } else if (values.type === 'product') {
-            if (!values.product_retailer_id) {
-                toast({ variant: 'destructive', title: 'Produto obrigatório', description: 'Por favor, selecione um produto.' });
-                setIsSaving(false);
-                return;
-            }
-            messageContent.product_message = { product_retailer_id: values.product_retailer_id };
-        } else if (values.type === 'interactive') {
-            messageContent.interactive = {
-                type: values.interactive_type as any,
-                body: { text: values.interactive_body_text || ' ' }, 
-                header: values.interactive_header_text ? { type: 'text', text: values.interactive_header_text } : undefined,
-                footer: values.interactive_footer_text ? { text: values.interactive_footer_text } : undefined,
-                action: {},
-            };
-            if (values.interactive_type === 'button') {
-                messageContent.interactive.action = {
-                    buttons: values.interactive_buttons?.map(b => ({ type: 'reply', reply: { id: b.id, title: b.title } })) || []
-                };
-            } else if (values.interactive_type === 'list') {
-                messageContent.interactive.action = {
-                    button: values.interactive_list_button_text,
-                    sections: values.interactive_list_sections?.map(s => ({
-                        title: s.title,
-                        rows: s.rows.map(r => ({ id: r.id, title: r.title, description: r.description }))
-                    }))
-                };
-            }
+                if (values.interactive_type === 'button') {
+                    interactiveContent.action = {
+                        buttons: values.interactive_buttons?.map(b => ({ type: 'reply', reply: { id: b.id, title: b.title } })) || []
+                    };
+                } else if (values.interactive_type === 'list') {
+                     interactiveContent.action = {
+                        button: values.interactive_list_button_text,
+                        sections: values.interactive_list_sections?.map(s => ({
+                            title: s.title,
+                            rows: s.rows.map(r => ({ id: r.id, title: r.title, description: r.description }))
+                        }))
+                    };
+                }
+                 messageContent = { interactive: interactiveContent };
+                break;
         }
 
 
