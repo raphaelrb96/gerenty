@@ -63,7 +63,7 @@ function CustomLabelInput({ node, onNodeDataChange }: { node: Node, onNodeDataCh
             <Label htmlFor="custom-label">Rótulo Personalizado</Label>
             <Input
                 id="custom-label"
-                placeholder="Dê um nome a esta tarefa"
+                placeholder="Ex: Verificar CPF"
                 value={node.data.customLabel || ''}
                 onChange={(e) => onNodeDataChange(node.id, { customLabel: e.target.value })}
             />
@@ -427,7 +427,7 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
     const availableNodes = allNodes.filter(n => n.id !== '1' && n.id !== node.id);
 
     const handleAddCondition = () => {
-        const newConditions = [...conditions, { id: `handle_${Date.now()}`, variable: '', operator: '==', value: '', label: '' }];
+        const newConditions = [...conditions, { id: `handle_${Date.now()}`, type: 'response_text', variable: '', operator: '==', value: '' }];
         onNodeDataChange(node.id, { conditions: newConditions });
     };
 
@@ -455,13 +455,6 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
         setCurrentHandle(null);
     }
     
-    const getConnectedNodeName = (handleId: string) => {
-        const edge = allEdges.find(e => e.source === node.id && e.sourceHandle === handleId);
-        if (!edge) return null;
-        const targetNode = allNodes.find(n => n.id === edge.target);
-        return targetNode?.data.label || 'Nó desconhecido';
-    };
-
     const renderConnectionSelect = (handleId: string) => {
         const currentTargetId = allEdges.find(e => e.source === node.id && e.sourceHandle === handleId)?.target;
         return (
@@ -486,10 +479,19 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
                     <div key={cond.id} className="p-3 border rounded-lg space-y-3 relative bg-muted/50">
                         <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6 text-destructive" onClick={() => handleRemoveCondition(cond.id)}><Trash2 className="h-4 w-4"/></Button>
                         <p className="text-sm font-semibold">Condição {index + 1}</p>
+                        
                         <div className="space-y-2">
-                            <Label>SE</Label>
-                            <div className="grid grid-cols-2 gap-2">
-                                <Input placeholder="Variável (ex: cpf)" value={cond.variable} onChange={(e) => handleConditionChange(index, 'variable', e.target.value)} />
+                             <Label>SE</Label>
+                             <div className="grid grid-cols-2 gap-2">
+                                <Select value={cond.type} onValueChange={(val) => handleConditionChange(index, 'type', val)}>
+                                    <SelectTrigger><SelectValue/></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="response_text">Texto da Resposta</SelectItem>
+                                        <SelectItem value="variable">Variável do Contato</SelectItem>
+                                        <SelectItem value="interaction_id">ID da Interação</SelectItem>
+                                        <SelectItem value="response_type">Tipo da Resposta</SelectItem>
+                                    </SelectContent>
+                                </Select>
                                 <Select value={cond.operator} onValueChange={(val) => handleConditionChange(index, 'operator', val)}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
@@ -501,8 +503,14 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
                                     </SelectContent>
                                 </Select>
                             </div>
+
+                            {cond.type === 'variable' && (
+                                <Input placeholder="Nome da variável (ex: cpf)" value={cond.variable} onChange={(e) => handleConditionChange(index, 'variable', e.target.value)} />
+                            )}
+                            
                             <Input placeholder="Valor a comparar" value={cond.value} onChange={(e) => handleConditionChange(index, 'value', e.target.value)} />
                         </div>
+                        
                         <div className="space-y-2">
                             <Label>ENTÃO</Label>
                             {renderConnectionSelect(cond.id)}
@@ -635,7 +643,7 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, onClos
 
         return (
             <div>
-                <CustomLabelInput node={selectedNode} onNodeDataChange={onNodeDataChange} />
+                {nodeType !== 'conditional' && <CustomLabelInput node={selectedNode} onNodeDataChange={onNodeDataChange} />}
                 {panelComponent}
             </div>
         );
