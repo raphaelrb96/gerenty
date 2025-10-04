@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { useForm, useFieldArray, useWatch, FormProvider, useFormContext } from "react-hook-form";
+import { useForm, useFieldArray, FormProvider, useFormContext, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
@@ -210,12 +210,14 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
    React.useEffect(() => {
     if (isOpen) {
       if (message) {
+        const mediaContent = message.content.image || message.content.video || message.content.audio || message.content.document;
+
         form.reset({
           name: message.name || "",
           type: message.type || "text",
           text_body: message.content.text?.body || "",
-          media_id: message.content.media?.id || "",
-          media_caption: message.content.media?.caption || "",
+          media_id: mediaContent?.id || "",
+          media_caption: mediaContent?.caption || "",
           product_retailer_id: message.content.product_message?.product_retailer_id || "",
           interactive_type: message.content.interactive?.type || "button",
           interactive_header_text: message.content.interactive?.header?.text || "",
@@ -228,7 +230,7 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
             rows: s.rows?.map(r => ({id: r.id, title: r.title, description: r.description || ''})) || []
           })) || [],
         });
-        setFileName(message.content.media?.url ? message.content.media.url.split('/').pop()?.split('?')[0] || 'Arquivo existente' : null);
+        setFileName(mediaContent?.url ? mediaContent.url.split('/').pop()?.split('?')[0] || 'Arquivo existente' : null);
         setFileToUpload(null);
       } else {
         form.reset({
@@ -283,21 +285,26 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
             case 'video':
             case 'audio':
             case 'file':
-                let mediaUrl = message?.content.media?.url || '';
-                let mediaId = message?.content.media?.id || '';
-                 if (fileToUpload) {
+                const existingMedia = message?.content.image || message?.content.video || message?.content.audio || message?.content.document;
+                let mediaUrl = existingMedia?.url || '';
+                let mediaId = existingMedia?.id || '';
+
+                if (fileToUpload) {
                     const path = `libraryMessages/${activeCompany.id}/${Date.now()}-${fileToUpload.name}`;
                     mediaUrl = await uploadFile(fileToUpload, path);
-                    mediaId = path;
+                    mediaId = path; // Use path as ID for internally stored files
                 }
-                const mediaObject: any = { id: mediaId, url: mediaUrl };
-                if (values.media_caption) mediaObject.caption = values.media_caption;
 
+                const mediaObject: any = { id: mediaId, url: mediaUrl };
+                if (values.media_caption) {
+                    mediaObject.caption = values.media_caption;
+                }
+                
+                // Ensure the content object has the correct media type key
                 if (values.type === 'file') {
-                    mediaObject.filename = fileName || 'arquivo';
-                    messageContent = { media: mediaObject };
+                     messageContent = { document: mediaObject };
                 } else {
-                    messageContent = { media: mediaObject };
+                    messageContent = { [values.type]: mediaObject };
                 }
                 break;
             

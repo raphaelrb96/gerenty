@@ -207,7 +207,7 @@ export class WhatsAppService {
             ...payload.content // Spread the content directly, as it's now in the correct API format
         };
 
-        // Fallback for legacy text messages
+        // Fallback for legacy text messages without content structure
         if (payload.type === 'text' && !payload.content) {
             messageData.text = { body: payload.message || 'Mensagem de teste do Gerenty' };
         }
