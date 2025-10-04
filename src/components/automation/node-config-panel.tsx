@@ -266,7 +266,7 @@ function TriggerPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange
     );
 }
 
-function MessagePanel({ node, onNodeDataChange, onOpenLibraryForm, libraryMessages }: { 
+function MessagePanel({ node, onNodeDataChange, onOpenLibraryForm, libraryMessages }: {
     node: Node;
     onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'];
     onOpenLibraryForm: NodeConfigPanelProps['onOpenLibraryForm'];
@@ -275,6 +275,12 @@ function MessagePanel({ node, onNodeDataChange, onOpenLibraryForm, libraryMessag
     const handleMessageChange = (value: string) => {
         onNodeDataChange(node.id, { messageId: value });
     };
+    
+    const handleEditClick = (e: React.MouseEvent, msg: LibraryMessage) => {
+        e.stopPropagation();
+        e.preventDefault();
+        onOpenLibraryForm(msg);
+    }
 
     return (
         <div className="space-y-4">
@@ -294,7 +300,17 @@ function MessagePanel({ node, onNodeDataChange, onOpenLibraryForm, libraryMessag
                         </SelectTrigger>
                         <SelectContent>
                             {libraryMessages.map(msg => (
-                                <SelectItem key={msg.id} value={msg.id}>{msg.name}</SelectItem>
+                                <div key={msg.id} className="relative flex justify-between items-center pr-2">
+                                    <SelectItem value={msg.id} className="w-full">{msg.name}</SelectItem>
+                                    <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="h-7 w-7 absolute right-2 top-1/2 -translate-y-1/2"
+                                        onClick={(e) => handleEditClick(e, msg)}
+                                    >
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                                </div>
                             ))}
                         </SelectContent>
                     </Select>
