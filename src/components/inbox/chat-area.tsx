@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import type { Conversation, Consumer, Message, MessageTemplate } from "@/lib/types";
+import type { Conversation, Consumer, Message, MessageTemplate, LibraryMessage, SendMessagePayload } from "@/lib/types";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
 import { LoadingSpinner } from "../common/loading-spinner";
@@ -96,12 +96,12 @@ export function ChatArea({ conversation, consumer }: ChatAreaProps) {
         }
     }, [messages, loading, scrollToBottom]);
 
-    const handleSendMessage = useCallback(async (messageContent: string, type: 'text' | 'template' = 'text') => {
+    const handleSendMessage = useCallback(async (payload: SendMessagePayload) => {
         if (!consumer || !activeCompany) return;
 
         setIsSending(true);
         try {
-            await sendMessage( consumer.phone, activeCompany.id, messageContent, type);
+            await sendMessage(consumer.phone, activeCompany.id, payload);
         } catch (error: any) {
             console.error("Error sending message:", error);
             toast({

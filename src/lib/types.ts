@@ -1,3 +1,4 @@
+
 import type { FieldValue, Timestamp } from "firebase/firestore";
 import type { Node, Edge } from "reactflow";
 
@@ -867,7 +868,7 @@ export type LibraryMessage = {
   type: LibraryMessageType;
   content: {
     text?: TextMessage;
-    media?: MediaMessage;
+    media?: MediaMessage; // Combined for all media types
     location?: LocationMessage;
     contact?: ContactMessage;
     product_message?: ProductMessage;
@@ -879,6 +880,7 @@ export type LibraryMessage = {
   createdAt: Timestamp;
   updatedAt: Timestamp;
 };
+  
 
 export type AutomationRule = {
   id: string;
@@ -1017,10 +1019,13 @@ export type TemplateStatusUpdate = {
 
 export type SendMessagePayload = {
     phoneNumber: string;
-    message: string;
-    type?: 'text' | 'template';
+    type: LibraryMessage['type'] | 'template';
+    content?: LibraryMessage['content'];
+    // For legacy text messages or simple template calls
+    message?: string; 
     templateName?: string;
-};
+}
+
 
 export interface WhatsAppApiError {
     code: number;
@@ -1037,4 +1042,3 @@ export type CallableRequest<T = any> = {
     auth?: { uid: string; token: string; };
     data: T;
 };
-```

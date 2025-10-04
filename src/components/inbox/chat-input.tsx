@@ -5,9 +5,10 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Paperclip, Send, Loader2 } from "lucide-react";
+import type { SendMessagePayload } from "@/lib/types";
 
 type ChatInputProps = {
-    onSendMessage: (message: string, type: 'text') => Promise<void>;
+    onSendMessage: (payload: SendMessagePayload) => Promise<void>;
     isSending: boolean;
 };
 
@@ -16,7 +17,12 @@ export function ChatInput({ onSendMessage, isSending }: ChatInputProps) {
 
     const handleSend = () => {
         if (message.trim()) {
-            onSendMessage(message, 'text');
+            const payload: SendMessagePayload = {
+                type: 'text',
+                content: { text: { body: message } },
+                phoneNumber: '', // This will be set in the parent component
+            };
+            onSendMessage(payload);
             setMessage("");
         }
     };

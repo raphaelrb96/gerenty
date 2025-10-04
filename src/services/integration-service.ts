@@ -1,7 +1,8 @@
+
 // src/services/integration-service.ts
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '@/lib/firebase';
-import { WhatsAppCredentials, TestMessageResponse } from '@/lib/types';
+import { WhatsAppCredentials, TestMessageResponse, SendMessagePayload } from '@/lib/types';
 
 // Referências para as Cloud Functions
 const validateAndSaveCredentialsCallable = httpsCallable<WhatsAppCredentials & { companyId: string }, {
@@ -11,13 +12,7 @@ const validateAndSaveCredentialsCallable = httpsCallable<WhatsAppCredentials & {
   companyId: string;
 }>(functions, 'validateAndSaveCredentials');
 
-const sendMessageCallable = httpsCallable<{
-  phoneNumber: string;
-  message?: string;
-  type?: 'text' | 'template';
-  templateName?: string;
-  companyId: string;
-}, TestMessageResponse>(functions, 'sendMessage');
+const sendMessageCallable = httpsCallable<SendMessagePayload & { companyId: string }, TestMessageResponse>(functions, 'sendMessage');
 
 const checkWhatsAppIntegrationCallable = httpsCallable<{
   companyId: string;
@@ -68,27 +63,17 @@ export const integrationService = {
     }
   },
 
-  async sendMessage(phoneNumber: string, companyId: string, message: string, type: 'text' | 'template'): Promise<TestMessageResponse> {
+  async sendMessage(
+    phoneNumber: string, 
+    companyId: string, 
+    payload: SendMessagePayload
+  ): Promise<TestMessageResponse> {
     try {
-      const payload: {
-        phoneNumber: string;
-        companyId: string;
-        type: 'text' | 'template';
-        message?: string;
-        templateName?: string;
-      } = {
-        phoneNumber,
+      const result = await sendMessageCallable({ 
+        ...payload, 
+        phoneNumber, 
         companyId,
-        type,
-      };
-
-      if (type === 'text') {
-        payload.message = message;
-      } else {
-        payload.templateName = message;
-      }
-
-      const result = await sendMessageCallable(payload);
+      });
       return result.data;
     } catch (error: any) {
       console.error('Error sending message:', error);
@@ -142,10 +127,18 @@ export const integrationService = {
 };
 
 // Aliases
-export const { saveWhatsAppCredentials, sendMessage, checkWhatsAppIntegration, getWhatsAppIntegrationStatus, syncWhatsAppTemplates } = integrationService;
-
+export const { saveWhatsAppCredentials, checkWhatsAppIntegration, getWhatsAppIntegrationStatus, syncWhatsAppTemplates } = integrationService;
 
 // Specific alias for test message to avoid confusion
 export const sendTestMessage = async (phoneNumber: string, companyId: string, message: string) => {
-    return integrationService.sendMessage(phoneNumber, companyId, message, 'text');
+    const payload: SendMessagePayload = {
+      phoneNumber,
+      type: 'text',
+      content: { text: { body: message } }
+    };
+    return integrationService.sendMessage(phoneNumber, companyId, payload);
+};
+
+export const sendMessage = async (phoneNumber: string, companyId: string, payload: SendMessagePayload) => {
+    return integrationService.sendMessage(phoneNumber, companyId, payload);
 };

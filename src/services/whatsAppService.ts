@@ -1,7 +1,7 @@
 
 // src/services/whatsAppService.ts
 import { SecretManagerService } from './secretManager';
-import { MessageResult, SendMessagePayload, TemplateErrorInfo, WhatsAppApiResponse } from '../types/whatsapp';
+import { MessageResult, SendMessagePayload, TemplateErrorInfo, WhatsAppApiResponse, LibraryMessage } from '../types/whatsapp';
 import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
 
@@ -167,7 +167,11 @@ export class WhatsAppService {
       }
 
       let result: MessageResult;
-      if (payload.type === 'template') {
+      
+      // Se for um fluxo, o payload já virá com o `content`
+      if (payload.content) {
+         result = await this.tryConversationMessage(integration.phoneNumberId, accessToken, payload);
+      } else if (payload.type === 'template') {
         result = await this.tryTemplateMessage(integration.phoneNumberId, accessToken, payload);
       } else {
         result = await this.tryConversationMessage(integration.phoneNumberId, accessToken, payload);
@@ -196,16 +200,37 @@ export class WhatsAppService {
     payload: SendMessagePayload
   ): Promise<MessageResult> {
     try {
-      const messageData = {
-        messaging_product: 'whatsapp',
-        to: payload.phoneNumber,
-        type: 'text',
-        text: {
-          body: payload.message || 'Mensagem de teste do Gerenty'
-        }
-      };
+        const messageData: any = {
+            messaging_product: 'whatsapp',
+            to: payload.phoneNumber,
+        };
 
-      functions.logger.info(`[WhatsAppService] Sending conversation message to ${payload.phoneNumber}`);
+        const type = payload.type as LibraryMessage['type'];
+        messageData.type = type;
+
+        if (type === 'text' && payload.content?.text) {
+             messageData.text = payload.content.text;
+        } else if (type === 'interactive' && payload.content?.interactive) {
+             messageData.interactive = payload.content.interactive;
+        } else if (type === 'image' && payload.content?.media?.id) {
+            messageData.image = { id: payload.content.media.id };
+        } else if (type === 'video' && payload.content?.media?.id) {
+            messageData.video = { id: payload.content.media.id };
+        } else if (type === 'audio' && payload.content?.media?.id) {
+            messageData.audio = { id: payload.content.media.id };
+        } else if (type === 'file' && payload.content?.media?.id) {
+            messageData.type = 'document'; // API uses 'document' for files
+            messageData.document = { 
+                id: payload.content.media.id, 
+                filename: payload.content.media.filename || 'arquivo' 
+            };
+        } else {
+            // Fallback para o comportamento antigo se `content` não estiver presente
+             messageData.type = 'text';
+             messageData.text = { body: payload.message || 'Mensagem de teste do Gerenty' };
+        }
+
+      functions.logger.info(`[WhatsAppService] Sending conversation message to ${payload.phoneNumber}`, { type: messageData.type });
 
       const response = await fetch(
         `https://graph.facebook.com/v17.0/${phoneNumberId}/messages`,
@@ -436,13 +461,9 @@ export class WhatsAppService {
         timestamp: now,
         status: 'sent', // Initial status
         createdAt: now,
+        content: payload.content || (payload.type === 'text' ? { text: { body: payload.message } } : { template: { name: payload.templateName, language: { code: 'pt_BR' } } })
       };
 
-      if (payload.type === 'text') {
-        messageContent.content = { text: { body: payload.message } };
-      } else if (payload.type === 'template') {
-        messageContent.content = { template: { name: payload.templateName, language: { code: 'pt_BR' } } };
-      }
 
       await this.db.collection('companies')
         .doc(companyId)

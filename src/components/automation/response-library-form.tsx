@@ -37,10 +37,13 @@ const formSchema = z.object({
   type: z.enum(['text', 'image', 'video', 'audio', 'file', 'location', 'interactive', 'product']),
   
   text_body: z.string().optional(),
+  
+  media_id: z.string().optional(), // Para mídias existentes
   media_caption: z.string().optional(),
+
   product_retailer_id: z.string().optional(),
 
-  interactive_type: z.enum(['button', 'list', 'product', 'product_list']).default('button'),
+  interactive_type: z.enum(['button', 'list']).optional(),
   interactive_header_text: z.string().optional(),
   interactive_body_text: z.string().optional(),
   interactive_footer_text: z.string().optional(),
@@ -58,21 +61,21 @@ const formSchema = z.object({
     })).min(1, "A seção deve ter pelo menos um item.").max(10, "Uma seção não pode ter mais de 10 itens."),
   })).optional(),
 }).superRefine((data, ctx) => {
-    if (data.type === 'interactive' && data.interactive_type === 'list') {
-        if (!data.interactive_list_button_text || data.interactive_list_button_text.trim() === '') {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: "O texto do botão da lista é obrigatório.",
-                path: ["interactive_list_button_text"],
-            });
+    if (data.type === 'interactive') {
+        if (!data.interactive_body_text || data.interactive_body_text.trim() === '') {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "O corpo da mensagem é obrigatório para mensagens interativas.", path: ["interactive_body_text"]});
         }
-        if (!data.interactive_list_sections || data.interactive_list_sections.length === 0) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: "Adicione pelo menos uma seção à lista.",
-                path: ["interactive_list_sections"],
-            });
+        if (data.interactive_type === 'list') {
+            if (!data.interactive_list_button_text || data.interactive_list_button_text.trim() === '') {
+                ctx.addIssue({ code: z.ZodIssueCode.custom, message: "O texto do botão da lista é obrigatório.", path: ["interactive_list_button_text"]});
+            }
+            if (!data.interactive_list_sections || data.interactive_list_sections.length === 0) {
+                ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Adicione pelo menos uma seção à lista.", path: ["interactive_list_sections"]});
+            }
         }
+    }
+    if (data.type === 'text' && (!data.text_body || data.text_body.trim() === '')) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "O texto da mensagem é obrigatório.", path: ["text_body"]});
     }
 });
 
@@ -211,6 +214,7 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
           name: message.name || "",
           type: message.type || "text",
           text_body: message.content.text?.body || "",
+          media_id: message.content.media?.id || "",
           media_caption: message.content.media?.caption || "",
           product_retailer_id: message.content.product_message?.product_retailer_id || "",
           interactive_type: message.content.interactive?.type || "button",
@@ -261,6 +265,11 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
       return;
     }
     
+    if (isMediaType && !fileToUpload && !message?.content.media?.id) {
+        toast({ variant: 'destructive', title: 'Arquivo obrigatório', description: 'Por favor, envie um arquivo de mídia.' });
+        return;
+    }
+
     setIsSaving(true);
     try {
         let messageContent: Partial<LibraryMessage['content']> = {};
@@ -268,12 +277,17 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
         if (values.type === 'text') {
             messageContent.text = { body: values.text_body || '' };
         } else if (isMediaType) {
-             let mediaUrl = (message && !fileToUpload) ? (message.content.media?.url || '') : '';
+             let mediaUrl = message?.content.media?.url || '';
+             let mediaId = message?.content.media?.id || '';
+
              if (fileToUpload) {
+                // In a real scenario, you'd upload to a service that gives you a persistent ID,
+                // like Meta's media upload API. For now, we simulate with Firebase Storage URL.
                 const path = `libraryMessages/${activeCompany.id}/${Date.now()}-${fileToUpload.name}`;
                 mediaUrl = await uploadFile(fileToUpload, path);
+                mediaId = path; // Use path as a temporary ID
              }
-             messageContent.media = { id: '', mime_type: fileToUpload?.type || '', url: mediaUrl, caption: values.media_caption };
+             messageContent.media = { id: mediaId, mime_type: fileToUpload?.type || message?.content.media?.mime_type || '', url: mediaUrl, caption: values.media_caption };
         } else if (values.type === 'product') {
             if (!values.product_retailer_id) {
                 toast({ variant: 'destructive', title: 'Produto obrigatório', description: 'Por favor, selecione um produto.' });
@@ -283,8 +297,8 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
             messageContent.product_message = { product_retailer_id: values.product_retailer_id };
         } else if (values.type === 'interactive') {
             messageContent.interactive = {
-                type: values.interactive_type, // Store the subtype here
-                body: { text: values.interactive_body_text || ' ' }, // Body is mandatory
+                type: values.interactive_type as any,
+                body: { text: values.interactive_body_text || ' ' }, 
                 header: values.interactive_header_text ? { type: 'text', text: values.interactive_header_text } : undefined,
                 footer: values.interactive_footer_text ? { text: values.interactive_footer_text } : undefined,
                 action: {},
@@ -379,8 +393,8 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
                 {watchedType === 'interactive' && (
                     <div className="space-y-4">
                         <FormField control={form.control} name="interactive_type" render={({ field }) => (<FormItem><FormLabel>Tipo Interativo</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>
-                            <SelectItem value="button">Botões</SelectItem>
-                            <SelectItem value="list">Lista</SelectItem>
+                            <SelectItem value="button">Botões de Resposta</SelectItem>
+                            <SelectItem value="list">Lista de Opções</SelectItem>
                         </SelectContent></Select><FormMessage /></FormItem>)} />
                         
                         <Card>
@@ -397,6 +411,7 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
                                         {buttonFields.map((field, index) => (
                                             <div key={field.id} className="flex items-end gap-2 mt-2">
                                                 <FormField control={form.control} name={`interactive_buttons.${index}.title`} render={({ field }) => (<FormItem className="flex-1"><FormLabel className="text-xs">Texto Botão {index + 1}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                                <FormField control={form.control} name={`interactive_buttons.${index}.id`} render={({ field }) => (<FormItem className="hidden"><FormControl><Input {...field} /></FormControl></FormItem>)}/>
                                                 <Button type="button" variant="destructive" size="icon" onClick={() => removeButton(index)}><Trash2 className="h-4 w-4" /></Button>
                                             </div>
                                         ))}
