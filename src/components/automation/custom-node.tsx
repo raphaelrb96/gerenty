@@ -99,7 +99,7 @@ export function CustomNode({ data, selected }: NodeProps<{
         </>
       )}
       
-      {data.type !== 'conditional' && data.type !== 'keywordTrigger' && (
+      {data.type !== 'conditional' && (
           <Handle type="source" position={Position.Bottom} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10 }} />
       )}
       
@@ -161,7 +161,7 @@ export function CustomNode({ data, selected }: NodeProps<{
                 <Settings className="h-4 w-4"/>
                 <span className="sr-only">Configurar Tarefa</span>
             </Button>
-            {data.type !== 'conditional' && data.type !== 'keywordTrigger' && (
+            {data.type !== 'conditional' && (
              <Button 
                 variant="ghost" 
                 size="icon" 
