@@ -10,6 +10,7 @@ import { Badge } from '../ui/badge';
 import { Settings, Trash2, Zap, PlusCircle, GitBranch, MessageSquare } from 'lucide-react';
 import { LibraryMessage } from '@/lib/types';
 import React from 'react';
+import Image from 'next/image';
 
 export function CustomNode({ data, selected }: NodeProps<{ 
   label: string, 
@@ -49,33 +50,43 @@ export function CustomNode({ data, selected }: NodeProps<{
         return <div className="text-center text-xs p-2 italic text-muted-foreground">Nenhuma mensagem selecionada</div>;
     }
 
-    let previewText: React.ReactNode = '';
+    let previewContent: React.ReactNode = '';
     let details = '';
 
     switch (message.type) {
         case 'text':
-            previewText = message.content.text?.body || '[Texto vazio]';
+            previewContent = <p className="line-clamp-3 whitespace-pre-wrap">{message.content.text?.body || '[Texto vazio]'}</p>;
             break;
         case 'interactive':
-            previewText = message.content.interactive?.body.text || '[Mensagem Interativa]';
+            previewContent = <p className="line-clamp-3 whitespace-pre-wrap">{message.content.interactive?.body.text || '[Mensagem Interativa]'}</p>;
             const buttonCount = message.content.interactive?.action?.buttons?.length;
             const sectionCount = message.content.interactive?.action.sections?.length;
             if (buttonCount) details = `${buttonCount} botão(ões)`;
             if (sectionCount) details = `${sectionCount} seção(ões)`;
             break;
-        case 'image': previewText = '[Imagem]'; break;
-        case 'video': previewText = '[Vídeo]'; break;
-        case 'audio': previewText = '[Áudio]'; break;
-        case 'file': previewText = '[Arquivo]'; break;
-        case 'product': previewText = '[Produto]'; break;
+        case 'image':
+            if (message.content.media?.url) {
+                previewContent = (
+                    <div className="relative aspect-video w-full">
+                        <Image src={message.content.media.url} alt="Pré-visualização da imagem" layout="fill" objectFit="cover" className="rounded-md" />
+                    </div>
+                );
+            } else {
+                 previewContent = <p className="line-clamp-3 whitespace-pre-wrap">[Imagem]</p>;
+            }
+            break;
+        case 'video': previewContent = <p className="line-clamp-3 whitespace-pre-wrap">[Vídeo]</p>; break;
+        case 'audio': previewContent = <p className="line-clamp-3 whitespace-pre-wrap">[Áudio]</p>; break;
+        case 'file': previewContent = <p className="line-clamp-3 whitespace-pre-wrap">[Arquivo]</p>; break;
+        case 'product': previewContent = <p className="line-clamp-3 whitespace-pre-wrap">[Produto]</p>; break;
         default:
-             previewText = `[${message.type.charAt(0).toUpperCase() + message.type.slice(1)}]`;
+             previewContent = <p className="line-clamp-3 whitespace-pre-wrap">{`[${message.type.charAt(0).toUpperCase() + message.type.slice(1)}]`}</p>;
     }
 
     return (
         <div className="bg-muted p-2 rounded-md text-xs space-y-1">
-            <p className="line-clamp-3 whitespace-pre-wrap">{previewText}</p>
-            {details && <p className="font-semibold text-primary">{details}</p>}
+            {previewContent}
+            {details && <p className="font-semibold text-primary mt-1">{details}</p>}
         </div>
     );
   };
@@ -126,11 +137,11 @@ export function CustomNode({ data, selected }: NodeProps<{
       )}
       
       <Card className={cn(
-        "border-t-4 bg-card/80 backdrop-blur-sm transition-all duration-200 hover:shadow-xl",
+        "bg-card/80 backdrop-blur-sm transition-all duration-200 hover:shadow-xl",
         isTriggerType ? 'w-[320px] animate-pulse-slow border-4 border-yellow-400 ring-4 ring-yellow-400/20 shadow-2xl' : 'w-[280px]',
         selected ? 'ring-2 ring-primary ring-offset-2' : '',
-        !isTriggerType ? `border-[${data.color}]` : ''
-      )}>
+        !isTriggerType ? 'border-t-4' : ''
+      )} style={{ borderColor: !isTriggerType ? data.color : '' }}>
         <CardHeader className={cn(
           "flex flex-row items-center gap-3 p-3 text-card-foreground rounded-t-md",
           isTriggerType && "bg-yellow-400/10"
@@ -138,16 +149,16 @@ export function CustomNode({ data, selected }: NodeProps<{
            <div className={cn(
              "p-1 rounded-md", 
              isTriggerType && "p-2 bg-yellow-400/10",
-             !isTriggerType && data.color,
-             !isTriggerType && "text-primary-foreground"
             )}>
-            {data.icon}
+            {React.cloneElement(data.icon as React.ReactElement, {
+                className: cn(!isTriggerType && data.color ? `text-[${data.color}]` : '', (data.icon as React.ReactElement).props.className),
+                style: { color: !isTriggerType ? data.color : undefined }
+            })}
           </div>
           <CardTitle className={cn(
             "font-semibold", 
             isTriggerType ? "text-base" : "text-sm",
-            !isTriggerType && data.color && "text-primary"
-            )}>{data.customLabel || data.label}</CardTitle>
+            )} style={{ color: !isTriggerType ? data.color : undefined }}>{data.customLabel || data.label}</CardTitle>
         </CardHeader>
         
         {isTriggerType ? (
@@ -230,3 +241,5 @@ export function CustomNode({ data, selected }: NodeProps<{
 }
 
   
+
+    
