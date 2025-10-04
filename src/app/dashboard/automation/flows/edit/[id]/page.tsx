@@ -316,6 +316,15 @@ export default function EditConversationFlowPage() {
     };
 
     const addNode = (type: keyof typeof nodeTypeConfig, sourceHandle?: string) => {
+        if (quickAddSourceNode?.data.type === 'keywordTrigger' && type === 'waitForResponse') {
+            toast({
+                variant: 'destructive',
+                title: 'Conexão Inválida',
+                description: 'Um nó de "Gatilho" não pode ser conectado a um nó de "Aguardar Resposta".'
+            });
+            return;
+        }
+
         const sourceNodeIsConditional = quickAddSourceNode?.data.type === 'conditional';
         const handleFromQuickAdd = quickAddSourceNode?.data.sourceHandleForQuickAdd;
 
