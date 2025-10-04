@@ -43,6 +43,7 @@ import { getLibraryMessagesByCompany } from "@/services/library-message-service"
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ResponseLibraryForm } from "@/components/automation/response-library-form";
 
 
 export const nodeTypeConfig = {
@@ -98,6 +99,9 @@ export default function EditConversationFlowPage() {
     const [isPaletteOpen, setIsPaletteOpen] = useState(false);
     const [isConfigOpen, setIsConfigOpen] = useState(false);
     const [isFlowSettingsOpen, setIsFlowSettingsOpen] = useState(false);
+    
+    const [isLibraryFormOpen, setIsLibraryFormOpen] = useState(false);
+    const [messageToEdit, setMessageToEdit] = useState<LibraryMessage | null>(null);
     
     const [flowSettings, setFlowSettings] = useState({
         name: "",
@@ -182,6 +186,15 @@ export default function EditConversationFlowPage() {
     }, [setEdges]);
 
 
+    const fetchLibraryMessages = useCallback(async () => {
+        if (activeCompany) {
+            getLibraryMessagesByCompany(activeCompany.id)
+                .then(setLibraryMessages)
+                .catch(() => toast({ variant: 'destructive', title: 'Erro ao carregar mensagens da biblioteca' }));
+        }
+    }, [activeCompany, toast]);
+
+
     useEffect(() => {
         if (typeof flowId !== 'string') return;
         
@@ -220,17 +233,18 @@ export default function EditConversationFlowPage() {
         fetchFlow();
     }, [flowId, toast, router]);
     
-    // Fetch complementary data for the settings modal
     useEffect(() => {
         if (activeCompany) {
-            getLibraryMessagesByCompany(activeCompany.id)
-                .then(setLibraryMessages)
-                .catch(() => toast({ variant: 'destructive', title: 'Erro ao carregar mensagens da biblioteca' }));
-
+            fetchLibraryMessages();
             // You'd also fetch all other flows here for the "Forward Flow" option
             // getFlowsByCompany(activeCompany.id).then(setAllFlows)...
         }
-    }, [activeCompany, toast]);
+    }, [activeCompany, fetchLibraryMessages]);
+    
+    const handleOpenLibraryForm = (message: LibraryMessage | null = null) => {
+        setMessageToEdit(message);
+        setIsLibraryFormOpen(true);
+    };
 
     const handleFlowSettingsSave = async () => {
         if (!flow) return;
@@ -593,6 +607,9 @@ export default function EditConversationFlowPage() {
                     allEdges={edges}
                     onConnect={onConnectFromPanel}
                     onCreateAndConnect={addNode}
+                    onOpenLibraryForm={handleOpenLibraryForm}
+                    libraryMessages={libraryMessages}
+                    onLibraryMessageCreated={fetchLibraryMessages}
                 />
             </Sheet>
             
@@ -755,6 +772,13 @@ export default function EditConversationFlowPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+            
+            <ResponseLibraryForm
+                isOpen={isLibraryFormOpen}
+                onClose={() => setIsLibraryFormOpen(false)}
+                onFinished={fetchLibraryMessages}
+                message={messageToEdit}
+            />
         </div>
     );
     

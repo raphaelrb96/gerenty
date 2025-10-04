@@ -39,6 +39,7 @@ import {
 import { NodesPalette } from "./nodes-palette";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { nodeTypeConfig } from "@/app/dashboard/automation/flows/edit/[id]/page";
+import { ResponseLibraryForm } from "./response-library-form";
 
 type NodeConfigPanelProps = {
     selectedNode: Node | null;
@@ -49,6 +50,9 @@ type NodeConfigPanelProps = {
     allEdges: Edge[];
     onConnect: (source: string, sourceHandle: string, target: string) => void;
     onCreateAndConnect: (type: keyof typeof nodeTypeConfig, sourceHandle?: string) => Node | undefined;
+    onOpenLibraryForm: (message: LibraryMessage | null) => void;
+    libraryMessages: LibraryMessage[]; 
+    onLibraryMessageCreated: () => void;
 }
 
 function CustomLabelInput({ node, onNodeDataChange }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'] }) {
@@ -262,19 +266,12 @@ function TriggerPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange
     );
 }
 
-function MessagePanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'] }) {
-    const [messages, setMessages] = useState<LibraryMessage[]>([]);
-    const { activeCompany } = useCompany();
-    const { toast } = useToast();
-
-    useEffect(() => {
-        if(activeCompany) {
-            getLibraryMessagesByCompany(activeCompany.id).then(setMessages).catch(() => {
-                toast({ variant: 'destructive', title: 'Erro ao carregar mensagens' });
-            });
-        }
-    }, [activeCompany, toast]);
-
+function MessagePanel({ node, onNodeDataChange, onOpenLibraryForm, libraryMessages }: { 
+    node: Node;
+    onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'];
+    onOpenLibraryForm: NodeConfigPanelProps['onOpenLibraryForm'];
+    libraryMessages: LibraryMessage[];
+}) {
     const handleMessageChange = (value: string) => {
         onNodeDataChange(node.id, { messageId: value });
     };
@@ -287,19 +284,24 @@ function MessagePanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange
             <Separator />
              <div className="space-y-2">
                 <Label htmlFor="library-message-select">Mensagem da Biblioteca</Label>
-                <Select
-                    value={node.data.messageId || ""}
-                    onValueChange={handleMessageChange}
-                >
-                    <SelectTrigger id="library-message-select">
-                        <SelectValue placeholder="Selecione uma mensagem..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {messages.map(msg => (
-                            <SelectItem key={msg.id} value={msg.id}>{msg.name}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+                <div className="flex gap-2">
+                    <Select
+                        value={node.data.messageId || ""}
+                        onValueChange={handleMessageChange}
+                    >
+                        <SelectTrigger id="library-message-select" className="flex-1">
+                            <SelectValue placeholder="Selecione uma mensagem..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {libraryMessages.map(msg => (
+                                <SelectItem key={msg.id} value={msg.id}>{msg.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Button type="button" variant="outline" size="icon" onClick={() => onOpenLibraryForm(null)}>
+                        <PlusCircle className="h-4 w-4" />
+                    </Button>
+                </div>
             </div>
         </div>
     )
@@ -575,7 +577,7 @@ function TransferPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChang
     )
 }
 
-export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, onClose, allNodes, allEdges, onConnect, onCreateAndConnect }: NodeConfigPanelProps) {
+export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, onClose, allNodes, allEdges, onConnect, onCreateAndConnect, onOpenLibraryForm, libraryMessages }: NodeConfigPanelProps) {
     const [isSaving, setIsSaving] = useState(false);
 
     const handleSaveClick = async () => {
@@ -609,7 +611,7 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, onClos
                 panelComponent = <TriggerPanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
                 break;
             case 'message':
-                 panelComponent = <MessagePanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
+                 panelComponent = <MessagePanel node={selectedNode} onNodeDataChange={onNodeDataChange} onOpenLibraryForm={onOpenLibraryForm} libraryMessages={libraryMessages} />;
                  break;
             case 'captureData':
                 panelComponent = <CaptureDataPanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
