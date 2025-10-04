@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { useForm, useFieldArray, useWatch } from "react-hook-form";
+import { useForm, useFieldArray, useWatch, FormProvider, useFormContext } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
@@ -295,9 +295,9 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
 
                 if (values.type === 'file') {
                     mediaObject.filename = fileName || 'arquivo';
-                    messageContent = { [values.type as 'file']: mediaObject }; // Use 'document' for file
+                    messageContent = { media: mediaObject };
                 } else {
-                    messageContent = { [values.type]: mediaObject };
+                    messageContent = { media: mediaObject };
                 }
                 break;
             
