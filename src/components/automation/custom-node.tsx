@@ -119,7 +119,7 @@ export function CustomNode({ data, selected }: NodeProps<{
         {isMainTrigger && hasKeywords ? (
             <CardContent className="px-3 pb-3 pt-2 text-xs text-muted-foreground min-h-[60px]">
                 <div className="space-y-1">
-                    <span className="font-medium mr-2 text-foreground">Gatilhos:</span>
+                    <span className="font-medium mr-2 text-foreground block mb-3">Gatilhos:</span>
                     {data.triggerKeywords?.map((kw, index) =>
                         <div key={index} className="flex justify-between items-center text-xs">
                             <Badge variant="secondary">{kw.value}</Badge>
