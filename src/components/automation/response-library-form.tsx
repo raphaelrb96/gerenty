@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
@@ -83,7 +83,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 function InteractiveListSection({ sectionIndex, removeSection, isAddRowDisabled }: { sectionIndex: number; removeSection: (index: number) => void; isAddRowDisabled: boolean; }) {
-    const { control } = useFormContext<FormValues>();
+    const { control } = useForm<FormValues>();
     const { fields: rowFields, append: appendRow, remove: removeRow } = useFieldArray({
         control: control,
         name: `interactive_list_sections.${sectionIndex}.rows`
@@ -295,9 +295,9 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
                 if (values.media_caption) mediaObject.caption = values.media_caption;
                 if (values.type === 'file') {
                     mediaObject.filename = fileName || 'arquivo';
-                    messageContent = { document: mediaObject };
+                    messageContent = { media: mediaObject };
                 } else {
-                    messageContent = { [values.type]: mediaObject };
+                    messageContent = { media: mediaObject };
                 }
                 break;
             
@@ -468,3 +468,4 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
     </Sheet>
   );
 }
+

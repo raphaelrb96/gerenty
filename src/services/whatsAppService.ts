@@ -1,4 +1,5 @@
 
+
 // src/services/whatsAppService.ts
 import { SecretManagerService } from './secretManager';
 import { MessageResult, SendMessagePayload, TemplateErrorInfo, WhatsAppApiResponse, LibraryMessage } from '../types/whatsapp';
@@ -193,7 +194,6 @@ export class WhatsAppService {
     }
   }
 
-  // Atualize as assinaturas das funções
   private async tryConversationMessage(
     phoneNumberId: string,
     accessToken: string,
@@ -203,34 +203,17 @@ export class WhatsAppService {
         const messageData: any = {
             messaging_product: 'whatsapp',
             to: payload.phoneNumber,
+            type: payload.type,
+            ...payload.content // Spread the content directly, as it's now in the correct API format
         };
 
-        const type = payload.type as LibraryMessage['type'];
-        messageData.type = type;
-
-        if (type === 'text' && payload.content?.text) {
-             messageData.text = payload.content.text;
-        } else if (type === 'interactive' && payload.content?.interactive) {
-             messageData.interactive = payload.content.interactive;
-        } else if (type === 'image' && payload.content?.media?.id) {
-            messageData.image = { id: payload.content.media.id };
-        } else if (type === 'video' && payload.content?.media?.id) {
-            messageData.video = { id: payload.content.media.id };
-        } else if (type === 'audio' && payload.content?.media?.id) {
-            messageData.audio = { id: payload.content.media.id };
-        } else if (type === 'file' && payload.content?.media?.id) {
-            messageData.type = 'document'; // API uses 'document' for files
-            messageData.document = { 
-                id: payload.content.media.id, 
-                filename: payload.content.media.filename || 'arquivo' 
-            };
-        } else {
-            // Fallback para o comportamento antigo se `content` não estiver presente
-             messageData.type = 'text';
-             messageData.text = { body: payload.message || 'Mensagem de teste do Gerenty' };
+        // Fallback for legacy text messages
+        if (payload.type === 'text' && !payload.content) {
+            messageData.text = { body: payload.message || 'Mensagem de teste do Gerenty' };
         }
 
-      functions.logger.info(`[WhatsAppService] Sending conversation message to ${payload.phoneNumber}`, { type: messageData.type });
+
+      functions.logger.info(`[WhatsAppService] Sending conversation message to ${payload.phoneNumber}`, { type: messageData.type, body: JSON.stringify(messageData) });
 
       const response = await fetch(
         `https://graph.facebook.com/v17.0/${phoneNumberId}/messages`,
