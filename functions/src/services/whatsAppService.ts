@@ -199,33 +199,30 @@ export class WhatsAppService {
     payload: SendMessagePayload
   ): Promise<MessageResult> {
     try {
-        let messageData: any = {
+        const messageData: any = {
             messaging_product: 'whatsapp',
             to: payload.phoneNumber,
-            type: payload.type,
         };
 
-        if (payload.type === 'text' && payload.content?.text) {
-             messageData.text = { body: payload.content.text.body };
-        } else if (payload.type === 'interactive' && payload.content?.interactive) {
-             const { type, header, body, footer, action } = payload.content.interactive;
-             messageData.type = 'interactive';
-             messageData.interactive = {
-                type,
-                header,
-                body,
-                footer,
-                action,
-             }
-        } else if (payload.type === 'image' && payload.content?.media?.id) {
+        const type = payload.type as LibraryMessage['type'];
+        messageData.type = type;
+
+        if (type === 'text' && payload.content?.text) {
+             messageData.text = payload.content.text;
+        } else if (type === 'interactive' && payload.content?.interactive) {
+             messageData.interactive = payload.content.interactive;
+        } else if (type === 'image' && payload.content?.media?.id) {
             messageData.image = { id: payload.content.media.id };
-        } else if (payload.type === 'video' && payload.content?.media?.id) {
+        } else if (type === 'video' && payload.content?.media?.id) {
             messageData.video = { id: payload.content.media.id };
-        } else if (payload.type === 'audio' && payload.content?.media?.id) {
+        } else if (type === 'audio' && payload.content?.media?.id) {
             messageData.audio = { id: payload.content.media.id };
-        } else if (payload.type === 'file' && payload.content?.media?.id) {
+        } else if (type === 'file' && payload.content?.media?.id) {
             messageData.type = 'document'; // API uses 'document' for files
-            messageData.document = { id: payload.content.media.id, filename: payload.content.media.filename || 'arquivo' };
+            messageData.document = { 
+                id: payload.content.media.id, 
+                filename: payload.content.media.filename || 'arquivo' 
+            };
         } else {
             // Fallback para o comportamento antigo se `content` não estiver presente
              messageData.type = 'text';
