@@ -74,6 +74,7 @@ export function FlowBuilder({ nodes, edges, onNodesChange, onEdgesChange, onConn
         defaultEdgeOptions={{ type: 'smoothstep', style: { strokeWidth: 2, stroke: '#9ca3af' } }}
         deleteKeyCode={['Backspace', 'Delete']}
         proOptions={proOptions}
+        minZoom={0.1}
       >
         <Controls />
         <Background variant={BackgroundVariant.Dots} gap={24} size={1} />
