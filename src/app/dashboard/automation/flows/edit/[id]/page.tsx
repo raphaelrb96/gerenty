@@ -424,8 +424,8 @@ export default function EditConversationFlowPage() {
             const targetNode = nodes.find((node) => node.id === params.target);
     
             // Rule: Prevent connecting 'keywordTrigger' to 'waitForResponse' and vice-versa
-            const isTriggerToResponse = sourceNode?.data.type === 'keywordTrigger' && targetNode?.data.type === 'waitForResponse';
-            const isResponseToTrigger = sourceNode?.data.type === 'waitForResponse' && targetNode?.data.type === 'keywordTrigger';
+            const isTriggerToResponse = (sourceNode?.data.type === 'keywordTrigger' && targetNode?.data.type === 'waitForResponse');
+            const isResponseToTrigger = (sourceNode?.data.type === 'waitForResponse' && targetNode?.data.type === 'keywordTrigger');
     
             if (isTriggerToResponse || isResponseToTrigger) {
                 toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Gatilhos e Respostas não podem se conectar entre si.' });
