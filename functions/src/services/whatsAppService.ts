@@ -33,7 +33,10 @@ export class WhatsAppService {
 
         const formData = new FormData();
         formData.append('messaging_product', 'whatsapp');
-        formData.append('file', fileFromSync(filename, mediaBuffer, { type: mimeType }));
+        // Use fileFromSync or fileFrom to create a Blob-like object
+        // formdata-node might need a specific way to handle buffers
+        const blob = new Blob([mediaBuffer], { type: mimeType });
+        formData.append('file', blob, filename);
 
         const uploadResponse = await fetch(`https://graph.facebook.com/v17.0/${integration.phoneNumberId}/media`, {
             method: 'POST',
@@ -245,13 +248,20 @@ export class WhatsAppService {
   ): Promise<MessageResult> {
     try {
         const contentForApi = JSON.parse(JSON.stringify(payload.content || {}));
+        const mediaType = payload.type as 'image' | 'video' | 'audio' | 'document' | 'file';
+        const isMedia = ['image', 'video', 'audio', 'document', 'file'].includes(mediaType);
 
-        // Remove a chave 'url' de qualquer objeto de mídia
-        if (contentForApi.image?.url) delete contentForApi.image.url;
-        if (contentForApi.video?.url) delete contentForApi.video.url;
-        if (contentForApi.audio?.url) delete contentForApi.audio.url;
-        if (contentForApi.document?.url) delete contentForApi.document.url;
+        if (isMedia) {
+            const mediaKey = mediaType === 'file' ? 'document' : mediaType;
+            const mediaObject = contentForApi[mediaKey];
 
+            if (mediaObject?.url) {
+                // Future implementation: Upload to Meta and get media ID
+                // For now, we assume an ID is already present for media messages
+                delete mediaObject.url; // Ensure URL is not sent to Meta
+            }
+        }
+        
         const messageData: any = {
             messaging_product: 'whatsapp',
             to: payload.phoneNumber,
