@@ -504,9 +504,9 @@ export default function AutomationPage() {
             
             <div className="space-y-6">
                 <FlowBuilderTab flows={flows} onFlowsChange={fetchData} />
-                <TemplatesTab templates={templates} onTemplatesChange={fetchData} />
-                {/* <AutomationRulesTab /> */}
                 <LibraryTab messages={libraryMessages} onMessagesChange={fetchData} />
+                {/* <AutomationRulesTab /> */}
+                <TemplatesTab templates={templates} onTemplatesChange={fetchData} />
             </div>
         </div>
     );
