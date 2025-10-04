@@ -171,14 +171,7 @@ function FlowBuilderTab() {
                                         {keywords.length > 0 && (
                                             <div className="space-y-2">
                                                 <h4 className="text-xs font-semibold flex items-center gap-1"><Key className="h-3 w-3" /> Gatilhos</h4>
-                                                <div className="flex flex-wrap gap-1">
-                                                    {keywords.slice(0, 6).map((kw: any, index: number) => (
-                                                        <Badge key={index} variant="secondary">{kw.value}</Badge>
-                                                    ))}
-                                                     {keywords.length > 6 && (
-                                                        <Badge variant="secondary">+{keywords.length - 6}</Badge>
-                                                    )}
-                                                </div>
+                                                <p className="text-sm">{keywords.length} gatilho(s) configurado(s)</p>
                                             </div>
                                         )}
 
