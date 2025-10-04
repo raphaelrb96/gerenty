@@ -129,13 +129,25 @@ export function CustomNode({ data, selected }: NodeProps<{
         "border-t-4 bg-card/80 backdrop-blur-sm transition-all duration-200 hover:shadow-xl",
         isTriggerType ? 'w-[320px] animate-pulse-slow border-4 border-yellow-400 ring-4 ring-yellow-400/20 shadow-2xl' : 'w-[280px]',
         selected ? 'ring-2 ring-primary ring-offset-2' : '',
-        !isTriggerType && data.color
+        !isTriggerType ? `border-[${data.color}]` : ''
       )}>
-        <CardHeader className="flex flex-row items-center gap-3 p-3 text-card-foreground rounded-t-md">
-           <div className={cn("p-1 rounded-md", isTriggerType && "p-2 bg-yellow-400/10")}>
+        <CardHeader className={cn(
+          "flex flex-row items-center gap-3 p-3 text-card-foreground rounded-t-md",
+          isTriggerType && "bg-yellow-400/10"
+        )}>
+           <div className={cn(
+             "p-1 rounded-md", 
+             isTriggerType && "p-2 bg-yellow-400/10",
+             !isTriggerType && data.color,
+             !isTriggerType && "text-primary-foreground"
+            )}>
             {data.icon}
           </div>
-          <CardTitle className={cn("font-semibold", isTriggerType ? "text-base" : "text-sm")}>{data.customLabel || data.label}</CardTitle>
+          <CardTitle className={cn(
+            "font-semibold", 
+            isTriggerType ? "text-base" : "text-sm",
+            !isTriggerType && data.color && "text-primary"
+            )}>{data.customLabel || data.label}</CardTitle>
         </CardHeader>
         
         {isTriggerType ? (
