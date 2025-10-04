@@ -15,6 +15,7 @@ import ReactFlow, {
 } from 'reactflow';
 import { CustomNode } from './custom-node';
 import { CustomEdge } from './custom-edge';
+import { LibraryMessage } from '@/lib/types';
 
 import 'reactflow/dist/style.css';
 
@@ -35,9 +36,10 @@ type FlowBuilderProps = {
     onEdgesChange: OnEdgesChange;
     onConnect: (params: Edge | Connection) => void;
     onEdgesDelete: (edges: Edge[]) => void;
+    libraryMessages: LibraryMessage[];
 };
 
-export function FlowBuilder({ nodes, edges, onNodesChange, onEdgesChange, onConnect, onEdgesDelete }: FlowBuilderProps) {
+export function FlowBuilder({ nodes, edges, onNodesChange, onEdgesChange, onConnect, onEdgesDelete, libraryMessages }: FlowBuilderProps) {
 
   const edgesWithCustomType = edges.map(edge => ({
     ...edge,
@@ -48,11 +50,19 @@ export function FlowBuilder({ nodes, edges, onNodesChange, onEdgesChange, onConn
     }
   }));
 
+  const nodesWithMessages = nodes.map(node => ({
+      ...node,
+      data: {
+          ...node.data,
+          libraryMessages, // Pass libraryMessages to each node
+      },
+  }));
+
 
   return (
     <div style={{ width: '100%', height: '100%' }}>
       <ReactFlow
-        nodes={nodes.map(node => ({ ...node, type: 'custom' }))}
+        nodes={nodesWithMessages.map(node => ({ ...node, type: 'custom' }))}
         edges={edgesWithCustomType}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}

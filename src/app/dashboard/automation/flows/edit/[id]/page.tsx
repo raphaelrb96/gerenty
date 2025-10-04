@@ -557,6 +557,7 @@ export default function EditConversationFlowPage() {
                     onEdgesChange={onEdgesChange}
                     onConnect={onConnect}
                     onEdgesDelete={handleEdgesDelete}
+                    libraryMessages={libraryMessages}
                 />
                  <Button 
                     className="absolute bottom-6 right-6 rounded-full w-14 h-14"

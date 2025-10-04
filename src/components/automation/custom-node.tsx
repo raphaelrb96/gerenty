@@ -8,6 +8,7 @@ import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { Badge } from '../ui/badge';
 import { Settings, Trash2, Zap, PlusCircle, GitBranch } from 'lucide-react';
+import { LibraryMessage } from '@/lib/types';
 
 export function CustomNode({ data, selected }: NodeProps<{ 
   label: string, 
@@ -24,6 +25,7 @@ export function CustomNode({ data, selected }: NodeProps<{
   transferTo?: string,
   conditions?: any[],
   isDeletable?: boolean,
+  libraryMessages: LibraryMessage[],
   onConfigure: () => void,
   onDelete: () => void,
   onQuickAdd: (sourceHandle?: string) => void,
@@ -42,7 +44,13 @@ export function CustomNode({ data, selected }: NodeProps<{
   const contentPreview = () => {
     switch (data.type) {
         case 'message':
-            return data.messageId ? `ID: ...${data.messageId.slice(-4)}` : <span className="italic">Nenhuma mensagem</span>;
+            const message = data.libraryMessages?.find(m => m.id === data.messageId);
+            if (!message) return <span className="italic">Nenhuma mensagem</span>;
+            if (message.type === 'text' && message.content.text) {
+                const text = message.content.text.body;
+                return text.length > 30 ? `"${text.substring(0, 30)}..."` : `"${text}"`;
+            }
+            return `[${message.type.charAt(0).toUpperCase() + message.type.slice(1)}]`;
         case 'internalAction':
             return data.actionType ? `Ação: ${data.actionType}` : <span className="italic">Nenhuma ação</span>;
         case 'captureData':
