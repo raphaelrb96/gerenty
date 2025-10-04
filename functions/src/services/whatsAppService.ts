@@ -3,9 +3,7 @@ import { SecretManagerService } from './secretManager';
 import { MessageResult, SendMessagePayload, TemplateErrorInfo, WhatsAppApiResponse, LibraryMessage } from '../types/whatsapp';
 import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
-import fetch from 'node-fetch';
-import { FormData } from 'formdata-node';
-import { fileFrom, fileFromSync } from 'formdata-node/file-from';
+import fetch, { RequestInfo, RequestInit } from 'node-fetch';
 
 
 export class WhatsAppService {
@@ -30,22 +28,32 @@ export class WhatsAppService {
             throw new Error(`Failed to fetch media from URL: ${mediaResponse.statusText}`);
         }
         const mediaBuffer = await mediaResponse.buffer();
+        
+        const boundary = `----${Date.now().toString(16)}`;
+        let body = `--${boundary}\r\n`;
+        body += `Content-Disposition: form-data; name="messaging_product"\r\n\r\n`;
+        body += `whatsapp\r\n`;
+        body += `--${boundary}\r\n`;
+        body += `Content-Disposition: form-data; name="file"; filename="${filename}"\r\n`;
+        body += `Content-Type: ${mimeType}\r\n\r\n`;
+        
+        const payload = Buffer.concat([
+            Buffer.from(body, 'utf-8'),
+            mediaBuffer,
+            Buffer.from(`\r\n--${boundary}--\r\n`, 'utf-8'),
+        ]);
 
-        const formData = new FormData();
-        formData.append('messaging_product', 'whatsapp');
-        // Use fileFromSync or fileFrom to create a Blob-like object
-        // formdata-node might need a specific way to handle buffers
-        const blob = new Blob([mediaBuffer], { type: mimeType });
-        formData.append('file', blob, filename);
-
-        const uploadResponse = await fetch(`https://graph.facebook.com/v17.0/${integration.phoneNumberId}/media`, {
+        const uploadUrl: RequestInfo = `https://graph.facebook.com/v17.0/${integration.phoneNumberId}/media`;
+        const options: RequestInit = {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': `multipart/form-data; boundary=${boundary}`,
             },
-            body: formData,
-        });
+            body: payload,
+        };
 
+        const uploadResponse = await fetch(uploadUrl, options);
         const result = await uploadResponse.json() as { id?: string; error?: any };
 
         if (uploadResponse.ok && result.id) {
@@ -218,11 +226,11 @@ export class WhatsAppService {
       
       // Se for um fluxo, o payload já virá com o `content`
       if (payload.content) {
-         result = await this.tryConversationMessage(integration.phoneNumberId, accessToken, payload);
+         result = await this.tryConversationMessage(companyId, integration.phoneNumberId, accessToken, payload);
       } else if (payload.type === 'template') {
         result = await this.tryTemplateMessage(integration.phoneNumberId, accessToken, payload);
       } else {
-        result = await this.tryConversationMessage(integration.phoneNumberId, accessToken, payload);
+        result = await this.tryConversationMessage(companyId, integration.phoneNumberId, accessToken, payload);
       }
 
       // ✅  Salvar a mensagem enviada no Firestore se for bem-sucedida
@@ -242,24 +250,31 @@ export class WhatsAppService {
   }
 
   private async tryConversationMessage(
+    companyId: string,
     phoneNumberId: string,
     accessToken: string,
     payload: SendMessagePayload
   ): Promise<MessageResult> {
     try {
         const contentForApi = JSON.parse(JSON.stringify(payload.content || {}));
-        const mediaType = payload.type as 'image' | 'video' | 'audio' | 'document' | 'file';
-        const isMedia = ['image', 'video', 'audio', 'document', 'file'].includes(mediaType);
+        const mediaType = payload.type as 'image' | 'video' | 'audio' | 'document';
+        const isMedia = ['image', 'video', 'audio', 'document'].includes(mediaType);
+        
+        if (isMedia && contentForApi[mediaType]?.url) {
+            const mediaObject = contentForApi[mediaType];
+            const mediaUrl = mediaObject.url;
+            const filename = mediaUrl.split('/').pop().split('?')[0];
+            const mimeType = mediaObject.mime_type || 'application/octet-stream';
+            
+            const uploadedMediaId = await this.uploadMediaToMeta(companyId, mediaUrl, mimeType, filename);
 
-        if (isMedia) {
-            const mediaKey = mediaType === 'file' ? 'document' : mediaType;
-            const mediaObject = contentForApi[mediaKey];
-
-            if (mediaObject?.url) {
-                // Future implementation: Upload to Meta and get media ID
-                // For now, we assume an ID is already present for media messages
-                delete mediaObject.url; // Ensure URL is not sent to Meta
+            if (!uploadedMediaId) {
+                return { success: false, error: "Failed to upload media to Meta." };
             }
+            
+            // Replace the URL with the ID and remove the URL property
+            mediaObject.id = uploadedMediaId;
+            delete mediaObject.url; 
         }
         
         const messageData: any = {
