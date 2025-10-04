@@ -9,7 +9,7 @@ import { getFlowById, updateFlow } from "@/services/flow-service";
 import { useToast } from "@/hooks/use-toast";
 import type { Flow, LibraryMessage } from "@/lib/types";
 import { useRouter, useParams } from 'next/navigation';
-import type { Node, Edge, OnNodesChange, OnEdgesChange, Connection } from "reactflow";
+import type { Node, Edge, OnNodesChange, OnEdgesChange, Connection, NodeChange } from "reactflow";
 import { applyNodeChanges, applyEdgeChanges, addEdge } from 'reactflow';
 import { NodeConfigPanel } from "@/components/automation/node-config-panel";
 import { NodesPalette } from "@/components/automation/nodes-palette";
@@ -92,6 +92,7 @@ export default function EditConversationFlowPage() {
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
     const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+    const [activeNode, setActiveNode] = useState<Node | null>(null);
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -299,12 +300,24 @@ export default function EditConversationFlowPage() {
     };
     
     const onNodesChange: OnNodesChange = useCallback((changes) => {
-        setNodes((nds) => {
-            const newNodes = applyNodeChanges(changes, nds);
-            return newNodes.map(n => enrichNodeData(n, handleConfigureNode, handleDeleteNode, (node, sourceHandle) => handleQuickAdd(node, sourceHandle)));
-        });
+        const nextNodes = applyNodeChanges(changes, nodes);
+        setNodes(nextNodes.map(n => enrichNodeData(n, handleConfigureNode, handleDeleteNode, (node, sourceHandle) => handleQuickAdd(node, sourceHandle))));
+
+        const selectionChange = changes.find(c => c.type === 'select') as NodeChange & { type: 'select' } | undefined;
+        if (selectionChange) {
+            if (selectionChange.selected) {
+                const selected = nextNodes.find(n => n.id === selectionChange.id);
+                setActiveNode(selected || null);
+            } else {
+                // Check if any other node is selected
+                const anySelected = changes.some(c => (c as any).selected);
+                if (!anySelected) {
+                    setActiveNode(null);
+                }
+            }
+        }
         setHasUnsavedChanges(true);
-    }, [setNodes]);
+    }, [nodes]);
 
     const onEdgesChange: OnEdgesChange = useCallback((changes) => {
         setEdges((eds) => applyEdgeChanges(changes, eds));
@@ -573,16 +586,26 @@ export default function EditConversationFlowPage() {
                     onEdgesDelete={handleEdgesDelete}
                     libraryMessages={libraryMessages}
                 />
-                 <Button 
-                    className="absolute bottom-6 right-6 rounded-full w-14 h-14"
-                    onClick={() => {
-                        setQuickAddSourceNode(null);
-                        setIsPaletteOpen(true);
-                    }}
-                >
-                    <Plus className="h-6 w-6" />
-                    <span className="sr-only">Adicionar Tarefa</span>
-                </Button>
+                 <div className="absolute bottom-6 right-6 flex items-center gap-2">
+                    {activeNode && (
+                        <Card className="p-1 flex items-center gap-1 bg-background/80 backdrop-blur-sm">
+                            <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => handleConfigureNode(activeNode)}>
+                                <Pencil className="h-5 w-5" />
+                                <span className="sr-only">Editar Tarefa</span>
+                            </Button>
+                        </Card>
+                    )}
+                    <Button
+                        className="rounded-full w-14 h-14"
+                        onClick={() => {
+                            setQuickAddSourceNode(null);
+                            setIsPaletteOpen(true);
+                        }}
+                    >
+                        <Plus className="h-6 w-6" />
+                        <span className="sr-only">Adicionar Tarefa</span>
+                    </Button>
+                </div>
             </main>
 
             <Sheet open={isPaletteOpen} onOpenChange={setIsPaletteOpen}>
