@@ -17,7 +17,7 @@ import { useTranslation } from "@/context/i18n-context";
 import { useAuth } from "@/context/auth-context";
 import { useRouter } from "next/navigation";
 import { signOut } from "@/services/auth-service";
-import { Store, UserCircle } from "lucide-react";
+import { Store, UserCircle, MessageSquare } from "lucide-react";
 
 export function Header() {
   const { t } = useTranslation();
@@ -45,6 +45,12 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-2">
+        <Button asChild variant="outline" size="icon">
+            <Link href="/dashboard/inbox">
+              <MessageSquare className="h-5 w-5" />
+              <span className="sr-only">Inbox</span>
+            </Link>
+        </Button>
         <Button asChild variant="outline" size="icon">
             <Link href="/dashboard/pos">
               <Store className="h-5 w-5" />

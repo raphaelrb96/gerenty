@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import {
@@ -65,7 +64,6 @@ export function MainSidebar() {
 
   const allMenuItems = [
     { href: "/dashboard", label: t("Dashboard"), icon: LayoutDashboard, module: 'dashboard' as const },
-    { href: "/dashboard/inbox", label: "Inbox", icon: MessageSquare, module: 'inbox' as const },
     { href: "/dashboard/automation", label: "Automação", icon: Bot, module: 'automation' as const },
     { href: "/dashboard/products", label: t("Products"), icon: Package, module: 'products' as const },
     { href: "/dashboard/orders", label: t("Orders"), icon: ShoppingCart, module: 'orders' as const },
