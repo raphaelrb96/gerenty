@@ -117,10 +117,11 @@ export function CustomNode({ data, selected }: NodeProps<{
         </CardHeader>
         
         {isMainTrigger && hasKeywords ? (
-            <CardContent className="px-3 pb-3 pt-2 text-xs text-muted-foreground space-y-2 min-h-[60px]">
-                <div className="text-center p-2 rounded-md bg-muted">
-                    <span className="font-semibold text-lg text-foreground">{data.triggerKeywords?.length}</span>
-                    <p className="text-xs">Gatilho(s) configurado(s)</p>
+            <CardContent className="px-3 pb-3 pt-2 text-xs text-muted-foreground min-h-[60px]">
+                <div className="flex flex-wrap gap-1">
+                    {data.triggerKeywords?.map((kw, index) => (
+                        <Badge key={index} variant="secondary" className="font-normal">{kw.value}</Badge>
+                    ))}
                 </div>
             </CardContent>
         ) : isMainTrigger && !hasKeywords ? (
