@@ -43,57 +43,45 @@ export function CustomNode({ data, selected }: NodeProps<{
   }
 
   const contentPreview = () => {
-    switch (data.type) {
-        case 'message':
-            const message = data.libraryMessages?.find(m => m.id === data.messageId);
-            if (!message) return <div className="text-center text-xs p-2 italic">Nenhuma mensagem selecionada</div>;
-            
-            let previewText = '';
-            let details = '';
-
-            switch (message.type) {
-                case 'text':
-                    previewText = message.content.text?.body || '[Texto vazio]';
-                    break;
-                case 'interactive':
-                    previewText = message.content.interactive?.body.text || '[Mensagem Interativa]';
-                    const buttonCount = message.content.interactive?.action?.buttons?.length;
-                    const sectionCount = message.content.interactive?.action.sections?.length;
-                    if (buttonCount) details = `${buttonCount} botão(ões)`;
-                    if (sectionCount) details = `${sectionCount} seção(ões)`;
-                    break;
-                case 'image': previewText = '[Imagem]'; break;
-                case 'video': previewText = '[Vídeo]'; break;
-                case 'audio': previewText = '[Áudio]'; break;
-                case 'file': previewText = '[Arquivo]'; break;
-                case 'product': previewText = '[Produto]'; break;
-                default:
-                     previewText = `[${message.type.charAt(0).toUpperCase() + message.type.slice(1)}]`;
-            }
-
-            return (
-                <div className="bg-muted p-2 rounded-md text-xs space-y-1">
-                    <p className="line-clamp-3 whitespace-pre-wrap">{previewText}</p>
-                    {details && <p className="font-semibold text-primary">{details}</p>}
-                </div>
-            );
-        case 'internalAction':
-            return <Badge variant="secondary" className="w-full justify-center truncate">Ação: {data.actionType || 'Nenhuma'}</Badge>;
-        case 'captureData':
-            return <Badge variant="secondary" className="w-full justify-center truncate">Variável: {data.captureVariable || 'Nenhuma'}</Badge>;
-        case 'delay':
-            return <Badge variant="secondary" className="w-full justify-center truncate">Aguardar: {data.delaySeconds ? `${data.delaySeconds}s` : 'Sem atraso'}</Badge>;
-        case 'transfer':
-            return <Badge variant="secondary" className="w-full justify-center truncate">Para: {data.transferTo || 'Ninguém'}</Badge>;
-        case 'conditional':
-             return <Badge variant="secondary" className="w-full justify-center truncate">{data.conditions?.length ? `${data.conditions.length} condição(ões)` : 'Nenhuma'}</Badge>;
-        default:
-            return <Badge variant="secondary" className="w-full justify-center">Nenhuma configuração</Badge>;
+    const message = data.libraryMessages?.find(m => m.id === data.messageId);
+    
+    if (!message) {
+        return <div className="text-center text-xs p-2 italic text-muted-foreground">Nenhuma mensagem selecionada</div>;
     }
+
+    let previewText: React.ReactNode = '';
+    let details = '';
+
+    switch (message.type) {
+        case 'text':
+            previewText = message.content.text?.body || '[Texto vazio]';
+            break;
+        case 'interactive':
+            previewText = message.content.interactive?.body.text || '[Mensagem Interativa]';
+            const buttonCount = message.content.interactive?.action?.buttons?.length;
+            const sectionCount = message.content.interactive?.action.sections?.length;
+            if (buttonCount) details = `${buttonCount} botão(ões)`;
+            if (sectionCount) details = `${sectionCount} seção(ões)`;
+            break;
+        case 'image': previewText = '[Imagem]'; break;
+        case 'video': previewText = '[Vídeo]'; break;
+        case 'audio': previewText = '[Áudio]'; break;
+        case 'file': previewText = '[Arquivo]'; break;
+        case 'product': previewText = '[Produto]'; break;
+        default:
+             previewText = `[${message.type.charAt(0).toUpperCase() + message.type.slice(1)}]`;
+    }
+
+    return (
+        <div className="bg-muted p-2 rounded-md text-xs space-y-1">
+            <p className="line-clamp-3 whitespace-pre-wrap">{previewText}</p>
+            {details && <p className="font-semibold text-primary">{details}</p>}
+        </div>
+    );
   };
   
   const isDeletable = data.isDeletable !== false;
-  const isMainTrigger = !isDeletable;
+  const isTriggerType = data.type === 'keywordTrigger' || data.type === 'waitForResponse';
 
   const getVerticalHandlePosition = (index: number) => {
     const headerHeight = 44; 
@@ -108,7 +96,7 @@ export function CustomNode({ data, selected }: NodeProps<{
 
   return (
     <div className="relative group">
-      {!isMainTrigger && <Handle type="target" position={Position.Top} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10 }} />}
+      {!isTriggerType && <Handle type="target" position={Position.Top} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10 }} />}
       
       {data.type === 'conditional' && (
         <>
@@ -133,42 +121,43 @@ export function CustomNode({ data, selected }: NodeProps<{
         </>
       )}
       
-      {data.type !== 'conditional' && (
+      {(data.type !== 'conditional' && data.type !== 'endFlow') && (
           <Handle type="source" position={Position.Bottom} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10 }} />
       )}
       
       <Card className={cn(
         "border-t-4 bg-card/80 backdrop-blur-sm transition-all duration-200 hover:shadow-xl",
-        isMainTrigger ? 'w-[320px]' : 'w-[280px]',
+        isTriggerType ? 'w-[320px] animate-pulse-slow border-4 border-yellow-400 ring-4 ring-yellow-400/20 shadow-2xl' : 'w-[280px]',
         selected ? 'ring-2 ring-primary ring-offset-2' : '',
-        data.color
+        !isTriggerType && data.color
       )}>
         <CardHeader className="flex flex-row items-center gap-3 p-3 text-card-foreground rounded-t-md">
-           <div className="p-1 rounded-md">
+           <div className={cn("p-1 rounded-md", isTriggerType && "p-2 bg-yellow-400/10")}>
             {data.icon}
           </div>
-          <CardTitle className="text-sm font-semibold">{data.customLabel || data.label}</CardTitle>
+          <CardTitle className={cn("font-semibold", isTriggerType ? "text-base" : "text-sm")}>{data.customLabel || data.label}</CardTitle>
         </CardHeader>
         
-        {isMainTrigger && hasKeywords ? (
-            <CardContent className="px-3 pb-3 pt-2 text-xs text-muted-foreground min-h-[60px]">
-                 <div className="space-y-1">
-                    <span className="font-medium mr-2 text-foreground mb-3 block">Gatilhos:</span>
-                    {data.triggerKeywords?.map((kw, index) =>
-                        <div key={index} className="flex justify-between items-center text-xs">
-                            <Badge variant="secondary">{kw.value}</Badge>
-                            <Badge variant="outline">{getMatchTypeLabel(kw.matchType)}</Badge>
-                        </div>
-                    )}
-                </div>
+        {isTriggerType ? (
+             <CardContent className="px-4 pb-4 pt-2 text-center text-muted-foreground min-h-[80px] flex flex-col items-center justify-center">
+                {hasKeywords ? (
+                    <div className="space-y-2 text-left w-full">
+                        <span className="font-medium mr-2 text-foreground mb-1 block">Gatilhos:</span>
+                        {data.triggerKeywords?.map((kw, index) =>
+                            <div key={index} className="flex justify-between items-center text-xs">
+                                <Badge variant="secondary">{kw.value}</Badge>
+                                <Badge variant="outline">{getMatchTypeLabel(kw.matchType)}</Badge>
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    <>
+                         <p className="text-sm font-semibold text-foreground">Configure os gatilhos</p>
+                         <p className="text-xs">Use o ícone de configurações para definir as palavras-chave que iniciam a conversa.</p>
+                    </>
+                )}
             </CardContent>
-        ) : isMainTrigger && !hasKeywords ? (
-            <CardContent className="px-4 pb-4 pt-2 text-center text-muted-foreground min-h-[80px] flex flex-col items-center justify-center">
-                <Zap className="h-6 w-6 mb-2 text-yellow-500"/>
-                <p className="text-sm font-semibold text-foreground">Gatilho Inicial</p>
-                <p className="text-xs">Configure as palavras-chave que iniciam esta conversa clicando no ícone de configurações.</p>
-            </CardContent>
-        ) : !isMainTrigger && data.type !== 'conditional' ? (
+        ) : data.type !== 'conditional' && data.type !== 'endFlow' ? (
              <CardContent className="px-3 pb-3 pt-2 text-xs text-muted-foreground min-h-[40px]">
               {contentPreview()}
             </CardContent>
@@ -200,7 +189,7 @@ export function CustomNode({ data, selected }: NodeProps<{
                 <Settings className="h-4 w-4"/>
                 <span className="sr-only">Configurar Tarefa</span>
             </Button>
-            {data.type !== 'conditional' && (
+            {data.type !== 'conditional' && data.type !== 'endFlow' && (
              <Button 
                 variant="ghost" 
                 size="icon" 
@@ -227,3 +216,5 @@ export function CustomNode({ data, selected }: NodeProps<{
     </div>
   );
 }
+
+  

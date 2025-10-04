@@ -13,7 +13,7 @@ import type { Node, Edge, OnNodesChange, OnEdgesChange, Connection } from "react
 import { applyNodeChanges, applyEdgeChanges, addEdge } from 'reactflow';
 import { NodeConfigPanel } from "@/components/automation/node-config-panel";
 import { NodesPalette } from "@/components/automation/nodes-palette";
-import { Bot, MessageCircle, Settings, Plus, Pencil, Trash2, Save, MoreVertical, Clock, Calendar, Repeat, MessageSquareX, Forward, Send, HelpCircle, GitBranch, Share2, Timer, UserCheck, CheckCircle, MessageSquareReply } from "lucide-react";
+import { Bot, MessageCircle, Settings, Plus, Pencil, Trash2, Save, MoreVertical, Clock, Calendar, Repeat, MessageSquareX, Forward, Send, HelpCircle, GitBranch, Share2, Timer, UserCheck, CheckCircle, MessageSquareReply, Zap } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -47,8 +47,8 @@ import { ResponseLibraryForm } from "@/components/automation/response-library-fo
 
 
 export const nodeTypeConfig = {
-    keywordTrigger: { icon: <Bot size={20} />, color: 'bg-yellow-500', defaultData: { label: 'Gatilho: Palavra-Chave', type: 'keywordTrigger' } },
-    waitForResponse: { icon: <MessageSquareReply size={20} />, color: 'bg-yellow-500', defaultData: { label: 'Aguardar Resposta', type: 'waitForResponse' } },
+    keywordTrigger: { icon: <Zap size={32} />, color: 'bg-yellow-500', defaultData: { label: 'Gatilho: Palavra-Chave', type: 'keywordTrigger' } },
+    waitForResponse: { icon: <MessageSquareReply size={32} />, color: 'bg-yellow-500', defaultData: { label: 'Aguardar Resposta', type: 'waitForResponse' } },
     message: { icon: <MessageCircle size={20} />, color: 'bg-green-500', defaultData: { label: 'Enviar Mensagem', type: 'message' } },
     captureData: { icon: <HelpCircle size={20} />, color: 'bg-blue-500', defaultData: { label: 'Capturar Dados', type: 'captureData' } },
     internalAction: { icon: <Settings size={20} />, color: 'bg-purple-500', defaultData: { label: 'Ação Interna', type: 'internalAction' } },
@@ -785,3 +785,5 @@ export default function EditConversationFlowPage() {
 
 
 }
+
+  
