@@ -14,7 +14,6 @@ import { applyNodeChanges, applyEdgeChanges, addEdge } from 'reactflow';
 import { NodeConfigPanel } from "@/components/automation/node-config-panel";
 import { NodesPalette } from "@/components/automation/nodes-palette";
 import { Bot, MessageCircle, Settings, Plus, Pencil, Trash2, Save, MoreVertical, Clock, Calendar, Repeat, MessageSquareX, Forward, Send, HelpCircle, GitBranch, Share2, Timer, UserCheck, CheckCircle, MessageSquareReply } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import {
   Sheet,
   SheetContent,
@@ -571,14 +570,17 @@ export default function EditConversationFlowPage() {
                 </Button>
             </main>
 
-             <Dialog open={isPaletteOpen} onOpenChange={setIsPaletteOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Paleta de Tarefas</DialogTitle>
-                    </DialogHeader>
-                    <NodesPalette onNodeAdd={addNode} />
-                </DialogContent>
-            </Dialog>
+            <Sheet open={isPaletteOpen} onOpenChange={setIsPaletteOpen}>
+                <SheetContent className="sm:max-w-md flex flex-col p-0">
+                     <SheetHeader className="p-6">
+                        <SheetTitle>Paleta de Tarefas</SheetTitle>
+                        <SheetDescription>Clique em uma tarefa para adicioná-la ao fluxo.</SheetDescription>
+                    </SheetHeader>
+                    <ScrollArea className="flex-1 px-6">
+                        <NodesPalette onNodeAdd={addNode} />
+                    </ScrollArea>
+                </SheetContent>
+            </Sheet>
             
             <Sheet open={isConfigOpen} onOpenChange={(isOpen) => { if (!isOpen) setSelectedNode(null); setIsConfigOpen(isOpen);}}>
                 <NodeConfigPanel 
@@ -754,7 +756,6 @@ export default function EditConversationFlowPage() {
             </AlertDialog>
         </div>
     );
-
     
 
 

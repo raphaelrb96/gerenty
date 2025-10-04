@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
@@ -84,45 +85,40 @@ type NodePaletteProps = {
 export function NodesPalette({ onNodeAdd }: NodePaletteProps) {
 
     return (
-        <Card className="border-0 shadow-none">
-            <CardHeader>
-                <CardDescription>Clique em uma tarefa para adicioná-la ao fluxo.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <div>
-                    <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Gatilhos e Etapas</h3>
-                     <div className="grid grid-cols-2 gap-4">
-                        {triggerNodeTypes.map(nodeType => (
-                            <Button 
-                                key={nodeType.type} 
-                                variant="outline" 
-                                className="h-auto p-4 flex flex-col gap-2 items-center text-center"
-                                onClick={() => onNodeAdd(nodeType.type)}
-                            >
-                                <nodeType.icon className="h-6 w-6 text-yellow-500" />
-                                <span className="text-sm font-semibold">{nodeType.label}</span>
-                            </Button>
-                        ))}
-                    </div>
+        <div className="space-y-6">
+            <div>
+                <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Gatilhos e Etapas</h3>
+                 <div className="grid grid-cols-2 gap-4">
+                    {triggerNodeTypes.map(nodeType => (
+                        <Button 
+                            key={nodeType.type} 
+                            variant="outline" 
+                            className="h-auto p-4 flex flex-col gap-2 items-center text-center"
+                            onClick={() => onNodeAdd(nodeType.type)}
+                        >
+                            <nodeType.icon className="h-6 w-6 text-yellow-500" />
+                            <span className="text-sm font-semibold">{nodeType.label}</span>
+                        </Button>
+                    ))}
                 </div>
-                 <Separator />
-                <div>
-                    <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Ações</h3>
-                     <div className="grid grid-cols-2 gap-4">
-                        {actionNodeTypes.map(nodeType => (
-                            <Button 
-                                key={nodeType.type} 
-                                variant="outline" 
-                                className="h-auto p-4 flex flex-col gap-2 items-center text-center"
-                                onClick={() => onNodeAdd(nodeType.type)}
-                            >
-                                <nodeType.icon className="h-6 w-6" />
-                                <span className="text-sm font-semibold">{nodeType.label}</span>
-                            </Button>
-                        ))}
-                    </div>
+            </div>
+             <Separator />
+            <div>
+                <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Ações</h3>
+                 <div className="grid grid-cols-2 gap-4">
+                    {actionNodeTypes.map(nodeType => (
+                        <Button 
+                            key={nodeType.type} 
+                            variant="outline" 
+                            className="h-auto p-4 flex flex-col gap-2 items-center text-center"
+                            onClick={() => onNodeAdd(nodeType.type)}
+                        >
+                            <nodeType.icon className="h-6 w-6" />
+                            <span className="text-sm font-semibold">{nodeType.label}</span>
+                        </Button>
+                    ))}
                 </div>
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     )
 }
