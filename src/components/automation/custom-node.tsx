@@ -99,7 +99,7 @@ export function CustomNode({ data, selected }: NodeProps<{
         </>
       )}
       
-      {data.type !== 'conditional' && (
+      {data.type !== 'conditional' && data.type !== 'keywordTrigger' && (
           <Handle type="source" position={Position.Bottom} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10 }} />
       )}
       
@@ -118,14 +118,9 @@ export function CustomNode({ data, selected }: NodeProps<{
         
         {isMainTrigger && hasKeywords ? (
             <CardContent className="px-3 pb-3 pt-2 text-xs text-muted-foreground space-y-2 min-h-[60px]">
-                <div className="space-y-1">
-                    <span className="font-medium mr-2 text-foreground">Gatilhos:</span>
-                    {data.triggerKeywords?.map((kw, index) => 
-                        <div key={index} className="flex justify-between items-center text-xs">
-                            <Badge variant="secondary">{kw.value}</Badge>
-                            <Badge variant="outline">{getMatchTypeLabel(kw.matchType)}</Badge>
-                        </div>
-                    )}
+                <div className="text-center p-2 rounded-md bg-muted">
+                    <span className="font-semibold text-lg text-foreground">{data.triggerKeywords?.length}</span>
+                    <p className="text-xs">Gatilho(s) configurado(s)</p>
                 </div>
             </CardContent>
         ) : isMainTrigger && !hasKeywords ? (
@@ -166,7 +161,7 @@ export function CustomNode({ data, selected }: NodeProps<{
                 <Settings className="h-4 w-4"/>
                 <span className="sr-only">Configurar Tarefa</span>
             </Button>
-            {data.type !== 'conditional' && (
+            {data.type !== 'conditional' && data.type !== 'keywordTrigger' && (
              <Button 
                 variant="ghost" 
                 size="icon" 
