@@ -1,10 +1,12 @@
-
-
 // src/services/whatsAppService.ts
 import { SecretManagerService } from './secretManager';
 import { MessageResult, SendMessagePayload, TemplateErrorInfo, WhatsAppApiResponse, LibraryMessage } from '../types/whatsapp';
 import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
+import fetch from 'node-fetch';
+import { FormData } from 'formdata-node';
+import { fileFrom, fileFromSync } from 'formdata-node/file-from';
+
 
 export class WhatsAppService {
   private secretManager: SecretManagerService;
@@ -14,6 +16,48 @@ export class WhatsAppService {
     this.secretManager = SecretManagerService.getInstance();
     this.db = admin.firestore();
   }
+
+  async uploadMediaToMeta(companyId: string, mediaUrl: string, mimeType: string, filename: string): Promise<string | null> {
+    try {
+        const accessToken = await this.secretManager.getWhatsAppToken(companyId);
+        const integration = await this.getCompanyIntegration(companyId);
+        if (!integration?.phoneNumberId) {
+            throw new Error('WhatsApp integration not found for media upload.');
+        }
+
+        const mediaResponse = await fetch(mediaUrl);
+        if (!mediaResponse.ok) {
+            throw new Error(`Failed to fetch media from URL: ${mediaResponse.statusText}`);
+        }
+        const mediaBuffer = await mediaResponse.buffer();
+
+        const formData = new FormData();
+        formData.append('messaging_product', 'whatsapp');
+        formData.append('file', fileFromSync(filename, mediaBuffer, { type: mimeType }));
+
+        const uploadResponse = await fetch(`https://graph.facebook.com/v17.0/${integration.phoneNumberId}/media`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+            },
+            body: formData,
+        });
+
+        const result = await uploadResponse.json() as { id?: string; error?: any };
+
+        if (uploadResponse.ok && result.id) {
+            functions.logger.info(`[WhatsAppService] Media uploaded to Meta successfully. Media ID: ${result.id}`);
+            return result.id;
+        } else {
+            functions.logger.error('[WhatsAppService] Failed to upload media to Meta:', result.error);
+            return null;
+        }
+    } catch (error) {
+        functions.logger.error('[WhatsAppService] Exception during media upload to Meta:', error);
+        return null;
+    }
+}
+
 
   async fetchMediaUrl(mediaId: string, companyId: string): Promise<string | null> {
     try {
@@ -252,7 +296,7 @@ export class WhatsAppService {
         };
       } else {
         // Se a API já rejeitou imediatamente
-        functions.logger.error('[WhatsAppService] Conversation message rejected by API:', result.error);
+        functions.logger.error('[WhatsAppService] Conversation message rejected by API:', result.error, JSON.stringify(messageData));
 
         if (result.error?.code === 131047 || result.error?.message.includes("24 hour")) {
           functions.logger.info(`[WhatsAppService] Outside 24h window (immediate rejection)`);
