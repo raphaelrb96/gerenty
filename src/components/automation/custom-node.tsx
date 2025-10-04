@@ -7,8 +7,9 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../ui/card
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { Badge } from '../ui/badge';
-import { Settings, Trash2, Zap, PlusCircle, GitBranch } from 'lucide-react';
+import { Settings, Trash2, Zap, PlusCircle, GitBranch, MessageSquare } from 'lucide-react';
 import { LibraryMessage } from '@/lib/types';
+import React from 'react';
 
 export function CustomNode({ data, selected }: NodeProps<{ 
   label: string, 
@@ -45,40 +46,49 @@ export function CustomNode({ data, selected }: NodeProps<{
     switch (data.type) {
         case 'message':
             const message = data.libraryMessages?.find(m => m.id === data.messageId);
-            if (!message) return <span className="italic">Nenhuma mensagem</span>;
+            if (!message) return <div className="text-center text-xs p-2 italic">Nenhuma mensagem selecionada</div>;
             
+            let previewText = '';
+            let details = '';
+
             switch (message.type) {
                 case 'text':
-                    const text = message.content.text?.body;
-                    return text ? (text.length > 40 ? `"${text.substring(0, 40)}..."` : `"${text}"`) : '[Texto vazio]';
+                    previewText = message.content.text?.body || '[Texto vazio]';
+                    break;
                 case 'interactive':
-                    const bodyText = message.content.interactive?.body?.text;
+                    previewText = message.content.interactive?.body.text || '[Mensagem Interativa]';
                     const buttonCount = message.content.interactive?.action?.buttons?.length;
-                    const sectionCount = message.content.interactive?.action?.sections?.length;
-                    let interactivePreview = bodyText ? `"${bodyText.substring(0, 25)}..."` : '[Mensagem Interativa]';
-                    if (buttonCount) interactivePreview += ` (${buttonCount} botões)`;
-                    if (sectionCount) interactivePreview += ` (${sectionCount} seções)`;
-                    return interactivePreview;
-                case 'image': return '[Imagem]';
-                case 'video': return '[Vídeo]';
-                case 'audio': return '[Áudio]';
-                case 'file': return '[Arquivo]';
-                case 'product': return '[Produto]';
+                    const sectionCount = message.content.interactive?.action.sections?.length;
+                    if (buttonCount) details = `${buttonCount} botão(ões)`;
+                    if (sectionCount) details = `${sectionCount} seção(ões)`;
+                    break;
+                case 'image': previewText = '[Imagem]'; break;
+                case 'video': previewText = '[Vídeo]'; break;
+                case 'audio': previewText = '[Áudio]'; break;
+                case 'file': previewText = '[Arquivo]'; break;
+                case 'product': previewText = '[Produto]'; break;
                 default:
-                     return `[${message.type.charAt(0).toUpperCase() + message.type.slice(1)}]`;
+                     previewText = `[${message.type.charAt(0).toUpperCase() + message.type.slice(1)}]`;
             }
+
+            return (
+                <div className="bg-muted p-2 rounded-md text-xs space-y-1">
+                    <p className="line-clamp-3 whitespace-pre-wrap">{previewText}</p>
+                    {details && <p className="font-semibold text-primary">{details}</p>}
+                </div>
+            );
         case 'internalAction':
-            return data.actionType ? `Ação: ${data.actionType}` : <span className="italic">Nenhuma ação</span>;
+            return <Badge variant="secondary" className="w-full justify-center truncate">Ação: {data.actionType || 'Nenhuma'}</Badge>;
         case 'captureData':
-            return data.captureVariable ? `Variável: ${data.captureVariable}` : <span className="italic">Nenhuma variável</span>;
+            return <Badge variant="secondary" className="w-full justify-center truncate">Variável: {data.captureVariable || 'Nenhuma'}</Badge>;
         case 'delay':
-            return data.delaySeconds ? `Aguardar: ${data.delaySeconds}s` : <span className="italic">Sem atraso</span>;
+            return <Badge variant="secondary" className="w-full justify-center truncate">Aguardar: {data.delaySeconds ? `${data.delaySeconds}s` : 'Sem atraso'}</Badge>;
         case 'transfer':
-            return data.transferTo ? `Para: ${data.transferTo}`: <span className="italic">Ninguém selecionado</span>
+            return <Badge variant="secondary" className="w-full justify-center truncate">Para: {data.transferTo || 'Ninguém'}</Badge>;
         case 'conditional':
-             return data.conditions?.length ? `${data.conditions.length} condição(ões)` : <span className="italic">Nenhuma condição</span>;
+             return <Badge variant="secondary" className="w-full justify-center truncate">{data.conditions?.length ? `${data.conditions.length} condição(ões)` : 'Nenhuma'}</Badge>;
         default:
-            return 'Nenhuma configuração';
+            return <Badge variant="secondary" className="w-full justify-center">Nenhuma configuração</Badge>;
     }
   };
   
@@ -142,7 +152,7 @@ export function CustomNode({ data, selected }: NodeProps<{
         
         {isMainTrigger && hasKeywords ? (
             <CardContent className="px-3 pb-3 pt-2 text-xs text-muted-foreground min-h-[60px]">
-                <div className="space-y-1">
+                 <div className="space-y-1">
                     <span className="font-medium mr-2 text-foreground mb-3 block">Gatilhos:</span>
                     {data.triggerKeywords?.map((kw, index) =>
                         <div key={index} className="flex justify-between items-center text-xs">
@@ -160,7 +170,7 @@ export function CustomNode({ data, selected }: NodeProps<{
             </CardContent>
         ) : !isMainTrigger && data.type !== 'conditional' ? (
              <CardContent className="px-3 pb-3 pt-2 text-xs text-muted-foreground min-h-[40px]">
-              <Badge variant="secondary" className="w-full justify-center truncate">{contentPreview()}</Badge>
+              {contentPreview()}
             </CardContent>
         ) : data.type === 'conditional' && (
             <CardContent className="px-3 pb-3 pt-2 space-y-2">
