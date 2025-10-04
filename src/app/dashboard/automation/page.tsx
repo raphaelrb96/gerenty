@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -72,41 +71,22 @@ function AutomationRulesTab() {
     );
 }
 
-function FlowBuilderTab() {
-    const [flows, setFlows] = useState<Flow[]>([]);
-    const [loading, setLoading] = useState(true);
-    const { activeCompany } = useCompany();
+function FlowBuilderTab({ flows, onFlowsChange }: { flows: Flow[]; onFlowsChange: () => void; }) {
     const { toast } = useToast();
     const [flowToDelete, setFlowToDelete] = useState<Flow | null>(null);
-
-    const fetchFlows = useCallback(() => {
-        if (activeCompany) {
-            setLoading(true);
-            getFlowsByCompany(activeCompany.id)
-                .then(setFlows)
-                .catch(() => toast({ variant: "destructive", title: "Erro ao buscar fluxos" }))
-                .finally(() => setLoading(false));
-        }
-    }, [activeCompany, toast]);
-    
-    useEffect(() => {
-        fetchFlows();
-    }, [fetchFlows]);
 
     const handleDeleteFlow = async () => {
         if (!flowToDelete) return;
         try {
             await deleteFlow(flowToDelete.id);
             toast({ title: "Fluxo excluído com sucesso!" });
-            fetchFlows(); // Refresh list
+            onFlowsChange();
         } catch (error) {
             toast({ variant: "destructive", title: "Erro ao excluir fluxo." });
         } finally {
             setFlowToDelete(null);
         }
     };
-    
-    if (loading) return <LoadingSpinner />;
 
     return (
         <Card>
@@ -219,17 +199,13 @@ function FlowBuilderTab() {
     );
 }
 
-
-function TemplatesTab() {
+function TemplatesTab({ templates, onTemplatesChange }: { templates: MessageTemplate[], onTemplatesChange: () => void }) {
   const { activeCompany } = useCompany();
   const { toast } = useToast();
-  const [templates, setTemplates] = useState<MessageTemplate[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedTemplate, setSelectedTemplate] = useState<MessageTemplate | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [templateToEdit, setTemplateToEdit] = useState<MessageTemplate | null>(null);
   const [templateToDelete, setTemplateToDelete] = useState<MessageTemplate | null>(null);
-
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncCooldown, setSyncCooldown] = useState(0);
 
@@ -253,27 +229,6 @@ function TemplatesTab() {
     return () => clearInterval(interval);
   }, [activeCompany, syncStorageKey]);
 
-  const fetchTemplates = useCallback(async () => {
-    if (activeCompany) {
-      setLoading(true);
-      try {
-        const companyTemplates = await getTemplatesByCompany(activeCompany.id);
-        setTemplates(companyTemplates);
-      } catch (error) {
-        toast({ variant: "destructive", title: "Erro ao buscar templates" });
-      } finally {
-        setLoading(false);
-      }
-    } else {
-      setTemplates([]);
-      setLoading(false);
-    }
-  }, [activeCompany, toast]);
-
-  useEffect(() => {
-    fetchTemplates();
-  }, [fetchTemplates]);
-
   const handleOpenForm = (template: MessageTemplate | null = null) => {
     setTemplateToEdit(template);
     setIsFormOpen(true);
@@ -284,7 +239,7 @@ function TemplatesTab() {
     try {
         await deleteTemplateService(activeCompany.id, templateToDelete.name);
         toast({ title: "Template excluído com sucesso!" });
-        fetchTemplates();
+        onTemplatesChange();
     } catch (error) {
         toast({ variant: "destructive", title: "Erro ao excluir template" });
     } finally {
@@ -304,7 +259,7 @@ function TemplatesTab() {
                 title: "Sincronização Concluída",
                 description: `${result.added} templates adicionados, ${result.updated} atualizados.`
             });
-            fetchTemplates(); // Refresh the list
+            onTemplatesChange();
             localStorage.setItem(syncStorageKey, new Date().toISOString());
             setSyncCooldown(SYNC_COOLDOWN_HOURS * 60 * 60 * 1000);
         } catch (error: any) {
@@ -314,17 +269,12 @@ function TemplatesTab() {
         }
     };
 
-
   const formatCooldown = (ms: number) => {
     const hours = Math.floor(ms / (1000 * 60 * 60));
     const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((ms % (1000 * 60)) / 1000);
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   }
-  
-    if (loading) {
-        return <LoadingSpinner />;
-    }
 
     return (
         <Card>
@@ -343,9 +293,9 @@ function TemplatesTab() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {templates.map(template => (
-                            <TemplateCard 
-                                key={template.id} 
-                                template={template} 
+                            <TemplateCard
+                                key={template.id}
+                                template={template}
                                 onViewDetails={() => setSelectedTemplate(template)}
                                 onEdit={() => handleOpenForm(template)}
                                 onDelete={() => setTemplateToDelete(template)}
@@ -368,7 +318,7 @@ function TemplatesTab() {
                 </div>
             </CardFooter>
         
-            <TemplatePreviewModal 
+            <TemplatePreviewModal
                 template={selectedTemplate}
                 isOpen={!!selectedTemplate}
                 onClose={() => setSelectedTemplate(null)}
@@ -377,10 +327,10 @@ function TemplatesTab() {
             <TemplateForm
                 isOpen={isFormOpen}
                 onClose={() => setIsFormOpen(false)}
-                onFinished={fetchTemplates}
+                onFinished={onTemplatesChange}
                 template={templateToEdit}
             />
-            
+
             <AlertDialog open={!!templateToDelete} onOpenChange={(isOpen) => !isOpen && setTemplateToDelete(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
@@ -401,35 +351,12 @@ function TemplatesTab() {
     )
 }
 
-function LibraryTab() {
+function LibraryTab({ messages, onMessagesChange }: { messages: LibraryMessage[], onMessagesChange: () => void }) {
     const { activeCompany } = useCompany();
     const { toast } = useToast();
-    const [messages, setMessages] = useState<LibraryMessage[]>([]);
-    const [loading, setLoading] = useState(true);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [messageToEdit, setMessageToEdit] = useState<LibraryMessage | null>(null);
     const [messageToDelete, setMessageToDelete] = useState<LibraryMessage | null>(null);
-
-    const fetchMessages = useCallback(async () => {
-        if (activeCompany) {
-            setLoading(true);
-            try {
-                const companyMessages = await getLibraryMessagesByCompany(activeCompany.id);
-                setMessages(companyMessages);
-            } catch (error) {
-                toast({ variant: "destructive", title: "Erro ao buscar respostas" });
-            } finally {
-                setLoading(false);
-            }
-        } else {
-            setMessages([]);
-            setLoading(false);
-        }
-    }, [activeCompany, toast]);
-
-    useEffect(() => {
-        fetchMessages();
-    }, [fetchMessages]);
 
     const handleOpenForm = (message: LibraryMessage | null = null) => {
         setMessageToEdit(message);
@@ -441,17 +368,13 @@ function LibraryTab() {
         try {
             await deleteLibraryMessage(activeCompany.id, messageToDelete.id);
             toast({ title: "Resposta excluída com sucesso!" });
-            fetchMessages();
+            onMessagesChange();
         } catch (error) {
             toast({ variant: "destructive", title: "Erro ao excluir resposta" });
         } finally {
             setMessageToDelete(null);
         }
     };
-
-    if (loading) {
-        return <LoadingSpinner />;
-    }
 
     return (
         <Card>
@@ -490,10 +413,10 @@ function LibraryTab() {
             <ResponseLibraryForm
                 isOpen={isFormOpen}
                 onClose={() => setIsFormOpen(false)}
-                onFinished={fetchMessages}
+                onFinished={onMessagesChange}
                 message={messageToEdit}
             />
-            
+
             <AlertDialog open={!!messageToDelete} onOpenChange={(isOpen) => !isOpen && setMessageToDelete(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
@@ -515,38 +438,76 @@ function LibraryTab() {
 }
 
 export default function AutomationPage() {
-  const { activeCompany, loading } = useCompany();
+    const { activeCompany, loading: companyLoading } = useCompany();
+    const { toast } = useToast();
+    const [loading, setLoading] = useState(true);
 
-  if (loading) {
-      return <LoadingSpinner />;
-  }
+    const [flows, setFlows] = useState<Flow[]>([]);
+    const [templates, setTemplates] = useState<MessageTemplate[]>([]);
+    const [libraryMessages, setLibraryMessages] = useState<LibraryMessage[]>([]);
 
-  if (!activeCompany) {
+    const fetchData = useCallback(async () => {
+        if (activeCompany) {
+            setLoading(true);
+            try {
+                const [companyFlows, companyTemplates, companyMessages] = await Promise.all([
+                    getFlowsByCompany(activeCompany.id),
+                    getTemplatesByCompany(activeCompany.id),
+                    getLibraryMessagesByCompany(activeCompany.id)
+                ]);
+                setFlows(companyFlows);
+                setTemplates(companyTemplates);
+                setLibraryMessages(companyMessages);
+            } catch (error) {
+                 toast({ variant: "destructive", title: "Erro ao carregar dados de automação." });
+            } finally {
+                setLoading(false);
+            }
+        } else {
+            // Clear data if no company is active
+            setFlows([]);
+            setTemplates([]);
+            setLibraryMessages([]);
+            setLoading(false);
+        }
+    }, [activeCompany, toast]);
+
+    useEffect(() => {
+        if (!companyLoading) {
+            fetchData();
+        }
+    }, [companyLoading, fetchData]);
+
+    if (companyLoading || loading) {
+        return <LoadingSpinner />;
+    }
+
+    if (!activeCompany) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <EmptyState
+                    icon={<Building className="h-16 w-16" />}
+                    title="Nenhuma empresa selecionada"
+                    description="Por favor, selecione uma empresa para gerenciar as automações e templates."
+                    action={<Button asChild><Link href="/dashboard/companies">Gerenciar Empresas</Link></Button>}
+                />
+            </div>
+        );
+    }
+
     return (
-        <div className="flex items-center justify-center h-full">
-            <EmptyState
-                icon={<Building className="h-16 w-16" />}
-                title="Nenhuma empresa selecionada"
-                description="Por favor, selecione uma empresa para gerenciar as automações e templates."
-                action={<Button asChild><Link href="/dashboard/companies">Gerenciar Empresas</Link></Button>}
+        <div className="space-y-8">
+            <PageHeader
+                title="Automação e Modelos"
+                description="Crie fluxos de trabalho, gerencie modelos de mensagem e respostas rápidas."
             />
+            
+            <div className="space-y-6">
+                <FlowBuilderTab flows={flows} onFlowsChange={fetchData} />
+                <TemplatesTab templates={templates} onTemplatesChange={fetchData} />
+                <AutomationRulesTab />
+                <LibraryTab messages={libraryMessages} onMessagesChange={fetchData} />
+            </div>
         </div>
     );
-  }
-
-  return (
-    <div className="space-y-8">
-      <PageHeader
-        title="Automação e Modelos"
-        description="Crie fluxos de trabalho, gerencie modelos de mensagem e respostas rápidas."
-      />
-      
-      <div className="space-y-6">
-        <FlowBuilderTab />
-        <TemplatesTab />
-        <AutomationRulesTab />
-        <LibraryTab />
-      </div>
-    </div>
-  );
 }
