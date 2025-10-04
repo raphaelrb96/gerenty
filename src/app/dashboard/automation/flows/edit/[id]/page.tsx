@@ -325,6 +325,15 @@ export default function EditConversationFlowPage() {
             return;
         }
 
+        if (quickAddSourceNode?.data.type === 'keywordTrigger' && type === 'keywordTrigger') {
+            toast({
+                variant: 'destructive',
+                title: 'Conexão Inválida',
+                description: 'Um nó de "Gatilho" não pode ser conectado a outro "Gatilho".'
+            });
+            return;
+        }
+
         const sourceNodeIsConditional = quickAddSourceNode?.data.type === 'conditional';
         const handleFromQuickAdd = quickAddSourceNode?.data.sourceHandleForQuickAdd;
 
@@ -428,28 +437,28 @@ export default function EditConversationFlowPage() {
     };
 
     const onConnect = useCallback((params: Edge | Connection) => {
+        const sourceNode = nodes.find((node) => node.id === params.source);
+        const targetNode = nodes.find((node) => node.id === params.target);
+
+        // Rule: Prevent connecting 'keywordTrigger' to 'waitForResponse' and vice-versa
+        const isTriggerToResponse = (sourceNode?.data.type === 'keywordTrigger' && targetNode?.data.type === 'waitForResponse');
+        const isResponseToTrigger = (sourceNode?.data.type === 'waitForResponse' && targetNode?.data.type === 'keywordTrigger');
+
+        if (isTriggerToResponse || isResponseToTrigger) {
+            toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Gatilhos e Respostas não podem se conectar entre si.' });
+            return;
+        }
+
+        // Rule 1: Target handle can only have one connection.
+        const isTargetHandleOccupied = edges.some(
+            (edge) => edge.target === params.target && edge.targetHandle === params.targetHandle
+        );
+        if (isTargetHandleOccupied) {
+            toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Cada ponto de entrada de uma tarefa só pode receber uma conexão.' });
+            return;
+        }
+        
         setEdges((eds) => {
-            const sourceNode = nodes.find((node) => node.id === params.source);
-            const targetNode = nodes.find((node) => node.id === params.target);
-    
-            // Rule: Prevent connecting 'keywordTrigger' to 'waitForResponse' and vice-versa
-            const isTriggerToResponse = (sourceNode?.data.type === 'keywordTrigger' && targetNode?.data.type === 'waitForResponse');
-            const isResponseToTrigger = (sourceNode?.data.type === 'waitForResponse' && targetNode?.data.type === 'keywordTrigger');
-    
-            if (isTriggerToResponse || isResponseToTrigger) {
-                toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Gatilhos e Respostas não podem se conectar entre si.' });
-                return eds;
-            }
-    
-            // Rule 1: Target handle can only have one connection.
-            const isTargetHandleOccupied = eds.some(
-                (edge) => edge.target === params.target && edge.targetHandle === params.targetHandle
-            );
-            if (isTargetHandleOccupied) {
-                toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Cada ponto de entrada de uma tarefa só pode receber uma conexão.' });
-                return eds;
-            }
-            
             // Rule 2: Non-conditional nodes can only have one outgoing connection.
             if (sourceNode && sourceNode.data.type !== 'conditional') {
                 const sourceHasConnection = eds.some(edge => edge.source === params.source);
@@ -494,7 +503,7 @@ export default function EditConversationFlowPage() {
     
             return addEdge({ ...params, type: 'smoothstep' }, eds);
         });
-    }, [nodes, toast]);
+    }, [nodes, edges, toast]);
 
     const onConnectFromPanel = (source: string, sourceHandle: string, target: string) => {
         setEdges(prevEdges => {
