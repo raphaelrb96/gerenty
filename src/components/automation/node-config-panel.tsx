@@ -479,15 +479,6 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
 
     return (
         <div className="space-y-4">
-             <div className="space-y-2">
-                <Label htmlFor="custom-label">Rótulo Personalizado</Label>
-                <Input 
-                    id="custom-label" 
-                    placeholder="Ex: Verificar CPF" 
-                    value={node.data.customLabel || ''} 
-                    onChange={(e) => onNodeDataChange(node.id, { customLabel: e.target.value })}
-                />
-            </div>
             <p className="text-sm text-muted-foreground">Crie condições para o fluxo. A saída padrão "Senão" será usada se nenhuma das regras for atendida.</p>
             <Separator />
             {conditions.map((cond: any, index: number) => {
