@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../ui/card
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { Badge } from '../ui/badge';
-import { Settings, Trash2, Zap, PlusCircle, GitBranch, MessageSquare } from 'lucide-react';
+import { Settings, Trash2, Zap, PlusCircle, GitBranch, MessageSquare, Video, File, Music, List, MessageCircle as MessageIcon } from 'lucide-react';
 import { LibraryMessage } from '@/lib/types';
 import React from 'react';
 import Image from 'next/image';
@@ -50,45 +50,79 @@ export function CustomNode({ data, selected }: NodeProps<{
         return <div className="text-center text-xs p-2 italic text-muted-foreground">Nenhuma mensagem selecionada</div>;
     }
 
-    let previewContent: React.ReactNode = '';
-    let details = '';
-
     switch (message.type) {
         case 'text':
-            previewContent = <p className="line-clamp-3 whitespace-pre-wrap">{message.content.text?.body || '[Texto vazio]'}</p>;
-            break;
-        case 'interactive':
-            previewContent = <p className="line-clamp-3 whitespace-pre-wrap">{message.content.interactive?.body.text || '[Mensagem Interativa]'}</p>;
-            const buttonCount = message.content.interactive?.action?.buttons?.length;
-            const sectionCount = message.content.interactive?.action.sections?.length;
-            if (buttonCount) details = `${buttonCount} botão(ões)`;
-            if (sectionCount) details = `${sectionCount} seção(ões)`;
-            break;
+            return <p className="text-sm p-2 bg-muted rounded-md whitespace-pre-wrap">{message.content.text?.body || '[Texto vazio]'}</p>;
         case 'image':
             if (message.content.media?.url) {
-                previewContent = (
+                return (
                     <div className="relative aspect-video w-full">
                         <Image src={message.content.media.url} alt="Pré-visualização da imagem" layout="fill" objectFit="cover" className="rounded-md" />
                     </div>
                 );
-            } else {
-                 previewContent = <p className="line-clamp-3 whitespace-pre-wrap">[Imagem]</p>;
             }
-            break;
-        case 'video': previewContent = <p className="line-clamp-3 whitespace-pre-wrap">[Vídeo]</p>; break;
-        case 'audio': previewContent = <p className="line-clamp-3 whitespace-pre-wrap">[Áudio]</p>; break;
-        case 'file': previewContent = <p className="line-clamp-3 whitespace-pre-wrap">[Arquivo]</p>; break;
-        case 'product': previewContent = <p className="line-clamp-3 whitespace-pre-wrap">[Produto]</p>; break;
-        default:
-             previewContent = <p className="line-clamp-3 whitespace-pre-wrap">{`[${message.type.charAt(0).toUpperCase() + message.type.slice(1)}]`}</p>;
-    }
+            return <p className="text-sm p-2 italic text-muted-foreground">[Imagem sem URL]</p>;
+        case 'video':
+            return <div className="p-2 bg-muted rounded-md text-xs flex items-center gap-2"><Video className="h-4 w-4" /> <span>Vídeo: {message.content.media?.caption || message.content.media?.filename || 'Arquivo de vídeo'}</span></div>;
+        case 'audio':
+            if (message.content.media?.url) {
+                return (
+                    <div className="p-2 bg-muted rounded-md">
+                        <audio controls className="w-full h-8">
+                            <source src={message.content.media.url} type={message.content.media.mime_type} />
+                            Seu navegador não suporta o elemento de áudio.
+                        </audio>
+                    </div>
+                );
+            }
+            return <p className="text-sm p-2 italic text-muted-foreground">[Áudio sem URL]</p>;
+        case 'file':
+             return <div className="p-2 bg-muted rounded-md text-xs flex items-center gap-2"><File className="h-4 w-4" /> <span>Documento: {message.content.media?.filename || 'Arquivo'}</span></div>;
+        
+        case 'interactive':
+            const interactive = message.content.interactive;
+            if (!interactive) return <p className="text-sm p-2 italic text-muted-foreground">[Mensagem interativa vazia]</p>;
 
-    return (
-        <div className="bg-muted p-2 rounded-md text-xs space-y-1">
-            {previewContent}
-            {details && <p className="font-semibold text-primary mt-1">{details}</p>}
-        </div>
-    );
+            return (
+                 <div className="space-y-2 bg-muted p-2 rounded-md">
+                    {interactive.header?.text && <p className="text-xs font-bold border-b pb-1 mb-1">{interactive.header.text}</p>}
+                    <p className="text-xs">{interactive.body.text}</p>
+                    {interactive.footer?.text && <p className="text-xs text-muted-foreground pt-1 border-t mt-1">{interactive.footer.text}</p>}
+                    
+                    {interactive.action?.buttons && (
+                        <div className="flex flex-col gap-1 pt-1">
+                           {interactive.action.buttons.map(button => (
+                               <div key={button.reply.id} className="text-center text-blue-600 bg-background py-1 px-2 rounded-md text-xs border">
+                                   {button.reply.title}
+                               </div>
+                           ))}
+                        </div>
+                    )}
+                     {interactive.action?.sections && (
+                        <div className="pt-1 space-y-2">
+                             <div className="text-center text-blue-600 bg-background py-1.5 px-2 rounded-md text-xs font-semibold border flex items-center justify-center gap-1">
+                                <List className="h-3 w-3" />
+                                {interactive.action.button}
+                            </div>
+                            {interactive.action.sections.map((section, sIndex) => (
+                                <div key={sIndex}>
+                                    {section.title && <p className="text-xs font-semibold uppercase text-muted-foreground">{section.title}</p>}
+                                    {section.rows?.map((row, rIndex) => (
+                                        <div key={rIndex} className="text-xs py-1.5 border-b last:border-b-0">
+                                            <p className="font-medium">{row.title}</p>
+                                            {row.description && <p className="text-muted-foreground">{row.description}</p>}
+                                        </div>
+                                    ))}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+
+        default:
+             return <p className="text-sm p-2 italic text-muted-foreground">{`[${message.type.charAt(0).toUpperCase() + message.type.slice(1)}]`}</p>;
+    }
   };
   
   const isDeletable = data.isDeletable !== false;
@@ -151,7 +185,7 @@ export function CustomNode({ data, selected }: NodeProps<{
              isTriggerType && "p-2 bg-yellow-400/10",
             )}>
             {React.cloneElement(data.icon as React.ReactElement, {
-                className: cn(!isTriggerType && data.color ? `text-[${data.color}]` : '', (data.icon as React.ReactElement).props.className),
+                className: cn((data.icon as React.ReactElement).props.className),
                 style: { color: !isTriggerType ? data.color : undefined }
             })}
           </div>
