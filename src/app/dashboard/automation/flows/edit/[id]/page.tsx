@@ -47,8 +47,8 @@ import { ResponseLibraryForm } from "@/components/automation/response-library-fo
 
 
 export const nodeTypeConfig = {
-    keywordTrigger: { icon: <Zap size={32} />, color: 'bg-yellow-500', defaultData: { label: 'Gatilho: Palavra-Chave', type: 'keywordTrigger' } },
-    waitForResponse: { icon: <MessageSquareReply size={32} />, color: 'bg-yellow-500', defaultData: { label: 'Aguardar Resposta', type: 'waitForResponse' } },
+    keywordTrigger: { icon: <Zap size={20} />, color: 'bg-yellow-500', defaultData: { label: 'Gatilho: Palavra-Chave', type: 'keywordTrigger' } },
+    waitForResponse: { icon: <MessageSquareReply size={20} />, color: 'bg-yellow-500', defaultData: { label: 'Aguardar Resposta', type: 'waitForResponse' } },
     message: { icon: <MessageCircle size={20} />, color: 'hsl(var(--primary))', defaultData: { label: 'Enviar Mensagem', type: 'message' } },
     captureData: { icon: <HelpCircle size={20} />, color: 'hsl(var(--primary))', defaultData: { label: 'Capturar Dados', type: 'captureData' } },
     internalAction: { icon: <Settings size={20} />, color: 'hsl(var(--primary))', defaultData: { label: 'Ação Interna', type: 'internalAction' } },
@@ -300,24 +300,21 @@ export default function EditConversationFlowPage() {
     };
     
     const onNodesChange: OnNodesChange = useCallback((changes) => {
-        const nextNodes = applyNodeChanges(changes, nodes);
-        setNodes(nextNodes.map(n => enrichNodeData(n, handleConfigureNode, handleDeleteNode, (node, sourceHandle) => handleQuickAdd(node, sourceHandle))));
+        setNodes((nds) => {
+            const nextNodes = applyNodeChanges(changes, nds);
 
-        const selectionChange = changes.find(c => c.type === 'select') as NodeChange & { type: 'select' } | undefined;
-        if (selectionChange) {
-            if (selectionChange.selected) {
-                const selected = nextNodes.find(n => n.id === selectionChange.id);
-                setActiveNode(selected || null);
-            } else {
-                // Check if any other node is selected
-                const anySelected = changes.some(c => (c as any).selected);
-                if (!anySelected) {
-                    setActiveNode(null);
-                }
+            const selectionChange = changes.find(c => c.type === 'select');
+            if (selectionChange) {
+                const selectedNode = nextNodes.find(n => n.selected);
+                setActiveNode(selectedNode || null);
             }
-        }
+
+            return nextNodes.map(n => enrichNodeData(n, handleConfigureNode, handleDeleteNode, (node, sourceHandle) => handleQuickAdd(node, sourceHandle)));
+        });
+
         setHasUnsavedChanges(true);
-    }, [nodes]);
+    }, []);
+
 
     const onEdgesChange: OnEdgesChange = useCallback((changes) => {
         setEdges((eds) => applyEdgeChanges(changes, eds));
@@ -814,3 +811,5 @@ export default function EditConversationFlowPage() {
 
 
 }
+
+    
