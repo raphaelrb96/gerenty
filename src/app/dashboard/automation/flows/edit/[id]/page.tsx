@@ -588,11 +588,17 @@ export default function EditConversationFlowPage() {
                 />
                  <div className="absolute bottom-6 right-6 flex items-center gap-2">
                     {activeNode && (
-                        <Card className="p-1 flex items-center gap-1 bg-background/80 backdrop-blur-sm">
-                            <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => handleConfigureNode(activeNode)}>
-                                <Pencil className="h-5 w-5" />
-                                <span className="sr-only">Editar Tarefa</span>
-                            </Button>
+                         <Card 
+                            className="p-2 flex items-center gap-2 bg-background/80 backdrop-blur-sm cursor-pointer hover:bg-background/90"
+                            onClick={() => handleConfigureNode(activeNode)}
+                        >
+                            <div className={`p-1 rounded-md ${activeNode.data.color}`}>
+                                {activeNode.data.icon}
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-sm font-semibold">{activeNode.data.customLabel || activeNode.data.label}</span>
+                                <span className="text-xs text-muted-foreground">Clique para editar</span>
+                            </div>
                         </Card>
                     )}
                     <Button
