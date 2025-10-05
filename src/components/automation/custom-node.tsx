@@ -146,7 +146,7 @@ export function CustomNode({ data, selected }: NodeProps<{
 
   const hasKeywords = data.triggerKeywords && data.triggerKeywords.length > 0;
   
-  const colorClass = data.color.replace('text-', 'bg-').replace('-500', '-500/20');
+  const colorClass = (data.color || 'text-gray-500').replace('text-', 'bg-').replace('-500', '-500/20');
 
 
   return (
