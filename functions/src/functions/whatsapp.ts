@@ -605,15 +605,7 @@ async function processIncomingMessage(
 
         // CORREÇÃO: Processa a URL da mídia ANTES de qualquer operação de escrita
         if (message.video?.id) {
-            message.video.url = await Promise.race([
-                whatsAppService.fetchMediaUrl(message.video.id, companyId),
-                new Promise<null>((resolve) =>
-                    setTimeout(() => {
-                        functions.logger.warn(`Timeout processing video ${message.video.id}`);
-                        resolve(null);
-                    }, 50000) // 50 segundos timeout
-                )
-            ]);
+            message.video.url = await whatsAppService.fetchMediaVideoUrl(message.video.id, companyId);
         } else if (message.image?.id) {
             message.image.url = await whatsAppService.fetchMediaUrl(message.image.id, companyId);
         } else if (message.audio?.id) {
@@ -815,7 +807,7 @@ async function processIncomingMessage(
 }
 
 /**
- * Processa a etapa atual de um fluxo e executa a próxima ação.
+ * Processa a etapa atual de um fluxo e executa la próxima ação.
  * @returns O próximo nó que requer uma parada (ex: captureData) ou null se o fluxo terminar.
  */
 async function processFlowStep(

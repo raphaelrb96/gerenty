@@ -1,4 +1,5 @@
 
+
 // src/services/whatsAppService.ts
 import { SecretManagerService } from './secretManager';
 import { MessageResult, SendMessagePayload, TemplateErrorInfo, WhatsAppApiResponse, LibraryMessage } from '../types/whatsapp';
@@ -141,7 +142,6 @@ export class WhatsAppService {
 
       const mediaDetails = await mediaDetailsResponse.json();
       const mediaUrl = (mediaDetails as any).url;
-      //const mimeType = mediaDetails.mime_typs;
       const mimeType = (mediaDetails as any).mime_type;
 
       if (!mediaUrl) {
