@@ -146,12 +146,12 @@ export function CustomNode({ data, selected }: NodeProps<{
 
   const hasKeywords = data.triggerKeywords && data.triggerKeywords.length > 0;
   
-  const colorClass = (data.color || 'text-gray-500').replace('text-', 'bg-').replace('-500', '-500/20');
+  const colorClass = data.color ? data.color.replace('text-', 'bg-').replace('-500', '-500/20') : 'bg-gray-500/20';
 
 
   return (
     <div className="relative group">
-      {!isTriggerType && <Handle type="target" position={Position.Top} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10 }} />}
+      {!isTriggerType && <Handle type="target" position={Position.Left} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10 }} />}
       
       {data.type === 'conditional' && (
         <>
@@ -177,7 +177,7 @@ export function CustomNode({ data, selected }: NodeProps<{
       )}
       
       {(data.type !== 'conditional' && data.type !== 'endFlow') && (
-          <Handle type="source" position={Position.Bottom} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10 }} />
+          <Handle type="source" position={Position.Right} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10 }} />
       )}
       
       <Card 
