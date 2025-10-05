@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { FlowBuilder } from "@/components/automation/flow-builder";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { getFlowById, updateFlow } from "@/services/flow-service";
@@ -304,17 +304,20 @@ export default function EditConversationFlowPage() {
         setNodes((nds) => {
             const nextNodes = applyNodeChanges(changes, nds);
 
-            const selectionChange = changes.find(c => c.type === 'select');
+            const selectionChange = changes.find(c => c.type === 'select' && c.selected);
             if (selectionChange) {
-                const selectedNode = nextNodes.find(n => n.selected);
+                const selectedNode = nextNodes.find(n => n.id === (selectionChange as any).id);
                 setActiveNode(selectedNode || null);
+            } else if (changes.some(c => c.type === 'select' && !c.selected && activeNode && c.id === activeNode.id)) {
+                 // Deselect if the active node is unselected
+                 setActiveNode(null);
             }
 
             return nextNodes.map(n => enrichNodeData(n, handleConfigureNode, handleDeleteNode, (node, sourceHandle) => handleQuickAdd(node, sourceHandle)));
         });
 
         setHasUnsavedChanges(true);
-    }, []);
+    }, [activeNode]);
 
 
     const onEdgesChange: OnEdgesChange = useCallback((changes) => {
@@ -590,9 +593,9 @@ export default function EditConversationFlowPage() {
                             className="p-2 flex items-center gap-2 bg-background/80 backdrop-blur-sm cursor-pointer hover:bg-background/90"
                             onClick={() => handleConfigureNode(activeNode)}
                         >
-                            <div className={cn("p-1 rounded-md", activeNode.data.color)}>
+                            <div className={cn("p-1 rounded-md", activeNode.data.color.replace('text-', 'bg-') + '/20')}>
                                 {React.cloneElement(activeNode.data.icon as React.ReactElement, {
-                                    className: cn((activeNode.data.icon as React.ReactElement).props.className, "text-white"),
+                                    className: cn((activeNode.data.icon as React.ReactElement).props.className, activeNode.data.color),
                                 })}
                             </div>
                             <div className="flex flex-col">
