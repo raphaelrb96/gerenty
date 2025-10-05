@@ -147,7 +147,7 @@ export function CustomNode({ data, selected }: NodeProps<{
 
   return (
     <div className="relative group">
-      {!isTriggerType && <Handle type="target" position={Position.Left} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10, bottom: '20px', top: 'auto' }} />}
+      {data.type !== 'keywordTrigger' && <Handle type="target" position={Position.Left} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10, bottom: '20px', top: 'auto' }} />}
       
       {data.type === 'conditional' && (
         <>
@@ -173,20 +173,20 @@ export function CustomNode({ data, selected }: NodeProps<{
       )}
       
       {(data.type !== 'conditional' && data.type !== 'endFlow') && (
-          <Handle type="source" position={Position.Right} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10, top: '36px' }} />
+          <Handle type="source" position={Position.Right} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10, top: '20px' }} />
       )}
       
       <Card 
         className={cn(
             "bg-card/80 backdrop-blur-sm transition-all duration-200 hover:shadow-xl w-[280px]",
-            isTriggerType && 'w-[320px] !border-4',
-            isTriggerType && !selected && 'animate-pulse-glow',
-            isTriggerType && selected && 'animate-pulse-glow-strong',
+            data.type === 'keywordTrigger' && 'w-[320px] !border-4',
+            data.type === 'keywordTrigger' && !selected && 'animate-pulse-glow',
+            data.type === 'keywordTrigger' && selected && 'animate-pulse-glow-strong',
             selected && 'ring-2 ring-white ring-offset-2 !border-transparent'
         )} 
-        style={{ borderColor: isTriggerType ? 'hsl(40 50% 50% / 0.4)' : (selected ? undefined : data.color) }}
+        style={{ borderColor: data.type === 'keywordTrigger' ? 'hsl(40 50% 50% / 0.4)' : (selected ? undefined : data.color) }}
     >
-        <CardHeader className={cn("flex flex-row items-center gap-3 p-3 text-card-foreground rounded-t-lg border-t-4", !isTriggerType && 'border-t-transparent')} style={{ borderColor: isTriggerType ? 'transparent' : data.color }}>
+        <CardHeader className={cn("flex flex-row items-center gap-3 p-3 text-card-foreground rounded-t-lg border-t-4", data.type !== 'keywordTrigger' && 'border-t-transparent')} style={{ borderColor: data.type === 'keywordTrigger' ? 'transparent' : data.color }}>
            <div className={cn("p-1 rounded-md", colorClass)}>
             {data.icon && data.color && React.cloneElement(data.icon as React.ReactElement, {
                 className: cn((data.icon as React.ReactElement).props.className, data.color),
@@ -239,8 +239,8 @@ export function CustomNode({ data, selected }: NodeProps<{
         )}
         
         <CardFooter className="p-2 border-t bg-muted/30 flex justify-between items-center gap-1">
-            <div>
-                 {isTriggerType && (
+             <div>
+                {isTriggerType && (
                     <Badge variant="outline" className="text-xs font-bold text-yellow-500 border-yellow-500 animate-blink">INPUT</Badge>
                 )}
             </div>
@@ -282,4 +282,5 @@ export function CustomNode({ data, selected }: NodeProps<{
     </div>
   );
 }
+
 
