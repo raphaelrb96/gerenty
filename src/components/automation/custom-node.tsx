@@ -145,6 +145,9 @@ export function CustomNode({ data, selected }: NodeProps<{
   };
 
   const hasKeywords = data.triggerKeywords && data.triggerKeywords.length > 0;
+  
+  const colorClass = data.color.replace('text-', 'bg-').replace('-500', '-500/20');
+
 
   return (
     <div className="relative group">
@@ -186,9 +189,9 @@ export function CustomNode({ data, selected }: NodeProps<{
         style={{ borderColor: selected ? undefined : data.color }}
     >
         <CardHeader className={cn("flex flex-row items-center gap-3 p-3 text-card-foreground rounded-t-md relative")}>
-           <div className={cn("p-1 rounded-md", data.color)}>
+           <div className={cn("p-1 rounded-md", colorClass)}>
             {React.cloneElement(data.icon as React.ReactElement, {
-                className: cn((data.icon as React.ReactElement).props.className, "text-white"),
+                className: cn((data.icon as React.ReactElement).props.className, data.color),
             })}
           </div>
           <CardTitle className={cn("font-semibold text-sm", data.color)}>
