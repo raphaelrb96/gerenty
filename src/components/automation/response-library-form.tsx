@@ -267,7 +267,7 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
       return;
     }
     
-    if (isMediaType && !fileToUpload && !message?.content.media?.id) {
+    if (isMediaType && !fileToUpload && !values.media_id) {
         toast({ variant: 'destructive', title: 'Arquivo obrigatório', description: 'Por favor, envie um arquivo de mídia.' });
         return;
     }
@@ -287,7 +287,7 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
             case 'file':
                 const existingMedia = message?.content.image || message?.content.video || message?.content.audio || message?.content.document;
                 let mediaUrl = existingMedia?.url || '';
-                let mediaId = existingMedia?.id || '';
+                let mediaId = values.media_id || '';
 
                 if (fileToUpload) {
                     const path = `libraryMessages/${activeCompany.id}/${Date.now()}-${fileToUpload.name}`;
