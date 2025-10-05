@@ -953,7 +953,9 @@ async function processFlowStep(
                         }
                     }
                 }
-                break;
+                // *** BUG FIX: Break execution after sending a message to wait for next user input ***
+                functions.logger.info(`[Flow] Stopping execution at node ${nextNode.id} after sending message. Awaiting user input.`);
+                return nextNode;
 
             case 'internalAction':
                 const actionType = nextNode.data.actionType;
