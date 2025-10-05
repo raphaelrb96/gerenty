@@ -182,11 +182,13 @@ export function CustomNode({ data, selected }: NodeProps<{
       
       <Card 
         className={cn(
-            "bg-card/80 backdrop-blur-sm transition-all duration-200 hover:shadow-xl w-[280px] border-t-4",
-            isTriggerType && 'w-[320px] animate-pulse-glow !border-4 !border-yellow-500 bg-yellow-500/10',
+            "bg-card/80 backdrop-blur-sm transition-all duration-200 hover:shadow-xl w-[280px]",
+            isTriggerType && 'w-[320px] !border-4 bg-yellow-500/10',
+            isTriggerType && !selected && 'animate-pulse-glow',
+            isTriggerType && selected && 'animate-pulse-glow-strong',
             selected && 'ring-2 ring-white ring-offset-2 !border-transparent'
         )} 
-        style={{ borderColor: selected ? undefined : data.color }}
+        style={{ borderColor: isTriggerType ? 'hsl(40 50% 50% / 0.4)' : (selected ? undefined : data.color) }}
     >
         <CardHeader className={cn("flex flex-row items-center gap-3 p-3 text-card-foreground rounded-t-md relative")}>
            <div className={cn("p-1 rounded-md", colorClass)}>
