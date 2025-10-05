@@ -183,7 +183,7 @@ export function CustomNode({ data, selected }: NodeProps<{
       <Card 
         className={cn(
             "bg-card/80 backdrop-blur-sm transition-all duration-200 hover:shadow-xl w-[280px]",
-            isTriggerType && 'w-[320px] !border-4 bg-yellow-500/10',
+            isTriggerType && 'w-[320px] !border-4',
             isTriggerType && !selected && 'animate-pulse-glow',
             isTriggerType && selected && 'animate-pulse-glow-strong',
             selected && 'ring-2 ring-white ring-offset-2 !border-transparent'
@@ -192,8 +192,8 @@ export function CustomNode({ data, selected }: NodeProps<{
     >
         <CardHeader className={cn("flex flex-row items-center gap-3 p-3 text-card-foreground rounded-t-lg border-t-4", !isTriggerType && 'border-t-transparent')} style={{ borderColor: isTriggerType ? 'transparent' : data.color }}>
            <div className={cn("p-1 rounded-md", colorClass)}>
-            {React.cloneElement(data.icon as React.ReactElement, {
-                className: cn((data.icon as React.ReactElement).props.className, data.color),
+            {data.icon && data.color && React.cloneElement(data.icon as React.ReactElement, {
+                className: cn((data.icon as React.ReactElement).props?.className, data.color),
             })}
           </div>
           <CardTitle className={cn("font-semibold text-sm", data.color)}>
