@@ -195,9 +195,6 @@ export function CustomNode({ data, selected }: NodeProps<{
           <CardTitle className={cn("font-semibold text-sm", data.color)}>
               {data.customLabel || data.label}
           </CardTitle>
-          {isTriggerType && (
-              <Badge variant="outline" className="absolute top-2 right-2 text-xs font-bold text-yellow-500 border-yellow-500 animate-blink">INPUT</Badge>
-          )}
         </CardHeader>
         
         {isTriggerType ? (
@@ -241,38 +238,45 @@ export function CustomNode({ data, selected }: NodeProps<{
             </CardContent>
         )}
         
-        <CardFooter className="p-2 border-t bg-muted/30 flex justify-end gap-1">
-             <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-7 w-7"
-                onClick={data.onConfigure}
-            >
-                <Pencil className="h-4 w-4"/>
-                <span className="sr-only">Configurar Tarefa</span>
-            </Button>
-            {data.type !== 'conditional' && data.type !== 'endFlow' && (
-             <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-7 w-7 text-primary hover:text-primary hover:bg-primary/10"
-                onClick={() => data.onQuickAdd()}
-            >
-                <PlusCircle className="h-4 w-4"/>
-                <span className="sr-only">Adicionar Tarefa</span>
-            </Button>
-            )}
-            {isDeletable && (
+        <CardFooter className="p-2 border-t bg-muted/30 flex justify-between items-center gap-1">
+            <div>
+                 {isTriggerType && (
+                    <Badge variant="outline" className="text-xs font-bold text-yellow-500 border-yellow-500 animate-blink">INPUT</Badge>
+                )}
+            </div>
+            <div className="flex gap-1">
                 <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={data.onDelete}
+                    className="h-7 w-7"
+                    onClick={data.onConfigure}
                 >
-                    <Trash2 className="h-4 w-4"/>
-                    <span className="sr-only">Excluir Tarefa</span>
+                    <Pencil className="h-4 w-4"/>
+                    <span className="sr-only">Configurar Tarefa</span>
                 </Button>
-            )}
+                {data.type !== 'conditional' && data.type !== 'endFlow' && (
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-7 w-7 text-primary hover:text-primary hover:bg-primary/10"
+                    onClick={() => data.onQuickAdd()}
+                >
+                    <PlusCircle className="h-4 w-4"/>
+                    <span className="sr-only">Adicionar Tarefa</span>
+                </Button>
+                )}
+                {isDeletable && (
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={data.onDelete}
+                    >
+                        <Trash2 className="h-4 w-4"/>
+                        <span className="sr-only">Excluir Tarefa</span>
+                    </Button>
+                )}
+            </div>
         </CardFooter>
       </Card>
     </div>
