@@ -147,7 +147,7 @@ export function CustomNode({ data, selected }: NodeProps<{
 
   return (
     <div className="relative group">
-      {!isTriggerType && <Handle type="target" position={Position.Left} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10, top: '36px' }} />}
+      {!isTriggerType && <Handle type="target" position={Position.Left} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10, bottom: '20px', top: 'auto' }} />}
       
       {data.type === 'conditional' && (
         <>
@@ -278,3 +278,4 @@ export function CustomNode({ data, selected }: NodeProps<{
     </div>
   );
 }
+
