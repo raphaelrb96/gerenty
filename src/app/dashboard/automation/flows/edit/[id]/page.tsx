@@ -47,8 +47,8 @@ import { ResponseLibraryForm } from "@/components/automation/response-library-fo
 
 
 export const nodeTypeConfig = {
-    keywordTrigger: { icon: <Zap size={20} />, color: 'bg-yellow-500', defaultData: { label: 'Gatilho: Palavra-Chave', type: 'keywordTrigger' } },
-    waitForResponse: { icon: <MessageSquareReply size={20} />, color: 'bg-yellow-500', defaultData: { label: 'Aguardar Resposta', type: 'waitForResponse' } },
+    keywordTrigger: { icon: <Zap size={20} />, color: 'text-yellow-500', defaultData: { label: 'Gatilho: Palavra-Chave', type: 'keywordTrigger' } },
+    waitForResponse: { icon: <MessageSquareReply size={20} />, color: 'text-yellow-500', defaultData: { label: 'Aguardar Resposta', type: 'waitForResponse' } },
     message: { icon: <MessageCircle size={20} />, color: 'hsl(var(--primary))', defaultData: { label: 'Enviar Mensagem', type: 'message' } },
     captureData: { icon: <HelpCircle size={20} />, color: 'hsl(var(--primary))', defaultData: { label: 'Capturar Dados', type: 'captureData' } },
     internalAction: { icon: <Settings size={20} />, color: 'hsl(var(--primary))', defaultData: { label: 'Ação Interna', type: 'internalAction' } },
@@ -589,7 +589,7 @@ export default function EditConversationFlowPage() {
                             className="p-2 flex items-center gap-2 bg-background/80 backdrop-blur-sm cursor-pointer hover:bg-background/90"
                             onClick={() => handleConfigureNode(activeNode)}
                         >
-                            <div className={`p-1 rounded-md ${activeNode.data.color}`}>
+                            <div className={cn("p-1 rounded-md", activeNode.data.color)}>
                                 {activeNode.data.icon}
                             </div>
                             <div className="flex flex-col">

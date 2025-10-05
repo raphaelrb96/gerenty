@@ -177,19 +177,21 @@ export function CustomNode({ data, selected }: NodeProps<{
           <Handle type="source" position={Position.Bottom} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10 }} />
       )}
       
-      <Card className={cn(
-        "bg-card/80 backdrop-blur-sm transition-all duration-200 hover:shadow-xl w-[280px]",
-        isTriggerType && 'w-[320px] animate-pulse-glow bg-yellow-500/10 border-4 border-yellow-500',
-        selected && !isTriggerType ? 'ring-2 ring-white ring-offset-2 border-transparent' : (isTriggerType ? 'border-yellow-500' : 'border-t-4'),
-        selected && isTriggerType ? 'ring-2 ring-white ring-offset-2' : ''
-      )} style={{ borderColor: !isTriggerType ? data.color : (selected ? undefined : 'hsl(40 50% 50%)') }}>
+      <Card 
+        className={cn(
+            "bg-card/80 backdrop-blur-sm transition-all duration-200 hover:shadow-xl w-[280px] border-t-4",
+            isTriggerType && 'w-[320px] animate-pulse-glow !border-4 !border-yellow-500 bg-yellow-500/10',
+            selected && 'ring-2 ring-white ring-offset-2 !border-transparent'
+        )} 
+        style={{ borderColor: selected ? undefined : data.color }}
+    >
         <CardHeader className={cn("flex flex-row items-center gap-3 p-3 text-card-foreground rounded-t-md relative")}>
-           <div className={cn("p-1 rounded-md")}>
+           <div className={cn("p-1 rounded-md", data.color)}>
             {React.cloneElement(data.icon as React.ReactElement, {
-                className: cn((data.icon as React.ReactElement).props.className, isTriggerType && 'text-yellow-500'),
+                className: cn((data.icon as React.ReactElement).props.className, "text-white"),
             })}
           </div>
-          <CardTitle className={cn("font-semibold text-sm", isTriggerType && 'text-yellow-500')}>
+          <CardTitle className={cn("font-semibold text-sm", data.color)}>
               {data.customLabel || data.label}
           </CardTitle>
           {isTriggerType && (
