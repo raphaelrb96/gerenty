@@ -62,7 +62,7 @@ export function CustomNode({ data, selected }: NodeProps<{
             if (imageUrl) {
                 return (
                     <div className="flex justify-center p-2">
-                         <div className="relative w-16 h-16">
+                         <div className="relative w-24 h-24">
                             <Image src={imageUrl} alt="Pré-visualização da imagem" layout="fill" objectFit="cover" className="rounded-md" />
                         </div>
                     </div>
