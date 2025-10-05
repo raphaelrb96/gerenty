@@ -45,10 +45,6 @@ export function CustomNode({ data, selected }: NodeProps<{
 
   const contentPreview = () => {
     const message = data.libraryMessages?.find(m => m.id === data.messageId);
-    
-    if (data.type === 'delay') {
-        return <p className="p-2 text-center text-lg font-bold">{data.delaySeconds || 0}s</p>;
-    }
 
     if (!message) {
       return <div className="text-center text-xs p-2 italic text-muted-foreground">Nenhuma mensagem selecionada</div>;
@@ -151,7 +147,7 @@ export function CustomNode({ data, selected }: NodeProps<{
 
   return (
     <div className="relative group">
-      {!isTriggerType && <Handle type="target" position={Position.Left} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10 }} />}
+      {!isTriggerType && <Handle type="target" position={Position.Left} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10, top: '36px' }} />}
       
       {data.type === 'conditional' && (
         <>
@@ -177,7 +173,7 @@ export function CustomNode({ data, selected }: NodeProps<{
       )}
       
       {(data.type !== 'conditional' && data.type !== 'endFlow') && (
-          <Handle type="source" position={Position.Right} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10 }} />
+          <Handle type="source" position={Position.Right} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10, top: '36px' }} />
       )}
       
       <Card 
@@ -193,7 +189,7 @@ export function CustomNode({ data, selected }: NodeProps<{
         <CardHeader className={cn("flex flex-row items-center gap-3 p-3 text-card-foreground rounded-t-lg border-t-4", !isTriggerType && 'border-t-transparent')} style={{ borderColor: isTriggerType ? 'transparent' : data.color }}>
            <div className={cn("p-1 rounded-md", colorClass)}>
             {data.icon && data.color && React.cloneElement(data.icon as React.ReactElement, {
-                className: cn((data.icon as React.ReactElement).props?.className, data.color),
+                className: cn((data.icon as React.ReactElement).props.className, data.color),
             })}
           </div>
           <CardTitle className={cn("font-semibold text-sm", data.color)}>
