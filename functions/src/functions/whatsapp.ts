@@ -24,7 +24,6 @@ import {
 } from '../types/whatsapp';
 import { FieldValue } from 'firebase-admin/firestore';
 import type { Node as FlowNode, Edge as FlowEdge } from 'reactflow';
-import { CloudTasksClient } from '@google-cloud/tasks';
 
 // Inicializa o Firebase Admin
 if (admin.apps.length === 0) {
@@ -36,11 +35,6 @@ const secretManager = SecretManagerService.getInstance();
 const securityService = new SecurityService();
 const whatsAppService = new WhatsAppService();
 const templateService = new TemplateService();
-const tasksClient = new CloudTasksClient();
-
-const LOCATION_ID = 'us-central1'; // Or your function's region
-const QUEUE_ID = 'flow-resume-queue'; // Name your queue
-
 
 /**
  * 1. validateAndSaveCredentials - Configuração Segura Multi-Tenant
@@ -263,12 +257,13 @@ export const sendMessage = functions.https.onCall(
     }> => {
         try {
             const validation = await securityService.validateCallableRequest(request);
-            if (!validation.isValid) {
+            if (!validation.isValid || !validation.companyId) {
                 throw new functions.https.HttpsError('unauthenticated', validation.error || 'Validation failed');
             }
             
-            const result = await whatsAppService.sendMessage(validation.companyId, request.data);
-
+            const { companyId } = validation;
+            
+            const result = await whatsAppService.sendMessage(companyId, request.data);
 
             if (result.success) {
                 return {
@@ -951,19 +946,6 @@ async function processFlowStep(
                 // *** BUG FIX: Break execution after sending a message to wait for next user input ***
                 functions.logger.info(`[Flow] Stopping execution at node ${nextNode.id} after sending message. Awaiting user input.`);
                 return nextNode;
-            
-            case 'delay':
-                const delaySeconds = nextNode.data.delaySeconds || 0;
-                if (delaySeconds > 0) {
-                    functions.logger.info(`[Flow] Delaying for ${delaySeconds} seconds.`);
-                    const subsequentNode = flow.nodes.find(n => n.id === flow.edges.find(e => e.source === nextNode?.id)?.target);
-                    if (subsequentNode) {
-                        await scheduleFlowResumption(companyId, consumerRef.id, subsequentNode.id, delaySeconds);
-                        functions.logger.info(`[Flow] Task scheduled to resume flow at node ${subsequentNode.id}. Stopping execution.`);
-                        return null; // Stop execution, it will be resumed by the task
-                    }
-                }
-                break;
 
             case 'internalAction':
                 const actionType = nextNode.data.actionType;
@@ -1130,100 +1112,3 @@ function sanitizeMetaPatterns(text: string): string {
     // Replace problematic patterns like [[...]] but keep valid template variables like {{1}}
     return text.replace(/\[\[.*?\]\]/g, '').trim();
 }
-
-async function scheduleFlowResumption(companyId: string, consumerId: string, nextNodeId: string, delayInSeconds: number) {
-    const projectId = process.env.GCLOUD_PROJECT;
-    if (!projectId) {
-        functions.logger.error("GCLOUD_PROJECT environment variable not set.");
-        return;
-    }
-
-    const queuePath = tasksClient.queuePath(projectId, LOCATION_ID, QUEUE_ID);
-
-    const functionUrl = `https://${LOCATION_ID}-${projectId}.cloudfunctions.net/resumeFlow`;
-
-    const task = {
-        httpRequest: {
-            httpMethod: 'POST' as const,
-            url: functionUrl,
-            headers: { 'Content-Type': 'application/json' },
-            body: Buffer.from(JSON.stringify({ companyId, consumerId, nextNodeId })).toString('base64'),
-        },
-        scheduleTime: {
-            seconds: Math.floor(Date.now() / 1000) + delayInSeconds,
-        },
-    };
-
-    try {
-        await tasksClient.createTask({ parent: queuePath, task });
-        functions.logger.info(`Task created successfully to resume flow for consumer ${consumerId} in ${delayInSeconds}s.`);
-    } catch (error) {
-        functions.logger.error("Error creating task for flow resumption:", error);
-    }
-}
-
-export const resumeFlow = functions.https.onRequest(async (req, res) => {
-    if (req.method !== 'POST') {
-        res.status(405).send('Method Not Allowed');
-        return;
-    }
-
-    try {
-        const { companyId, consumerId, nextNodeId } = req.body;
-        functions.logger.info(`Resuming flow for company ${companyId}, consumer ${consumerId} at node ${nextNodeId}`);
-
-        if (!companyId || !consumerId || !nextNodeId) {
-            res.status(400).send('Missing required parameters');
-            return;
-        }
-
-        const consumerRef = db.collection('companies').doc(companyId).collection('consumers').doc(consumerId);
-        const consumerDoc = await consumerRef.get();
-        if (!consumerDoc.exists) {
-            functions.logger.error(`[resumeFlow] Consumer ${consumerId} not found.`);
-            res.status(404).send('Consumer not found');
-            return;
-        }
-
-        const conversationQuery = await db.collection('companies').doc(companyId).collection('conversations')
-            .where('consumerId', '==', consumerId)
-            .where('status', 'in', ['open', 'pending'])
-            .limit(1).get();
-
-        if (conversationQuery.empty) {
-            functions.logger.error(`[resumeFlow] Active conversation not found for consumer ${consumerId}.`);
-            res.status(404).send('Active conversation not found');
-            return;
-        }
-        
-        const conversationRef = conversationQuery.docs[0].ref;
-        const conversationData = conversationQuery.docs[0].data() as Conversation;
-
-        if (conversationData.activeFlowId) {
-            const flowDoc = await db.collection('flows').doc(conversationData.activeFlowId).get();
-            if (flowDoc.exists) {
-                const activeFlow = { id: flowDoc.id, ...flowDoc.data() } as Flow;
-                
-                // Execute the next step(s)
-                const nextStopNode = await processFlowStep(companyId, consumerRef, activeFlow, nextNodeId, null);
-
-                // Update the conversation state
-                await conversationRef.update({
-                    currentStepId: nextStopNode?.id || null,
-                    activeFlowId: nextStopNode ? conversationData.activeFlowId : null,
-                    updatedAt: admin.firestore.FieldValue.serverTimestamp()
-                });
-                
-                if (!nextStopNode) {
-                    functions.logger.info(`[resumeFlow] Flow ${activeFlow.id} finished.`);
-                }
-            }
-        }
-        
-        res.status(200).send('Flow resumed');
-
-    } catch (error) {
-        functions.logger.error('[resumeFlow] Error:', error);
-        res.status(500).send('Internal Server Error');
-    }
-});
