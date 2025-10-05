@@ -993,7 +993,7 @@ async function processMessageStatus(companyId: string, status: MessageStatus): P
     try {
         const db = admin.firestore();
 
-        // Encontra a conversa que contém a mensagem com base no ID da mensagem
+        // Encontra a mensagem com base no ID
         const messagesQuery = await db.collectionGroup('messages')
             .where('id', '==', status.id)
             .get();
@@ -1005,8 +1005,9 @@ async function processMessageStatus(companyId: string, status: MessageStatus): P
 
         for (const doc of messagesQuery.docs) {
             // Garante que estamos atualizando a mensagem da empresa correta
-            const conversationRef = doc.ref.parent.parent;
-            if (conversationRef?.parent?.id === 'companies' && conversationRef?.parent?.parent?.id === companyId) {
+            // Path: companies/{companyId}/conversations/{conversationId}/messages/{messageId}
+            const pathParts = doc.ref.path.split('/');
+            if (pathParts.length >= 4 && pathParts[0] === 'companies' && pathParts[1] === companyId) {
                 await doc.ref.update({
                     status: status.status,
                     statusTimestamp: admin.firestore.Timestamp.fromMillis(parseInt(status.timestamp) * 1000),
