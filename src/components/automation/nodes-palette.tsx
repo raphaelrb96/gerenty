@@ -55,12 +55,6 @@ const actionNodeTypes = [
         icon: Share2
     },
     {
-        type: 'delay' as const,
-        label: "Aguardar",
-        description: "Pausa o fluxo por um tempo determinado.",
-        icon: Timer
-    },
-    {
         type: 'transfer' as const,
         label: "Transferir Atendente",
         description: "Encerra e notifica um atendente.",
