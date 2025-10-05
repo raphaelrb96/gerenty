@@ -178,11 +178,11 @@ export function CustomNode({ data, selected }: NodeProps<{
       )}
       
       <Card className={cn(
-        "bg-card/80 backdrop-blur-sm transition-all duration-200 hover:shadow-xl w-[280px]",
-        isTriggerType && 'w-[320px] animate-pulse-glow bg-yellow-500/10 border-2',
-        selected && !isTriggerType ? 'ring-2 ring-primary ring-offset-2' : '',
+        "bg-card/80 backdrop-blur-sm transition-all duration-200 hover:shadow-xl w-[280px] border-2",
+        isTriggerType && 'w-[320px] animate-pulse-glow bg-yellow-500/10 border-yellow-500',
+        selected && !isTriggerType ? 'ring-2 ring-white ring-offset-2' : '',
         !isTriggerType ? 'border-t-4' : ''
-      )} style={{ borderColor: !isTriggerType ? data.color : 'hsl(var(--primary))' }}>
+      )} style={{ borderColor: !isTriggerType ? data.color : 'hsl(var(--yellow-500))' }}>
         <CardHeader className={cn("flex flex-row items-center gap-3 p-3 text-card-foreground rounded-t-md relative")}>
            <div className={cn("p-1 rounded-md")}>
             {React.cloneElement(data.icon as React.ReactElement, {
