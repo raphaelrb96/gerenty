@@ -179,22 +179,21 @@ export function CustomNode({ data, selected }: NodeProps<{
       
       <Card className={cn(
         "bg-card/80 backdrop-blur-sm transition-all duration-200 hover:shadow-xl w-[280px]",
-        isTriggerType && 'w-[320px] animate-pulse-glow bg-primary/10 border-2',
+        isTriggerType && 'w-[320px] animate-pulse-glow bg-yellow-500/10 border-2',
         selected && !isTriggerType ? 'ring-2 ring-primary ring-offset-2' : '',
         !isTriggerType ? 'border-t-4' : ''
-      )} style={{ borderColor: !isTriggerType ? data.color : '' }}>
+      )} style={{ borderColor: !isTriggerType ? data.color : 'hsl(var(--primary))' }}>
         <CardHeader className={cn("flex flex-row items-center gap-3 p-3 text-card-foreground rounded-t-md relative")}>
            <div className={cn("p-1 rounded-md")}>
             {React.cloneElement(data.icon as React.ReactElement, {
-                className: cn((data.icon as React.ReactElement).props.className),
-                style: { color: !isTriggerType ? data.color : 'hsl(var(--primary))' }
+                className: cn((data.icon as React.ReactElement).props.className, isTriggerType && 'text-yellow-500'),
             })}
           </div>
-          <CardTitle className={cn("font-semibold text-sm",)} style={{ color: !isTriggerType ? data.color : 'hsl(var(--primary))' }}>
+          <CardTitle className={cn("font-semibold text-sm", isTriggerType && 'text-yellow-500')}>
               {data.customLabel || data.label}
           </CardTitle>
           {isTriggerType && (
-              <Badge variant="outline" className="absolute top-2 right-2 text-xs font-bold text-primary border-primary animate-blink">INPUT</Badge>
+              <Badge variant="outline" className="absolute top-2 right-2 text-xs font-bold text-yellow-500 border-yellow-500 animate-blink">INPUT</Badge>
           )}
         </CardHeader>
         
@@ -276,12 +275,3 @@ export function CustomNode({ data, selected }: NodeProps<{
     </div>
   );
 }
-
-  
-
-    
-
-    
-
-
-
