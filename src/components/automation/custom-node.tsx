@@ -239,9 +239,9 @@ export function CustomNode({ data, selected }: NodeProps<{
         )}
         
         <CardFooter className="p-2 border-t bg-muted/30 flex justify-between items-center gap-1">
-             <div>
+             <div className="flex items-center gap-2">
                 {isTriggerType && (
-                    <Badge variant="outline" className="text-xs font-bold text-yellow-500 border-yellow-500 animate-blink">INPUT</Badge>
+                    <Badge variant="outline" className="ml-2 text-xs font-bold text-yellow-500 border-yellow-500 animate-blink">INPUT</Badge>
                 )}
             </div>
             <div className="flex gap-1">
@@ -282,5 +282,6 @@ export function CustomNode({ data, selected }: NodeProps<{
     </div>
   );
 }
+
 
 
