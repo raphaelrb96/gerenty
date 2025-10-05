@@ -62,7 +62,7 @@ export function CustomNode({ data, selected }: NodeProps<{
             if (imageUrl) {
                 return (
                     <div className="flex justify-center p-2">
-                         <div className="relative w-24 h-24">
+                         <div className="relative w-32 h-32">
                             <Image src={imageUrl} alt="Pré-visualização da imagem" layout="fill" objectFit="cover" className="rounded-md" />
                         </div>
                     </div>
@@ -190,7 +190,7 @@ export function CustomNode({ data, selected }: NodeProps<{
         )} 
         style={{ borderColor: isTriggerType ? 'hsl(40 50% 50% / 0.4)' : (selected ? undefined : data.color) }}
     >
-        <CardHeader className={cn("flex flex-row items-center gap-3 p-3 text-card-foreground rounded-t-md relative")}>
+        <CardHeader className={cn("flex flex-row items-center gap-3 p-3 text-card-foreground rounded-t-lg border-t-4", !isTriggerType && 'border-t-transparent')} style={{ borderColor: isTriggerType ? 'transparent' : data.color }}>
            <div className={cn("p-1 rounded-md", colorClass)}>
             {React.cloneElement(data.icon as React.ReactElement, {
                 className: cn((data.icon as React.ReactElement).props.className, data.color),
