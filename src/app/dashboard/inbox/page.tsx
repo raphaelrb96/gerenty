@@ -76,9 +76,16 @@ export default function InboxPage() {
     }, [activeCompany, effectiveOwnerId]);
     
     const handleSelectConversation = (conversation: Conversation) => {
-        setSelectedConversationId(conversation.id);
-        if (conversation.unreadMessagesCount > 0 && activeCompany) {
-            markConversationAsRead(activeCompany.id, conversation.id);
+        const newId = conversation.id;
+        
+        // If clicking the same conversation, close it. Otherwise, open the new one.
+        if (selectedConversationId === newId) {
+            setSelectedConversationId(null);
+        } else {
+            setSelectedConversationId(newId);
+            if (conversation.unreadMessagesCount > 0 && activeCompany) {
+                markConversationAsRead(activeCompany.id, newId);
+            }
         }
     };
     
