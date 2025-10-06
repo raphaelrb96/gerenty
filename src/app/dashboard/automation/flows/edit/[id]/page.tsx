@@ -604,13 +604,13 @@ export default function EditConversationFlowPage() {
                         </Card>
                     )}
                     <Button
-                        className="rounded-full w-14 h-14"
+                        className="rounded-full w-12 h-12"
                         onClick={() => {
                             setQuickAddSourceNode(null);
                             setIsPaletteOpen(true);
                         }}
                     >
-                        <Plus className="h-6 w-6" />
+                        <Plus className="h-5 w-5" />
                         <span className="sr-only">Adicionar Tarefa</span>
                     </Button>
                 </div>
