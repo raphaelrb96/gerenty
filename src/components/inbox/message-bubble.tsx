@@ -7,7 +7,7 @@ import type { Message } from "@/lib/types";
 import { format } from "date-fns";
 import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
-import { MapPin, Check, CheckCheck, Play, Pause } from "lucide-react";
+import { MapPin, Check, CheckCheck, Play, Pause, List, MessageSquare } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 
@@ -138,12 +138,54 @@ export function MessageBubble({ message }: MessageBubbleProps) {
             return <p className="text-sm whitespace-pre-wrap">{content.text.body}</p>;
         }
         
-        if (type === 'interactive') {
-             if (content.interactive?.button_reply?.title) {
+         if (type === 'interactive') {
+            // This is a reply to an interactive message
+            if (content.interactive?.button_reply?.title) {
                 return <p className="text-sm italic text-muted-foreground">Resposta do botão: "{content.interactive.button_reply.title}"</p>;
             }
             if (content.interactive?.list_reply?.title) {
                 return <p className="text-sm italic text-muted-foreground">Resposta da lista: "{content.interactive.list_reply.title}"</p>;
+            }
+            
+            // This is the original interactive message being rendered
+            const interactive = content.interactive;
+            if (interactive?.body?.text) {
+                return (
+                    <div className="space-y-2">
+                        {interactive.header?.text && <p className="font-bold border-b pb-1 mb-1">{interactive.header.text}</p>}
+                        <p className="text-sm">{interactive.body.text}</p>
+                        {interactive.footer?.text && <p className="text-xs text-muted-foreground/80 pt-1 border-t mt-1">{interactive.footer.text}</p>}
+                        
+                        {interactive.action?.buttons && (
+                            <div className="flex flex-col gap-1 pt-2">
+                               {interactive.action.buttons.map(button => (
+                                   <div key={button.reply.id} className="text-center text-primary-foreground bg-primary/80 py-1.5 px-2 rounded-md text-sm border">
+                                       {button.reply.title}
+                                   </div>
+                               ))}
+                            </div>
+                        )}
+                         {interactive.action?.sections && (
+                            <div className="pt-2 space-y-2">
+                                <div className="text-center text-primary-foreground bg-primary/80 py-2 px-2 rounded-md text-sm font-semibold border flex items-center justify-center gap-1">
+                                    <List className="h-4 w-4" />
+                                    {interactive.action.button}
+                                </div>
+                                {interactive.action.sections.map((section, sIndex) => (
+                                    <div key={sIndex}>
+                                        {section.title && <p className="text-xs font-semibold uppercase text-muted-foreground">{section.title}</p>}
+                                        {section.rows?.map((row, rIndex) => (
+                                            <div key={rIndex} className="text-sm py-1.5 border-b last:border-b-0">
+                                                <p className="font-medium">{row.title}</p>
+                                                {row.description && <p className="text-xs text-muted-foreground">{row.description}</p>}
+                                            </div>
+                                        ))}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                );
             }
         }
         
