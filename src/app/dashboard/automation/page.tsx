@@ -1,15 +1,16 @@
 
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { PageHeader } from "@/components/common/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Bot, PlusCircle, LayoutGrid, Building, Library, Workflow, Pencil, MoreVertical, Trash2, RefreshCw, Circle, Key } from "lucide-react";
+import { Bot, PlusCircle, LayoutGrid, Building, Library, Workflow, Pencil, MoreVertical, Trash2, RefreshCw, Circle, Key, PlayCircle, PauseCircle } from "lucide-react";
 import type { MessageTemplate, LibraryMessage, AutomationRule, Flow } from "@/lib/types";
 import { getTemplatesByCompany, deleteTemplate as deleteTemplateService } from "@/services/template-service";
 import { getLibraryMessagesByCompany, deleteLibraryMessage } from "@/services/library-message-service";
-import { getFlowsByCompany, deleteFlow } from "@/services/flow-service";
+import { getFlowsByCompany, deleteFlow, updateFlow } from "@/services/flow-service";
 import { useCompany } from "@/context/company-context";
 import { useToast } from "@/hooks/use-toast";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
@@ -87,6 +88,17 @@ function FlowBuilderTab({ flows, onFlowsChange }: { flows: Flow[]; onFlowsChange
             setFlowToDelete(null);
         }
     };
+    
+    const handleToggleFlowStatus = async (flow: Flow) => {
+        const newStatus = flow.status === 'published' ? 'draft' : 'published';
+        try {
+            await updateFlow(flow.id, { status: newStatus });
+            toast({ title: "Status do fluxo atualizado com sucesso!" });
+            onFlowsChange(); // Refresh the list to show the new status
+        } catch (error) {
+            toast({ variant: "destructive", title: "Erro ao atualizar status do fluxo." });
+        }
+    };
 
     return (
         <Card>
@@ -107,6 +119,7 @@ function FlowBuilderTab({ flows, onFlowsChange }: { flows: Flow[]; onFlowsChange
                         {flows.map(flow => {
                             const triggerNode = flow.nodes.find(n => n.id === '1');
                             const keywords = triggerNode?.data?.triggerKeywords || [];
+                            const isPublished = flow.status === 'published';
                             return (
                                 <Card key={flow.id} className="flex flex-col hover:shadow-lg transition-shadow">
                                     <CardHeader>
@@ -123,6 +136,10 @@ function FlowBuilderTab({ flows, onFlowsChange }: { flows: Flow[]; onFlowsChange
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent>
                                                     <DropdownMenuItem asChild><Link href={`/dashboard/automation/flows/edit/${flow.id}`}><Pencil className="mr-2 h-4 w-4" />Editar</Link></DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => handleToggleFlowStatus(flow)}>
+                                                        {isPublished ? <PauseCircle className="mr-2 h-4 w-4" /> : <PlayCircle className="mr-2 h-4 w-4" />}
+                                                        {isPublished ? 'Desativar' : 'Ativar'}
+                                                    </DropdownMenuItem>
                                                     <DropdownMenuItem onClick={() => setFlowToDelete(flow)} className="text-destructive focus:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Excluir</DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
