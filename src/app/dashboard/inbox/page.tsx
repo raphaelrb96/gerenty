@@ -1,10 +1,11 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useCompany } from "@/context/company-context";
 import type { Conversation, Consumer, Stage, Customer } from "@/lib/types";
-import { getConversations } from "@/services/conversation-service";
+import { getConversations, markConversationAsRead } from "@/services/conversation-service";
 import { getConsumersByCompany } from "@/services/consumer-service";
 import { getStagesByUser } from "@/services/stage-service";
 
@@ -40,7 +41,11 @@ export default function InboxPage() {
                         return prevId;
                     }
                     if (!prevId && convos.length > 0) {
-                        return convos[0].id;
+                        const firstConvo = convos[0];
+                        if (firstConvo.unreadMessagesCount > 0) {
+                            markConversationAsRead(activeCompany.id, firstConvo.id);
+                        }
+                        return firstConvo.id;
                     }
                     return prevId;
                 });
@@ -72,6 +77,9 @@ export default function InboxPage() {
     
     const handleSelectConversation = (conversation: Conversation) => {
         setSelectedConversationId(conversation.id);
+        if (conversation.unreadMessagesCount > 0 && activeCompany) {
+            markConversationAsRead(activeCompany.id, conversation.id);
+        }
     };
     
     const handleEditConsumer = (consumer: Consumer | null) => {
