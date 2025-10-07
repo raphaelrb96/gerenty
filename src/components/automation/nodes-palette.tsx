@@ -101,7 +101,7 @@ export function NodesPalette({ onNodeAdd }: NodePaletteProps) {
                 </div>
             </div>
              <Separator />
-            <div>
+            <div className="mb-4">
                 <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Ações e Lógica</h3>
                  <div className="flex flex-col gap-2">
                     {actionNodeTypes.map(nodeType => (
