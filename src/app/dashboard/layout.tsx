@@ -19,7 +19,7 @@ export default function DashboardLayout({
             <div className="flex w-full min-h-screen bg-muted/40">
               <MainSidebar />
               <SidebarInset>
-                <div className="flex flex-col h-screen">
+                <div className="flex flex-col">
                   <Header />
                   <main className="flex-1 overflow-y-auto">
                     <div className="w-full h-full p-6 md:p-8">
