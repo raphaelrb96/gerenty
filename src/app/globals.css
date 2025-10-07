@@ -175,7 +175,7 @@
   .animated-edge {
     stroke-dasharray: 5;
     animation: flow 3s linear infinite;
-    filter: drop-shadow(0 0 3px #FFD700);
+    filter: drop-shadow(0 0 3px hsl(40 50% 50%));
   }
 
 }
