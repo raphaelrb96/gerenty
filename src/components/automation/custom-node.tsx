@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { Handle, Position, NodeProps } from 'reactflow';
@@ -149,7 +148,7 @@ export function CustomNode({ data, selected }: NodeProps<{
   };
   
   const isDeletable = data.isDeletable !== false;
-  const isTriggerType = data.type === 'keywordTrigger' || data.type === 'waitForResponse';
+  const isTriggerType = data.type === 'keywordTrigger' || data.type === 'waitForResponse' || data.type === 'captureData';
   const isActionNode = !isTriggerType;
 
   const getVerticalHandlePosition = (index: number) => {
@@ -200,12 +199,12 @@ export function CustomNode({ data, selected }: NodeProps<{
        <Card 
         className={cn(
             "bg-card/80 backdrop-blur-sm transition-all duration-200 hover:shadow-xl w-[280px]",
-            isTriggerType && 'w-[320px] animate-pulse-glow !border-transparent',
+            isTriggerType && 'w-[320px] animate-pulse-glow',
             selected && isActionNode && 'animate-pulse-glow-active',
-            selected && isTriggerType && 'animate-pulse-glow-stronger !border-4 !border-amber-400'
+            selected && isTriggerType ? 'animate-pulse-glow-stronger !border-4 !border-amber-400' : (isTriggerType ? '!border-transparent' : '')
         )}
     >
-        <CardHeader className={cn("flex flex-row items-center gap-3 p-3 text-card-foreground rounded-t-lg border-t-4", !isTriggerType && 'border-t-transparent')} style={{ borderColor: isTriggerType ? 'transparent' : data.color }}>
+        <CardHeader className={cn("flex flex-row items-center gap-3 p-3 text-card-foreground rounded-t-lg", !isTriggerType && 'border-t-4')} style={{ borderColor: isTriggerType ? 'transparent' : data.color }}>
            <div className={cn("p-1 rounded-md", colorClass)}>
             {data.icon && data.color && React.cloneElement(data.icon as React.ReactElement, {
                 className: cn((data.icon as React.ReactElement).props.className, data.color),
@@ -216,7 +215,7 @@ export function CustomNode({ data, selected }: NodeProps<{
           </CardTitle>
         </CardHeader>
         
-        {isTriggerType ? (
+        {(data.type === 'keywordTrigger') ? (
              <CardContent className="px-4 pb-4 pt-2 text-center text-muted-foreground min-h-[80px] flex flex-col items-center justify-center">
                 {hasKeywords ? (
                     <div className="space-y-2 text-left w-full">
@@ -235,7 +234,7 @@ export function CustomNode({ data, selected }: NodeProps<{
                     </>
                 )}
             </CardContent>
-        ) : data.type !== 'conditional' && data.type !== 'endFlow' ? (
+        ) : (data.type !== 'conditional' && data.type !== 'endFlow') ? (
              <CardContent className="px-3 pb-3 pt-2 text-xs text-muted-foreground min-h-[40px]">
               {contentPreview()}
             </CardContent>
@@ -301,9 +300,3 @@ export function CustomNode({ data, selected }: NodeProps<{
     </div>
   );
 }
-
-
-
-
-
-

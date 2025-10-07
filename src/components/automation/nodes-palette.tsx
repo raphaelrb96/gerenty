@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
@@ -12,58 +11,58 @@ const triggerNodeTypes = [
      {
         type: 'keywordTrigger' as const,
         label: "Gatilho: Palavra-Chave",
-        description: "Inicia uma etapa se a palavra for dita.",
+        description: "Inicia o fluxo quando o cliente envia uma mensagem específica (ex: 'oi', 'cardápio').",
         icon: Zap
     },
     {
         type: 'waitForResponse' as const,
         label: "Aguardar Resposta",
-        description: "Pausa o fluxo e espera pela próxima mensagem do usuário.",
+        description: "Pausa o fluxo e espera pela próxima mensagem do cliente, seja texto, imagem ou áudio.",
         icon: MessageSquareReply
-    }
+    },
+    {
+        type: 'captureData' as const,
+        label: "Capturar Dados",
+        description: "Faz uma pergunta e salva a resposta do cliente em uma variável para uso posterior.",
+        icon: HelpCircle
+    },
 ];
 
 const actionNodeTypes = [
     {
         type: 'message' as const,
         label: "Enviar Mensagem",
-        description: "Envia uma mensagem da biblioteca.",
+        description: "Envia uma mensagem de texto, imagem, vídeo ou com botões da sua biblioteca.",
         icon: MessageCircle
-    },
-    {
-        type: 'captureData' as const,
-        label: "Capturar Dados",
-        description: "Solicita e valida uma informação do usuário.",
-        icon: HelpCircle
     },
     {
         type: 'internalAction' as const,
         label: "Ação Interna",
-        description: "Executa ações no CRM ou em Pedidos.",
+        description: "Executa ações automáticas no sistema, como adicionar uma tag a um cliente ou mover no CRM.",
         icon: Settings
     },
      {
         type: 'conditional' as const,
-        label: "Condição Lógica",
-        description: "Cria um caminho baseado em condições.",
+        label: "Condição Lógica (Se/Então)",
+        description: "Cria diferentes caminhos no fluxo com base em regras (ex: se a resposta contém 'sim').",
         icon: GitBranch
     },
       {
         type: 'externalApi' as const,
         label: "API Externa",
-        description: "Envia requisições para sistemas externos.",
+        description: "Envia ou busca informações de outros sistemas, como um banco de dados externo ou outro software.",
         icon: Share2
     },
     {
         type: 'transfer' as const,
-        label: "Transferir Atendente",
-        description: "Encerra e notifica um atendente.",
+        label: "Transferir para Atendente",
+        description: "Encerra a automação e notifica um atendente humano para assumir a conversa.",
         icon: UserCheck
     },
     {
         type: 'endFlow' as const,
         label: "Finalizar Fluxo",
-        description: "Marca o fim de um caminho no fluxo.",
+        description: "Marca o fim de um caminho no fluxo. É o ponto final da automação.",
         icon: CheckCircle
     }
 ]
@@ -81,34 +80,44 @@ export function NodesPalette({ onNodeAdd }: NodePaletteProps) {
     return (
         <div className="space-y-6">
             <div>
-                <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Gatilhos e Etapas</h3>
-                 <div className="grid grid-cols-2 gap-4">
+                <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Gatilhos e Etapas de Entrada</h3>
+                 <div className="flex flex-col gap-2">
                     {triggerNodeTypes.map(nodeType => (
                         <Button 
                             key={nodeType.type} 
                             variant="outline" 
-                            className="h-auto p-4 flex flex-col gap-2 items-center text-center"
+                            className="h-auto p-3 flex items-center justify-start gap-3 text-left"
                             onClick={() => onNodeAdd(nodeType.type)}
                         >
-                            <nodeType.icon className="h-6 w-6 text-yellow-500" />
-                            <span className="text-sm font-semibold">{nodeType.label}</span>
+                            <div className="p-2 bg-yellow-500/10 rounded-md">
+                                <nodeType.icon className="h-5 w-5 text-yellow-500" />
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-sm font-semibold">{nodeType.label}</span>
+                                <span className="text-xs text-muted-foreground font-normal">{nodeType.description}</span>
+                            </div>
                         </Button>
                     ))}
                 </div>
             </div>
              <Separator />
             <div>
-                <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Ações</h3>
-                 <div className="grid grid-cols-2 gap-4">
+                <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Ações e Lógica</h3>
+                 <div className="flex flex-col gap-2">
                     {actionNodeTypes.map(nodeType => (
                         <Button 
                             key={nodeType.type} 
                             variant="outline" 
-                            className="h-auto p-4 flex flex-col gap-2 items-center text-center"
+                            className="h-auto p-3 flex items-center justify-start gap-3 text-left"
                             onClick={() => onNodeAdd(nodeType.type)}
                         >
-                            <nodeType.icon className="h-6 w-6" />
-                            <span className="text-sm font-semibold">{nodeType.label}</span>
+                            <div className="p-2 bg-blue-500/10 rounded-md">
+                                <nodeType.icon className="h-5 w-5 text-blue-500" />
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-sm font-semibold">{nodeType.label}</span>
+                                <span className="text-xs text-muted-foreground font-normal">{nodeType.description}</span>
+                            </div>
                         </Button>
                     ))}
                 </div>
