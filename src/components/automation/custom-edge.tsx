@@ -48,7 +48,7 @@ export function CustomEdge({
         id={`${id}-animated`}
         d={edgePath}
         fill="none"
-        stroke="#87CEEB"
+        stroke="#FFD700"
         strokeWidth={2}
         className="animated-edge"
         markerEnd={markerEnd}
