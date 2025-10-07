@@ -160,7 +160,7 @@
   }
   
   .animate-blink {
-    animation: blink 1.5s infinite step-end;
+    animation: blink 1.0s infinite step-end;
   }
   
   @keyframes flow {
