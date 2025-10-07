@@ -622,7 +622,7 @@ export default function EditConversationFlowPage() {
                         <SheetTitle>Paleta de Tarefas</SheetTitle>
                         <SheetDescription>Clique em uma tarefa para adicioná-la ao fluxo.</SheetDescription>
                     </SheetHeader>
-                    <ScrollArea className="flex-1 px-6">
+                    <ScrollArea className="flex-1 px-6 pb-[26px]">
                         <NodesPalette onNodeAdd={addNode} />
                     </ScrollArea>
                 </SheetContent>
