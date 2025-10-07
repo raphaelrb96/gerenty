@@ -177,13 +177,14 @@ export function CustomNode({ data, selected }: NodeProps<{
           <Handle type="source" position={Position.Right} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10, top: '20px' }} />
       )}
       
-      <Card 
+       <Card 
         className={cn(
             "bg-card/80 backdrop-blur-sm transition-all duration-200 hover:shadow-xl w-[280px]",
-            isTriggerType && 'w-[320px] !border-4 animate-pulse-glow-strong',
+            isTriggerType && 'w-[320px] !border-4 animate-pulse-glow',
+            selected && isTriggerType && 'animate-pulse-glow-stronger !border-8',
             selected && isActionNode && 'animate-pulse-glow-active !border-transparent'
         )} 
-        style={{ borderColor: isTriggerType ? 'hsl(40 50% 50% / 0.4)' : (selected ? undefined : data.color) }}
+        style={{ borderColor: (isTriggerType) ? 'hsl(40 50% 50% / 0.4)' : (selected ? undefined : data.color) }}
     >
         <CardHeader className={cn("flex flex-row items-center gap-3 p-3 text-card-foreground rounded-t-lg border-t-4", !isTriggerType && 'border-t-transparent')} style={{ borderColor: isTriggerType ? 'transparent' : data.color }}>
            <div className={cn("p-1 rounded-md", colorClass)}>
@@ -281,5 +282,6 @@ export function CustomNode({ data, selected }: NodeProps<{
     </div>
   );
 }
+
 
 

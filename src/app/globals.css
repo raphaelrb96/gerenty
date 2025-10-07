@@ -120,7 +120,7 @@
     }
   }
 
-  @keyframes pulse-glow-strong {
+  @keyframes pulse-glow-stronger {
     0%, 100% {
       box-shadow: 0 0 20px hsl(40 50% 50% / 0.4), 0 0 40px hsl(40 50% 50% / 0.3);
       border-color: hsl(40 50% 50% / 0.6);
@@ -151,8 +151,8 @@
     animation: pulse-glow 2s infinite ease-in-out;
   }
   
-  .animate-pulse-glow-strong {
-    animation: pulse-glow-strong 1.5s infinite ease-in-out;
+  .animate-pulse-glow-stronger {
+    animation: pulse-glow-stronger 1.5s infinite ease-in-out;
   }
   
   .animate-pulse-glow-active {
