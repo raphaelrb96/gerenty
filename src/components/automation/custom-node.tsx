@@ -241,7 +241,7 @@ export function CustomNode({ data, selected }: NodeProps<{
         ) : data.type === 'conditional' && (
             <CardContent className="px-3 pb-3 pt-2 space-y-2">
                  {(data.conditions || []).map((cond: any, index: number) => (
-                    <div key={cond.id} className="text-xs p-2 bg-muted rounded-md flex justify-between items-center relative">
+                    <div key={cond.id} className="text-xs p-3 bg-muted rounded-md flex justify-between items-center relative">
                         <span>Se <strong>{`{{${cond.variable || '...'}}}`}</strong> {cond.operator} <strong>{cond.value || '...'}</strong></span>
                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => data.onQuickAdd(cond.id)}><PlusCircle className="h-4 w-4" /></Button>
                     </div>
