@@ -181,7 +181,6 @@ export function CustomNode({ data, selected }: NodeProps<{
         className={cn(
             "bg-card/80 backdrop-blur-sm transition-all duration-200 hover:shadow-xl w-[280px]",
             data.type === 'keywordTrigger' && 'w-[320px] !border-4',
-            data.type === 'keywordTrigger' && !selected && 'animate-pulse-glow',
             data.type === 'keywordTrigger' && selected && 'animate-pulse-glow-strong',
             selected && isActionNode && 'animate-pulse-glow-white !border-transparent'
         )} 
