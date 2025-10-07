@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../ui/card
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { Badge } from '../ui/badge';
-import { Pencil, Settings, Trash2, Zap, PlusCircle, GitBranch, MessageSquare, Video, File, Music, List, MessageCircle as MessageIcon } from 'lucide-react';
+import { Pencil, Settings, Trash2, Zap, PlusCircle, GitBranch, MessageSquare, Video, File, Music, List, MessageCircle as MessageIcon, HelpCircle } from 'lucide-react';
 import { LibraryMessage } from '@/lib/types';
 import React from 'react';
 import Image from 'next/image';
@@ -21,8 +21,9 @@ export function CustomNode({ data, selected }: NodeProps<{
   triggerKeywords?: { value: string; matchType: string }[],
   triggerType?: string,
   messageId?: string,
-  actionType?: string,
+  captureMessage?: string,
   captureVariable?: string,
+  actionType?: string,
   delaySeconds?: number,
   transferTo?: string,
   conditions?: any[],
@@ -44,6 +45,25 @@ export function CustomNode({ data, selected }: NodeProps<{
   }
 
   const contentPreview = () => {
+    if (data.type === 'captureData') {
+      if (data.captureMessage) {
+        return (
+          <div className="p-2 bg-muted rounded-md space-y-2">
+            <p className="text-sm italic">"{data.captureMessage}"</p>
+            <p className="text-xs text-foreground/80 font-mono text-right">
+              Salvar em: {`{{${data.captureVariable || '...'}}}`}
+            </p>
+          </div>
+        );
+      }
+      return (
+        <div className="text-center text-xs p-2 italic text-muted-foreground">
+          <HelpCircle className="h-4 w-4 mx-auto mb-1" />
+          Configure a pergunta a ser feita...
+        </div>
+      );
+    }
+    
     const message = data.libraryMessages?.find(m => m.id === data.messageId);
 
     if (!message) {
@@ -182,7 +202,7 @@ export function CustomNode({ data, selected }: NodeProps<{
             "bg-card/80 backdrop-blur-sm transition-all duration-200 hover:shadow-xl w-[280px]",
             isTriggerType && 'w-[320px] animate-pulse-glow !border-transparent',
             selected && isActionNode && 'animate-pulse-glow-active',
-            selected && isTriggerType && 'animate-pulse-glow-stronger !border-4 !border-yellow-500'
+            selected && isTriggerType && 'animate-pulse-glow-stronger !border-4 !border-amber-400'
         )}
     >
         <CardHeader className={cn("flex flex-row items-center gap-3 p-3 text-card-foreground rounded-t-lg border-t-4", !isTriggerType && 'border-t-transparent')} style={{ borderColor: isTriggerType ? 'transparent' : data.color }}>
@@ -281,6 +301,7 @@ export function CustomNode({ data, selected }: NodeProps<{
     </div>
   );
 }
+
 
 
 
