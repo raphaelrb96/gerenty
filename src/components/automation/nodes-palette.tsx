@@ -92,9 +92,9 @@ export function NodesPalette({ onNodeAdd }: NodePaletteProps) {
                             <div className="p-2 bg-yellow-500/10 rounded-md">
                                 <nodeType.icon className="h-5 w-5 text-yellow-500" />
                             </div>
-                            <div className="flex flex-col">
-                                <span className="text-sm font-semibold">{nodeType.label}</span>
-                                <span className="text-xs text-muted-foreground font-normal">{nodeType.description}</span>
+                            <div className="flex-1 flex flex-col min-w-0">
+                                <span className="text-sm font-semibold truncate">{nodeType.label}</span>
+                                <span className="text-xs text-muted-foreground font-normal whitespace-normal">{nodeType.description}</span>
                             </div>
                         </Button>
                     ))}
@@ -114,9 +114,9 @@ export function NodesPalette({ onNodeAdd }: NodePaletteProps) {
                             <div className="p-2 bg-blue-500/10 rounded-md">
                                 <nodeType.icon className="h-5 w-5 text-blue-500" />
                             </div>
-                            <div className="flex flex-col">
-                                <span className="text-sm font-semibold">{nodeType.label}</span>
-                                <span className="text-xs text-muted-foreground font-normal">{nodeType.description}</span>
+                            <div className="flex-1 flex flex-col min-w-0">
+                                <span className="text-sm font-semibold truncate">{nodeType.label}</span>
+                                <span className="text-xs text-muted-foreground font-normal whitespace-normal">{nodeType.description}</span>
                             </div>
                         </Button>
                     ))}
