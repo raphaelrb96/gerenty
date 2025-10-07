@@ -147,6 +147,21 @@
   .animate-blink {
     animation: blink 0.5s infinite step-end;
   }
+  
+  @keyframes flow {
+    from {
+      stroke-dashoffset: 20;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  .animated-edge {
+    stroke-dasharray: 5;
+    animation: flow 3s linear infinite;
+    filter: drop-shadow(0 0 3px #87CEEB);
+  }
 
 }
 

@@ -5,7 +5,7 @@ import React from 'react';
 import {
   BaseEdge,
   EdgeLabelRenderer,
-  getBezierPath,
+  getSmoothStepPath,
   useReactFlow,
   EdgeProps,
 } from 'reactflow';
@@ -24,10 +24,9 @@ export function CustomEdge({
   style = {},
   markerEnd,
   selected,
-  data,
-}: EdgeProps & { data?: { onDelete: () => void } }) {
+}: EdgeProps) {
   const { setEdges } = useReactFlow();
-  const [edgePath, labelX, labelY] = getBezierPath({
+  const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
     sourceY,
     sourcePosition,
@@ -37,14 +36,22 @@ export function CustomEdge({
   });
 
   const onEdgeClick = () => {
-    if (data?.onDelete) {
-      data.onDelete();
-    }
+    setEdges((edges) => edges.filter((edge) => edge.id !== id));
   };
 
   return (
     <>
       <BaseEdge path={edgePath} markerEnd={markerEnd} style={style} />
+      {/* Animated path */}
+      <path
+        id={`${id}-animated`}
+        d={edgePath}
+        fill="none"
+        stroke="#87CEEB"
+        strokeWidth={2}
+        className="animated-edge"
+        markerEnd={markerEnd}
+      />
       <EdgeLabelRenderer>
         <div
           style={{
