@@ -33,6 +33,7 @@ export function CustomEdge({
     targetX,
     targetY,
     targetPosition,
+    borderRadius: 15,
   });
 
   const onEdgeClick = () => {
