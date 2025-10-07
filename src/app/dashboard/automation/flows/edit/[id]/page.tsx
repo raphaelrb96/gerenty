@@ -635,7 +635,7 @@ export default function EditConversationFlowPage() {
                     onSave={handleSaveFlow}
                     onClose={() => setIsConfigOpen(false)}
                     allNodes={nodes}
-                    allEdges={allEdges}
+                    allEdges={edges}
                     onConnect={onConnectFromPanel}
                     onCreateAndConnect={addNode}
                     onOpenLibraryForm={handleOpenLibraryForm}
@@ -816,7 +816,3 @@ export default function EditConversationFlowPage() {
 
 
 }
-
-    
-
-    
