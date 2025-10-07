@@ -635,12 +635,14 @@ export default function EditConversationFlowPage() {
                     onSave={handleSaveFlow}
                     onClose={() => setIsConfigOpen(false)}
                     allNodes={nodes}
-                    allEdges={edges}
+                    edges={edges}
                     onConnect={onConnectFromPanel}
                     onCreateAndConnect={addNode}
                     onOpenLibraryForm={handleOpenLibraryForm}
                     libraryMessages={libraryMessages}
                     onLibraryMessageCreated={fetchLibraryMessages}
+                    openPalette={setIsPaletteOpen}
+                    setQuickAddSourceNode={setQuickAddSourceNode}
                 />
             </Sheet>
             

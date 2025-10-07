@@ -46,13 +46,15 @@ type NodeConfigPanelProps = {
     onNodeDataChange: (nodeId: string, data: any) => void;
     onSave: () => Promise<void>;
     onClose: () => void;
-    allNodes: Node[]; // Pass all nodes for selection
-    allEdges: Edge[];
+    allNodes: Node[];
+    edges: Edge[];
     onConnect: (source: string, sourceHandle: string, target: string) => void;
     onCreateAndConnect: (type: keyof typeof nodeTypeConfig, sourceHandle?: string) => Node | undefined;
     onOpenLibraryForm: (message: LibraryMessage | null) => void;
     libraryMessages: LibraryMessage[]; 
     onLibraryMessageCreated: () => void;
+    openPalette: (isOpen: boolean) => void;
+    setQuickAddSourceNode: (node: Node | null) => void;
 }
 
 function CustomLabelInput({ node, onNodeDataChange }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'] }) {
@@ -436,12 +438,18 @@ function InternalActionPanel({ node, onNodeDataChange }: { node: Node, onNodeDat
     );
 }
 
-function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnect, onCreateAndConnect }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'], allNodes: Node[], allEdges: Edge[], onConnect: NodeConfigPanelProps['onConnect'], onCreateAndConnect: NodeConfigPanelProps['onCreateAndConnect'] }) {
+function ConditionalPanel({ node, onNodeDataChange, allNodes, edges, onConnect, onCreateAndConnect, openPalette, setQuickAddSourceNode }: { 
+    node: Node, 
+    onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'], 
+    allNodes: Node[], 
+    edges: Edge[], 
+    onConnect: NodeConfigPanelProps['onConnect'], 
+    onCreateAndConnect: NodeConfigPanelProps['onCreateAndConnect'],
+    openPalette: (isOpen: boolean) => void;
+    setQuickAddSourceNode: (node: Node | null) => void;
+}) {
     const conditions = node.data.conditions || [];
-    const [isPaletteOpen, setPaletteOpen] = useState(false);
-    const [currentHandle, setCurrentHandle] = useState<string | null>(null);
-
-
+    
     const availableNodes = allNodes.filter(n => n.id !== '1' && n.id !== node.id);
 
     const handleAddCondition = () => {
@@ -465,16 +473,13 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
         onConnect(node.id, handleId, targetNodeId);
     };
     
-    const handleCreateAndConnect = (type: keyof typeof nodeTypeConfig) => {
-        if (currentHandle) {
-            onCreateAndConnect(type, currentHandle);
-        }
-        setPaletteOpen(false);
-        setCurrentHandle(null);
-    }
+    const handleCreateAndConnectClick = (handleId: string) => {
+        setQuickAddSourceNode({ ...node, data: { ...node.data, sourceHandleForQuickAdd: handleId } });
+        openPalette(true);
+    };
     
     const renderConnectionSelect = (handleId: string) => {
-        const currentTargetId = allEdges.find(e => e.source === node.id && e.sourceHandle === handleId)?.target;
+        const currentTargetId = edges.find(e => e.source === node.id && e.sourceHandle === handleId)?.target;
         return (
             <div className="grid grid-cols-2 gap-2">
                 <Select onValueChange={(nodeId) => handleConnect(handleId, nodeId)} value={currentTargetId || ""}>
@@ -483,7 +488,7 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
                         {availableNodes.map(n => <SelectItem key={n.id} value={n.id}>{n.data.customLabel || n.data.label}</SelectItem>)}
                     </SelectContent>
                 </Select>
-                 <Button type="button" variant="outline" onClick={() => {setCurrentHandle(handleId); setPaletteOpen(true);}}><PlusCircle className="mr-2 h-4 w-4" /> Criar</Button>
+                 <Button type="button" variant="outline" onClick={() => handleCreateAndConnectClick(handleId)}><PlusCircle className="mr-2 h-4 w-4" /> Criar</Button>
             </div>
         );
     }
@@ -547,15 +552,6 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, allEdges, onConnec
                     {renderConnectionSelect('else')}
                 </div>
             </div>
-
-            <Dialog open={isPaletteOpen} onOpenChange={setPaletteOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Selecione a Tarefa para Criar</DialogTitle>
-                    </DialogHeader>
-                     <NodesPalette onNodeAdd={handleCreateAndConnect} />
-                </DialogContent>
-            </Dialog>
         </div>
     );
 }
@@ -593,7 +589,7 @@ function TransferPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChang
     )
 }
 
-export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, onClose, allNodes, allEdges, onConnect, onCreateAndConnect, onOpenLibraryForm, libraryMessages }: NodeConfigPanelProps) {
+export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, onClose, allNodes, edges, onConnect, onCreateAndConnect, onOpenLibraryForm, libraryMessages, openPalette, setQuickAddSourceNode }: NodeConfigPanelProps) {
     const [isSaving, setIsSaving] = useState(false);
 
     const handleSaveClick = async () => {
@@ -647,7 +643,7 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, onClos
                 panelComponent = <InternalActionPanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
                 break;
             case 'conditional':
-                panelComponent = <ConditionalPanel node={selectedNode} onNodeDataChange={onNodeDataChange} allNodes={allNodes} allEdges={allEdges} onConnect={onConnect} onCreateAndConnect={onCreateAndConnect}/>;
+                panelComponent = <ConditionalPanel node={selectedNode} onNodeDataChange={onNodeDataChange} allNodes={allNodes} edges={edges} onConnect={onConnect} onCreateAndConnect={onCreateAndConnect} openPalette={openPalette} setQuickAddSourceNode={setQuickAddSourceNode}/>;
                 break;
             case 'transfer':
                 panelComponent = <TransferPanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
