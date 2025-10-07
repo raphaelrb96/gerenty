@@ -626,6 +626,17 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, onClos
             case 'keywordTrigger':
                 panelComponent = <TriggerPanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
                 break;
+            case 'waitForResponse':
+                panelComponent = (
+                    <div className="text-center p-4 text-muted-foreground">
+                        <HelpCircle className="mx-auto h-8 w-8 mb-2" />
+                        <p className="text-sm font-semibold">Nó de Espera</p>
+                        <p className="text-xs">
+                            Esta tarefa pausa o fluxo e aguarda a próxima mensagem do usuário. Ela serve como ponto de entrada para qualquer tipo de resposta (texto, imagem, áudio, etc.). Nenhuma configuração é necessária.
+                        </p>
+                    </div>
+                );
+                break;
             case 'message':
                  panelComponent = <MessagePanel node={selectedNode} onNodeDataChange={onNodeDataChange} onOpenLibraryForm={onOpenLibraryForm} libraryMessages={libraryMessages} />;
                  break;
