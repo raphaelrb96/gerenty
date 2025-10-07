@@ -131,6 +131,17 @@
     }
   }
 
+  @keyframes pulse-glow-white {
+    0%, 100% {
+      box-shadow: 0 0 15px hsl(0 0% 100% / 0.3), 0 0 30px hsl(0 0% 100% / 0.2);
+      border-color: hsl(0 0% 100% / 0.6);
+    }
+    50% {
+      box-shadow: 0 0 30px hsl(0 0% 100% / 0.8), 0 0 60px hsl(0 0% 100% / 0.6);
+      border-color: hsl(0 0% 100% / 1);
+    }
+  }
+
   @keyframes blink {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.3; }
@@ -142,6 +153,10 @@
   
   .animate-pulse-glow-strong {
     animation: pulse-glow-strong 1.5s infinite ease-in-out;
+  }
+  
+  .animate-pulse-glow-white {
+    animation: pulse-glow-white 2s infinite ease-in-out;
   }
   
   .animate-blink {

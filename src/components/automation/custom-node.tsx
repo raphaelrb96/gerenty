@@ -130,6 +130,7 @@ export function CustomNode({ data, selected }: NodeProps<{
   
   const isDeletable = data.isDeletable !== false;
   const isTriggerType = data.type === 'keywordTrigger' || data.type === 'waitForResponse';
+  const isActionNode = !isTriggerType;
 
   const getVerticalHandlePosition = (index: number) => {
     const headerHeight = 44; 
@@ -182,7 +183,7 @@ export function CustomNode({ data, selected }: NodeProps<{
             data.type === 'keywordTrigger' && 'w-[320px] !border-4',
             data.type === 'keywordTrigger' && !selected && 'animate-pulse-glow',
             data.type === 'keywordTrigger' && selected && 'animate-pulse-glow-strong',
-            selected && 'ring-2 ring-white ring-offset-2 !border-transparent'
+            selected && isActionNode && 'animate-pulse-glow-white !border-transparent'
         )} 
         style={{ borderColor: data.type === 'keywordTrigger' ? 'hsl(40 50% 50% / 0.4)' : (selected ? undefined : data.color) }}
     >
@@ -282,6 +283,3 @@ export function CustomNode({ data, selected }: NodeProps<{
     </div>
   );
 }
-
-
-
