@@ -672,7 +672,7 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, onClos
 
         return (
             <div>
-                {nodeType !== 'conditional' && <CustomLabelInput node={selectedNode} onNodeDataChange={onNodeDataChange} />}
+                <CustomLabelInput node={selectedNode} onNodeDataChange={onNodeDataChange} />
                 {panelComponent}
             </div>
         );
