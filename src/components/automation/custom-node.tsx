@@ -181,7 +181,7 @@ export function CustomNode({ data, selected }: NodeProps<{
         className={cn(
             "bg-card/80 backdrop-blur-sm transition-all duration-200 hover:shadow-xl w-[280px]",
             isTriggerType && 'w-[320px] !border-4 animate-pulse-glow-strong',
-            selected && isActionNode && 'animate-pulse-glow-white !border-transparent'
+            selected && isActionNode && 'animate-pulse-glow-active !border-transparent'
         )} 
         style={{ borderColor: isTriggerType ? 'hsl(40 50% 50% / 0.4)' : (selected ? undefined : data.color) }}
     >
@@ -281,4 +281,5 @@ export function CustomNode({ data, selected }: NodeProps<{
     </div>
   );
 }
+
 
