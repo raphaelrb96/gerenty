@@ -24,7 +24,8 @@ export function CustomEdge({
   style = {},
   markerEnd,
   selected,
-}: EdgeProps) {
+  data,
+}: EdgeProps<{ onDelete: () => void }>) {
   const { setEdges } = useReactFlow();
   const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
@@ -37,7 +38,11 @@ export function CustomEdge({
   });
 
   const onEdgeClick = () => {
-    setEdges((edges) => edges.filter((edge) => edge.id !== id));
+    if (data?.onDelete) {
+      data.onDelete();
+    } else {
+      setEdges((edges) => edges.filter((edge) => edge.id !== id));
+    }
   };
 
   return (

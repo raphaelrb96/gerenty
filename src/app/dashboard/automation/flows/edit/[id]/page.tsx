@@ -138,25 +138,28 @@ export default function EditConversationFlowPage() {
 
     const confirmDeleteNode = () => {
         if (!nodeToDelete) return;
+    
+        // Find all edges connected to the node being deleted
+        const edgesToRemove = edges.filter(e => e.source === nodeToDelete.id || e.target === nodeToDelete.id);
+        const remainingEdges = edges.filter(e => !edgesToRemove.find(er => er.id === e.id));
         
-        setEdges((eds) => {
-            const newEdges = eds.filter(e => e.source !== nodeToDelete.id && e.target !== nodeToDelete.id);
-            setNodes(nds => nds.map(n => {
-                 if (n.data.type === 'conditional' && n.data.conditions) {
-                     const updatedConditions = n.data.conditions.filter((cond: any) => {
-                         const edgeForCond = newEdges.find(e => e.source === n.id && e.sourceHandle === cond.id);
-                         return !!edgeForCond;
-                     });
-                     if (updatedConditions.length !== n.data.conditions.length) {
-                         return {...n, data: {...n.data, conditions: updatedConditions}};
-                     }
-                 }
-                 return n;
-            }));
-            return newEdges;
+        // Remove the node itself
+        const remainingNodes = nodes.filter(n => n.id !== nodeToDelete.id);
+        
+        // Update nodes to remove any conditions that were linked by the removed edges
+        const sourceHandlesToRemove = edgesToRemove.map(e => e.sourceHandle).filter(Boolean);
+        const nodesToUpdate = remainingNodes.map(n => {
+            if (n.data.type === 'conditional' && n.data.conditions) {
+                const updatedConditions = n.data.conditions.filter((cond: any) => !sourceHandlesToRemove.includes(cond.id));
+                if (updatedConditions.length !== n.data.conditions.length) {
+                    return {...n, data: {...n.data, conditions: updatedConditions}};
+                }
+            }
+            return n;
         });
-        setNodes((nds) => nds.filter(n => n.id !== nodeToDelete.id));
 
+        setEdges(remainingEdges);
+        setNodes(nodesToUpdate);
         setNodeToDelete(null);
         setHasUnsavedChanges(true);
         toast({ title: "Tarefa removida com sucesso!" });
@@ -166,25 +169,26 @@ export default function EditConversationFlowPage() {
         setEdges(eds => {
             const newEdges = eds.filter(e => !edgesToDelete.find(etd => etd.id === e.id));
             
-            // Remove conditions from conditional nodes if their edge is deleted
-            setNodes(nds => nds.map(n => {
-                 if (n.data.type === 'conditional') {
-                    const deletedSourceHandles = edgesToDelete
-                        .filter(e => e.source === n.id)
-                        .map(e => e.sourceHandle);
-                    
-                    if (deletedSourceHandles.length > 0) {
-                        const updatedConditions = (n.data.conditions || []).filter((cond: any) => !deletedSourceHandles.includes(cond.id));
-                        return {...n, data: {...n.data, conditions: updatedConditions}};
+            // Clean up conditions from conditional nodes if their edge is deleted
+            setNodes(nds => {
+                const sourceHandlesToRemove = new Set(edgesToDelete.map(e => e.sourceHandle).filter(Boolean));
+                if (sourceHandlesToRemove.size === 0) return nds;
+
+                return nds.map(n => {
+                    if (n.data.type === 'conditional' && n.data.conditions) {
+                        const updatedConditions = n.data.conditions.filter((cond: any) => !sourceHandlesToRemove.has(cond.id));
+                        if (updatedConditions.length !== n.data.conditions.length) {
+                             return {...n, data: {...n.data, conditions: updatedConditions}};
+                        }
                     }
-                 }
-                 return n;
-            }));
+                    return n;
+                });
+            });
 
             return newEdges;
         });
         setHasUnsavedChanges(true);
-    }, [setEdges]);
+    }, [setEdges, setNodes]);
 
 
     const fetchLibraryMessages = useCallback(async () => {
