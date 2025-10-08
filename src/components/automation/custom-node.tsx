@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Handle, Position, NodeProps } from 'reactflow';
@@ -152,8 +153,8 @@ export function CustomNode({ data, selected }: NodeProps<{
 
   const getVerticalHandlePosition = (index: number) => {
     const headerHeight = 44; 
-    const contentPaddingTop = 24;
-    const itemHeight = 50; // Adjusted for better spacing
+    const contentPaddingTop = 22;
+    const itemHeight = 46; // Adjusted for better spacing
     const itemSpacing = 8;
     const topOffset = headerHeight + contentPaddingTop + (index * (itemHeight + itemSpacing)) + (itemHeight / 2);
     return `${topOffset}px`;
