@@ -4,7 +4,7 @@
 import type { LibraryMessage } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Image, Video, AudioLines, File as FileIcon, MoreVertical, Pencil, Trash2, List } from "lucide-react";
+import { FileText, Image as ImageIcon, Video, AudioLines, File as FileIcon, MoreVertical, Pencil, Trash2, List } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import React from 'react';
 import Image from "next/image";
@@ -34,7 +34,7 @@ export function ResponseCard({ message, onEdit, onDelete }: ResponseCardProps) {
                         </div>
                     );
                 }
-                return <div className="p-2 bg-muted rounded-md text-xs flex items-center gap-2"><Image className="h-4 w-4" /> <span>Imagem</span></div>;
+                return <div className="p-2 bg-muted rounded-md text-xs flex items-center gap-2"><ImageIcon className="h-4 w-4" /> <span>Imagem</span></div>;
             case 'video':
                 return <div className="p-2 bg-muted rounded-md text-xs flex items-center gap-2"><Video className="h-4 w-4" /> <span>Vídeo: {message.content.media?.caption || message.content.media?.filename || 'Arquivo de vídeo'}</span></div>;
             case 'audio':
