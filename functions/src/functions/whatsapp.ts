@@ -824,8 +824,8 @@ async function processFlowStep(
     }
 
     // Se o nó atual é um gatilho, apenas o usamos como ponto de partida
-    if (currentNode.data.type !== 'keywordTrigger' && currentNode.data.type !== 'captureData') {
-         functions.logger.error(`[Flow] processFlowStep called with a non-trigger/non-capture node: ${currentNode.data.type}. This should not happen.`);
+    if (currentNode.data.type !== 'keywordTrigger' && currentNode.data.type !== 'captureData' && currentNode.data.type !== 'message') {
+         functions.logger.error(`[Flow] processFlowStep called with a non-trigger/non-capture/non-message node: ${currentNode.data.type}. This should not happen.`);
          return null; // A lógica de execução deve sempre partir de um ponto de parada
     }
     
@@ -943,7 +943,7 @@ async function processFlowStep(
                         }
                     }
                 }
-                // *** BUG FIX: Break execution after sending a message to wait for next user input ***
+                // *** CORREÇÃO: Parar execução após enviar mensagem para aguardar a próxima entrada do usuário ***
                 functions.logger.info(`[Flow] Stopping execution at node ${nextNode.id} after sending message. Awaiting user input.`);
                 return nextNode;
 
