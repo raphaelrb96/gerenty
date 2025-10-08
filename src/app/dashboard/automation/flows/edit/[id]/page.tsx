@@ -139,56 +139,20 @@ export default function EditConversationFlowPage() {
     const confirmDeleteNode = () => {
         if (!nodeToDelete) return;
     
-        // Find all edges connected to the node being deleted
-        const edgesToRemove = edges.filter(e => e.source === nodeToDelete.id || e.target === nodeToDelete.id);
-        const remainingEdges = edges.filter(e => !edgesToRemove.find(er => er.id === e.id));
-        
-        // Remove the node itself
+        const remainingEdges = edges.filter(e => e.source !== nodeToDelete.id && e.target !== nodeToDelete.id);
         const remainingNodes = nodes.filter(n => n.id !== nodeToDelete.id);
         
-        // Update nodes to remove any conditions that were linked by the removed edges
-        const sourceHandlesToRemove = edgesToRemove.map(e => e.sourceHandle).filter(Boolean);
-        const nodesToUpdate = remainingNodes.map(n => {
-            if (n.data.type === 'conditional' && n.data.conditions) {
-                const updatedConditions = n.data.conditions.filter((cond: any) => !sourceHandlesToRemove.includes(cond.id));
-                if (updatedConditions.length !== n.data.conditions.length) {
-                    return {...n, data: {...n.data, conditions: updatedConditions}};
-                }
-            }
-            return n;
-        });
-
         setEdges(remainingEdges);
-        setNodes(nodesToUpdate);
+        setNodes(remainingNodes);
         setNodeToDelete(null);
         setHasUnsavedChanges(true);
         toast({ title: "Tarefa removida com sucesso!" });
     };
 
     const handleEdgesDelete = useCallback((edgesToDelete: Edge[]) => {
-        setEdges(eds => {
-            const newEdges = eds.filter(e => !edgesToDelete.find(etd => etd.id === e.id));
-            
-            // Clean up conditions from conditional nodes if their edge is deleted
-            setNodes(nds => {
-                const sourceHandlesToRemove = new Set(edgesToDelete.map(e => e.sourceHandle).filter(Boolean));
-                if (sourceHandlesToRemove.size === 0) return nds;
-
-                return nds.map(n => {
-                    if (n.data.type === 'conditional' && n.data.conditions) {
-                        const updatedConditions = n.data.conditions.filter((cond: any) => !sourceHandlesToRemove.has(cond.id));
-                        if (updatedConditions.length !== n.data.conditions.length) {
-                             return {...n, data: {...n.data, conditions: updatedConditions}};
-                        }
-                    }
-                    return n;
-                });
-            });
-
-            return newEdges;
-        });
+        setEdges((eds) => eds.filter((edge) => !edgesToDelete.some((e) => e.id === edge.id)));
         setHasUnsavedChanges(true);
-    }, [setEdges, setNodes]);
+    }, []);
 
 
     const fetchLibraryMessages = useCallback(async () => {

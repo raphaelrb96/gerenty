@@ -37,7 +37,8 @@ export function CustomEdge({
     borderRadius: 60,
   });
 
-  const onEdgeClick = () => {
+  const onEdgeClick = (event: React.MouseEvent) => {
+    event.stopPropagation();
     if (data?.onDelete) {
       data.onDelete();
     } else {
