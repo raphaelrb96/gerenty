@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import type { LibraryMessage } from "@/lib/types";
@@ -8,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { FileText, Image, Video, AudioLines, File as FileIcon, MoreVertical, Pencil, Trash2, List } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import React from 'react';
+import Image from "next/image";
 
 type ResponseCardProps = {
     message: LibraryMessage;
@@ -30,7 +30,7 @@ export function ResponseCard({ message, onEdit, onDelete }: ResponseCardProps) {
                 if (imageUrl) {
                     return (
                         <div className="relative w-full aspect-video">
-                            <Image src={imageUrl} alt="Pré-visualização" layout="fill" objectFit="cover" className="rounded-md" />
+                            <Image src={imageUrl} alt="Pré-visualização" fill className="rounded-md object-cover" />
                         </div>
                     );
                 }
