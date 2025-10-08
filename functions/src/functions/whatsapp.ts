@@ -825,41 +825,50 @@ async function processFlowStep(
     }
 
     const startNodeTypes = ['keywordTrigger', 'captureData', 'waitForResponse'];
-    if (!startNodeTypes.includes(currentNode.data.type)) {
-         functions.logger.error(`[Flow] processFlowStep called with a non-trigger/non-capture node: ${currentNode.data.type}. This should not happen.`);
-         return null;
-    }
-    
-    // Se o nó atual é para capturar dados, salve a resposta do usuário antes de continuar
-    if (currentNode.data.type === 'captureData' && userMessage?.text?.body) {
-        const variableName = currentNode.data.captureVariable;
-        if (variableName) {
-            await consumerRef.update({
-                [`flowData.${variableName}`]: userMessage.text.body,
-                updatedAt: admin.firestore.FieldValue.serverTimestamp()
-            });
-            functions.logger.info(`[Flow] Captured data for variable "${variableName}"`);
+    if (startNodeTypes.includes(currentNode.data.type)) {
+         // If the current node is for capturing data, save the user's response before continuing
+        if (currentNode.data.type === 'captureData' && userMessage?.text?.body) {
+            const variableName = currentNode.data.captureVariable;
+            if (variableName) {
+                await consumerRef.update({
+                    [`flowData.${variableName}`]: userMessage.text.body,
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+                functions.logger.info(`[Flow] Captured data for variable "${variableName}"`);
+            }
         }
     }
 
 
-    // LOOP DE EXECUÇÃO: Começa do nó atual e executa até encontrar um ponto de parada.
+    // EXECUTION LOOP: Starts from the current node and executes until it finds a stopping point.
     while (currentNode) {
         functions.logger.info(`[Flow] Executing loop for node ${currentNode.id} of type ${currentNode.data.type}`);
         
         let nextNode: FlowNode | null = null;
         
-        // --- 1. LÓGICA DE DECISÃO DE PRÓXIMO NÓ ---
+        // --- 1. NEXT NODE DECISION LOGIC ---
         if (currentNode.data.type === 'conditional') {
             const conditions = currentNode.data.conditions || [];
             const consumerDoc = await consumerRef.get();
             const consumerData = consumerDoc.data() || {};
-            const userText = userMessage?.text?.body.toLowerCase().trim();
-
+            
+            // Extract the relevant text or ID from the user's message
+            let userInput: string | undefined;
+            if (userMessage?.type === 'text') {
+                userInput = userMessage.text?.body.toLowerCase().trim();
+            } else if (userMessage?.type === 'interactive') {
+                if (userMessage.interactive.type === 'button_reply') {
+                    userInput = userMessage.interactive.button_reply.id;
+                } else if (userMessage.interactive.type === 'list_reply') {
+                    userInput = userMessage.interactive.list_reply.id;
+                }
+            }
+            
             let satisfiedEdgeId: string | null = null;
             for (const cond of conditions) {
-                const variableValue = consumerData.flowData?.[cond.variable] || userText;
+                const variableValue = consumerData.flowData?.[cond.variable] || userInput;
                 const comparisonValue = cond.value?.toLowerCase().trim();
+
                 if (variableValue === undefined) continue;
 
                 let isMatch = false;
@@ -887,23 +896,23 @@ async function processFlowStep(
                 }
             }
         } else {
-            // Para todos os outros nós (incluindo gatilhos e ações)
+            // For all other nodes (including triggers and actions)
             const nextEdge = flow.edges.find(e => e.source === currentNode?.id);
             if (nextEdge) {
                 nextNode = flow.nodes.find(n => n.id === nextEdge.target) || null;
             }
         }
         
-        // --- 2. VERIFICAÇÃO DE PONTO DE PARADA ---
+        // --- 2. STOPPING POINT CHECK ---
         if (!nextNode) {
             functions.logger.info(`[Flow] No outgoing edge from node ${currentNode.id}. Ending flow.`);
-            return null; // Fim do fluxo
+            return null; // End of flow
         }
         
         const stopNodeTypes = ['captureData', 'keywordTrigger', 'waitForResponse'];
         if (stopNodeTypes.includes(nextNode.data.type)) {
             functions.logger.info(`[Flow] Stopping execution at node ${nextNode.id} of type ${nextNode.data.type}. Awaiting user input.`);
-            // Ação do nó de parada (enviar a pergunta) é executada antes de retornar
+            // The action of the stopping node (e.g., sending the question) is executed before returning
              if(nextNode.data.type === 'captureData') {
                 const captureMessage = nextNode.data.captureMessage;
                 if (captureMessage) {
@@ -919,10 +928,10 @@ async function processFlowStep(
                     }
                 }
             }
-            return nextNode; // Retorna o nó de parada
+            return nextNode; // Returns the stopping node
         }
 
-        // --- 3. EXECUÇÃO DA AÇÃO DO PRÓXIMO NÓ ---
+        // --- 3. EXECUTE THE ACTION OF THE NEXT NODE ---
         functions.logger.info(`[Flow] Next node is ${nextNode.id}, executing action of type ${nextNode.data.type}`);
         switch (nextNode.data.type) {
             case 'message':
@@ -967,7 +976,7 @@ async function processFlowStep(
                 break;
 
             case 'conditional':
-                // A lógica condicional já define o `nextNode`, então apenas continuamos o loop.
+                // The conditional logic already defines `nextNode`, so we just continue the loop.
                 break;
                 
             default:
@@ -975,12 +984,12 @@ async function processFlowStep(
                 break;
         }
 
-        // --- 4. PREPARA PARA A PRÓXIMA ITERAÇÃO ---
-        currentNode = nextNode; // O próximo nó se torna o nó atual para a próxima volta do loop.
-        userMessage = null; // A mensagem do usuário só é relevante na primeira iteração.
+        // --- 4. PREPARE FOR THE NEXT ITERATION ---
+        currentNode = nextNode; // The next node becomes the current node for the next loop turn.
+        userMessage = null; // The user's message is only relevant in the first iteration.
     }
     
-    return null; // Se o loop terminar, o fluxo acabou.
+    return null; // If the loop ends, the flow is over.
 }
 
 
