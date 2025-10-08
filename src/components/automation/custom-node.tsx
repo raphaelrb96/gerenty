@@ -77,7 +77,7 @@ export function CustomNode({ data, selected }: NodeProps<{
                 return (
                     <div className="flex justify-center p-2">
                          <div className="relative w-32 h-32">
-                            <Image src={imageUrl} alt="Pré-visualização da imagem" layout="fill" objectFit="cover" className="rounded-md" />
+                            <Image src={imageUrl} alt="Pré-visualização da imagem" fill object-cover className="rounded-md" />
                         </div>
                     </div>
                 );
@@ -153,7 +153,7 @@ export function CustomNode({ data, selected }: NodeProps<{
   const getVerticalHandlePosition = (index: number) => {
     const headerHeight = 44; 
     const contentPaddingTop = 8;
-    const itemHeight = 50; // Adjusted for better spacing
+    const itemHeight = 56; // Adjusted for better spacing
     const itemSpacing = 8;
     const topOffset = headerHeight + contentPaddingTop + (index * (itemHeight + itemSpacing)) + (itemHeight / 2);
     return `${topOffset}px`;
