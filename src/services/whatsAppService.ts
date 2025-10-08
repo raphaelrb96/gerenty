@@ -5,6 +5,8 @@ import { SecretManagerService } from './secretManager';
 import { MessageResult, SendMessagePayload, TemplateErrorInfo, WhatsAppApiResponse, LibraryMessage } from '../types/whatsapp';
 import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
+import fetch, { RequestInfo, RequestInit, Response } from 'node-fetch';
+
 
 export class WhatsAppService {
   private secretManager: SecretManagerService;
@@ -14,6 +16,63 @@ export class WhatsAppService {
     this.secretManager = SecretManagerService.getInstance();
     this.db = admin.firestore();
   }
+
+  async uploadMediaToMeta(companyId: string, mediaUrl: string, mimeType: string, filename: string): Promise<string | null> {
+    try {
+        const accessToken = await this.secretManager.getWhatsAppToken(companyId);
+        const integration = await this.getCompanyIntegration(companyId);
+        if (!integration?.phoneNumberId) {
+            throw new Error('WhatsApp integration not found for media upload.');
+        }
+
+        const mediaResponse: Response = await fetch(mediaUrl);
+        if (!mediaResponse.ok) {
+            throw new Error(`Failed to fetch media from URL: ${mediaResponse.statusText}`);
+        }
+        
+        const arrayBuffer = await mediaResponse.arrayBuffer();
+        const mediaBuffer = Buffer.from(arrayBuffer);
+        
+        const boundary = `----${Date.now().toString(16)}`;
+        let body = `--${boundary}\r\n`;
+        body += `Content-Disposition: form-data; name="messaging_product"\r\n\r\n`;
+        body += `whatsapp\r\n`;
+        body += `--${boundary}\r\n`;
+        body += `Content-Disposition: form-data; name="file"; filename="${filename}"\r\n`;
+        body += `Content-Type: ${mimeType}\r\n\r\n`;
+        
+        const payload = Buffer.concat([
+            Buffer.from(body, 'utf-8'),
+            mediaBuffer,
+            Buffer.from(`\r\n--${boundary}--\r\n`, 'utf-8'),
+        ]);
+
+        const uploadUrl: RequestInfo = `https://graph.facebook.com/v17.0/${integration.phoneNumberId}/media`;
+        const options: RequestInit = {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': `multipart/form-data; boundary=${boundary}`,
+            },
+            body: payload,
+        };
+
+        const uploadResponse = await fetch(uploadUrl, options);
+        const result = await uploadResponse.json() as { id?: string; error?: any };
+
+        if (uploadResponse.ok && result.id) {
+            functions.logger.info(`[WhatsAppService] Media uploaded to Meta successfully. Media ID: ${result.id}`);
+            return result.id;
+        } else {
+            functions.logger.error('[WhatsAppService] Failed to upload media to Meta:', result.error);
+            return null;
+        }
+    } catch (error) {
+        functions.logger.error('[WhatsAppService] Exception during media upload to Meta:', error);
+        return null;
+    }
+}
+
 
   async fetchMediaUrl(mediaId: string, companyId: string): Promise<string | null> {
     try {
@@ -33,8 +92,8 @@ export class WhatsAppService {
       }
 
       const mediaDetails = await mediaDetailsResponse.json();
-      const mediaUrl = mediaDetails.url;
-      const mimeType = mediaDetails.mime_type;
+      const mediaUrl = (mediaDetails as any).url;
+      const mimeType = (mediaDetails as any).mime_type;
 
       if (!mediaUrl || !mimeType) {
         functions.logger.error(`[WhatsAppService] Media URL or MIME type not found for ID ${mediaId}`, { mediaDetails });
@@ -82,8 +141,8 @@ export class WhatsAppService {
       }
 
       const mediaDetails = await mediaDetailsResponse.json();
-      const mediaUrl = mediaDetails.url;
-      const mimeType = mediaDetails.mime_type;
+      const mediaUrl = (mediaDetails as any).url;
+      const mimeType = (mediaDetails as any).mime_type;
 
       if (!mediaUrl) {
         functions.logger.error(`Media URL not found for ID ${mediaId}`);
@@ -171,11 +230,11 @@ export class WhatsAppService {
       
       // Se for um fluxo, o payload já virá com o `content`
       if (payload.content) {
-         result = await this.tryConversationMessage(integration.phoneNumberId, accessToken, payload);
+         result = await this.tryConversationMessage(companyId, integration.phoneNumberId, accessToken, payload);
       } else if (payload.type === 'template') {
         result = await this.tryTemplateMessage(integration.phoneNumberId, accessToken, payload);
       } else {
-        result = await this.tryConversationMessage(integration.phoneNumberId, accessToken, payload);
+        result = await this.tryConversationMessage(companyId, integration.phoneNumberId, accessToken, payload);
       }
 
       // ✅  Salvar a mensagem enviada no Firestore se for bem-sucedida
@@ -195,16 +254,46 @@ export class WhatsAppService {
   }
 
   private async tryConversationMessage(
+    companyId: string,
     phoneNumberId: string,
     accessToken: string,
     payload: SendMessagePayload
   ): Promise<MessageResult> {
     try {
+        const contentForApi = JSON.parse(JSON.stringify(payload.content || {}));
+        const mediaType = payload.type as 'image' | 'video' | 'audio' | 'document';
+        const isMedia = ['image', 'video', 'audio', 'document'].includes(mediaType);
+        
+        // Find the media object, which could be under its type (e.g., 'image') or under 'media'.
+        const mediaObject = contentForApi[mediaType] || contentForApi.media;
+
+        if (isMedia && mediaObject?.url) {
+            const mediaUrl = mediaObject.url;
+            const filename = mediaUrl.split('/').pop().split('?')[0] || `mediafile_${Date.now()}`;
+            
+            const mediaDetailsResponse = await fetch(mediaUrl);
+            const mediaBuffer = await mediaDetailsResponse.arrayBuffer();
+            const mimeType = mediaDetailsResponse.headers.get('content-type') || 'application/octet-stream';
+
+            const uploadedMediaId = await this.uploadMediaToMeta(companyId, mediaUrl, mimeType, filename);
+
+            if (!uploadedMediaId) {
+                return { success: false, error: "Failed to upload media to Meta." };
+            }
+            
+            // Replace URL with ID and ensure it's in the correct format for the API
+            const apiMediaObject = { id: uploadedMediaId };
+            
+            // Reconstruct contentForApi to have the correct structure
+            delete contentForApi.media; // Remove generic media key if it exists
+            contentForApi[mediaType] = apiMediaObject; // Place it under the specific media type key
+        }
+        
         const messageData: any = {
             messaging_product: 'whatsapp',
             to: payload.phoneNumber,
             type: payload.type,
-            ...payload.content // Spread the content directly, as it's now in the correct API format
+            ...contentForApi 
         };
 
         // Fallback for legacy text messages without content structure
@@ -463,3 +552,5 @@ export class WhatsAppService {
     }
   }
 }
+
+  

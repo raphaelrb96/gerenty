@@ -990,31 +990,45 @@ async function processFlowStep(
 async function processMessageStatus(companyId: string, status: MessageStatus): Promise<void> {
     try {
         const db = admin.firestore();
-
-        // Encontra a mensagem com base no ID
-        const messagesQuery = await db.collectionGroup('messages')
-            .where('id', '==', status.id)
+ 
+        // 1. Busca todas as conversas da empresa
+        const conversationsSnapshot = await db.collection('companies')
+            .doc(companyId)
+            .collection('conversations')
             .get();
-
-        if (messagesQuery.empty) {
-            functions.logger.warn(`Message status update received for non-existent message ID: ${status.id} in company ${companyId}`);
+ 
+        if (conversationsSnapshot.empty) {
+            functions.logger.warn(`No conversations found for company ${companyId} to process message status.`);
             return;
         }
-
-        for (const doc of messagesQuery.docs) {
-            // Garante que estamos atualizando a mensagem da empresa correta
-            const pathParts = doc.ref.path.split('/');
-            if (pathParts[0] === 'companies' && pathParts[1] === companyId) {
-                await doc.ref.update({
+ 
+        // 2. Itera sobre as conversas e busca a mensagem em cada uma
+        for (const conversationDoc of conversationsSnapshot.docs) {
+            const messagesQuery = await conversationDoc.ref.collection('messages')
+                .where('id', '==', status.id)
+                .limit(1)
+                .get();
+ 
+            // 3. Se a mensagem for encontrada, atualiza e para a busca
+            if (!messagesQuery.empty) {
+                const messageDoc = messagesQuery.docs[0];
+                await messageDoc.ref.update({
                     status: status.status,
                     statusTimestamp: admin.firestore.Timestamp.fromMillis(parseInt(status.timestamp) * 1000),
                     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
                 });
                 functions.logger.info(`Message status updated for company ${companyId}, message ${status.id} to ${status.status}`);
+                return; // Encontrou e atualizou, pode sair da função
             }
         }
+ 
+        // Se o loop terminar, a mensagem não foi encontrada em nenhuma conversa
+        functions.logger.warn(`Message status update received for non-existent message ID: ${status.id} in company ${companyId}`);
     } catch (error) {
-        functions.logger.error('Error processing message status:', { companyId, status, error });
+        functions.logger.error(
+            `Error processing message status for company ${companyId} and message ID ${status?.id}`,
+            { error, companyId, status }
+        );
         // Não relança o erro para evitar falhas no webhook
     }
 }

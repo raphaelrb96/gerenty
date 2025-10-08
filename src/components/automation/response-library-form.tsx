@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -204,13 +205,13 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
   });
 
   const watchedType = form.watch('type');
-  const watchedInteractiveType = form.watch('interactive_type');
   const isMediaType = ['image', 'video', 'audio', 'file'].includes(watchedType);
 
    React.useEffect(() => {
     if (isOpen) {
       if (message) {
-        const mediaContent = message.content.image || message.content.video || message.content.audio || message.content.document;
+        // Handle both specific media keys (image, video, etc.) and the generic 'media' key.
+        const mediaContent = message.content.image || message.content.video || message.content.audio || message.content.document || message.content.media;
 
         form.reset({
           name: message.name || "",
@@ -285,7 +286,7 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
             case 'video':
             case 'audio':
             case 'file':
-                const existingMedia = message?.content.image || message?.content.video || message?.content.audio || message?.content.document;
+                const existingMedia = message?.content.image || message?.content.video || message?.content.audio || message?.content.document || message?.content.media;
                 let mediaUrl = existingMedia?.url || '';
                 let mediaId = values.media_id || '';
 
@@ -295,17 +296,14 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
                     mediaId = path; // Use path as ID for internally stored files
                 }
 
+                // Generic 'media' object to be saved in Firestore
                 const mediaObject: any = { id: mediaId, url: mediaUrl };
                 if (values.media_caption) {
                     mediaObject.caption = values.media_caption;
                 }
                 
-                // Ensure the content object has the correct media type key
-                if (values.type === 'file') {
-                     messageContent = { document: mediaObject };
-                } else {
-                    messageContent = { [values.type]: mediaObject };
-                }
+                // Store under the generic 'media' key for consistency
+                messageContent = { media: mediaObject };
                 break;
             
             case 'product':
@@ -431,7 +429,7 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
                                 
                                 <Separator />
                                 
-                                {watchedInteractiveType === 'button' && (
+                                {form.watch('interactive_type') === 'button' && (
                                     <div>
                                         <Label>Botões de Resposta (Máx. 3)</Label>
                                         {buttonFields.map((field, index) => (
@@ -445,7 +443,7 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
                                     </div>
                                 )}
                                 
-                                {watchedInteractiveType === 'list' && (
+                                {form.watch('interactive_type') === 'list' && (
                                     <div className="space-y-4">
                                         <FormField control={form.control} name="interactive_list_button_text" render={({ field }) => (<FormItem><FormLabel>Texto do Botão da Lista</FormLabel><FormControl><Input placeholder="Ex: Ver Opções" {...field} value={field.value || ''}/></FormControl><FormMessage /></FormItem>)} />
                                         <Label>Seções e Itens da Lista (Total Máx. 10 Itens)</Label>
@@ -475,3 +473,5 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
     </Sheet>
   );
 }
+
+  
