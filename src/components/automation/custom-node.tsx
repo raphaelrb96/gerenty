@@ -154,7 +154,7 @@ export function CustomNode({ data, selected }: NodeProps<{
   const getVerticalHandlePosition = (index: number) => {
     const headerHeight = 44; 
     const contentPaddingTop = 8;
-    const itemHeight = 60; // Adjusted for better spacing
+    const itemHeight = 96; // Approximate height of each condition item card
     const itemSpacing = 8;
     const topOffset = headerHeight + contentPaddingTop + (index * (itemHeight + itemSpacing)) + (itemHeight / 2);
     return `${topOffset}px`;
