@@ -53,7 +53,7 @@ export const nodeTypeConfig = {
     message: { icon: <MessageCircle size={20} />, color: 'text-blue-500', defaultData: { label: 'Enviar Mensagem', type: 'message' } },
     captureData: { icon: <HelpCircle size={20} />, color: 'text-yellow-500', defaultData: { label: 'Capturar Dados', type: 'captureData' } },
     internalAction: { icon: <Settings size={20} />, color: 'text-blue-500', defaultData: { label: 'Ação Interna', type: 'internalAction' } },
-    conditional: { icon: <GitBranch size={20} />, color: 'text-cyan-500', defaultData: { label: 'Condição Lógica', type: 'conditional', conditions: [] } },
+    conditional: { icon: <GitBranch size={20} />, color: 'text-cyan-500', defaultData: { label: 'Condição Lógica', conditions: [] } },
     externalApi: { icon: <Share2 size={20} />, color: 'text-indigo-500', defaultData: { label: 'API Externa', type: 'externalApi' } },
     transfer: { icon: <UserCheck size={20} />, color: 'text-purple-500', defaultData: { label: 'Transferir Atendente', type: 'transfer' } },
     endFlow: { icon: <CheckCircle size={20} />, color: 'text-green-500', defaultData: { label: 'Finalizar Fluxo', type: 'endFlow' } },
@@ -150,7 +150,14 @@ export default function EditConversationFlowPage() {
     };
 
     const handleEdgesDelete = useCallback((edgesToDelete: Edge[]) => {
-        setEdges((eds) => eds.filter((edge) => !edgesToDelete.some((e) => e.id === edge.id)));
+        setEdges((currentEdges) => {
+            const newEdges = currentEdges.filter((edge) => !edgesToDelete.some((e) => e.id === edge.id));
+            
+            // Do not remove condition when an edge is deleted.
+            // This logic is now removed.
+
+            return newEdges;
+        });
         setHasUnsavedChanges(true);
     }, []);
 
@@ -443,13 +450,15 @@ export default function EditConversationFlowPage() {
             return;
         }
 
-        // Rule 1: Target handle can only have one connection.
-        const isTargetHandleOccupied = edges.some(
-            (edge) => edge.target === params.target && edge.targetHandle === params.targetHandle
-        );
-        if (isTargetHandleOccupied) {
-            toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Cada ponto de entrada de uma tarefa só pode receber uma conexão.' });
-            return;
+        // Rule 1: Target handle can only have one connection, EXCEPT for 'message' nodes.
+        if (targetNode?.data.type !== 'message') {
+            const isTargetHandleOccupied = edges.some(
+                (edge) => edge.target === params.target && edge.targetHandle === params.targetHandle
+            );
+            if (isTargetHandleOccupied) {
+                toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Cada ponto de entrada de uma tarefa só pode receber uma conexão.' });
+                return;
+            }
         }
         
         setEdges((eds) => {
@@ -503,10 +512,13 @@ export default function EditConversationFlowPage() {
         setEdges(prevEdges => {
             const filteredEdges = prevEdges.filter(edge => !(edge.source === source && edge.sourceHandle === sourceHandle));
             
-            const targetHasIncomingEdge = filteredEdges.some(edge => edge.target === target);
-            if (targetHasIncomingEdge) {
-                toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Esta tarefa de destino já possui uma conexão de entrada.' });
-                return prevEdges; // Return original edges
+            const targetNode = nodes.find(n => n.id === target);
+            if (targetNode?.data.type !== 'message') {
+                const targetHasIncomingEdge = filteredEdges.some(edge => edge.target === target);
+                if (targetHasIncomingEdge) {
+                    toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Esta tarefa de destino já possui uma conexão de entrada.' });
+                    return prevEdges; // Return original edges
+                }
             }
 
             const newEdge: Edge = {
