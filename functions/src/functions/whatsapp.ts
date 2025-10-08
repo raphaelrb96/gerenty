@@ -824,10 +824,10 @@ async function processFlowStep(
         return null;
     }
 
-    // Se o nó atual é um gatilho, apenas o usamos como ponto de partida
-    if (currentNode.data.type !== 'keywordTrigger' && currentNode.data.type !== 'captureData' && currentNode.data.type !== 'message') {
-         functions.logger.error(`[Flow] processFlowStep called with a non-trigger/non-capture/non-message node: ${currentNode.data.type}. This should not happen.`);
-         return null; // A lógica de execução deve sempre partir de um ponto de parada
+    const startNodeTypes = ['keywordTrigger', 'captureData', 'waitForResponse'];
+    if (!startNodeTypes.includes(currentNode.data.type)) {
+         functions.logger.error(`[Flow] processFlowStep called with a non-trigger/non-capture node: ${currentNode.data.type}. This should not happen.`);
+         return null;
     }
     
     // Se o nó atual é para capturar dados, salve a resposta do usuário antes de continuar
@@ -900,7 +900,8 @@ async function processFlowStep(
             return null; // Fim do fluxo
         }
         
-        if (nextNode.data.type === 'captureData' || nextNode.data.type === 'keywordTrigger') {
+        const stopNodeTypes = ['captureData', 'keywordTrigger', 'waitForResponse'];
+        if (stopNodeTypes.includes(nextNode.data.type)) {
             functions.logger.info(`[Flow] Stopping execution at node ${nextNode.id} of type ${nextNode.data.type}. Awaiting user input.`);
             // Ação do nó de parada (enviar a pergunta) é executada antes de retornar
              if(nextNode.data.type === 'captureData') {
