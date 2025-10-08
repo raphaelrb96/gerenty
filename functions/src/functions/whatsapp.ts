@@ -1,3 +1,4 @@
+
 // src/functions/whatsapp.ts
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
@@ -943,9 +944,7 @@ async function processFlowStep(
                         }
                     }
                 }
-                // *** CORREÇÃO: Parar execução após enviar mensagem para aguardar a próxima entrada do usuário ***
-                functions.logger.info(`[Flow] Stopping execution at node ${nextNode.id} after sending message. Awaiting user input.`);
-                return nextNode;
+                break;
 
             case 'internalAction':
                 const actionType = nextNode.data.actionType;
@@ -1126,3 +1125,5 @@ function sanitizeMetaPatterns(text: string): string {
     // Replace problematic patterns like [[...]] but keep valid template variables like {{1}}
     return text.replace(/\[\[.*?\]\]/g, '').trim();
 }
+
+    
