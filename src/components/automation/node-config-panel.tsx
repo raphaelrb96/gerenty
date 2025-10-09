@@ -505,61 +505,61 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, edges, onConnect, 
         <div className="space-y-4">
             <p className="text-sm text-muted-foreground">Crie condições para o fluxo. A saída padrão "Senão" será usada se nenhuma das regras for atendida.</p>
             <Separator />
-            {conditions.map((cond: any, index: number) => {
-                const icon = getConditionIcon(cond.type);
-                return (
-                    <div key={cond.id} className="p-3 border rounded-lg space-y-3 relative bg-muted/50">
-                        <div className="flex items-center justify-between">
-                             <p className="text-sm font-semibold">Regra {index + 1}</p>
-                             <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleRemoveCondition(cond.id)}><Trash2 className="h-4 w-4"/></Button>
-                        </div>
-                        
-                        <div className="text-xs p-3 bg-background rounded-md flex justify-between items-center relative h-[50px] border">
-                           <span className="flex items-center gap-2 font-mono">
-                                {icon}
-                                Se {cond.type === 'variable' ? <strong>{`{{${cond.variable || '...'}}}`}</strong> : <strong className="capitalize">{cond.type?.replace('_', ' ') || '...'}</strong>}
-                                {cond.operator}
-                                <strong>{`"${cond.value || '...'}"`}</strong>
-                            </span>
-                        </div>
-                        <Separator/>
-                         <div className="space-y-2">
-                             <div className="grid grid-cols-2 gap-2">
-                                <Select value={cond.type} onValueChange={(val) => handleConditionChange(index, 'type', val)}>
-                                    <SelectTrigger><SelectValue/></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="response_text">Texto da Resposta</SelectItem>
-                                        <SelectItem value="variable">Variável do Contato</SelectItem>
-                                        <SelectItem value="interaction_id">ID da Interação</SelectItem>
-                                        <SelectItem value="response_type">Tipo da Resposta</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <Select value={cond.operator} onValueChange={(val) => handleConditionChange(index, 'operator', val)}>
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="==">É igual a</SelectItem>
-                                        <SelectItem value="!=">É diferente de</SelectItem>
-                                        <SelectItem value=">">É maior que</SelectItem>
-                                        <SelectItem value="<">É menor que</SelectItem>
-                                        <SelectItem value="contains">Contém</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            {cond.type === 'variable' && (
-                                <Input placeholder="Nome da variável (ex: cpf)" value={cond.variable} onChange={(e) => handleConditionChange(index, 'variable', e.target.value)} />
-                            )}
-                            
-                            <Input placeholder="Valor a comparar" value={cond.value} onChange={(e) => handleConditionChange(index, 'value', e.target.value)} />
-                        </div>
-                        
-                        <div className="space-y-2">
-                            <Label>ENTÃO</Label>
-                            {renderConnectionSelect(cond.id)}
-                        </div>
+            {conditions.map((cond: any, index: number) => (
+                <div key={cond.id} className="p-3 border rounded-lg space-y-3 relative bg-muted/50">
+                    <div className="flex items-center justify-between">
+                         <p className="text-sm font-semibold">Regra {index + 1}</p>
+                         <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleRemoveCondition(cond.id)}><Trash2 className="h-4 w-4"/></Button>
                     </div>
-                );
-            })}
+                    
+                    <div className="text-xs p-3 bg-background rounded-md flex justify-between items-center relative h-[50px] border">
+                        <span className="flex items-center gap-2 font-mono">
+                            {getConditionIcon(cond.type)}
+                            {'Se '}
+                            {cond.type === 'variable' ? <strong>{`{{${cond.variable || '...'}}}`}</strong> : <strong className="capitalize">{cond.type?.replace('_', ' ') || '...'}</strong>}
+                            {` ${cond.operator} `}
+                            <strong>{`"${cond.value || '...'}"`}</strong>
+                        </span>
+                    </div>
+
+                    <Separator/>
+
+                     <div className="space-y-2">
+                         <div className="grid grid-cols-2 gap-2">
+                            <Select value={cond.type} onValueChange={(val) => handleConditionChange(index, 'type', val)}>
+                                <SelectTrigger><SelectValue/></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="response_text">Texto da Resposta</SelectItem>
+                                    <SelectItem value="variable">Variável do Contato</SelectItem>
+                                    <SelectItem value="interaction_id">ID da Interação</SelectItem>
+                                    <SelectItem value="response_type">Tipo da Resposta</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <Select value={cond.operator} onValueChange={(val) => handleConditionChange(index, 'operator', val)}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="==">É igual a</SelectItem>
+                                    <SelectItem value="!=">É diferente de</SelectItem>
+                                    <SelectItem value=">">É maior que</SelectItem>
+                                    <SelectItem value="<">É menor que</SelectItem>
+                                    <SelectItem value="contains">Contém</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {cond.type === 'variable' && (
+                            <Input placeholder="Nome da variável (ex: cpf)" value={cond.variable} onChange={(e) => handleConditionChange(index, 'variable', e.target.value)} />
+                        )}
+                        
+                        <Input placeholder="Valor a comparar" value={cond.value} onChange={(e) => handleConditionChange(index, 'value', e.target.value)} />
+                    </div>
+                    
+                    <div className="space-y-2">
+                        <Label>ENTÃO</Label>
+                        {renderConnectionSelect(cond.id)}
+                    </div>
+                </div>
+            ))}
             <Button type="button" variant="outline" size="sm" onClick={handleAddCondition}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Condição</Button>
             
             <Separator />

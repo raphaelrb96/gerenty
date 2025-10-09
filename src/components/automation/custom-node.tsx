@@ -167,10 +167,10 @@ export function CustomNode({ data, selected }: NodeProps<{
   const isActionNode = !isTriggerType;
 
 const getVerticalHandlePosition = (index: number) => {
-    const headerHeight = 46; 
+    const headerHeight = 46;
     const contentPaddingTop = 12;
     const itemHeight = 50; 
-    const itemSpacing = 6;
+    const itemSpacing = 8;
     const topOffset = headerHeight + contentPaddingTop + (index * (itemHeight + itemSpacing)) + (itemHeight / 2);
     return `${topOffset}px`;
 };
@@ -223,7 +223,7 @@ const getVerticalHandlePosition = (index: number) => {
         <CardHeader className={cn("flex flex-row items-center gap-3 p-3 text-card-foreground rounded-t-lg", !isTriggerType && 'border-t-4')} style={{ borderColor: isTriggerType ? 'transparent' : data.color }}>
            <div className={cn("p-1 rounded-md", colorClass)}>
             {data.icon && data.color && React.cloneElement(data.icon as React.ReactElement, {
-                className: cn((data.icon as React.ReactElement).props.className, data.color),
+                className: cn((data.icon as React.ReactElement).props?.className, data.color),
             })}
           </div>
           <CardTitle className={cn("font-semibold text-sm", data.color)}>
@@ -256,20 +256,18 @@ const getVerticalHandlePosition = (index: number) => {
             </CardContent>
         ) : data.type === 'conditional' && (
             <CardContent className="px-3 pb-3 pt-2 space-y-2">
-                 {(data.conditions || []).map((cond: any) => {
-                    const icon = getConditionIcon(cond.type);
-                    return (
-                        <div key={cond.id} className="text-xs p-3 bg-muted rounded-md flex justify-between items-center relative h-[50px]">
-                            <span className="flex items-center gap-2 font-mono">
-                                {icon}
-                                Se {cond.type === 'variable' ? <strong>{`{{${cond.variable || '...'}}}`}</strong> : <strong className="capitalize">{cond.type?.replace('_', ' ') || '...'}</strong>}
-                                {cond.operator}
-                                <strong>{`"${cond.value || '...'}"`}</strong>
-                            </span>
-                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => data.onQuickAdd(cond.id)}><PlusCircle className="h-4 w-4" /></Button>
-                        </div>
-                    );
-                })}
+                 {(data.conditions || []).map((cond: any) => (
+                    <div key={cond.id} className="text-xs p-3 bg-muted rounded-md flex justify-between items-center relative h-[50px]">
+                        <span className="flex items-center gap-2 font-mono">
+                            {getConditionIcon(cond.type)}
+                            {'Se '}
+                            {cond.type === 'variable' ? <strong>{`{{${cond.variable || '...'}}}`}</strong> : <strong className="capitalize">{cond.type?.replace('_', ' ') || '...'}</strong>}
+                            {` ${cond.operator} `}
+                            <strong>{`"${cond.value || '...'}"`}</strong>
+                        </span>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => data.onQuickAdd(cond.id)}><PlusCircle className="h-4 w-4" /></Button>
+                    </div>
+                 ))}
                  <div className="text-xs p-3 bg-muted rounded-md flex justify-between items-center relative h-[50px]">
                     <div>
                       <span className="font-semibold">Fluxo Padrão</span>
