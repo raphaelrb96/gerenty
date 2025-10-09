@@ -155,7 +155,7 @@ export function CustomNode({ data, selected }: NodeProps<{
     const headerHeight = 46; 
     const contentPaddingTop = 8;
     const itemHeight = 52; // Adjusted for better spacing
-    const itemSpacing = 8;
+    const itemSpacing = 4;
     const topOffset = headerHeight + contentPaddingTop + (index * (itemHeight + itemSpacing)) + (itemHeight / 2);
     return `${topOffset}px`;
 };
