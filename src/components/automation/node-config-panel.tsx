@@ -2,7 +2,7 @@
 "use client";
 
 import type { Node, Edge } from "reactflow";
-import { Settings, HelpCircle, PlusCircle, MoreHorizontal, Pencil, Trash2, Save, TextCursorInput, Link, Bot, MessageCircle, Loader2, Variable, Type, Package } from "lucide-react";
+import { Settings, HelpCircle, PlusCircle, MoreHorizontal, Pencil, Trash2, Save, TextCursorInput, Link, Bot, MessageCircle, Loader2, Variable, Type, Package, MessageSquare } from "lucide-react";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
