@@ -53,7 +53,7 @@ export const nodeTypeConfig = {
     message: { icon: <MessageCircle size={20} />, color: 'text-blue-500', defaultData: { label: 'Enviar Mensagem', type: 'message' } },
     captureData: { icon: <HelpCircle size={20} />, color: 'text-yellow-500', defaultData: { label: 'Capturar Dados', type: 'captureData' } },
     internalAction: { icon: <Settings size={20} />, color: 'text-blue-500', defaultData: { label: 'Ação Interna', type: 'internalAction' } },
-    conditional: { icon: <GitBranch size={20} />, color: 'text-cyan-500', defaultData: { label: 'Condição Lógica', conditions: [] } },
+    conditional: { icon: <GitBranch size={20} />, color: 'text-cyan-500', defaultData: { label: 'Condição Lógica', type: 'conditional', conditions: [] } },
     externalApi: { icon: <Share2 size={20} />, color: 'text-indigo-500', defaultData: { label: 'API Externa', type: 'externalApi' } },
     transfer: { icon: <UserCheck size={20} />, color: 'text-purple-500', defaultData: { label: 'Transferir Atendente', type: 'transfer' } },
     endFlow: { icon: <CheckCircle size={20} />, color: 'text-green-500', defaultData: { label: 'Finalizar Fluxo', type: 'endFlow' } },
@@ -402,7 +402,6 @@ export default function EditConversationFlowPage() {
             data: { 
                 ...config.defaultData, 
                 customLabel: newLabel, 
-                conditions: type === 'conditional' ? [] : undefined 
             },
         };
 
