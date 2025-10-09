@@ -166,14 +166,14 @@ export function CustomNode({ data, selected }: NodeProps<{
   const isTriggerType = data.type === 'keywordTrigger' || data.type === 'waitForResponse' || data.type === 'captureData';
   const isActionNode = !isTriggerType;
 
-const getVerticalHandlePosition = (index: number) => {
+  const getVerticalHandlePosition = (index: number) => {
     const headerHeight = 46;
     const contentPaddingTop = 12;
-    const itemHeight = 50; 
-    const itemSpacing = 8;
+    const itemHeight = 50;
+    const itemSpacing = 6;
     const topOffset = headerHeight + contentPaddingTop + (index * (itemHeight + itemSpacing)) + (itemHeight / 2);
     return `${topOffset}px`;
-};
+  };
 
 
   const hasKeywords = data.triggerKeywords && data.triggerKeywords.length > 0;
@@ -216,8 +216,8 @@ const getVerticalHandlePosition = (index: number) => {
         className={cn(
             "bg-card/80 backdrop-blur-sm transition-all duration-200 hover:shadow-xl w-[280px]",
             isTriggerType && 'w-[320px] animate-pulse-glow',
-            selected && isActionNode && 'animate-pulse-glow-active',
-            selected && isTriggerType ? 'animate-pulse-glow-stronger !border-4 !border-amber-400' : (isTriggerType ? '!border-transparent' : '')
+            selected && 'animate-pulse-glow-active',
+            selected && isTriggerType ? '!border-4 !border-amber-400' : (isTriggerType ? '!border-transparent' : '')
         )}
     >
         <CardHeader className={cn("flex flex-row items-center gap-3 p-3 text-card-foreground rounded-t-lg", !isTriggerType && 'border-t-4')} style={{ borderColor: isTriggerType ? 'transparent' : data.color }}>
@@ -322,3 +322,5 @@ const getVerticalHandlePosition = (index: number) => {
     </div>
   );
 }
+
+    
