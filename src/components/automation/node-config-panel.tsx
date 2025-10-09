@@ -438,7 +438,7 @@ function InternalActionPanel({ node, onNodeDataChange }: { node: Node, onNodeDat
 
 const getConditionIcon = (type: string) => {
     switch (type) {
-        case 'response_text': return <MessageCircle className="h-4 w-4 text-blue-500" />;
+        case 'response_text': return <MessageSquare className="h-4 w-4 text-blue-500" />;
         case 'variable': return <Variable className="h-4 w-4 text-orange-500" />;
         case 'interaction_id': return <Package className="h-4 w-4 text-purple-500" />;
         case 'response_type': return <Type className="h-4 w-4 text-green-500" />;
@@ -514,10 +514,10 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, edges, onConnect, 
                              <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleRemoveCondition(cond.id)}><Trash2 className="h-4 w-4"/></Button>
                         </div>
                         
-                        <div className="text-xs p-2 bg-background rounded-md flex justify-between items-center relative h-[40px] border">
+                        <div className="text-xs p-3 bg-background rounded-md flex justify-between items-center relative h-[50px] border">
                            <span className="flex items-center gap-2 font-mono">
                                 {icon}
-                                Se {cond.type === 'variable' ? <strong>{`{{${cond.variable || '...'}}}`}</strong> : <strong className="capitalize">{cond.type.replace('_', ' ')}</strong>}
+                                Se {cond.type === 'variable' ? <strong>{`{{${cond.variable || '...'}}}`}</strong> : <strong className="capitalize">{cond.type?.replace('_', ' ') || '...'}</strong>}
                                 {cond.operator}
                                 <strong>{`"${cond.value || '...'}"`}</strong>
                             </span>
