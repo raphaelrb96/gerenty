@@ -43,7 +43,7 @@ export function CustomNode({ data, selected }: NodeProps<{
     }
   }
 
-  const getConditionIcon = (type: string) => {
+  const getConditionIcon = (type?: string) => {
     switch (type) {
         case 'response_text':
             return <MessageSquare className="h-4 w-4 text-blue-500" />;
@@ -169,11 +169,12 @@ export function CustomNode({ data, selected }: NodeProps<{
 const getVerticalHandlePosition = (index: number) => {
     const headerHeight = 46; 
     const contentPaddingTop = 12;
-    const itemHeight = 50;
+    const itemHeight = 50; 
     const itemSpacing = 6;
     const topOffset = headerHeight + contentPaddingTop + (index * (itemHeight + itemSpacing)) + (itemHeight / 2);
     return `${topOffset}px`;
 };
+
 
   const hasKeywords = data.triggerKeywords && data.triggerKeywords.length > 0;
   
@@ -255,15 +256,15 @@ const getVerticalHandlePosition = (index: number) => {
             </CardContent>
         ) : data.type === 'conditional' && (
             <CardContent className="px-3 pb-3 pt-2 space-y-2">
-                 {(data.conditions || []).map((cond: any, index: number) => {
+                 {(data.conditions || []).map((cond: any) => {
                     const icon = getConditionIcon(cond.type);
                     return (
                         <div key={cond.id} className="text-xs p-3 bg-muted rounded-md flex justify-between items-center relative h-[50px]">
-                            <span className="flex items-center gap-2">
+                            <span className="flex items-center gap-2 font-mono">
                                 {icon}
-                                {cond.type === 'variable' ? <strong>{`{{${cond.variable || '...'}}}`}</strong> : <strong className="capitalize">{cond.type.replace('_', ' ')}</strong>}
+                                Se {cond.type === 'variable' ? <strong>{`{{${cond.variable || '...'}}}`}</strong> : <strong className="capitalize">{cond.type?.replace('_', ' ') || '...'}</strong>}
                                 {cond.operator}
-                                <strong>{cond.value || '...'}</strong>
+                                <strong>{`"${cond.value || '...'}"`}</strong>
                             </span>
                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => data.onQuickAdd(cond.id)}><PlusCircle className="h-4 w-4" /></Button>
                         </div>

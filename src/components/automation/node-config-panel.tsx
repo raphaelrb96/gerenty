@@ -509,13 +509,17 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, edges, onConnect, 
                 const icon = getConditionIcon(cond.type);
                 return (
                     <div key={cond.id} className="p-3 border rounded-lg space-y-3 relative bg-muted/50">
-                        <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6 text-destructive" onClick={() => handleRemoveCondition(cond.id)}><Trash2 className="h-4 w-4"/></Button>
-                        <div className="text-xs p-3 bg-muted rounded-md flex justify-between items-center relative h-[50px]">
-                           <span className="flex items-center gap-2">
+                        <div className="flex items-center justify-between">
+                             <p className="text-sm font-semibold">Regra {index + 1}</p>
+                             <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleRemoveCondition(cond.id)}><Trash2 className="h-4 w-4"/></Button>
+                        </div>
+                        
+                        <div className="text-xs p-2 bg-background rounded-md flex justify-between items-center relative h-[40px] border">
+                           <span className="flex items-center gap-2 font-mono">
                                 {icon}
-                                {cond.type === 'variable' ? <strong>{`{{${cond.variable || '...'}}}`}</strong> : <strong className="capitalize">{cond.type.replace('_', ' ')}</strong>}
+                                Se {cond.type === 'variable' ? <strong>{`{{${cond.variable || '...'}}}`}</strong> : <strong className="capitalize">{cond.type.replace('_', ' ')}</strong>}
                                 {cond.operator}
-                                <strong>{cond.value || '...'}</strong>
+                                <strong>{`"${cond.value || '...'}"`}</strong>
                             </span>
                         </div>
                         <Separator/>
