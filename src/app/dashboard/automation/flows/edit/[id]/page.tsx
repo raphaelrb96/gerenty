@@ -399,7 +399,7 @@ export default function EditConversationFlowPage() {
             id: newNodeId,
             type: 'custom',
             position,
-            data: { ...config.defaultData, customLabel: newLabel },
+            data: { ...config.defaultData, customLabel: newLabel, conditions: type === 'conditional' ? [] : undefined },
         };
 
         const enriched = enrichNodeData(newNode, handleConfigureNode, handleDeleteNode, (node, sh) => handleQuickAdd(node, sh));
@@ -572,7 +572,7 @@ export default function EditConversationFlowPage() {
                             className="p-2 flex items-center gap-2 bg-background/80 backdrop-blur-sm cursor-pointer hover:bg-background/90"
                             onClick={() => handleConfigureNode(activeNode)}
                         >
-                            <div className={cn("p-1 rounded-md", activeNode.data.color ? activeNode.data.color.replace('text-', 'bg-') + '/20' : 'bg-gray-500/20')}>
+                             <div className={cn("p-1 rounded-md", activeNode.data.color ? activeNode.data.color.replace('text-', 'bg-') + '/20' : 'bg-gray-500/20')}>
                                 {activeNode.data.icon && React.cloneElement(activeNode.data.icon as React.ReactElement, {
                                     className: cn((activeNode.data.icon as React.ReactElement).props?.className, activeNode.data.color),
                                 })}
