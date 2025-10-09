@@ -214,8 +214,9 @@ export function CustomNode({ data, selected }: NodeProps<{
       
        <Card 
         className={cn(
-            "bg-card/80 backdrop-blur-sm transition-all duration-200 hover:shadow-xl w-[280px]",
-            isTriggerType && 'w-[320px] animate-pulse-glow',
+            "bg-card/80 backdrop-blur-sm transition-all duration-200 hover:shadow-xl",
+            data.type === 'conditional' ? "w-[340px]" : "w-[280px]",
+            isTriggerType && 'animate-pulse-glow',
             selected && 'animate-pulse-glow-active',
             selected && isTriggerType ? '!border-4 !border-amber-400' : (isTriggerType ? '!border-transparent' : '')
         )}
@@ -257,13 +258,13 @@ export function CustomNode({ data, selected }: NodeProps<{
         ) : data.type === 'conditional' && (
             <CardContent className="px-3 pb-3 pt-2 space-y-2">
                  {(data.conditions || []).map((cond: any) => (
-                    <div key={cond.id} className="text-xs p-3 bg-muted rounded-md flex justify-between items-center relative h-[50px]">
-                        <span className="flex items-center gap-[8px] font-mono">
+                    <div key={cond.id} className="text-xs p-3 bg-background rounded-md flex justify-between items-center relative h-[50px] border">
+                        <span className="flex items-center" style={{ gap: '8px' }}>
                             {getConditionIcon(cond.type)}
                             {'Se '}
-                            {cond.type === 'variable' ? <strong>{`{{${cond.variable || '...'}}}`}</strong> : <strong className="capitalize">{cond.type?.replace('_', ' ') || '...'}</strong>}
+                            {cond.type === 'variable' ? <strong className='font-mono'>{`{{${cond.variable || '...'}}}`}</strong> : <strong className="capitalize">{cond.type?.replace('_', ' ') || '...'}</strong>}
                             {` ${cond.operator} `}
-                            <strong>{`"${cond.value || '...'}"`}</strong>
+                            <strong className='font-mono'>{`"${cond.value || '...'}"`}</strong>
                         </span>
                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => data.onQuickAdd(cond.id)}><PlusCircle className="h-4 w-4" /></Button>
                     </div>
