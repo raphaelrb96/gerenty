@@ -6,10 +6,10 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../ui/card
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { Badge } from '../ui/badge';
-import { Pencil, Settings, Trash2, Zap, PlusCircle, GitBranch, MessageSquare, Video, File, Music, List, MessageCircle as MessageIcon, HelpCircle } from 'lucide-react';
+import { Pencil, Trash2, PlusCircle, GitBranch, MessageSquare, Video, File, Music, List, HelpCircle, Variable, Package, Type } from 'lucide-react';
 import { LibraryMessage } from '@/lib/types';
 import React from 'react';
-import Image from 'next/image';
+import Image from "next/image";
 
 export function CustomNode({ data, selected }: NodeProps<{ 
   label: string, 
@@ -42,6 +42,21 @@ export function CustomNode({ data, selected }: NodeProps<{
       default: return 'N/A';
     }
   }
+
+  const getConditionIcon = (type: string) => {
+    switch (type) {
+        case 'response_text':
+            return <MessageSquare className="h-4 w-4 text-blue-500" />;
+        case 'variable':
+            return <Variable className="h-4 w-4 text-orange-500" />;
+        case 'interaction_id':
+            return <Package className="h-4 w-4 text-purple-500" />;
+        case 'response_type':
+            return <Type className="h-4 w-4 text-green-500" />;
+        default:
+            return <HelpCircle className="h-4 w-4 text-gray-500" />;
+    }
+  };
 
   const contentPreview = () => {
     if (data.type === 'captureData') {
@@ -154,8 +169,8 @@ export function CustomNode({ data, selected }: NodeProps<{
 const getVerticalHandlePosition = (index: number) => {
     const headerHeight = 46; 
     const contentPaddingTop = 12;
-    const itemHeight = 52; // Adjusted for better spacing
-    const itemSpacing = 4;
+    const itemHeight = 50;
+    const itemSpacing = 6;
     const topOffset = headerHeight + contentPaddingTop + (index * (itemHeight + itemSpacing)) + (itemHeight / 2);
     return `${topOffset}px`;
 };
@@ -240,13 +255,21 @@ const getVerticalHandlePosition = (index: number) => {
             </CardContent>
         ) : data.type === 'conditional' && (
             <CardContent className="px-3 pb-3 pt-2 space-y-2">
-                 {(data.conditions || []).map((cond: any, index: number) => (
-                    <div key={cond.id} className="text-xs p-3 bg-muted rounded-md flex justify-between items-center relative">
-                        <span>Se <strong>{`{{${cond.variable || '...'}}}`}</strong> {cond.operator} <strong>{cond.value || '...'}</strong></span>
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => data.onQuickAdd(cond.id)}><PlusCircle className="h-4 w-4" /></Button>
-                    </div>
-                ))}
-                 <div className="text-xs p-3 bg-muted rounded-md flex justify-between items-center relative">
+                 {(data.conditions || []).map((cond: any, index: number) => {
+                    const icon = getConditionIcon(cond.type);
+                    return (
+                        <div key={cond.id} className="text-xs p-3 bg-muted rounded-md flex justify-between items-center relative h-[50px]">
+                            <span className="flex items-center gap-2">
+                                {icon}
+                                {cond.type === 'variable' ? <strong>{`{{${cond.variable || '...'}}}`}</strong> : <strong className="capitalize">{cond.type.replace('_', ' ')}</strong>}
+                                {cond.operator}
+                                <strong>{cond.value || '...'}</strong>
+                            </span>
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => data.onQuickAdd(cond.id)}><PlusCircle className="h-4 w-4" /></Button>
+                        </div>
+                    );
+                })}
+                 <div className="text-xs p-3 bg-muted rounded-md flex justify-between items-center relative h-[50px]">
                     <div>
                       <span className="font-semibold">Fluxo Padrão</span>
                       <p className="text-xs text-muted-foreground">(Se nenhuma condição for válida)</p>
