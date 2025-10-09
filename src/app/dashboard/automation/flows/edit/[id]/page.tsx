@@ -61,7 +61,7 @@ export const nodeTypeConfig = {
 
 
 const enrichNodeData = (node: Node, onConfigure: (node: Node) => void, onDelete: (node: Node) => void, onQuickAdd: (sourceNode: Node, sourceHandle?: string) => void): Node => {
-    const config = nodeTypeConfig[node.data.type as keyof typeof nodeTypeConfig] || {};
+    const config = node.data.type ? nodeTypeConfig[node.data.type as keyof typeof nodeTypeConfig] : {};
     
     const isDeletable = node.id !== '1';
 
@@ -69,8 +69,8 @@ const enrichNodeData = (node: Node, onConfigure: (node: Node) => void, onDelete:
         ...node,
         data: {
             ...node.data,
-            icon: config.icon,
-            color: config.color,
+            icon: config?.icon,
+            color: config?.color,
             onConfigure: () => onConfigure(node),
             onDelete: () => onDelete(node),
             onQuickAdd: (sourceHandle?: string) => onQuickAdd(node, sourceHandle),
@@ -399,7 +399,11 @@ export default function EditConversationFlowPage() {
             id: newNodeId,
             type: 'custom',
             position,
-            data: { ...config.defaultData, customLabel: newLabel, conditions: type === 'conditional' ? [] : undefined },
+            data: { 
+                ...config.defaultData, 
+                customLabel: newLabel, 
+                conditions: type === 'conditional' ? [] : undefined 
+            },
         };
 
         const enriched = enrichNodeData(newNode, handleConfigureNode, handleDeleteNode, (node, sh) => handleQuickAdd(node, sh));
@@ -572,11 +576,13 @@ export default function EditConversationFlowPage() {
                             className="p-2 flex items-center gap-2 bg-background/80 backdrop-blur-sm cursor-pointer hover:bg-background/90"
                             onClick={() => handleConfigureNode(activeNode)}
                         >
-                             <div className={cn("p-1 rounded-md", activeNode.data.color ? activeNode.data.color.replace('text-', 'bg-') + '/20' : 'bg-gray-500/20')}>
-                                {activeNode.data.icon && React.cloneElement(activeNode.data.icon as React.ReactElement, {
+                            {activeNode.data.icon && (
+                            <div className={cn("p-1 rounded-md", activeNode.data.color ? activeNode.data.color.replace('text-', 'bg-') + '/20' : 'bg-gray-500/20')}>
+                                {React.cloneElement(activeNode.data.icon as React.ReactElement, {
                                     className: cn((activeNode.data.icon as React.ReactElement).props?.className, activeNode.data.color),
                                 })}
                             </div>
+                            )}
                             <div className="flex flex-col">
                                 <span className="text-sm font-semibold">{activeNode.data.customLabel || activeNode.data.label}</span>
                                 <span className="text-xs text-muted-foreground">Clique para editar</span>
