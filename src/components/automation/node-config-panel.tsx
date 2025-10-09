@@ -436,7 +436,7 @@ function InternalActionPanel({ node, onNodeDataChange }: { node: Node, onNodeDat
     );
 }
 
-const getConditionIcon = (type: string) => {
+const getConditionIcon = (type?: string) => {
     switch (type) {
         case 'response_text': return <MessageSquare className="h-4 w-4 text-blue-500" />;
         case 'variable': return <Variable className="h-4 w-4 text-orange-500" />;
@@ -513,7 +513,7 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, edges, onConnect, 
                     </div>
                     
                     <div className="text-xs p-3 bg-background rounded-md flex justify-between items-center relative h-[50px] border">
-                        <span className="flex items-center gap-2 font-mono">
+                        <span className="flex items-center gap-[8px] font-mono">
                             {getConditionIcon(cond.type)}
                             {'Se '}
                             {cond.type === 'variable' ? <strong>{`{{${cond.variable || '...'}}}`}</strong> : <strong className="capitalize">{cond.type?.replace('_', ' ') || '...'}</strong>}

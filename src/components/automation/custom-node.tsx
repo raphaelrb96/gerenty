@@ -170,7 +170,7 @@ export function CustomNode({ data, selected }: NodeProps<{
     const headerHeight = 46;
     const contentPaddingTop = 12;
     const itemHeight = 50;
-    const itemSpacing = 6;
+    const itemSpacing = 8;
     const topOffset = headerHeight + contentPaddingTop + (index * (itemHeight + itemSpacing)) + (itemHeight / 2);
     return `${topOffset}px`;
   };
@@ -258,7 +258,7 @@ export function CustomNode({ data, selected }: NodeProps<{
             <CardContent className="px-3 pb-3 pt-2 space-y-2">
                  {(data.conditions || []).map((cond: any) => (
                     <div key={cond.id} className="text-xs p-3 bg-muted rounded-md flex justify-between items-center relative h-[50px]">
-                        <span className="flex items-center gap-2 font-mono">
+                        <span className="flex items-center gap-[8px] font-mono">
                             {getConditionIcon(cond.type)}
                             {'Se '}
                             {cond.type === 'variable' ? <strong>{`{{${cond.variable || '...'}}}`}</strong> : <strong className="capitalize">{cond.type?.replace('_', ' ') || '...'}</strong>}
