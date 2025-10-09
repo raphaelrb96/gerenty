@@ -1,9 +1,8 @@
 
-
 "use client";
 
 import type { Node, Edge } from "reactflow";
-import { Settings, HelpCircle, PlusCircle, MoreHorizontal, Pencil, Trash2, Save, TextCursorInput, Link, Bot, MessageCircle, Loader2 } from "lucide-react";
+import { Settings, HelpCircle, PlusCircle, MoreHorizontal, Pencil, Trash2, Save, TextCursorInput, Link, Bot, MessageCircle, Loader2, Variable, Type, Package } from "lucide-react";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
@@ -433,10 +432,19 @@ function InternalActionPanel({ node, onNodeDataChange }: { node: Node, onNodeDat
                     </Select>
                 </div>
             )}
-            {/* Add more fields for other actions */}
         </div>
     );
 }
+
+const getConditionIcon = (type: string) => {
+    switch (type) {
+        case 'response_text': return <MessageCircle className="h-4 w-4 text-blue-500" />;
+        case 'variable': return <Variable className="h-4 w-4 text-orange-500" />;
+        case 'interaction_id': return <Package className="h-4 w-4 text-purple-500" />;
+        case 'response_type': return <Type className="h-4 w-4 text-green-500" />;
+        default: return <HelpCircle className="h-4 w-4 text-gray-500" />;
+    }
+};
 
 function ConditionalPanel({ node, onNodeDataChange, allNodes, edges, onConnect, onCreateAndConnect, openPalette, setQuickAddSourceNode }: { 
     node: Node, 
@@ -498,13 +506,20 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, edges, onConnect, 
             <p className="text-sm text-muted-foreground">Crie condições para o fluxo. A saída padrão "Senão" será usada se nenhuma das regras for atendida.</p>
             <Separator />
             {conditions.map((cond: any, index: number) => {
+                const icon = getConditionIcon(cond.type);
                 return (
                     <div key={cond.id} className="p-3 border rounded-lg space-y-3 relative bg-muted/50">
                         <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6 text-destructive" onClick={() => handleRemoveCondition(cond.id)}><Trash2 className="h-4 w-4"/></Button>
-                        <p className="text-sm font-semibold">Condição {index + 1}</p>
-                        
-                        <div className="space-y-2">
-                             <Label>SE</Label>
+                        <div className="text-xs p-3 bg-muted rounded-md flex justify-between items-center relative h-[50px]">
+                           <span className="flex items-center gap-2">
+                                {icon}
+                                {cond.type === 'variable' ? <strong>{`{{${cond.variable || '...'}}}`}</strong> : <strong className="capitalize">{cond.type.replace('_', ' ')}</strong>}
+                                {cond.operator}
+                                <strong>{cond.value || '...'}</strong>
+                            </span>
+                        </div>
+                        <Separator/>
+                         <div className="space-y-2">
                              <div className="grid grid-cols-2 gap-2">
                                 <Select value={cond.type} onValueChange={(val) => handleConditionChange(index, 'type', val)}>
                                     <SelectTrigger><SelectValue/></SelectTrigger>
@@ -556,9 +571,6 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, edges, onConnect, 
     );
 }
 
-
-
-
 function TransferPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'] }) {
     const { effectiveOwnerId } = useAuth();
     const { toast } = useToast();
@@ -598,7 +610,6 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, onClos
             await onSave();
             onClose(); // Close sheet on successful save
         } catch (error) {
-            // Toast is handled in the parent component
         } finally {
             setIsSaving(false);
         }
