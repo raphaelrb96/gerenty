@@ -435,11 +435,11 @@ export function ResponseLibraryForm({ isOpen, onClose, onFinished, message }: Re
                                         {buttonFields.map((field, index) => (
                                             <div key={field.id} className="flex items-end gap-2 mt-2">
                                                 <FormField control={form.control} name={`interactive_buttons.${index}.title`} render={({ field }) => (<FormItem className="flex-1"><FormLabel className="text-xs">Texto Botão {index + 1}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                                                <FormField control={form.control} name={`interactive_buttons.${index}.id`} render={({ field }) => (<FormItem className="hidden"><FormControl><Input {...field} /></FormControl></FormItem>)}/>
+                                                <FormField control={form.control} name={`interactive_buttons.${index}.id`} render={({ field }) => (<FormItem className="flex-1"><FormLabel className="text-xs">ID do Botão {index + 1}</FormLabel><FormControl><Input placeholder="Ex: btn_sim" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                                                 <Button type="button" variant="destructive" size="icon" onClick={() => removeButton(index)}><Trash2 className="h-4 w-4" /></Button>
                                             </div>
                                         ))}
-                                        {buttonFields.length < 3 && <Button type="button" variant="outline" size="sm" onClick={() => appendButton({ id: `btn_${Date.now()}`, title: '' })} className="mt-2"><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Botão</Button>}
+                                        {buttonFields.length < 3 && <Button type="button" variant="outline" size="sm" onClick={() => appendButton({ id: '', title: '' })} className="mt-2"><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Botão</Button>}
                                     </div>
                                 )}
                                 
