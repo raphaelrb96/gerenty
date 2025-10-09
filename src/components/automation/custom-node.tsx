@@ -154,11 +154,11 @@ export function CustomNode({ data, selected }: NodeProps<{
   const getVerticalHandlePosition = (index: number) => {
     const headerHeight = 46; 
     const contentPaddingTop = 8;
-    const itemHeight = 60; // Adjusted for better spacing
+    const itemHeight = 52; // Adjusted for better spacing
     const itemSpacing = 8;
     const topOffset = headerHeight + contentPaddingTop + (index * (itemHeight + itemSpacing)) + (itemHeight / 2);
     return `${topOffset}px`;
-};
+  };
 
   const hasKeywords = data.triggerKeywords && data.triggerKeywords.length > 0;
   
