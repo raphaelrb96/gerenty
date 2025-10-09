@@ -152,9 +152,9 @@ export function CustomNode({ data, selected }: NodeProps<{
   const isActionNode = !isTriggerType;
 
   const getVerticalHandlePosition = (index: number) => {
-    const headerHeight = 50; 
-    const contentPaddingTop = 25;
-    const itemHeight = 50; // Adjusted for better spacing
+    const headerHeight = 44; 
+    const contentPaddingTop = 8;
+    const itemHeight = 42; // Adjusted for better spacing
     const itemSpacing = 8;
     const topOffset = headerHeight + contentPaddingTop + (index * (itemHeight + itemSpacing)) + (itemHeight / 2);
     return `${topOffset}px`;
