@@ -573,8 +573,8 @@ export default function EditConversationFlowPage() {
                             onClick={() => handleConfigureNode(activeNode)}
                         >
                             <div className={cn("p-1 rounded-md", activeNode.data.color ? activeNode.data.color.replace('text-', 'bg-') + '/20' : 'bg-gray-500/20')}>
-                                {React.cloneElement(activeNode.data.icon as React.ReactElement, {
-                                    className: cn((activeNode.data.icon as React.ReactElement).props.className, activeNode.data.color),
+                                {activeNode.data.icon && React.cloneElement(activeNode.data.icon as React.ReactElement, {
+                                    className: cn((activeNode.data.icon as React.ReactElement).props?.className, activeNode.data.color),
                                 })}
                             </div>
                             <div className="flex flex-col">
