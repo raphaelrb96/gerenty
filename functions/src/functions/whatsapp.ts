@@ -852,25 +852,22 @@ async function processFlowStep(
             const consumerDoc = await consumerRef.get();
             const consumerData = consumerDoc.data() || {};
             
-            // Extract the relevant text or ID from the user's message
             let userInput: string | undefined;
             if (userMessage?.type === 'text') {
                 userInput = userMessage.text?.body.toLowerCase().trim();
             } else if (userMessage?.type === 'interactive' && userMessage.interactive.type === 'button_reply') {
-                userInput = userMessage.interactive.button_reply.id;
+                userInput = userMessage.interactive.button_reply.title.toLowerCase().trim(); // USE TITLE, NOT ID
             } else if (userMessage?.type === 'interactive' && userMessage.interactive.type === 'list_reply') {
-                userInput = userMessage.interactive.list_reply.id;
+                userInput = userMessage.interactive.list_reply.title.toLowerCase().trim(); // USE TITLE, NOT ID
             }
             
             let satisfiedEdgeId: string | null = null;
             for (const cond of conditions) {
-                // Determine the value to check based on condition type
                 let valueToCheck: any;
                 switch (cond.type) {
                     case 'variable':
                         valueToCheck = consumerData.flowData?.[cond.variable];
                         break;
-                    case 'interaction_id':
                     case 'response_text':
                     default:
                          valueToCheck = userInput;

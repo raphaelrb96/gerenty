@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import type { Node, Edge } from "reactflow";
@@ -517,7 +516,7 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, edges, onConnect, 
                         <span className="flex items-center truncate" style={{gap: '8px'}}>
                             {getConditionIcon(cond.type)}
                             {'Se '}
-                            {cond.type === 'variable' ? <strong className='font-mono'>{`{{${cond.variable || '...'}}}`}</strong> : <strong className="capitalize">{cond.type === 'interaction_id' ? 'ID da Interação' : cond.type?.replace('_', ' ') || '...'}</strong>}
+                            {cond.type === 'variable' ? <strong className='font-mono'>{`{{${cond.variable || '...'}}}`}</strong> : <strong className="capitalize">{cond.type === 'response_text' ? 'Texto da Resposta/Botão' : cond.type?.replace('_', ' ') || '...'}</strong>}
                             {` ${cond.operator} `}
                             <strong className='font-mono'>{`"${cond.value || '...'}"`}</strong>
                         </span>
@@ -530,9 +529,8 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, edges, onConnect, 
                             <Select value={cond.type} onValueChange={(val) => handleConditionChange(index, 'type', val)}>
                                 <SelectTrigger><SelectValue/></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="response_text">Texto da Resposta</SelectItem>
+                                    <SelectItem value="response_text">Texto da Resposta/Botão</SelectItem>
                                     <SelectItem value="variable">Variável do Contato</SelectItem>
-                                    <SelectItem value="interaction_id">ID da Interação</SelectItem>
                                     <SelectItem value="response_type">Tipo da Resposta</SelectItem>
                                 </SelectContent>
                             </Select>
