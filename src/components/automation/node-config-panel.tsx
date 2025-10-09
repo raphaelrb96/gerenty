@@ -3,7 +3,7 @@
 "use client";
 
 import type { Node, Edge } from "reactflow";
-import { Settings, HelpCircle, PlusCircle, MoreHorizontal, Pencil, Trash2, Save, TextCursorInput, Link, Bot, MessageCircle, Loader2, Variable, Type, Package, GitBranch, Share2, Timer, UserCheck, CheckCircle, Zap, MessageSquareReply } from "lucide-react";
+import { Settings, HelpCircle, PlusCircle, MoreHorizontal, Pencil, Trash2, Save, TextCursorInput, Link, Bot, MessageCircle, Loader2, Variable, Type, Package, GitBranch, Share2, Timer, UserCheck, CheckCircle, Zap, MessageSquareReply, MessageSquare } from "lucide-react";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
@@ -513,8 +513,8 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, edges, onConnect, 
                          <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleRemoveCondition(cond.id)}><Trash2 className="h-4 w-4"/></Button>
                     </div>
                     
-                    <div className="text-xs p-3 bg-background rounded-md flex justify-between items-center relative h-[50px] border" style={{ minWidth: '300px' }}>
-                        <span className="flex items-center truncate" style={{ gap: '8px' }}>
+                    <div className="text-xs p-3 bg-background rounded-md flex justify-between items-center relative h-[50px] border" style={{minWidth: '300px'}}>
+                        <span className="flex items-center truncate" style={{gap: '8px'}}>
                             {getConditionIcon(cond.type)}
                             {'Se '}
                             {cond.type === 'variable' ? <strong className='font-mono'>{`{{${cond.variable || '...'}}}`}</strong> : <strong className="capitalize">{cond.type === 'interaction_id' ? 'ID da Interação' : cond.type?.replace('_', ' ') || '...'}</strong>}

@@ -264,10 +264,12 @@ export class WhatsAppService {
         const mediaType = payload.type as 'image' | 'video' | 'audio' | 'document';
         const isMedia = ['image', 'video', 'audio', 'document'].includes(mediaType);
         
-        if (isMedia && contentForApi[mediaType]?.url) {
-            const mediaObject = contentForApi[mediaType];
+        // Find the media object, which could be under its type (e.g., 'image') or under 'media'.
+        const mediaObject = contentForApi[mediaType] || contentForApi.media;
+
+        if (isMedia && mediaObject?.url) {
             const mediaUrl = mediaObject.url;
-            const filename = mediaUrl.split('/').pop().split('?')[0];
+            const filename = mediaUrl.split('/').pop().split('?')[0] || `mediafile_${Date.now()}`;
             
             const mediaDetailsResponse = await fetch(mediaUrl);
             const mediaBuffer = await mediaDetailsResponse.arrayBuffer();
@@ -279,9 +281,12 @@ export class WhatsAppService {
                 return { success: false, error: "Failed to upload media to Meta." };
             }
             
-            // Replace the URL with the ID and remove the URL property
-            mediaObject.id = uploadedMediaId;
-            delete mediaObject.url; 
+            // Replace URL with ID and ensure it's in the correct format for the API
+            const apiMediaObject = { id: uploadedMediaId };
+            
+            // Reconstruct contentForApi to have the correct structure
+            delete contentForApi.media; // Remove generic media key if it exists
+            contentForApi[mediaType] = apiMediaObject; // Place it under the specific media type key
         }
         
         const messageData: any = {

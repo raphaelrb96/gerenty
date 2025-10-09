@@ -856,33 +856,44 @@ async function processFlowStep(
             let userInput: string | undefined;
             if (userMessage?.type === 'text') {
                 userInput = userMessage.text?.body.toLowerCase().trim();
-            } else if (userMessage?.type === 'interactive') {
-                if (userMessage.interactive.type === 'button_reply') {
-                    userInput = userMessage.interactive.button_reply.id;
-                } else if (userMessage.interactive.type === 'list_reply') {
-                    userInput = userMessage.interactive.list_reply.id;
-                }
+            } else if (userMessage?.type === 'interactive' && userMessage.interactive.type === 'button_reply') {
+                userInput = userMessage.interactive.button_reply.id;
+            } else if (userMessage?.type === 'interactive' && userMessage.interactive.type === 'list_reply') {
+                userInput = userMessage.interactive.list_reply.id;
             }
             
             let satisfiedEdgeId: string | null = null;
             for (const cond of conditions) {
-                const variableValue = consumerData.flowData?.[cond.variable] || userInput;
+                // Determine the value to check based on condition type
+                let valueToCheck: any;
+                switch (cond.type) {
+                    case 'variable':
+                        valueToCheck = consumerData.flowData?.[cond.variable];
+                        break;
+                    case 'interaction_id':
+                    case 'response_text':
+                    default:
+                         valueToCheck = userInput;
+                        break;
+                }
+
+                if (valueToCheck === undefined) continue;
+                
                 const comparisonValue = cond.value?.toLowerCase().trim();
-
-                if (variableValue === undefined) continue;
-
                 let isMatch = false;
+
                 switch (cond.operator) {
-                    case '==': isMatch = variableValue === comparisonValue; break;
-                    case '!=': isMatch = variableValue !== comparisonValue; break;
-                    case '>': isMatch = Number(variableValue) > Number(comparisonValue); break;
-                    case '<': isMatch = Number(variableValue) < Number(comparisonValue); break;
-                    case 'contains': isMatch = String(variableValue).includes(comparisonValue); break;
+                    case '==': isMatch = String(valueToCheck).toLowerCase().trim() === comparisonValue; break;
+                    case '!=': isMatch = String(valueToCheck).toLowerCase().trim() !== comparisonValue; break;
+                    case '>': isMatch = Number(valueToCheck) > Number(comparisonValue); break;
+                    case '<': isMatch = Number(valueToCheck) < Number(comparisonValue); break;
+                    case 'contains': isMatch = String(valueToCheck).toLowerCase().includes(comparisonValue); break;
                     default: isMatch = false;
                 }
 
                 if (isMatch) {
                     satisfiedEdgeId = flow.edges.find(e => e.source === currentNode?.id && e.sourceHandle === cond.id)?.target || null;
+                    functions.logger.info(`[Flow] Condition matched for handle ${cond.id}. Next node: ${satisfiedEdgeId}`);
                     break;
                 }
             }
@@ -893,6 +904,7 @@ async function processFlowStep(
                 const elseTargetId = flow.edges.find(e => e.source === currentNode?.id && e.sourceHandle === 'else')?.target;
                 if (elseTargetId) {
                     nextNode = flow.nodes.find(n => n.id === elseTargetId) || null;
+                    functions.logger.info(`[Flow] No condition matched. Following 'else' path. Next node: ${elseTargetId}`);
                 }
             }
         } else {
