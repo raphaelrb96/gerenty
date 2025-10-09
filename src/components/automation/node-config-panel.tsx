@@ -2,7 +2,7 @@
 "use client";
 
 import type { Node, Edge } from "reactflow";
-import { Settings, HelpCircle, PlusCircle, MoreHorizontal, Pencil, Trash2, Save, TextCursorInput, Link, Bot, MessageCircle, Loader2, Variable, Type, Package, MessageSquare, GitBranch, Share2, Timer, UserCheck, CheckCircle, Zap, MessageSquareReply } from "lucide-react";
+import { Settings, HelpCircle, PlusCircle, MoreHorizontal, Pencil, Trash2, Save, TextCursorInput, Link, Bot, MessageCircle, Loader2, Variable, Type, Package, GitBranch, Share2, Timer, UserCheck, CheckCircle, Zap, MessageSquare, MessageSquareReply } from "lucide-react";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
@@ -518,7 +518,7 @@ function ConditionalPanel({ node, onNodeDataChange, allNodes, edges, onConnect, 
                     </div>
                     
                     <div className="text-xs p-3 bg-background rounded-md flex justify-between items-center relative h-[50px] border" style={{minWidth: '300px'}}>
-                        <span className="flex items-center" style={{ gap: '8px' }}>
+                        <span className="flex items-center truncate" style={{ gap: '8px' }}>
                             {getConditionIcon(cond.type)}
                             {'Se '}
                             {cond.type === 'variable' ? <strong className='font-mono'>{`{{${cond.variable || '...'}}}`}</strong> : <strong className="capitalize">{cond.type?.replace('_', ' ') || '...'}</strong>}

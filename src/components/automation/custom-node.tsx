@@ -258,8 +258,8 @@ export function CustomNode({ data, selected }: NodeProps<{
         ) : data.type === 'conditional' && (
             <CardContent className="px-3 pb-3 pt-2 space-y-2">
                  {(data.conditions || []).map((cond: any) => (
-                    <div key={cond.id} className="text-xs p-3 bg-background rounded-md flex justify-between items-center relative h-[50px] border">
-                        <span className="flex items-center" style={{ gap: '8px' }}>
+                    <div key={cond.id} className="text-xs p-3 bg-background rounded-md flex justify-between items-center relative h-[50px] border" style={{minWidth: '300px'}}>
+                        <span className="flex items-center truncate" style={{gap: '8px'}}>
                             {getConditionIcon(cond.type)}
                             {'Se '}
                             {cond.type === 'variable' ? <strong className='font-mono'>{`{{${cond.variable || '...'}}}`}</strong> : <strong className="capitalize">{cond.type?.replace('_', ' ') || '...'}</strong>}
