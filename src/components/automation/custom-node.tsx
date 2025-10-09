@@ -154,13 +154,13 @@ export function CustomNode({ data, selected }: NodeProps<{
   const getVerticalHandlePosition = (index: number) => {
     const headerHeight = 46; 
     const contentPaddingTop = 8;
-    const itemHeight = 60; // Adjusted for better spacing
+    const itemHeight = 52; // Adjusted for better spacing
     const itemSpacing = 8;
     if(index === 0) {
-        const topOffset = headerHeight + contentPaddingTop + (index * (itemHeight)) + (itemHeight / 2);
+        const topOffset = headerHeight + contentPaddingTop + (index * (itemHeight + itemSpacing)) + (itemHeight / 2);
         return `${topOffset}px`;
     } else {
-        const topOffset = headerHeight + contentPaddingTop + (index * (itemHeight + itemSpacing)) + (itemHeight / 2);
+        const topOffset = headerHeight + contentPaddingTop + (index * (itemHeight + itemSpacing)) + ((itemHeight / 2) - 8);
         return `${topOffset}px`;
     }
     
