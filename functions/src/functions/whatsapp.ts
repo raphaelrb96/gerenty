@@ -873,7 +873,8 @@ async function processFlowStep(
                     valueToCheck = userInput;
                 }
                 
-                if (valueToCheck === undefined) continue;
+                if (valueToCheck === undefined)
+                    continue;
                 
                 const comparisonValue = cond.value?.toLowerCase().trim();
                 let isMatch = false;
@@ -889,9 +890,12 @@ async function processFlowStep(
                 }
 
                 if (isMatch) {
-                    satisfiedEdgeId = flow.edges.find(e => e.source === currentNode?.id && e.sourceHandle === cond.id)?.target || null;
-                    functions.logger.info(`[Flow] Condition matched for handle ${cond.id}. Next node: ${satisfiedEdgeId}`);
-                    break;
+                    const satisfiedEdge = flow.edges.find(e => e.source === currentNode?.id && e.sourceHandle === cond.id);
+                    if (satisfiedEdge) {
+                        satisfiedEdgeId = satisfiedEdge.target;
+                        functions.logger.info(`[Flow] Condition matched for handle ${cond.id}. Next node: ${satisfiedEdgeId}`);
+                        break;
+                    }
                 }
             }
 
@@ -1146,4 +1150,5 @@ function sanitizeMetaPatterns(text: string): string {
 }
 
     
+
 
