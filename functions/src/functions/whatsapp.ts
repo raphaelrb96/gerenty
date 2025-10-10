@@ -864,16 +864,15 @@ async function processFlowStep(
             let satisfiedEdgeId: string | null = null;
             for (const cond of conditions) {
                 let valueToCheck: any;
-                switch (cond.type) {
-                    case 'variable':
-                        valueToCheck = consumerData.flowData?.[cond.variable];
-                        break;
-                    case 'response_text':
-                    default:
-                         valueToCheck = userInput;
-                        break;
+                // Prioritize checking against the current user input if the condition is response-based
+                if (cond.type === 'response_text') {
+                    valueToCheck = userInput;
+                } else if (cond.type === 'variable') {
+                    valueToCheck = consumerData.flowData?.[cond.variable];
+                } else { // Fallback for other or undefined types
+                    valueToCheck = userInput;
                 }
-
+                
                 if (valueToCheck === undefined) continue;
                 
                 const comparisonValue = cond.value?.toLowerCase().trim();
