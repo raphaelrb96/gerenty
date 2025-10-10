@@ -878,6 +878,7 @@ async function processFlowStep(
                 const comparisonValue = cond.value?.toLowerCase().trim();
                 let isMatch = false;
 
+                functions.logger.info(`[Flow] Comparing: valueToCheck="${valueToCheck}", comparisonValue="${comparisonValue}"`);
                 switch (cond.operator) {
                     case '==': isMatch = String(valueToCheck).toLowerCase().trim() === comparisonValue; break;
                     case '!=': isMatch = String(valueToCheck).toLowerCase().trim() !== comparisonValue; break;
@@ -1145,3 +1146,4 @@ function sanitizeMetaPatterns(text: string): string {
 }
 
     
+
