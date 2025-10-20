@@ -54,7 +54,7 @@ export default function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
               >
-                {t('landing.hero.title')}
+                O Sistema Operacional para o seu Comércio.
               </motion.h1>
               <motion.p 
                 className="mx-auto mb-8 max-w-3xl text-lg text-muted-foreground sm:text-xl md:text-2xl"
