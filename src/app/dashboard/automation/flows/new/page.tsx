@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -21,7 +22,7 @@ export default function NewConversationFlowPage() {
     const router = useRouter();
     
     const [flowName, setFlowName] = useState("");
-    const [triggerType, setTriggerType] = useState("keyword");
+    const [flowType, setFlowType] = useState("keyword");
     const [isLoading, setIsLoading] = useState(false);
 
     const handleCreateFlow = async () => {
@@ -37,7 +38,7 @@ export default function NewConversationFlowPage() {
         setIsLoading(true);
 
         try {
-            const newFlow = await createFlow(effectiveOwnerId, activeCompany.id, flowName, triggerType);
+            const newFlow = await createFlow(effectiveOwnerId, activeCompany.id, flowName, flowType);
             toast({ title: "Fluxo criado com sucesso!", description: `Redirecionando para a edição de "${flowName}".`});
             router.push(`/dashboard/automation/flows/edit/${newFlow.id}`);
         } catch (error) {
@@ -46,11 +47,23 @@ export default function NewConversationFlowPage() {
         }
     };
 
+    const getFlowTypeDescription = () => {
+        switch(flowType) {
+            case 'product':
+                return "Responde automaticamente com detalhes do produto (foto, preço, link) quando um cliente digita o nome de um produto.";
+            case 'ai':
+                return "Utiliza Inteligência Artificial para interpretar e responder as mensagens dos clientes com base no contexto do seu negócio.";
+            case 'keyword':
+            default:
+                return "Crie um fluxo de conversa com múltiplos passos usando o construtor visual de arrastar e soltar.";
+        }
+    };
+
     return (
         <div className="space-y-6">
              <PageHeader
                 title="Criar Novo Fluxo de Conversa"
-                description="Dê um nome e defina o gatilho inicial para começar a construir sua automação."
+                description="Escolha um nome e o tipo de automação que deseja criar."
             />
              <div className="max-w-2xl mx-auto">
                 <Card>
@@ -69,18 +82,20 @@ export default function NewConversationFlowPage() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="trigger-type">Gatilho Principal</Label>
-                             <Select value={triggerType} onValueChange={setTriggerType}>
-                                <SelectTrigger id="trigger-type">
+                            <Label htmlFor="flow-type">Tipo de Fluxo</Label>
+                             <Select value={flowType} onValueChange={setFlowType}>
+                                <SelectTrigger id="flow-type">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="keyword">Palavra-Chave</SelectItem>
-                                    <SelectItem value="media">Tipo de Mensagem</SelectItem>
-                                    <SelectItem value="interaction">Interação (Clique)</SelectItem>
+                                    <SelectItem value="keyword">Fluxo Padrão (Construtor Visual)</SelectItem>
+                                    <SelectItem value="product">Fluxo de Produtos (Automático)</SelectItem>
+                                    <SelectItem value="ai">Fluxo de IA (Inteligência Artificial)</SelectItem>
                                 </SelectContent>
                             </Select>
-                            <p className="text-xs text-muted-foreground">Define como este fluxo será iniciado.</p>
+                            <p className="text-xs text-muted-foreground pt-1 min-h-[30px]">
+                                {getFlowTypeDescription()}
+                            </p>
                         </div>
                     </CardContent>
                     <CardFooter className="flex justify-end">

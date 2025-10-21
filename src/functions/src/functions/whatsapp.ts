@@ -683,9 +683,18 @@ async function processIncomingMessage(
             
             for (const doc of flowsSnapshot.docs) {
                 const flow = { id: doc.id, ...doc.data() } as Flow;
-                const triggerNodes = flow.nodes.filter(n => n.data.type === 'keywordTrigger');
+                const triggerNodes = flow.nodes.filter(n => ['keywordTrigger', 'productFlow', 'aiFlow'].includes(n.data.type));
 
                 for (const triggerNode of triggerNodes) {
+                    if (triggerNode.data.type === 'productFlow') {
+                        // TODO: Implement product flow logic
+                        continue;
+                    }
+                    if (triggerNode.data.type === 'aiFlow') {
+                        // TODO: Implement AI flow logic
+                        continue;
+                    }
+
                     const keywords = triggerNode?.data.triggerKeywords || [];
                     const isMatch = keywords.some((kw: { value: string, matchType: string }) => {
                         const keyword = kw.value.toLowerCase().trim();
@@ -852,34 +861,31 @@ async function processFlowStep(
             const consumerDoc = await consumerRef.get();
             const consumerData = consumerDoc.data() || {};
             
-            // Extract the relevant text or ID from the user's message
             let userInput: string | undefined;
             if (userMessage?.type === 'text') {
                 userInput = userMessage.text?.body.toLowerCase().trim();
             } else if (userMessage?.type === 'interactive' && userMessage.interactive.type === 'button_reply') {
-                userInput = userMessage.interactive.button_reply.id;
+                userInput = userMessage.interactive.button_reply.title.toLowerCase().trim(); // USE TITLE, NOT ID
             } else if (userMessage?.type === 'interactive' && userMessage.interactive.type === 'list_reply') {
-                userInput = userMessage.interactive.list_reply.id;
+                userInput = userMessage.interactive.list_reply.title.toLowerCase().trim(); // USE TITLE, NOT ID
             }
+
             
             let satisfiedEdgeId: string | null = null;
             for (const cond of conditions) {
-                // Determine the value to check based on condition type
                 let valueToCheck: any;
-                switch (cond.type) {
-                    case 'variable':
-                        valueToCheck = consumerData.flowData?.[cond.variable];
-                        break;
-                    case 'interaction_id':
-                    case 'response_text':
-                    default:
-                         valueToCheck = userInput;
-                        break;
+                // Prioritize checking against the current user input if the condition is response-based
+                if (cond.type === 'response_text') {
+                    valueToCheck = userInput;
+                } else if (cond.type === 'variable') {
+                    valueToCheck = consumerData.flowData?.[cond.variable];
+                } else { // Fallback for other or undefined types
+                    valueToCheck = userInput;
                 }
-
+                
                 if (valueToCheck === undefined) continue;
                 
-                const comparisonValue = cond.value?.toLowerCase().trim();
+                const comparisonValue = String(cond.value).toLowerCase().trim();
                 let isMatch = false;
 
                 switch (cond.operator) {
@@ -892,9 +898,16 @@ async function processFlowStep(
                 }
 
                 if (isMatch) {
-                    satisfiedEdgeId = flow.edges.find(e => e.source === currentNode?.id && e.sourceHandle === cond.id)?.target || null;
-                    functions.logger.info(`[Flow] Condition matched for handle ${cond.id}. Next node: ${satisfiedEdgeId}`);
-                    break;
+                    functions.logger.info(`[Flow] Condition matched:`, { type: cond.type, operator: cond.operator, value: cond.value });
+                    // Find the edge connected to this condition's handle
+                    const satisfiedEdge = flow.edges.find(e => e.source === currentNode?.id && e.sourceHandle === cond.id);
+                    if (satisfiedEdge) {
+                        satisfiedEdgeId = satisfiedEdge.target;
+                        functions.logger.info(`[Flow] Next node is ${satisfiedEdgeId}`);
+                        break; 
+                    } else {
+                        functions.logger.warn(`[Flow] No edge found for satisfied condition handle ${cond.id}`);
+                    }
                 }
             }
 
