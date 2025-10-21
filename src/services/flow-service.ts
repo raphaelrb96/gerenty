@@ -30,22 +30,8 @@ export async function getFlowsByCompany(companyId: string): Promise<Flow[]> {
     }
 }
 
-export async function createFlow(ownerId: string, companyId: string, name: string, flowType: string): Promise<Flow> {
+export async function createFlow(ownerId: string, companyId: string, name: string): Promise<Flow> {
     
-    let triggerType;
-    switch(flowType) {
-        case 'product':
-            triggerType = 'productFlow';
-            break;
-        case 'ai':
-            triggerType = 'aiFlow';
-            break;
-        case 'keyword':
-        default:
-            triggerType = 'keywordTrigger';
-            break;
-    }
-
     const initialNodes = [
         { 
             id: '1', 
@@ -53,7 +39,7 @@ export async function createFlow(ownerId: string, companyId: string, name: strin
             data: { 
                 label: 'Início do Fluxo', 
                 customLabel: 'Início do Fluxo',
-                type: triggerType,
+                type: 'keywordTrigger', // Always start with the standard keyword trigger
                 triggerKeywords: []
             }, 
             position: { x: 250, y: 5 } 

@@ -1,4 +1,5 @@
 
+
 // src/functions/whatsapp.ts
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
@@ -683,18 +684,9 @@ async function processIncomingMessage(
             
             for (const doc of flowsSnapshot.docs) {
                 const flow = { id: doc.id, ...doc.data() } as Flow;
-                const triggerNodes = flow.nodes.filter(n => ['keywordTrigger', 'productFlow', 'aiFlow'].includes(n.data.type));
+                const triggerNodes = flow.nodes.filter(n => n.data.type === 'keywordTrigger');
 
                 for (const triggerNode of triggerNodes) {
-                    if (triggerNode.data.type === 'productFlow') {
-                        // TODO: Implement product flow logic
-                        continue;
-                    }
-                    if (triggerNode.data.type === 'aiFlow') {
-                        // TODO: Implement AI flow logic
-                        continue;
-                    }
-
                     const keywords = triggerNode?.data.triggerKeywords || [];
                     const isMatch = keywords.some((kw: { value: string, matchType: string }) => {
                         const keyword = kw.value.toLowerCase().trim();
@@ -719,6 +711,9 @@ async function processIncomingMessage(
              const flowDoc = await db.collection('flows').doc(activeFlowId).get();
              if (flowDoc.exists) {
                 const activeFlow = { id: flowDoc.id, ...flowDoc.data() } as Flow;
+                
+                functions.logger.info(`[Flow] processFlowStep message "${JSON.stringify(message)}"`);
+
                 
                 // Se o fluxo acabou de ser acionado ou a conversa está esperando uma resposta
                 const nextStep = await processFlowStep(companyId, consumerRef, activeFlow, currentStepId, message);
@@ -823,8 +818,10 @@ async function processFlowStep(
     consumerRef: admin.firestore.DocumentReference,
     flow: Flow,
     currentStepId: string,
-    userMessage: IncomingMessage | null
+    userMessage: IncomingMessage | any | null
 ): Promise<FlowNode | null> {
+
+    functions.logger.info(`[Flow] processFlowStep userMessage1 "${JSON.stringify(userMessage)}"`);
     
     let currentNode = flow.nodes.find(n => n.id === currentStepId);
 
@@ -832,6 +829,9 @@ async function processFlowStep(
         functions.logger.warn(`[Flow] Node ${currentStepId} not found in flow ${flow.id}. Ending flow.`);
         return null;
     }
+
+    functions.logger.info(`[Flow] processFlowStep userMessage2 "${JSON.stringify(userMessage)}"`);
+
 
     const startNodeTypes = ['keywordTrigger', 'captureData', 'waitForResponse'];
     if (startNodeTypes.includes(currentNode.data.type)) {
@@ -848,28 +848,53 @@ async function processFlowStep(
         }
     }
 
+    functions.logger.info(`[Flow] processFlowStep userMessage3 "${JSON.stringify(userMessage)}"`);
+
+    const userMessageSave = userMessage;
 
     // EXECUTION LOOP: Starts from the current node and executes until it finds a stopping point.
     while (currentNode) {
         functions.logger.info(`[Flow] Executing loop for node ${currentNode.id} of type ${currentNode.data.type}`);
+
+        userMessage = userMessageSave;
+
+    functions.logger.info(`[Flow] processFlowStep userMessage4 "${JSON.stringify(userMessage)}"`);
+
         
         let nextNode: FlowNode | null = null;
         
         // --- 1. NEXT NODE DECISION LOGIC ---
         if (currentNode.data.type === 'conditional') {
             const conditions = currentNode.data.conditions || [];
+            functions.logger.info(`[Flow] conditions "${JSON.stringify(conditions)}"`);
+
             const consumerDoc = await consumerRef.get();
             const consumerData = consumerDoc.data() || {};
+
+            functions.logger.info(`[Flow] userMessage "${userMessage}"`);
+            functions.logger.info(`[Flow] userMessage.type "${userMessage?.type}"`);
+            functions.logger.info(`[Flow] userMessage.text?.body "${userMessage?.text?.body}"`);
+            functions.logger.info(`[Flow] userMessage.interactive?.type "${userMessage?.interactive?.type}"`);
+
             
             let userInput: string | undefined;
             if (userMessage?.type === 'text') {
+                functions.logger.info(`[Flow] userInput text`);
                 userInput = userMessage.text?.body.toLowerCase().trim();
             } else if (userMessage?.type === 'interactive' && userMessage.interactive.type === 'button_reply') {
+                functions.logger.info(`[Flow] userInput interactive button_reply`);
                 userInput = userMessage.interactive.button_reply.title.toLowerCase().trim(); // USE TITLE, NOT ID
             } else if (userMessage?.type === 'interactive' && userMessage.interactive.type === 'list_reply') {
+                functions.logger.info(`[Flow] userInput interactive list_reply`);
                 userInput = userMessage.interactive.list_reply.title.toLowerCase().trim(); // USE TITLE, NOT ID
+                userInput = userMessage.text?.body?.toLowerCase().trim();
+            } else if (userMessage?.type === 'interactive' && userMessage.interactive?.type === 'button_reply' && userMessage.interactive.button_reply) {
+                userInput = userMessage.interactive.button_reply.title?.toLowerCase().trim();
+            } else if (userMessage?.type === 'interactive' && userMessage.interactive?.type === 'list_reply' && userMessage.interactive.list_reply) {
+                userInput = userMessage.interactive.list_reply.title?.toLowerCase().trim();
             }
 
+            functions.logger.info(`[Flow] userInput "${userInput}"`);
             
             let satisfiedEdgeId: string | null = null;
             for (const cond of conditions) {
@@ -882,32 +907,55 @@ async function processFlowStep(
                 } else { // Fallback for other or undefined types
                     valueToCheck = userInput;
                 }
+
+                functions.logger.info(`[Flow] valueToCheck "${valueToCheck}"`);
                 
-                if (valueToCheck === undefined) continue;
+                if (valueToCheck === undefined)
+                    continue;
                 
-                const comparisonValue = String(cond.value).toLowerCase().trim();
                 let isMatch = false;
 
-                switch (cond.operator) {
-                    case '==': isMatch = String(valueToCheck).toLowerCase().trim() === comparisonValue; break;
-                    case '!=': isMatch = String(valueToCheck).toLowerCase().trim() !== comparisonValue; break;
-                    case '>': isMatch = Number(valueToCheck) > Number(comparisonValue); break;
-                    case '<': isMatch = Number(valueToCheck) < Number(comparisonValue); break;
-                    case 'contains': isMatch = String(valueToCheck).toLowerCase().includes(comparisonValue); break;
-                    default: isMatch = false;
+                // Lógica de comparação aprimorada
+                if (cond.operator === '>' || cond.operator === '<') {
+                    const numValueToCheck = Number(valueToCheck);
+                    const numComparisonValue = Number(cond.value);
+                    if (!isNaN(numValueToCheck) && !isNaN(numComparisonValue)) {
+                        if (cond.operator === '>') isMatch = numValueToCheck > numComparisonValue;
+                        if (cond.operator === '<') isMatch = numValueToCheck < numComparisonValue;
+                    }
+                } else {
+                    const strValueToCheck = String(valueToCheck).toLowerCase().trim();
+                    const strComparisonValue = String(cond.value).toLowerCase().trim();
+                    if (cond.operator === '==') isMatch = strValueToCheck === strComparisonValue;
+                    if (cond.operator === '!=') isMatch = strValueToCheck !== strComparisonValue;
+                    if (cond.operator === 'contains') isMatch = strValueToCheck.includes(strComparisonValue);
+
+                    functions.logger.info(`[Flow] cond.value "${cond.value}"`);
+                    functions.logger.info(`[Flow] strValueToCheck "${strValueToCheck}"`);
+                    functions.logger.info(`[Flow] strComparisonValue "${strComparisonValue}"`);
+                    functions.logger.info(`[Flow] cond.operator "${cond.operator}"`);
+                    functions.logger.info(`[Flow] isMatch "${isMatch}"`);
                 }
 
                 if (isMatch) {
-                    functions.logger.info(`[Flow] Condition matched:`, { type: cond.type, operator: cond.operator, value: cond.value });
-                    // Find the edge connected to this condition's handle
-                    const satisfiedEdge = flow.edges.find(e => e.source === currentNode?.id && e.sourceHandle === cond.id);
+                    functions.logger.info(`[Fluxo] Condição satisfeita: tipo=${cond.type}, operador=${cond.operator}, valor=${cond.value}, variável=${cond.variable || 'N/A'}`);
+                    // Encontra todas as conexões que saem do nó atual para depuração
+                    const outgoingEdges = flow.edges.filter(e => e.source === currentNode?.id);
+                    functions.logger.debug(`[Flow] Conexões de saída do nó ${currentNode?.id}:`, JSON.stringify(outgoingEdges.map(e => ({ target: e.target, handle: e.sourceHandle }))));
+                    functions.logger.debug(`[Fluxo] Conexões de saída do nó ${currentNode?.id}:`, JSON.stringify(outgoingEdges.map(e => ({ target: e.target, handle: e.sourceHandle }))));
+
+                    // Agora, encontra a conexão específica que corresponde à condição
+                    const satisfiedEdge = outgoingEdges.find(e => e.sourceHandle === cond.id);
                     if (satisfiedEdge) {
                         satisfiedEdgeId = satisfiedEdge.target;
-                        functions.logger.info(`[Flow] Next node is ${satisfiedEdgeId}`);
-                        break; 
+                        functions.logger.info(`[Fluxo] Conexão satisfeita encontrada para o handle ${cond.id}. Próximo nó: ${satisfiedEdgeId}`);
+                        break;
                     } else {
-                        functions.logger.warn(`[Flow] No edge found for satisfied condition handle ${cond.id}`);
+                        functions.logger.warn(`[Fluxo] Condição satisfeita para o handle ${cond.id}, mas nenhuma conexão de saída foi encontrada a partir do nó ${currentNode?.id}. Isso pode indicar um fluxo mal configurado.`);
                     }
+                } else {
+                    functions.logger.debug(`[Fluxo] Condição não satisfeita para o handle ${cond.id}: tipo=${cond.type}, operador=${cond.operator}, valor=${cond.value}, variável=${cond.variable || 'N/A'}`);
+                    functions.logger.debug(`[Fluxo] Condição não satisfeita para o handle ${cond.id}.`);
                 }
             }
 
@@ -917,7 +965,7 @@ async function processFlowStep(
                 const elseTargetId = flow.edges.find(e => e.source === currentNode?.id && e.sourceHandle === 'else')?.target;
                 if (elseTargetId) {
                     nextNode = flow.nodes.find(n => n.id === elseTargetId) || null;
-                    functions.logger.info(`[Flow] No condition matched. Following 'else' path. Next node: ${elseTargetId}`);
+                    functions.logger.info(`[Fluxo] Nenhuma condição foi satisfeita. Seguindo o caminho 'else'. Próximo nó: ${elseTargetId}`);
                 }
             }
         } else {
