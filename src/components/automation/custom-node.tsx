@@ -248,12 +248,6 @@ export function CustomNode({ data, selected }: NodeProps<{
                  {data.type === 'productSearch' ? (
                      <>
                         <div className="text-xs p-3 bg-muted rounded-md flex justify-between items-center relative h-[50px]">
-                            <span className="flex items-center gap-2 font-semibold">
-                                <Search className="h-4 w-4 text-cyan-500" />
-                                Busca produto com base na mensagem do cliente.
-                            </span>
-                        </div>
-                        <div className="text-xs p-3 bg-muted rounded-md flex justify-between items-center relative h-[50px]">
                             <div>
                                 <span className="font-semibold text-green-600">Encontrado</span>
                                 <p className="text-xs text-muted-foreground">Continua o fluxo se um produto for encontrado.</p>
@@ -266,6 +260,12 @@ export function CustomNode({ data, selected }: NodeProps<{
                                 <p className="text-xs text-muted-foreground">Continua o fluxo se nenhum produto for encontrado.</p>
                             </div>
                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => data.onQuickAdd('not-found')}><PlusCircle className="h-4 w-4" /></Button>
+                        </div>
+                        <div className="text-xs p-3 bg-muted/50 rounded-md flex justify-between items-center relative h-[50px]">
+                            <span className="flex items-center gap-2 font-semibold">
+                                <Search className="h-4 w-4 text-cyan-500" />
+                                Busca produto com base na mensagem do cliente.
+                            </span>
                         </div>
                      </>
                  ) : (
