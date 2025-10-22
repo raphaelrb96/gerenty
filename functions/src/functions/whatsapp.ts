@@ -1,4 +1,5 @@
 
+
 // src/functions/whatsapp.ts
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
@@ -21,7 +22,8 @@ import {
     MessageMetadata,
     Flow,
     Conversation,
-    LibraryMessage
+    LibraryMessage,
+    Product,
 } from '../types/whatsapp';
 import { FieldValue } from 'firebase-admin/firestore';
 import type { Node as FlowNode, Edge as FlowEdge } from 'reactflow';
@@ -48,7 +50,7 @@ export const validateAndSaveCredentials = functions.https.onCall(
         companyId: string;
     }> => {
         try {
-            // Valida a requisição e obtém o companyId
+            // Valida la requisição e obtém o companyId
             const validation = await securityService.validateCallableRequest(request);
             if (!validation.isValid || !validation.companyId) {
                 throw new functions.https.HttpsError('unauthenticated', validation.error || 'Validation failed');
@@ -906,8 +908,8 @@ async function processFlowStep(
                 } else { // Fallback for other or undefined types
                     valueToCheck = userInput;
                 }
-
-                functions.logger.info(`[Flow] valueToCheck "${valueToCheck}"`);
+                const comparisonValue = String(cond.value).toLowerCase().trim();
+                functions.logger.debug(`[Flow] Comparing: valueToCheck="${valueToCheck}", operator="${cond.operator}", comparisonValue="${comparisonValue}"`);
                 
                 if (valueToCheck === undefined)
                     continue;
@@ -967,7 +969,37 @@ async function processFlowStep(
                     functions.logger.info(`[Fluxo] Nenhuma condição foi satisfeita. Seguindo o caminho 'else'. Próximo nó: ${elseTargetId}`);
                 }
             }
-        } else {
+        } else if (currentNode.data.type === 'productSearch') {
+            const userInput = userMessage?.text?.body?.toLowerCase().trim();
+            let nextEdgeId: string | null = null;
+        
+            if (userInput) {
+                const productsQuery = db.collection('products')
+                    .where('ownerId', '==', companyId)
+                    .where('name', '>=', userInput)
+                    .where('name', '<=', userInput + '\uf8ff');
+        
+                const productSnapshot = await productsQuery.limit(1).get();
+        
+                if (!productSnapshot.empty) {
+                    const product = { id: productSnapshot.docs[0].id, ...productSnapshot.docs[0].data() } as Product;
+                    await consumerRef.update({ 'flowData.foundProduct': product });
+                    nextEdgeId = flow.edges.find(e => e.source === currentNode?.id && e.sourceHandle === 'found')?.target || null;
+                    functions.logger.info(`[Flow] Product found: ${product.name}. Following 'found' path.`);
+                }
+            }
+        
+            if (!nextEdgeId) {
+                await consumerRef.update({ 'flowData.foundProduct': null });
+                nextEdgeId = flow.edges.find(e => e.source === currentNode?.id && e.sourceHandle === 'not-found')?.target || null;
+                functions.logger.info(`[Flow] Product not found. Following 'not-found' path.`);
+            }
+        
+            if (nextEdgeId) {
+                nextNode = flow.nodes.find(n => n.id === nextEdgeId) || null;
+            }
+        }
+        else {
             // For all other nodes (including triggers and actions)
             const nextEdge = flow.edges.find(e => e.source === currentNode?.id);
             if (nextEdge) {
@@ -1048,7 +1080,8 @@ async function processFlowStep(
                 break;
 
             case 'conditional':
-                // The conditional logic already defines `nextNode`, so we just continue the loop.
+            case 'productSearch':
+                // The logic already defines `nextNode`, so we just continue the loop.
                 break;
                 
             default:

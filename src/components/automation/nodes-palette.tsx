@@ -3,7 +3,7 @@
 
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Bot, MessageCircle, HelpCircle, Settings, GitBranch, Share2, Timer, UserCheck, CheckCircle, Zap, MessageSquareReply } from "lucide-react";
+import { Bot, MessageCircle, HelpCircle, Settings, GitBranch, Share2, Timer, UserCheck, CheckCircle, Zap, MessageSquareReply, Search } from "lucide-react";
 import React from "react";
 import { Separator } from "../ui/separator";
 
@@ -36,6 +36,12 @@ const actionNodeTypes = [
         icon: MessageCircle
     },
     {
+        type: 'productSearch' as const,
+        label: "Buscar Produto no Catálogo",
+        description: "Usa a mensagem do cliente para buscar um produto e ramifica o fluxo se encontrar.",
+        icon: Search
+    },
+    {
         type: 'internalAction' as const,
         label: "Ação Interna",
         description: "Executa ações automáticas no sistema, como adicionar uma tag a um cliente ou mover no CRM.",
@@ -56,7 +62,7 @@ const actionNodeTypes = [
     {
         type: 'transfer' as const,
         label: "Transferir para Atendente",
-        description: "Encerra a automação e notifica um atendente humano para assumir a conversa.",
+        description: "Encerra la automação e notifica um atendente humano para assumir la conversa.",
         icon: UserCheck
     },
     {

@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../ui/card
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { Badge } from '../ui/badge';
-import { Pencil, Trash2, PlusCircle, GitBranch, MessageSquare, Video, File, Music, List, HelpCircle, Variable, Package, Type } from 'lucide-react';
+import { Pencil, Trash2, PlusCircle, GitBranch, MessageSquare, Video, File, Music, List, HelpCircle, Variable, Package, Type, Search } from 'lucide-react';
 import { LibraryMessage } from '@/lib/types';
 import React from 'react';
 import Image from "next/image";
@@ -94,7 +94,7 @@ export function CustomNode({ data, selected }: NodeProps<{
                 return (
                     <div className="flex justify-center p-2">
                          <div className="relative w-32 h-32">
-                            <Image src={imageUrl} alt="Pré-visualização da imagem" fill object-cover className="rounded-md" />
+                            <Image src={imageUrl} alt="Pré-visualização da imagem" layout="fill" objectFit="cover" className="rounded-md" />
                         </div>
                     </div>
                 );
@@ -166,12 +166,14 @@ export function CustomNode({ data, selected }: NodeProps<{
   const isDeletable = data.isDeletable !== false;
   const isTriggerType = data.type === 'keywordTrigger' || data.type === 'waitForResponse' || data.type === 'captureData';
   const isActionNode = !isTriggerType;
+  const isBranchingNode = data.type === 'conditional' || data.type === 'productSearch';
 
-  const getVerticalHandlePosition = (index: number) => {
+  const getVerticalHandlePosition = (index: number, total: number) => {
     const headerHeight = 46;
     const contentPaddingTop = 12;
     const itemHeight = 50;
     const itemSpacing = 8;
+    const totalContentHeight = total * (itemHeight + itemSpacing) - itemSpacing;
     const topOffset = headerHeight + contentPaddingTop + (index * (itemHeight + itemSpacing)) + (itemHeight / 2);
     return `${topOffset}px`;
   };
@@ -186,37 +188,22 @@ export function CustomNode({ data, selected }: NodeProps<{
     <div className="relative group">
       {data.type !== 'keywordTrigger' && <Handle type="target" position={Position.Left} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10, bottom: '20px', top: 'auto' }} />}
       
-      {data.type === 'conditional' && (
-        <>
-            {(data.conditions || []).map((cond: any, index: number) => (
-                <Handle
-                    key={cond.id}
-                    type="source"
-                    position={Position.Right}
-                    id={cond.id}
-                    style={{ top: getVerticalHandlePosition(index), right: '-0.75rem', zIndex: 10 }}
-                    className="!bg-cyan-500 !w-3 !h-3"
-                />
-            ))}
-             <Handle
-                key="else-handle"
-                type="source"
-                position={Position.Right}
-                id="else"
-                style={{ top: getVerticalHandlePosition(data.conditions?.length || 0), right: '-0.75rem', zIndex: 10 }}
-                className="!bg-gray-500 !w-3 !h-3"
-            />
-        </>
+      {isBranchingNode && (
+          <>
+              <Handle key="found-handle" type="source" position={Position.Right} id="found" className="!bg-green-500 !w-3 !h-3" style={{ top: '33%', zIndex: 10 }} />
+              <Handle key="not-found-handle" type="source" position={Position.Right} id="not-found" className="!bg-red-500 !w-3 !h-3" style={{ top: '66%', zIndex: 10 }}/>
+          </>
       )}
+
       
-      {(data.type !== 'conditional' && data.type !== 'endFlow') && (
+      {(data.type !== 'conditional' && data.type !== 'productSearch' && data.type !== 'endFlow') && (
           <Handle type="source" position={Position.Right} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10, top: '20px' }} />
       )}
       
        <Card 
         className={cn(
             "bg-card/80 backdrop-blur-sm transition-all duration-200 hover:shadow-xl",
-            data.type === 'conditional' ? "w-[340px]" : "w-[280px]",
+            isBranchingNode ? "w-[340px]" : "w-[280px]",
             isTriggerType && 'animate-pulse-glow',
             selected && 'animate-pulse-glow-active',
             selected && isTriggerType ? '!border-4 !border-amber-400' : (isTriggerType ? '!border-transparent' : '')
@@ -248,35 +235,62 @@ export function CustomNode({ data, selected }: NodeProps<{
                 ) : (
                     <>
                          <p className="text-sm font-semibold text-foreground">Configure os gatilhos</p>
-                         <p className="text-xs">Use o ícone de configurações para definir as palavras-chave que iniciam a conversa.</p>
+                         <p className="text-xs">Use o ícone de configurações para definir as palavras-chave que iniciam la conversa.</p>
                     </>
                 )}
             </CardContent>
-        ) : (data.type !== 'conditional' && data.type !== 'endFlow') ? (
+        ) : (data.type !== 'conditional' && data.type !== 'endFlow' && data.type !== 'productSearch') ? (
              <CardContent className="px-3 pb-3 pt-2 text-xs text-muted-foreground min-h-[40px]">
               {contentPreview()}
             </CardContent>
-        ) : data.type === 'conditional' && (
+        ) : (data.type === 'conditional' || data.type === 'productSearch') && (
             <CardContent className="px-3 pb-3 pt-2 space-y-2">
-                 {(data.conditions || []).map((cond: any) => (
-                    <div key={cond.id} className="text-xs p-3 bg-muted rounded-md flex justify-between items-center relative h-[50px]" style={{minWidth: '300px'}}>
-                        <span className="flex items-center truncate" style={{gap: '8px'}}>
-                            {getConditionIcon(cond.type)}
-                            {'Se '}
-                            {cond.type === 'variable' ? <strong className='font-mono'>{`{{${cond.variable || '...'}}}`}</strong> : <strong className="capitalize">{cond.type === 'interaction_id' ? 'ID da Interação' : cond.type?.replace('_', ' ') || '...'}</strong>}
-                            {` ${cond.operator} `}
-                            <strong className='font-mono'>{`"${cond.value || '...'}"`}</strong>
-                        </span>
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => data.onQuickAdd(cond.id)}><PlusCircle className="h-4 w-4" /></Button>
-                    </div>
-                 ))}
-                 <div className="text-xs p-3 bg-muted rounded-md flex justify-between items-center relative h-[50px]">
-                    <div>
-                      <span className="font-semibold">Fluxo Padrão</span>
-                      <p className="text-xs text-muted-foreground">(Se nenhuma condição for válida)</p>
-                    </div>
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => data.onQuickAdd('else')}><PlusCircle className="h-4 w-4" /></Button>
-                </div>
+                 {data.type === 'productSearch' ? (
+                     <>
+                        <div className="text-xs p-3 bg-muted rounded-md flex justify-between items-center relative h-[50px]">
+                            <span className="flex items-center gap-2 font-semibold">
+                                <Search className="h-4 w-4 text-cyan-500" />
+                                Busca produto com base na mensagem do cliente.
+                            </span>
+                        </div>
+                        <div className="text-xs p-3 bg-muted rounded-md flex justify-between items-center relative h-[50px]">
+                            <div>
+                                <span className="font-semibold text-green-600">Encontrado</span>
+                                <p className="text-xs text-muted-foreground">Continua o fluxo se um produto for encontrado.</p>
+                            </div>
+                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => data.onQuickAdd('found')}><PlusCircle className="h-4 w-4" /></Button>
+                        </div>
+                        <div className="text-xs p-3 bg-muted rounded-md flex justify-between items-center relative h-[50px]">
+                            <div>
+                                <span className="font-semibold text-red-600">Não Encontrado</span>
+                                <p className="text-xs text-muted-foreground">Continua o fluxo se nenhum produto for encontrado.</p>
+                            </div>
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => data.onQuickAdd('not-found')}><PlusCircle className="h-4 w-4" /></Button>
+                        </div>
+                     </>
+                 ) : (
+                    <>
+                        {(data.conditions || []).map((cond: any) => (
+                            <div key={cond.id} className="text-xs p-3 bg-muted rounded-md flex justify-between items-center relative h-[50px]" style={{minWidth: '300px'}}>
+                                <span className="flex items-center truncate" style={{gap: '8px'}}>
+                                    {getConditionIcon(cond.type)}
+                                    {'Se '}
+                                    {cond.type === 'variable' ? <strong className='font-mono'>{`{{${cond.variable || '...'}}}`}</strong> : <strong className="capitalize">{cond.type === 'interaction_id' ? 'ID da Interação' : cond.type?.replace('_', ' ') || '...'}</strong>}
+                                    {` ${cond.operator} `}
+                                    <strong className='font-mono'>{`"${cond.value || '...'}"`}</strong>
+                                </span>
+                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => data.onQuickAdd(cond.id)}><PlusCircle className="h-4 w-4" /></Button>
+                            </div>
+                        ))}
+                        <div className="text-xs p-3 bg-muted rounded-md flex justify-between items-center relative h-[50px]">
+                            <div>
+                            <span className="font-semibold">Fluxo Padrão</span>
+                            <p className="text-xs text-muted-foreground">(Se nenhuma condição for válida)</p>
+                            </div>
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => data.onQuickAdd('else')}><PlusCircle className="h-4 w-4" /></Button>
+                        </div>
+                    </>
+                )}
             </CardContent>
         )}
         
@@ -296,7 +310,7 @@ export function CustomNode({ data, selected }: NodeProps<{
                     <Pencil className="h-4 w-4"/>
                     <span className="sr-only">Configurar Tarefa</span>
                 </Button>
-                {data.type !== 'conditional' && data.type !== 'endFlow' && (
+                {data.type !== 'conditional' && data.type !== 'productSearch' && data.type !== 'endFlow' && (
                 <Button 
                     variant="ghost" 
                     size="icon" 

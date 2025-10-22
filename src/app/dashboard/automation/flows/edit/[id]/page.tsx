@@ -13,7 +13,7 @@ import type { Node, Edge, OnNodesChange, OnEdgesChange, Connection, NodeChange }
 import { applyNodeChanges, applyEdgeChanges, addEdge } from 'reactflow';
 import { NodeConfigPanel } from "@/components/automation/node-config-panel";
 import { NodesPalette } from "@/components/automation/nodes-palette";
-import { Bot, MessageCircle, Settings, Plus, Pencil, Trash2, Save, MoreVertical, Clock, Calendar, Repeat, MessageSquareX, Forward, Send, HelpCircle, GitBranch, Share2, Timer, UserCheck, CheckCircle, MessageSquareReply, Zap } from "lucide-react";
+import { Bot, MessageCircle, Settings, Plus, Pencil, Trash2, Save, MoreVertical, Clock, Calendar, Repeat, MessageSquareX, Forward, Send, HelpCircle, GitBranch, Share2, Timer, UserCheck, CheckCircle, MessageSquareReply, Zap, Search } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -52,6 +52,7 @@ export const nodeTypeConfig = {
     waitForResponse: { icon: <MessageSquareReply size={20} />, color: 'text-yellow-500', defaultData: { label: 'Aguardar Resposta', type: 'waitForResponse' } },
     message: { icon: <MessageCircle size={20} />, color: 'text-blue-500', defaultData: { label: 'Enviar Mensagem', type: 'message' } },
     captureData: { icon: <HelpCircle size={20} />, color: 'text-yellow-500', defaultData: { label: 'Capturar Dados', type: 'captureData' } },
+    productSearch: { icon: <Search size={20} />, color: 'text-cyan-500', defaultData: { label: 'Buscar Produto', type: 'productSearch', conditions: [] } },
     internalAction: { icon: <Settings size={20} />, color: 'text-blue-500', defaultData: { label: 'Ação Interna', type: 'internalAction' } },
     conditional: { icon: <GitBranch size={20} />, color: 'text-cyan-500', defaultData: { label: 'Condição Lógica', type: 'conditional', conditions: [] } },
     externalApi: { icon: <Share2 size={20} />, color: 'text-indigo-500', defaultData: { label: 'API Externa', type: 'externalApi' } },
@@ -335,18 +336,18 @@ export default function EditConversationFlowPage() {
             return;
         }
 
-        const sourceNodeIsConditional = quickAddSourceNode?.data.type === 'conditional';
+        const isBranchingNode = quickAddSourceNode?.data.type === 'conditional' || quickAddSourceNode?.data.type === 'productSearch';
         const handleFromQuickAdd = quickAddSourceNode?.data.sourceHandleForQuickAdd;
 
     
         // Check if the source node can have another connection
-        if (quickAddSourceNode && !sourceNodeIsConditional) {
+        if (quickAddSourceNode && !isBranchingNode) {
             const sourceHasConnection = edges.some(edge => edge.source === quickAddSourceNode.id);
             if (sourceHasConnection) {
                 toast({
                     variant: 'destructive',
                     title: 'Conexão Inválida',
-                    description: 'Esta tarefa já possui uma conexão de saída. Use o nó "Condição Lógica" para criar ramificações.'
+                    description: 'Esta tarefa já possui uma conexão de saída. Use um nó de condição para criar ramificações.'
                 });
                 return; // Stop execution
             }
@@ -419,7 +420,7 @@ export default function EditConversationFlowPage() {
             setEdges((eds) => addEdge(newEdge, eds));
             
             // Only add a new condition if the handle is not 'else'
-            if (sourceNodeIsConditional && handleFromQuickAdd && handleFromQuickAdd !== 'else') {
+            if (isBranchingNode && quickAddSourceNode.data.type === 'conditional' && handleFromQuickAdd && handleFromQuickAdd !== 'else') {
                  setNodes(nds => nds.map(n => {
                      if (n.id === quickAddSourceNode.id) {
                          const existingConditions = n.data.conditions || [];
@@ -465,17 +466,19 @@ export default function EditConversationFlowPage() {
         }
         
         setEdges((eds) => {
-            // Rule 2: Non-conditional nodes can only have one outgoing connection.
-            if (sourceNode && sourceNode.data.type !== 'conditional') {
+            const isBranchingNode = sourceNode?.data.type === 'conditional' || sourceNode?.data.type === 'productSearch';
+
+            // Rule 2: Non-branching nodes can only have one outgoing connection.
+            if (sourceNode && !isBranchingNode) {
                 const sourceHasConnection = eds.some(edge => edge.source === params.source);
                 if (sourceHasConnection) {
-                    toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Esta tarefa já possui uma conexão de saída. Use o nó "Condição Lógica" para criar ramificações.' });
+                    toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Esta tarefa já possui uma conexão de saída. Use um nó de condição para criar ramificações.' });
                     return eds;
                 }
             }
     
             // Rule 3: Conditional node handles can only have one outgoing connection each.
-            if (sourceNode && sourceNode.data.type === 'conditional' && params.sourceHandle) {
+            if (sourceNode && isBranchingNode && params.sourceHandle) {
                  const handleHasConnection = eds.some(edge => edge.source === params.source && edge.sourceHandle === params.sourceHandle);
                  if (handleHasConnection) {
                      toast({ variant: 'destructive', title: 'Conexão Inválida', description: 'Este caminho da condição já possui uma conexão de saída.' });
@@ -779,7 +782,7 @@ export default function EditConversationFlowPage() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Excluir Tarefa?</AlertDialogTitle>
                         <AlertDialogDescription>
-                           Tem certeza de que deseja excluir a tarefa "{nodeToDelete?.data.label}"? Esta ação não pode ser desfeita.
+                           Tem certeza de que deseja excluir la tarefa "{nodeToDelete?.data.label}"? Esta ação não pode ser desfeita.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
