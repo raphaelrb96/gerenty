@@ -2,6 +2,7 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import type { Node as FlowNode, Edge as FlowEdge } from 'reactflow';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 
 
 // Remove a definição customizada e usa a do Firebase
@@ -296,5 +297,131 @@ export type LibraryMessage = {
   };
   createdAt: admin.firestore.Timestamp;
   updatedAt: admin.firestore.Timestamp;
+};
+
+export type Product = {
+  // Identificador único do produto (por exemplo, SKU, ID interno)
+  id: string;
+  
+  // ID do usuário dono do produto
+  ownerId: string;
+
+  // IDs das empresas às quais o produto pertence (opcional)
+  companyIds?: string[];
+
+  // Nome do produto, ex: "Camiseta Preta Básica"
+  name: string;
+
+  // Slug do produto usado na URL (ex: "camiseta-preta-basica")
+  slug: string;
+
+  // Descrição detalhada do produto
+  description: string;
+
+  // Código único de estoque (SKU)
+  sku?: string;
+
+  // Status se o produto está ativo ou não
+  isActive: boolean;
+  
+  // Preço de custo do produto
+  costPrice?: number;
+  
+  extraCosts?: number;
+  
+  // Preço do produto em diferentes faixas (ex: Varejo, Atacado)
+  pricing: any[];
+
+  // Quantidade disponível em estoque
+  // Pode ser um número ou um booleano indicando se devera ser gerenciado automaticamente o estoque
+  availableStock?: number | boolean;
+
+  // Atributos personalizados do produto (ex: Cor, Tamanho)
+  attributes?: any[];
+
+  // Categorias globais do produto (ex: "Roupas", "Acessórios")
+  categoryIds?: string[]; // Categorias globais do produto
+
+  // Coleções privadas associadas ao produto (ex: "Coleção Verão 2023")
+  collectionIds?: string[];
+
+  // Tags que ajudam a categorizar ou filtrar o produto (ex: "camisa", "promoção")
+  tags?: string[];
+
+  // Imagens do produto (imagem principal e galeria de imagens)
+  images?: {
+    mainImage: string; // URL da imagem principal do produto
+    gallery: string[]; // Galeria de imagens do produto
+  };
+
+  // Referência ao template do produto (se aplicável)
+  templateId?: string;
+
+  // Datas de publicação e atualização do produto
+  publishedAt?: string | Date | Timestamp | FieldValue;
+  updatedAt: string | Date | Timestamp | FieldValue;
+  createdAt: string | Date | Timestamp | FieldValue;
+
+  // Status do produto (disponível, fora de estoque ou descontinuado)
+  status: 'available' | 'out-of-stock' | 'discontinued';
+
+  // Visibilidade do produto (público ou privado)
+  visibility: 'public' | 'private';
+
+  // Promoção associada ao produto (desconto, data de início e fim)
+  promotion?: {
+    startDate: Date; // Data de início da promoção
+    endDate: Date; // Data de término da promoção
+    discountPercentage: number; // Porcentagem de desconto
+  };
+
+  // Flag que indica se o produto foi verificado (por exemplo, por admins)
+  isVerified: boolean;
+
+  // Permissões relacionadas ao produto (quem pode editar ou excluir)
+  permissions?: {
+    canEdit: boolean;
+    canDelete: boolean;
+    allowedRoles: ('admin' | 'empresa' | 'user')[]; // Papéis que têm permissão sobre o produto
+  };
+
+  // Informações adicionais sobre o produto, como peso, dimensões, fabricante
+  additionalInfo?: {
+    weight?: string; // Peso do produto
+    dimensions?: string; // Dimensões do produto
+    manufacturer?: string; // Fabricante do produto
+    warranty?: string; // Garantia do produto
+    shippingInfo?: string; // Informações sobre envio (tempo, preço, etc.)
+  };
+
+  // Avaliações do produto
+  reviews?: {
+    averageRating: number; // Média de avaliações (0 a 5)
+    totalReviews: number; // Quantidade total de avaliações
+    ratings: number[]; // Array de avaliações (ex: [5, 4, 3, 2, 1])
+  };
+
+  // Histórico de versões do produto
+  versionHistory?: {
+    version: string; // Número da versão do produto
+    updatedAt: Date; // Data da última atualização
+    changes: string[]; // Descrição das mudanças realizadas
+  };
+
+  // Customizações do template para exibição do produto
+  templateCustomization?: {
+    layoutSettings: {
+      displayType: 'card' | 'grid' | 'list'; // Tipo de layout de exibição
+      cardSize: 'small' | 'medium' | 'large'; // Tamanho do cartão do produto
+      showPrice: boolean; // Se o preço será exibido
+    };
+  };
+
+  // Estratégias de vendas relacionadas ao produto
+  salesStrategies?: {
+    crossSell?: string[]; // Produtos recomendados para vender juntos
+    upsell?: string[]; // Produtos para venda adicional
+    bundles?: string[]; // Produtos vendidos em pacote
+  };
 };
   
