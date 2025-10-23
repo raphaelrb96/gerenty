@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../ui/card
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { Badge } from '../ui/badge';
-import { Pencil, Trash2, PlusCircle, GitBranch, MessageSquare, Video, File, Music, List, HelpCircle, Variable, Package, Type, Search } from 'lucide-react';
+import { Pencil, Trash2, PlusCircle, GitBranch, MessageSquare, Video, File, Music, List, HelpCircle, Variable, Package, Type, Search, ShoppingCart } from 'lucide-react';
 import { LibraryMessage } from '@/lib/types';
 import React from 'react';
 import Image from "next/image";
@@ -27,6 +27,7 @@ export function CustomNode({ data, selected }: NodeProps<{
   delaySeconds?: number,
   transferTo?: string,
   conditions?: any[],
+  actionButtons?: { id: string; label: string }[],
   isDeletable?: boolean,
   libraryMessages: LibraryMessage[],
   onConfigure: () => void,
@@ -168,17 +169,6 @@ export function CustomNode({ data, selected }: NodeProps<{
   const isActionNode = !isTriggerType;
   const isBranchingNode = data.type === 'conditional' || data.type === 'productSearch';
 
-  const getVerticalHandlePosition = (index: number, total: number) => {
-    const headerHeight = 46;
-    const contentPaddingTop = 12;
-    const itemHeight = 50;
-    const itemSpacing = 8;
-    const totalContentHeight = total * (itemHeight + itemSpacing) - itemSpacing;
-    const topOffset = headerHeight + contentPaddingTop + (index * (itemHeight + itemSpacing)) + (itemHeight / 2);
-    return `${topOffset}px`;
-  };
-
-
   const hasKeywords = data.triggerKeywords && data.triggerKeywords.length > 0;
   
   const colorClass = data.color ? data.color.replace('text-', 'bg-').replace('-500', '-500/20') : 'bg-gray-500/20';
@@ -186,19 +176,25 @@ export function CustomNode({ data, selected }: NodeProps<{
 
   return (
     <div className="relative group">
-      {data.type !== 'keywordTrigger' && <Handle type="target" position={Position.Left} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10, bottom: '20px', top: 'auto' }} />}
+      <Handle type="target" position={Position.Left} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10, bottom: '20px', top: 'auto' }} />
       
-      {isBranchingNode && (
+      {data.type === 'productSearch' ? (
           <>
-              <Handle key="found-handle" type="source" position={Position.Right} id="found" className="!bg-green-500 !w-3 !h-3" style={{ top: '33%', zIndex: 10 }} />
-              <Handle key="not-found-handle" type="source" position={Position.Right} id="not-found" className="!bg-red-500 !w-3 !h-3" style={{ top: '66%', zIndex: 10 }}/>
+            {(data.actionButtons || []).map((button: { id: string, label: string }, index: number) => (
+              <Handle key={button.id} type="source" position={Position.Right} id={button.id} className="!bg-blue-500 !w-3 !h-3" style={{ top: `${20 + index * 20}%`, zIndex: 10 }} />
+            ))}
+            <Handle key="not-found-handle" type="source" position={Position.Right} id="not-found" className="!bg-red-500 !w-3 !h-3" style={{ bottom: '20px', top: 'auto', zIndex: 10 }}/>
           </>
-      )}
-
-      
-      {(data.type !== 'conditional' && data.type !== 'productSearch' && data.type !== 'endFlow') && (
+      ) : data.type === 'conditional' ? (
+          <>
+              {(data.conditions || []).map((cond: any, index: number) => (
+                  <Handle key={cond.id} type="source" position={Position.Right} id={cond.id} className="!bg-green-500 !w-3 !h-3" style={{ top: `${(index + 1) * 20}%` }} />
+              ))}
+              <Handle key="else-handle" type="source" position={Position.Right} id="else" className="!bg-red-500 !w-3 !h-3" style={{ bottom: '20px', top: 'auto' }} />
+          </>
+      ) : data.type !== 'endFlow' ? (
           <Handle type="source" position={Position.Right} className="!bg-primary !w-3 !h-3" style={{ zIndex: 10, top: '20px' }} />
-      )}
+      ) : null}
       
        <Card 
         className={cn(
@@ -247,25 +243,21 @@ export function CustomNode({ data, selected }: NodeProps<{
             <CardContent className="px-3 pb-3 pt-2 space-y-2">
                  {data.type === 'productSearch' ? (
                      <>
-                        <div className="text-xs p-3 bg-muted rounded-md flex justify-between items-center relative h-[50px]">
-                            <div>
-                                <span className="font-semibold text-green-600">Encontrado</span>
-                                <p className="text-xs text-muted-foreground">Continua o fluxo se um produto for encontrado.</p>
+                        {(data.actionButtons || []).map((button: {id: string; label: string}) => (
+                            <div key={button.id} className="text-xs p-3 bg-muted rounded-md flex justify-between items-center relative h-[50px]">
+                                <span className="flex items-center gap-2 font-semibold">
+                                    <ShoppingCart className="h-4 w-4 text-blue-500" />
+                                    {button.label}
+                                </span>
+                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => data.onQuickAdd(button.id)}><PlusCircle className="h-4 w-4" /></Button>
                             </div>
-                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => data.onQuickAdd('found')}><PlusCircle className="h-4 w-4" /></Button>
-                        </div>
+                        ))}
                         <div className="text-xs p-3 bg-muted rounded-md flex justify-between items-center relative h-[50px]">
                             <div>
                                 <span className="font-semibold text-red-600">Não Encontrado</span>
                                 <p className="text-xs text-muted-foreground">Continua o fluxo se nenhum produto for encontrado.</p>
                             </div>
                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => data.onQuickAdd('not-found')}><PlusCircle className="h-4 w-4" /></Button>
-                        </div>
-                        <div className="text-xs p-3 bg-muted/50 rounded-md flex justify-between items-center relative h-[50px]">
-                            <span className="flex items-center gap-2 font-semibold">
-                                <Search className="h-4 w-4 text-cyan-500" />
-                                Busca produto com base na mensagem do cliente.
-                            </span>
                         </div>
                      </>
                  ) : (
@@ -338,5 +330,7 @@ export function CustomNode({ data, selected }: NodeProps<{
     </div>
   );
 }
+
+    
 
     

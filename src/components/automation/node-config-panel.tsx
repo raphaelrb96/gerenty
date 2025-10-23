@@ -1,8 +1,9 @@
 
+
 "use client";
 
 import type { Node, Edge } from "reactflow";
-import { Settings, HelpCircle, PlusCircle, MoreHorizontal, Pencil, Trash2, Save, TextCursorInput, Link, Bot, MessageCircle, Loader2, Variable, Type, Package, GitBranch, Share2, Timer, UserCheck, CheckCircle, Zap, MessageSquareReply, MessageSquare } from "lucide-react";
+import { Settings, HelpCircle, PlusCircle, MoreHorizontal, Pencil, Trash2, Save, TextCursorInput, Link, Bot, MessageCircle, Loader2, Variable, Type, Package, GitBranch, Share2, Timer, UserCheck, CheckCircle, Zap, MessageSquareReply, MessageSquare, Search } from "lucide-react";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
@@ -39,6 +40,7 @@ import { NodesPalette } from "./nodes-palette";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { nodeTypeConfig } from "@/app/dashboard/automation/flows/edit/[id]/page";
 import { ResponseLibraryForm } from "./response-library-form";
+import { useFieldArray } from "react-hook-form";
 
 type NodeConfigPanelProps = {
     selectedNode: Node | null;
@@ -368,6 +370,58 @@ function CaptureDataPanel({ node, onNodeDataChange }: { node: Node, onNodeDataCh
     );
 }
 
+function ProductSearchPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'] }) {
+    const { control, getValues, setValue } = useFormContext();
+    const { fields, append, remove } = useFieldArray({
+        control,
+        name: `actionButtons`,
+    });
+
+    useEffect(() => {
+        setValue('actionButtons', node.data.actionButtons || []);
+    }, [node.data.actionButtons, setValue]);
+
+    const handleButtonsChange = (newButtons: any[]) => {
+        onNodeDataChange(node.id, { actionButtons: newButtons });
+    };
+
+    return (
+        <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+                Busca um produto no catálogo com base na mensagem do cliente e envia uma mensagem interativa se encontrado.
+            </p>
+            <Separator />
+            <div className="space-y-2">
+                <Label>Botões de Ação (se encontrado)</Label>
+                <p className="text-xs text-muted-foreground">
+                    Adicione botões que serão enviados junto com o produto. Cada botão cria uma nova saída no fluxo.
+                </p>
+                <div className="space-y-2">
+                    {fields.map((field, index) => (
+                        <div key={field.id} className="flex items-center gap-2">
+                            <Input
+                                placeholder="Ex: Comprar Agora"
+                                {...control.register(`actionButtons.${index}.label`)}
+                                onChange={(e) => {
+                                    const values = getValues('actionButtons');
+                                    values[index].label = e.target.value;
+                                    handleButtonsChange(values);
+                                }}
+                            />
+                            <Button type="button" variant="destructive" size="icon" onClick={() => { remove(index); handleButtonsChange(getValues('actionButtons').filter((_: any, i: number) => i !== index)); }}>
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    ))}
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={() => { append({ id: `btn_${Date.now()}`, label: "" }); handleButtonsChange(getValues('actionButtons')); }} className="mt-2">
+                    <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Botão
+                </Button>
+            </div>
+        </div>
+    );
+}
+
 
 function InternalActionPanel({ node, onNodeDataChange }: { node: Node, onNodeDataChange: NodeConfigPanelProps['onNodeDataChange'] }) {
     const { effectiveOwnerId } = useAuth();
@@ -618,6 +672,12 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, onClos
         }
     };
 
+    const form = useForm({
+        defaultValues: {
+            actionButtons: selectedNode?.data.actionButtons || [],
+        },
+    });
+
 
     const renderPanelContent = () => {
         if (!selectedNode) {
@@ -652,6 +712,9 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, onClos
                  break;
             case 'captureData':
                 panelComponent = <CaptureDataPanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
+                break;
+            case 'productSearch':
+                panelComponent = <ProductSearchPanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
                 break;
             case 'internalAction':
                 panelComponent = <InternalActionPanel node={selectedNode} onNodeDataChange={onNodeDataChange} />;
@@ -696,9 +759,11 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, onClos
                     ID da Tarefa: <span className="font-mono text-xs">{selectedNode?.id}</span>
                 </SheetDescription>
             </SheetHeader>
-            <ScrollArea className="flex-1 px-6">
-                {renderPanelContent()}
-            </ScrollArea>
+            <FormProvider {...form}>
+                <ScrollArea className="flex-1 px-6">
+                    {renderPanelContent()}
+                </ScrollArea>
+            </FormProvider>
              <SheetFooter className="p-6 border-t">
                  <Button variant="outline" onClick={handleSaveClick} disabled={isSaving}>
                     {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -709,3 +774,5 @@ export function NodeConfigPanel({ selectedNode, onNodeDataChange, onSave, onClos
         </SheetContent>
     );
 }
+
+    
