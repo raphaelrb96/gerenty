@@ -326,13 +326,16 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
     }
 
     const orderCommission = cart.reduce((acc, item) => {
-        const commissionConfig = item.commission;
-        if (!commissionConfig) return acc;
+        const product = products.find(p => p.id === item.productId);
+        const pricingTier = product?.pricing?.[0]; // Assume first tier for now
+        const commissionConfig = pricingTier?.commission;
+
+        if (!commissionConfig || !commissionConfig.value) return acc;
 
         if (commissionConfig.type === 'fixed') {
-            return acc + (commissionConfig.value || 0) * item.quantity;
+            return acc + (commissionConfig.value * item.quantity);
         } else { // percentage
-            return acc + (item.totalPrice * ((commissionConfig.value || 0) / 100));
+            return acc + (item.totalPrice * (commissionConfig.value / 100));
         }
     }, 0);
 
