@@ -1,0 +1,628 @@
+
+
+// src/services/whatsAppService.ts
+import { SecretManagerService } from './secretManager';
+import { MessageResult, SendMessagePayload, TemplateErrorInfo, WhatsAppApiResponse, LibraryMessage, Product } from '../types/whatsapp';
+import * as admin from 'firebase-admin';
+import * as functions from 'firebase-functions';
+import fetch, { RequestInfo, RequestInit, Response } from 'node-fetch';
+
+
+export class WhatsAppService {
+  private secretManager: SecretManagerService;
+  private db: admin.firestore.Firestore;
+
+  constructor() {
+    this.secretManager = SecretManagerService.getInstance();
+    this.db = admin.firestore();
+  }
+
+  async uploadMediaToMeta(companyId: string, mediaUrl: string, mimeType: string, filename: string): Promise<string | null> {
+    try {
+        const accessToken = await this.secretManager.getWhatsAppToken(companyId);
+        const integration = await this.getCompanyIntegration(companyId);
+        if (!integration?.phoneNumberId) {
+            throw new Error('WhatsApp integration not found for media upload.');
+        }
+
+        const mediaResponse: Response = await fetch(mediaUrl);
+        if (!mediaResponse.ok) {
+            throw new Error(`Failed to fetch media from URL: ${mediaResponse.statusText}`);
+        }
+        
+        const arrayBuffer = await mediaResponse.arrayBuffer();
+        const mediaBuffer = Buffer.from(arrayBuffer);
+        
+        const boundary = `----${Date.now().toString(16)}`;
+        let body = `--${boundary}\r\n`;
+        body += `Content-Disposition: form-data; name="messaging_product"\r\n\r\n`;
+        body += `whatsapp\r\n`;
+        body += `--${boundary}\r\n`;
+        body += `Content-Disposition: form-data; name="file"; filename="${filename}"\r\n`;
+        body += `Content-Type: ${mimeType}\r\n\r\n`;
+        
+        const payload = Buffer.concat([
+            Buffer.from(body, 'utf-8'),
+            mediaBuffer,
+            Buffer.from(`\r\n--${boundary}--\r\n`, 'utf-8'),
+        ]);
+
+        const uploadUrl: RequestInfo = `https://graph.facebook.com/v17.0/${integration.phoneNumberId}/media`;
+        const options: RequestInit = {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': `multipart/form-data; boundary=${boundary}`,
+            },
+            body: payload,
+        };
+
+        const uploadResponse = await fetch(uploadUrl, options);
+        const result = await uploadResponse.json() as { id?: string; error?: any };
+
+        if (uploadResponse.ok && result.id) {
+            functions.logger.info(`[WhatsAppService] Media uploaded to Meta successfully. Media ID: ${result.id}`);
+            return result.id;
+        } else {
+            functions.logger.error('[WhatsAppService] Failed to upload media to Meta:', result.error);
+            return null;
+        }
+    } catch (error) {
+        functions.logger.error('[WhatsAppService] Exception during media upload to Meta:', error);
+        return null;
+    }
+}
+
+
+  async fetchMediaUrl(mediaId: string, companyId: string): Promise<string | null> {
+    try {
+      const accessToken = await this.secretManager.getWhatsAppToken(companyId);
+
+      // 1. Get media details including the temporary URL
+      const mediaDetailsResponse = await fetch(`https://graph.facebook.com/v17.0/${mediaId}`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!mediaDetailsResponse.ok) {
+        const errorData = await mediaDetailsResponse.json();
+        functions.logger.error(`[WhatsAppService] Failed to fetch media details for ID ${mediaId}`, { error: errorData, companyId });
+        return null;
+      }
+
+      const mediaDetails = await mediaDetailsResponse.json();
+      const mediaUrl = (mediaDetails as any).url;
+      const mimeType = (mediaDetails as any).mime_type;
+
+      if (!mediaUrl || !mimeType) {
+        functions.logger.error(`[WhatsAppService] Media URL or MIME type not found for ID ${mediaId}`, { mediaDetails });
+        return null;
+      }
+
+      // 2. Download the actual media content using the authenticated URL
+      const mediaDataResponse = await fetch(mediaUrl, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!mediaDataResponse.ok) {
+        const errorText = await mediaDataResponse.text();
+        functions.logger.error(`[WhatsAppService] Failed to download media content from URL ${mediaUrl}`, { status: mediaDataResponse.status, error: errorText, companyId });
+        return null;
+      }
+
+      // 3. Convert the downloaded content to a Base64 data URI
+      const buffer = await mediaDataResponse.arrayBuffer();
+      const base64Data = Buffer.from(buffer).toString('base64');
+
+      return `data:${mimeType};base64,${base64Data}`;
+
+    } catch (error) {
+      functions.logger.error(`[WhatsAppService] Exception fetching media URL for ID ${mediaId}`, { error, companyId });
+      return null;
+    }
+  }
+
+  async fetchMediaVideoUrl(mediaId: string, companyId: string): Promise<string | null> {
+    try {
+      const accessToken = await this.secretManager.getWhatsAppToken(companyId);
+
+      // 1. Busca detalhes da mídia
+      const mediaDetailsResponse = await fetch(`https://graph.facebook.com/v17.0/${mediaId}`, {
+        headers: { 'Authorization': `Bearer ${accessToken}` },
+      });
+
+      if (!mediaDetailsResponse.ok) {
+        const errorData = await mediaDetailsResponse.json();
+        functions.logger.error(`Failed to fetch media details for ID ${mediaId}`, { error: errorData });
+        return null;
+      }
+
+      const mediaDetails = await mediaDetailsResponse.json();
+      const mediaUrl = (mediaDetails as any).url;
+      const mimeType = (mediaDetails as any).mime_type;
+
+      if (!mediaUrl) {
+        functions.logger.error(`Media URL not found for ID ${mediaId}`);
+        return null;
+      }
+
+      // 2. Faz download do vídeo
+      const mediaDataResponse = await fetch(mediaUrl, {
+        headers: { 'Authorization': `Bearer ${accessToken}` },
+      });
+
+      if (!mediaDataResponse.ok) {
+        functions.logger.error(`Failed to download media content for ID ${mediaId}`, {
+          status: mediaDataResponse.status
+        });
+        return null;
+      }
+
+      // 3. Faz upload para Firebase Storage
+      functions.logger.log(`Fazendo Upload de um video no Storage`);
+      const bucket = admin.storage().bucket();
+      const fileName = `companies/${companyId}/videos/${mediaId}_${Date.now()}.mp4`;
+      const file = bucket.file(fileName);
+
+      const arrayBuffer = await mediaDataResponse.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      await file.save(buffer, {
+        metadata: {
+          contentType: mimeType,
+          metadata: {
+            originalMediaId: mediaId,
+            companyId: companyId,
+            uploadedAt: new Date().toISOString()
+          }
+        }
+      });
+
+
+      // 4. Gera URL pública (ou signed URL)
+      functions.logger.log(`Gerando URL pública para o video`);
+      // const [publicUrl] = await file.getSignedUrl({
+      //   action: 'read',
+      //   expires: '03-01-2500' // Data longa no futuro
+      // });
+
+      //if (!publicUrl) {
+      functions.logger.log(`Tornando arquivo público e gerando URL`);
+      // Torna o arquivo público
+      await file.makePublic();
+      // Obtém URL pública
+      const publicUrlFallback = `https://storage.googleapis.com/${bucket.name}/${file.name}`;
+      functions.logger.info(`Video uploaded to Storage: ${publicUrlFallback}`);
+      return publicUrlFallback;
+      //}
+
+      //functions.logger.info(`Video uploaded to Storage: ${publicUrl}`);
+      //return publicUrl;
+
+    } catch (error) {
+      functions.logger.error(`Exception processing video for ID ${mediaId}`, { error });
+      return null;
+    }
+  }
+
+  // src/services/whatsAppService.ts - Atualize completamente a função sendMessage
+  async sendMessage(
+    companyId: string,
+    payload: SendMessagePayload
+  ): Promise<MessageResult> {
+    try {
+      functions.logger.info(`[WhatsAppService] Starting message send to ${payload.phoneNumber}`);
+
+      const accessToken = await this.secretManager.getWhatsAppToken(companyId);
+      const integration = await this.getCompanyIntegration(companyId);
+
+      if (!integration) {
+        return {
+          success: false,
+          error: 'WhatsApp integration not found'
+        };
+      }
+
+      let result: MessageResult;
+      
+      // Se for um fluxo, o payload já virá com o `content`
+      if (payload.content) {
+         result = await this.tryConversationMessage(companyId, integration.phoneNumberId, accessToken, payload);
+      } else if (payload.type === 'template') {
+        result = await this.tryTemplateMessage(integration.phoneNumberId, accessToken, payload);
+      } else {
+        result = await this.tryConversationMessage(companyId, integration.phoneNumberId, accessToken, payload);
+      }
+
+      // ✅  Salvar a mensagem enviada no Firestore se for bem-sucedida
+      if (result.success && result.messageId) {
+        await this.saveOutboundMessage(companyId, payload, result.messageId);
+      }
+
+      return result;
+
+    } catch (error) {
+      functions.logger.error('[WhatsAppService] Error sending WhatsApp message:', error);
+      return {
+        success: false,
+        error: 'Internal server error'
+      };
+    }
+  }
+
+  private async tryConversationMessage(
+    companyId: string,
+    phoneNumberId: string,
+    accessToken: string,
+    payload: SendMessagePayload
+  ): Promise<MessageResult> {
+    try {
+        const contentForApi = JSON.parse(JSON.stringify(payload.content || {}));
+        const mediaType = payload.type as 'image' | 'video' | 'audio' | 'document';
+        const isMedia = ['image', 'video', 'audio', 'document'].includes(mediaType);
+        
+        // Find the media object, which could be under its type (e.g., 'image') or under 'media'.
+        const mediaObject = contentForApi[mediaType] || contentForApi.media;
+
+        if (isMedia && mediaObject?.url) {
+            const mediaUrl = mediaObject.url;
+            const filename = mediaUrl.split('/').pop().split('?')[0] || `mediafile_${Date.now()}`;
+            
+            const mediaDetailsResponse = await fetch(mediaUrl);
+            const mediaBuffer = await mediaDetailsResponse.arrayBuffer();
+            const mimeType = mediaDetailsResponse.headers.get('content-type') || 'application/octet-stream';
+
+            const uploadedMediaId = await this.uploadMediaToMeta(companyId, mediaUrl, mimeType, filename);
+
+            if (!uploadedMediaId) {
+                return { success: false, error: "Failed to upload media to Meta." };
+            }
+            
+            // Replace URL with ID and ensure it's in the correct format for the API
+            const apiMediaObject = { id: uploadedMediaId };
+            
+            // Reconstruct contentForApi to have the correct structure
+            delete contentForApi.media; // Remove generic media key if it exists
+            contentForApi[mediaType] = apiMediaObject; // Place it under the specific media type key
+        }
+        
+        const messageData: any = {
+            messaging_product: 'whatsapp',
+            to: payload.phoneNumber,
+            type: payload.type,
+            ...contentForApi 
+        };
+
+        // Fallback for legacy text messages without content structure
+        if (payload.type === 'text' && !payload.content) {
+            messageData.text = { body: payload.message || 'Mensagem de teste do Gerenty' };
+        }
+
+
+      functions.logger.info(`[WhatsAppService] Sending conversation message to ${payload.phoneNumber}`, { type: messageData.type, body: JSON.stringify(messageData) });
+
+      const response = await fetch(
+        `https://graph.facebook.com/v17.0/${phoneNumberId}/messages`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(messageData),
+        }
+      );
+
+      const result: WhatsAppApiResponse = await response.json();
+
+      functions.logger.info(`[WhatsAppService] Conversation API response:`, {
+        status: response.status,
+        result: result
+      });
+
+      if (response.ok && result.messages?.[0]?.id) {
+        const messageId = result.messages[0].id;
+        functions.logger.info(`[WhatsAppService] Message accepted for delivery, ID: ${messageId}`);
+        return {
+          success: true,
+          messageId: messageId,
+          messageType: 'conversation'
+        };
+      } else {
+        // Se a API já rejeitou imediatamente
+        functions.logger.error('[WhatsAppService] Conversation message rejected by API:', result.error);
+
+        if (result.error?.code === 131047 || result.error?.message.includes("24 hour")) {
+          functions.logger.info(`[WhatsAppService] Outside 24h window (immediate rejection)`);
+          return {
+            success: false,
+            error: 'outside_24h_window',
+            messageType: 'conversation'
+          };
+        }
+
+        return {
+          success: false,
+          error: result.error?.message || 'Failed to send conversation message',
+          messageType: 'conversation'
+        };
+      }
+    } catch (error: any) {
+      functions.logger.error('[WhatsAppService] Error sending conversation message:', error);
+      return {
+        success: false,
+        error: error.message || 'Conversation message failed',
+        messageType: 'conversation'
+      };
+    }
+  }
+
+  // src/services/whatsAppService.ts - Corrija a tipagem
+  private async tryTemplateMessage(
+    phoneNumberId: string,
+    accessToken: string,
+    payload: SendMessagePayload
+  ): Promise<MessageResult> {
+    try {
+      functions.logger.info(`[WhatsAppService] 🚀 Starting template message process`);
+
+      const templateName = payload.templateName || 'hello_world'; // Fallback to a common template
+
+      const messageData = {
+        messaging_product: 'whatsapp',
+        to: payload.phoneNumber,
+        type: 'template',
+        template: {
+          name: templateName,
+          language: { code: 'pt_BR' }, // This might need to be dynamic in the future
+        }
+      };
+
+      functions.logger.info(`[WhatsAppService] Sending template: ${templateName} to ${payload.phoneNumber}`);
+
+      const response = await fetch(
+        `https://graph.facebook.com/v17.0/${phoneNumberId}/messages`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(messageData),
+        }
+      );
+
+      const result = await response.json() as WhatsAppApiResponse;
+
+      functions.logger.info(`[WhatsAppService] Template API response:`, {
+        status: response.status,
+        result: result
+      });
+
+      if (response.ok && result.messages?.[0]?.id) {
+        const messageId = result.messages[0].id;
+        functions.logger.info(`[WhatsAppService] ✅ Template message accepted for delivery, ID: ${messageId}`);
+
+        return {
+          success: true,
+          messageId: messageId,
+          messageType: 'template'
+        };
+      } else {
+        functions.logger.error('[WhatsAppService] ❌ Template message rejected by API:', result.error);
+
+        let errorMessage = 'Falha ao enviar template';
+        let templateError: TemplateErrorInfo | undefined = undefined;
+
+        if (result.error?.code === 132001 || result.error?.message.includes("does not exist")) {
+          errorMessage = `Template "${templateName}" não existe ou não foi aprovado.`;
+          templateError = {
+            needsTemplateSetup: true,
+            errorCode: result.error.code,
+            errorMessage: result.error.message,
+            phoneNumberId: phoneNumberId,
+            templateName: templateName
+          };
+          functions.logger.info(`[WhatsAppService] 📋 Template setup required: ${templateName}`);
+        } else if (result.error?.message) {
+          templateError = {
+            needsTemplateSetup: false,
+            errorCode: result.error.code,
+            errorMessage: result.error.message,
+            phoneNumberId: phoneNumberId,
+            templateName: templateName
+          };
+          errorMessage = `${result.error.message} (Code: ${result.error.code})`;
+        }
+
+        return {
+          success: false,
+          error: errorMessage,
+          messageType: 'template',
+          templateError: templateError
+        };
+      }
+    } catch (error: any) {
+      functions.logger.error('[WhatsAppService] 💥 Error in template message:', error);
+      return {
+        success: false,
+        error: `Erro no template: ${error.message}`,
+        messageType: 'template'
+      };
+    }
+  }
+
+  async sendProductInteractiveMessage(
+    companyId: string,
+    phoneNumber: string,
+    product: Product,
+    actionButtons: { id: string; label: string }[]
+  ): Promise<MessageResult> {
+      try {
+          const accessToken = await this.secretManager.getWhatsAppToken(companyId);
+          const integration = await this.getCompanyIntegration(companyId);
+          if (!integration?.phoneNumberId) {
+              return { success: false, error: 'WhatsApp integration not found.' };
+          }
+  
+          let uploadedHeaderImageId: string | null = null;
+          if (product.images?.mainImage) {
+              const url = product.images.mainImage;
+              const filename = url.split('/').pop()?.split('?')[0] || `product_image_${product.id}.jpg`;
+              const response = await fetch(url);
+              const contentType = response.headers.get('content-type') || 'image/jpeg';
+              uploadedHeaderImageId = await this.uploadMediaToMeta(companyId, url, contentType, filename);
+              if (!uploadedHeaderImageId) {
+                  functions.logger.warn(`[sendProductInteractiveMessage] Could not upload header image for product ${product.id}`);
+              }
+          }
+  
+          const messageData = {
+              messaging_product: 'whatsapp',
+              to: phoneNumber,
+              type: 'interactive',
+              interactive: {
+                  type: 'product',
+                  ...(uploadedHeaderImageId && { header: { type: 'image', image: { id: uploadedHeaderImageId } } }),
+                  body: { text: product.description || product.name },
+                  footer: { text: `Ref: ${product.sku || product.id}` },
+                  action: {
+                      catalog_id: 'YOUR_CATALOG_ID', // You need a way to get this
+                      product_retailer_id: product.id,
+                  }
+              }
+          };
+
+            // This part is a bit tricky, WhatsApp doesn't officially support buttons on 'product' type message.
+            // A common workaround is to send a 'button' type message immediately after.
+            // For now, let's just log this and we can implement the multi-message send later.
+            if(actionButtons && actionButtons.length > 0) {
+                 functions.logger.info(`[sendProductInteractiveMessage] Action buttons requested, but not directly supported on 'product' messages. Follow-up message would be needed.`, { buttons: actionButtons});
+            }
+
+          const response = await fetch(
+              `https://graph.facebook.com/v17.0/${integration.phoneNumberId}/messages`,
+              {
+                  method: 'POST',
+                  headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+                  body: JSON.stringify(messageData),
+              }
+          );
+  
+          const result: WhatsAppApiResponse = await response.json();
+  
+          if (response.ok && result.messages?.[0]?.id) {
+              await this.saveOutboundMessage(companyId, { phoneNumber, type: 'interactive', content: messageData.interactive as any }, result.messages[0].id);
+              return { success: true, messageId: result.messages[0].id, messageType: 'conversation' };
+          } else {
+              functions.logger.error('[sendProductInteractiveMessage] API rejected message:', result.error);
+              return { success: false, error: result.error?.message || 'Failed to send product message.' };
+          }
+  
+      } catch (error: any) {
+          functions.logger.error('[sendProductInteractiveMessage] Exception:', error);
+          return { success: false, error: error.message || 'Failed to send product message.' };
+      }
+  }
+
+
+  async getCompanyIntegration(companyId: string): Promise<any> {
+    try {
+      const doc = await this.db.collection('companies')
+        .doc(companyId)
+        .collection('integrations')
+        .doc('whatsapp')
+        .get();
+
+      return doc.exists ? doc.data() : null;
+    } catch (error) {
+      functions.logger.error('Error getting company integration:', error);
+      return null;
+    }
+  }
+
+  private async saveOutboundMessage(companyId: string, payload: SendMessagePayload, messageId: string): Promise<void> {
+    try {
+      const customerQuery = await this.db.collection('customers') // Changed from 'consumers'
+        .where('phone', '==', payload.phoneNumber)
+        .limit(1)
+        .get();
+
+      if (customerQuery.empty) {
+        functions.logger.warn(`[saveOutboundMessage] Customer not found for phone ${payload.phoneNumber}. Cannot save message.`);
+        return;
+      }
+
+      const customerId = customerQuery.docs[0].id;
+      const conversationQuery = await this.db.collection('companies')
+        .doc(companyId)
+        .collection('conversations')
+        .where('consumerId', '==', customerId)
+        .where('status', 'in', ['open', 'pending'])
+        .limit(1)
+        .get();
+
+      let conversationId: string;
+      const now = admin.firestore.Timestamp.now();
+      const lastMessageText = payload.message || (payload.templateName ? `[Template: ${payload.templateName}]` : '[Mensagem Interativa]');
+
+
+      if (conversationQuery.empty) {
+        const conversationRef = await this.db.collection('companies')
+          .doc(companyId)
+          .collection('conversations')
+          .add({
+            consumerId: customerId,
+            status: 'open',
+            unreadMessagesCount: 0, // Outbound message doesn't make it unread
+            lastMessage: lastMessageText,
+            lastMessageTimestamp: now,
+            createdAt: now,
+            updatedAt: now,
+          });
+        conversationId = conversationRef.id;
+      } else {
+        conversationId = conversationQuery.docs[0].id;
+        await this.db.collection('companies')
+          .doc(companyId)
+          .collection('conversations')
+          .doc(conversationId)
+          .update({
+            lastMessage: lastMessageText,
+            lastMessageTimestamp: now,
+            updatedAt: now,
+            // Reset unread count if we are replying
+            unreadMessagesCount: 0
+          });
+      }
+
+      const messageContent: any = {
+        id: messageId,
+        direction: 'outbound',
+        type: payload.type,
+        timestamp: now,
+        status: 'sent', // Initial status
+        createdAt: now,
+        content: payload.content || (payload.type === 'text' ? { text: { body: payload.message } } : { template: { name: payload.templateName, language: { code: 'pt_BR' } } })
+      };
+
+
+      await this.db.collection('companies')
+        .doc(companyId)
+        .collection('conversations')
+        .doc(conversationId)
+        .collection('messages')
+        .add(messageContent);
+
+      functions.logger.info(`[saveOutboundMessage] Saved outbound message ${messageId} to conversation ${conversationId}`);
+
+    } catch (error) {
+      functions.logger.error(`[saveOutboundMessage] Error saving outbound message:`, error);
+      // Do not throw, as the message was already sent to the user.
+    }
+  }
+}
+
