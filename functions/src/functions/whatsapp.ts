@@ -844,121 +844,7 @@ async function processFlowStep(
         functions.logger.info(`[Flow] Executing loop for node ${currentNode.id} of type ${currentNode.data.type}`);
         userMessage = userMessageSave;
         
-        let nextNode: FlowNode | null = null;
-        
-        // --- 1. NEXT NODE DECISION LOGIC ---
-        if (currentNode.data.type === 'conditional') {
-            const conditions = currentNode.data.conditions || [];
-            const consumerDoc = await consumerRef.get();
-            const consumerData = consumerDoc.data() || {};
-            
-            let userInput: string | undefined;
-            if (userMessage?.type === 'text') {
-                userInput = userMessage.text?.body.toLowerCase().trim();
-            } else if (userMessage?.type === 'interactive' && userMessage.interactive.type === 'button_reply') {
-                userInput = userMessage.interactive.button_reply.title.toLowerCase().trim();
-            } else if (userMessage?.type === 'interactive' && userMessage.interactive.type === 'list_reply') {
-                userInput = userMessage.interactive.list_reply.title.toLowerCase().trim();
-            }
-
-            let satisfiedEdgeId: string | null = null;
-            for (const cond of conditions) {
-                let valueToCheck: any;
-                if (cond.type === 'response_text') {
-                    valueToCheck = userInput;
-                } else if (cond.type === 'variable') {
-                    valueToCheck = consumerData.flowData?.[cond.variable];
-                } else {
-                    valueToCheck = userInput;
-                }
-                
-                if (valueToCheck === undefined) continue;
-
-                const comparisonValue = String(cond.value).toLowerCase().trim();
-                let isMatch = false;
-
-                switch (cond.operator) {
-                    case '==': isMatch = String(valueToCheck).toLowerCase().trim() === comparisonValue; break;
-                    case '!=': isMatch = String(valueToCheck).toLowerCase().trim() !== comparisonValue; break;
-                    case '>': isMatch = Number(valueToCheck) > Number(comparisonValue); break;
-                    case '<': isMatch = Number(valueToCheck) < Number(comparisonValue); break;
-                    case 'contains': isMatch = String(valueToCheck).toLowerCase().includes(comparisonValue); break;
-                    default: isMatch = false;
-                }
-                
-                functions.logger.debug(`[Flow] Condition Check: valueToCheck='${valueToCheck}', operator='${cond.operator}', comparisonValue='${comparisonValue}', isMatch=${isMatch}`);
-
-                if (isMatch) {
-                    const satisfiedEdge = flow.edges.find(e => e.source === currentNode?.id && e.sourceHandle === cond.id);
-                    if (satisfiedEdge) {
-                        satisfiedEdgeId = satisfiedEdge.target;
-                        functions.logger.info(`[Flow] Condition met for handle ${cond.id}. Next node: ${satisfiedEdgeId}`);
-                        break;
-                    }
-                }
-            }
-
-            if (satisfiedEdgeId) {
-                nextNode = flow.nodes.find(n => n.id === satisfiedEdgeId) || null;
-            } else {
-                const elseTargetId = flow.edges.find(e => e.source === currentNode?.id && e.sourceHandle === 'else')?.target;
-                if (elseTargetId) {
-                    nextNode = flow.nodes.find(n => n.id === elseTargetId) || null;
-                    functions.logger.info(`[Flow] No condition matched. Following 'else' path. Next node: ${elseTargetId}`);
-                }
-            }
-        } else if (currentNode.data.type === 'productSearch') {
-            const userInput = userMessage?.text?.body?.toLowerCase().trim();
-            let nextEdgeId: string | null = null;
-        
-            if (userInput) {
-                const productsQuery = db.collection('products')
-                    .where('ownerId', '==', companyId)
-                    .where('name', '>=', userInput)
-                    .where('name', '<=', userInput + '\uf8ff');
-        
-                const productSnapshot = await productsQuery.limit(1).get();
-        
-                if (!productSnapshot.empty) {
-                    const product = { id: productSnapshot.docs[0].id, ...productSnapshot.docs[0].data() } as Product;
-                    await consumerRef.update({ 'flowData.foundProduct': product });
-                    
-                    const phoneNumber = (await consumerRef.get()).data()?.phone;
-                    if(phoneNumber) {
-                        await whatsAppService.sendProductInteractiveMessage(companyId, phoneNumber, product, currentNode.data.actionButtons);
-                    }
-                    
-                    return currentNode;
-                }
-            }
-            
-            // If product not found
-            nextEdgeId = flow.edges.find(e => e.source === currentNode?.id && e.sourceHandle === 'not-found')?.target || null;
-            functions.logger.info(`[Flow] Product not found. Following 'not-found' path.`);
-            if (nextEdgeId) {
-                nextNode = flow.nodes.find(n => n.id === nextEdgeId) || null;
-            }
-
-        } else if (userMessage?.type === 'interactive' && userMessage.interactive.type === 'button_reply') {
-            const buttonId = userMessage.interactive.button_reply.id;
-            const nextEdge = flow.edges.find(e => e.source === currentNode?.id && e.sourceHandle === buttonId);
-            if (nextEdge) {
-                nextNode = flow.nodes.find(n => n.id === nextEdge.target) || null;
-            } else {
-                // If no edge matches the button, check for a default edge
-                const defaultEdge = flow.edges.find(e => e.source === currentNode?.id && !e.sourceHandle);
-                if (defaultEdge) {
-                    nextNode = flow.nodes.find(n => n.id === defaultEdge.target) || null;
-                }
-            }
-
-        } else {
-            // For all other nodes (including triggers and actions)
-            const nextEdge = flow.edges.find(e => e.source === currentNode?.id);
-            if (nextEdge) {
-                nextNode = flow.nodes.find(n => n.id === nextEdge.target) || null;
-            }
-        }
+        let nextNode: FlowNode | null = await findNextNode(currentNode, flow, consumerRef, userMessage);
         
         // --- 2. STOPPING POINT CHECK ---
         if (!nextNode) {
@@ -966,82 +852,19 @@ async function processFlowStep(
             return null; // End of flow
         }
         
-        const stopNodeTypes = ['captureData', 'keywordTrigger', 'waitForResponse'];
+        const stopNodeTypes = ['captureData', 'keywordTrigger', 'waitForResponse', 'productSearch'];
         if (stopNodeTypes.includes(nextNode.data.type)) {
             functions.logger.info(`[Flow] Stopping execution at node ${nextNode.id} of type ${nextNode.data.type}. Awaiting user input.`);
             // The action of the stopping node (e.g., sending the question) is executed before returning
              if(nextNode.data.type === 'captureData') {
-                const captureMessage = nextNode.data.captureMessage;
-                if (captureMessage) {
-                    const consumerDoc = await consumerRef.get();
-                    const phoneNumber = consumerDoc.data()?.phone;
-                    if (phoneNumber) {
-                        await whatsAppService.sendMessage(companyId, {
-                            phoneNumber: phoneNumber,
-                            type: 'text',
-                            content: { text: { body: captureMessage }}
-                        });
-                        functions.logger.info(`[Flow] Sent capture data prompt from node ${nextNode.id}.`);
-                    }
-                }
+                await executeCaptureDataNode(companyId, consumerRef, nextNode);
             }
             return nextNode; // Returns the stopping node
         }
 
         // --- 3. EXECUTE THE ACTION OF THE NEXT NODE ---
-        functions.logger.info(`[Flow] Next node is ${nextNode.id}, executing action of type ${nextNode.data.type}`);
-        switch (nextNode.data.type) {
-            case 'message':
-                const messageId = nextNode.data.messageId;
-                if (messageId) {
-                    const libraryMessageDoc = await db.collection('companies').doc(companyId).collection('libraryMessages').doc(messageId).get();
-                    if (libraryMessageDoc.exists) {
-                        const libraryMessage = libraryMessageDoc.data() as LibraryMessage;
-                        const consumerDoc = await consumerRef.get();
-                        const phoneNumber = consumerDoc.data()?.phone;
-
-                        if (phoneNumber && libraryMessage) {
-                            const payload: SendMessagePayload = {
-                                phoneNumber: phoneNumber,
-                                type: libraryMessage.type,
-                                content: libraryMessage.content
-                            };
-                            await whatsAppService.sendMessage(companyId, payload);
-                            functions.logger.info(`[Flow] Executed message node ${nextNode.id}.`);
-                        }
-                    }
-                }
-                break;
-
-            case 'internalAction':
-                const actionType = nextNode.data.actionType;
-                const actionValue = nextNode.data.actionValue;
-                if (actionType && actionValue) {
-                    if (actionType === 'addTag') {
-                        await consumerRef.update({ tags: FieldValue.arrayUnion(actionValue) });
-                        functions.logger.info(`[Flow] Added tag "${actionValue}" to consumer ${consumerRef.id}`);
-                    }
-                    if (actionType === 'removeTag') {
-                        await consumerRef.update({ tags: FieldValue.arrayRemove(actionValue) });
-                        functions.logger.info(`[Flow] Removed tag "${actionValue}" from consumer ${consumerRef.id}`);
-                    }
-                    if (actionType === 'moveCrmStage') {
-                        await consumerRef.update({ status: actionValue }); // 'status' in consumer is the stageId
-                        functions.logger.info(`[Flow] Moved consumer ${consumerRef.id} to stage "${actionValue}"`);
-                    }
-                }
-                break;
-
-            case 'conditional':
-            case 'productSearch':
-                // The logic already defines `nextNode`, so we just continue the loop.
-                break;
-                
-            default:
-                functions.logger.info(`[Flow] Node type ${nextNode.data.type} not implemented for execution yet.`);
-                break;
-        }
-
+        await executeNodeAction(companyId, consumerRef, nextNode, userMessage);
+        
         // --- 4. PREPARE FOR THE NEXT ITERATION ---
         currentNode = nextNode; // The next node becomes the current node for the next loop turn.
         userMessage = null; // The user's message is only relevant in the first iteration.
@@ -1194,6 +1017,163 @@ function sanitizeMetaPatterns(text: string): string {
     return text.replace(/\[\[.*?\]\]/g, '').trim();
 }
 
+async function findNextNode(currentNode: FlowNode, flow: Flow, consumerRef: admin.firestore.DocumentReference, userMessage: IncomingMessage | null): Promise<FlowNode | null> {
+    if (currentNode.data.type === 'conditional') {
+        const conditions = currentNode.data.conditions || [];
+        const consumerDoc = await consumerRef.get();
+        const consumerData = consumerDoc.data() || {};
+        
+        let userInput: string | undefined;
+        if (userMessage?.type === 'text') {
+            userInput = userMessage.text?.body.toLowerCase().trim();
+        } else if (userMessage?.type === 'interactive' && userMessage.interactive.type === 'button_reply') {
+            userInput = userMessage.interactive.button_reply.title.toLowerCase().trim();
+        } else if (userMessage?.type === 'interactive' && userMessage.interactive.type === 'list_reply') {
+            userInput = userMessage.interactive.list_reply.title.toLowerCase().trim();
+        }
+
+        for (const cond of conditions) {
+            let valueToCheck: any;
+            if (cond.type === 'response_text') {
+                valueToCheck = userInput;
+            } else if (cond.type === 'variable') {
+                valueToCheck = consumerData.flowData?.[cond.variable];
+            } else {
+                valueToCheck = userInput;
+            }
+            
+            if (valueToCheck === undefined) continue;
+
+            const comparisonValue = String(cond.value).toLowerCase().trim();
+            let isMatch = false;
+
+            switch (cond.operator) {
+                case '==': isMatch = String(valueToCheck).toLowerCase().trim() === comparisonValue; break;
+                case '!=': isMatch = String(valueToCheck).toLowerCase().trim() !== comparisonValue; break;
+                case '>': isMatch = Number(valueToCheck) > Number(comparisonValue); break;
+                case '<': isMatch = Number(valueToCheck) < Number(comparisonValue); break;
+                case 'contains': isMatch = String(valueToCheck).toLowerCase().includes(comparisonValue); break;
+                default: isMatch = false;
+            }
+
+            if (isMatch) {
+                const satisfiedEdge = flow.edges.find(e => e.source === currentNode?.id && e.sourceHandle === cond.id);
+                if (satisfiedEdge) return flow.nodes.find(n => n.id === satisfiedEdge.target) || null;
+            }
+        }
+        const elseTargetId = flow.edges.find(e => e.source === currentNode?.id && e.sourceHandle === 'else')?.target;
+        if (elseTargetId) return flow.nodes.find(n => n.id === elseTargetId) || null;
+
+    } else if (userMessage?.type === 'interactive' && userMessage.interactive.type === 'button_reply') {
+        const buttonId = userMessage.interactive.button_reply.id;
+        const nextEdge = flow.edges.find(e => e.source === currentNode?.id && e.sourceHandle === buttonId);
+        if (nextEdge) return flow.nodes.find(n => n.id === nextEdge.target) || null;
+    }
+
+    const defaultEdge = flow.edges.find(e => e.source === currentNode?.id);
+    if (defaultEdge) return flow.nodes.find(n => n.id === defaultEdge.target) || null;
+
+    return null;
+}
+
+async function executeNodeAction(companyId: string, consumerRef: admin.firestore.DocumentReference, node: FlowNode, userMessage: IncomingMessage | null) {
+    functions.logger.info(`[Flow] Executing action for node ${node.id} of type ${node.data.type}`);
+    switch (node.data.type) {
+        case 'message':
+            await executeMessageNode(companyId, consumerRef, node);
+            break;
+        case 'internalAction':
+            await executeInternalActionNode(consumerRef, node);
+            break;
+        case 'productSearch':
+             await executeProductSearchNode(companyId, consumerRef, node, userMessage);
+            break;
+    }
+}
+
+async function executeMessageNode(companyId: string, consumerRef: admin.firestore.DocumentReference, node: FlowNode) {
+    const messageId = node.data.messageId;
+    if (!messageId) return;
+
+    const libraryMessageDoc = await db.collection('companies').doc(companyId).collection('libraryMessages').doc(messageId).get();
+    if (libraryMessageDoc.exists) {
+        const libraryMessage = libraryMessageDoc.data() as LibraryMessage;
+        const consumerDoc = await consumerRef.get();
+        const phoneNumber = consumerDoc.data()?.phone;
+
+        if (phoneNumber && libraryMessage) {
+            const payload: SendMessagePayload = {
+                phoneNumber,
+                type: libraryMessage.type,
+                content: libraryMessage.content
+            };
+            await whatsAppService.sendMessage(companyId, payload);
+            functions.logger.info(`[Flow] Executed message node ${node.id}.`);
+        }
+    }
+}
+
+async function executeInternalActionNode(consumerRef: admin.firestore.DocumentReference, node: FlowNode) {
+    const actionType = node.data.actionType;
+    const actionValue = node.data.actionValue;
+    if (actionType && actionValue) {
+        if (actionType === 'addTag') {
+            await consumerRef.update({ tags: FieldValue.arrayUnion(actionValue) });
+            functions.logger.info(`[Flow] Added tag "${actionValue}" to consumer ${consumerRef.id}`);
+        }
+        if (actionType === 'removeTag') {
+            await consumerRef.update({ tags: FieldValue.arrayRemove(actionValue) });
+            functions.logger.info(`[Flow] Removed tag "${actionValue}" from consumer ${consumerRef.id}`);
+        }
+        if (actionType === 'moveCrmStage') {
+            await consumerRef.update({ status: actionValue });
+            functions.logger.info(`[Flow] Moved consumer ${consumerRef.id} to stage "${actionValue}"`);
+        }
+    }
+}
+
+async function executeCaptureDataNode(companyId: string, consumerRef: admin.firestore.DocumentReference, node: FlowNode) {
+    const captureMessage = node.data.captureMessage;
+    if (captureMessage) {
+        const consumerDoc = await consumerRef.get();
+        const phoneNumber = consumerDoc.data()?.phone;
+        if (phoneNumber) {
+            await whatsAppService.sendMessage(companyId, {
+                phoneNumber,
+                type: 'text',
+                content: { text: { body: captureMessage } }
+            });
+            functions.logger.info(`[Flow] Sent capture data prompt from node ${node.id}.`);
+        }
+    }
+}
+
+async function executeProductSearchNode(companyId: string, consumerRef: admin.firestore.DocumentReference, node: FlowNode, userMessage: IncomingMessage | null) {
+    const userInput = userMessage?.text?.body?.toLowerCase().trim();
+    if (userInput) {
+        const productsQuery = db.collection('products')
+            .where('ownerId', '==', companyId)
+            .where('name', '>=', userInput)
+            .where('name', '<=', userInput + '\uf8ff');
+
+        const productSnapshot = await productsQuery.limit(1).get();
+
+        if (!productSnapshot.empty) {
+            const product = { id: productSnapshot.docs[0].id, ...productSnapshot.docs[0].data() } as Product;
+            await consumerRef.update({ 'flowData.foundProduct': product });
+            
+            const phoneNumber = (await consumerRef.get()).data()?.phone;
+            if(phoneNumber) {
+                await whatsAppService.sendProductInteractiveMessage(companyId, phoneNumber, product, node.data.actionButtons);
+            }
+        }
+    }
+}
     
 
-    
+```
+- src/services/whatsAppService.ts
+- `src/components/automation/custom-node.tsx`
+- `src/components/automation/node-config-panel.tsx`
+- `src/app/dashboard/automation/flows/edit/[id]/page.tsx`
+- `src/functions/src/types/whatsapp.ts`
