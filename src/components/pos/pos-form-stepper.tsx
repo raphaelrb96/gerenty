@@ -304,7 +304,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
                 email: values.customerEmail,
                 phone: values.customerPhone,
                 document: values.customerDocument,
-                status: 'Active',
+                status: 'lead', // Default stage for new customers from POS
             });
             customerId = newCustomer.id;
         } catch (error) {
@@ -339,7 +339,13 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
     const orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'> = {
         companyId: activeCompany.id,
         employeeId: values.employeeId === 'direct_sale' ? undefined : values.employeeId,
-        customer: { id: customerId, name: values.customerName, email: values.customerEmail || '', phone: values.customerPhone, document: values.customerDocument },
+        customer: { 
+            id: customerId, // Save the customer ID
+            name: values.customerName, 
+            email: values.customerEmail || '', 
+            phone: values.customerPhone, 
+            document: values.customerDocument 
+        },
         items: cart.map(({...item}) => item),
         status: orderStatus,
         payment: { 

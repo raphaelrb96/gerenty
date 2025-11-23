@@ -1,14 +1,18 @@
 
 "use client";
 
-import type { Customer } from "@/services/customer-service";
+import type { Customer, Order } from "@/lib/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Separator } from "../ui/separator";
-import { Home, Phone, Mail } from "lucide-react";
+import { Home, Phone, Mail, ShoppingCart } from "lucide-react";
 import { useTranslation } from "@/context/i18n-context";
+import { useEffect, useState } from "react";
+import { getOrdersForCustomer } from "@/services/order-service";
+import { useCurrency } from "@/context/currency-context";
+import { useCompany } from "@/context/company-context";
 
 type CustomerDetailsModalProps = {
     customer: Customer | null;
@@ -16,6 +20,46 @@ type CustomerDetailsModalProps = {
     onClose: () => void;
     stages: { id: string; name: string }[];
 };
+
+function OrderHistory({ customer }: { customer: Customer }) {
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [loading, setLoading] = useState(true);
+    const { formatCurrency } = useCurrency();
+    const { companies } = useCompany();
+    const companyIds = companies.map(c => c.id);
+
+    useEffect(() => {
+        if (customer) {
+            setLoading(true);
+            getOrdersForCustomer(customer.id, companyIds)
+                .then(setOrders)
+                .catch(console.error)
+                .finally(() => setLoading(false));
+        }
+    }, [customer, companyIds]);
+
+    if (loading) {
+        return <p className="text-sm text-muted-foreground">Carregando histórico...</p>
+    }
+
+    if (orders.length === 0) {
+        return <p className="text-sm text-muted-foreground text-center py-4">Nenhum pedido encontrado.</p>
+    }
+
+    return (
+        <div className="space-y-2">
+            {orders.map(order => (
+                <div key={order.id} className="flex justify-between items-center text-sm p-2 rounded-md bg-muted/50">
+                    <div>
+                        <p className="font-medium">Pedido #{order.id.substring(0, 7)}</p>
+                        <p className="text-xs text-muted-foreground">{new Date(order.createdAt as string).toLocaleDateString()}</p>
+                    </div>
+                    <p className="font-semibold">{formatCurrency(order.total)}</p>
+                </div>
+            ))}
+        </div>
+    );
+}
 
 export function CustomerDetailsModal({ customer, isOpen, onClose, stages }: CustomerDetailsModalProps) {
     const { t } = useTranslation();
@@ -82,10 +126,8 @@ export function CustomerDetailsModal({ customer, isOpen, onClose, stages }: Cust
 
                          <Separator />
                          <div className="space-y-2">
-                            <h4 className="font-semibold">Histórico</h4>
-                             <div className="text-sm text-muted-foreground text-center py-8">
-                                Histórico em breve.
-                            </div>
+                            <h4 className="font-semibold flex items-center gap-2"><ShoppingCart className="h-4 w-4" /> Histórico de Compras</h4>
+                            <OrderHistory customer={customer} />
                         </div>
                     </div>
                 </ScrollArea>

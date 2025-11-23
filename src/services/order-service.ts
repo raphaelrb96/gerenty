@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { db } from "@/lib/firebase";
@@ -36,31 +35,6 @@ export async function getOrders(companyId: string): Promise<Order[]> {
     }
 }
 
-// Get all orders that are ready to be assigned to a route
-export async function getUnassignedOrders(companyIds: string[]): Promise<Order[]> {
-    if (companyIds.length === 0) return [];
-    try {
-        // Fetch all orders for the given companies
-        const allOrders = await getOrdersForCompanies(companyIds);
-        
-        // Filter locally
-        return allOrders.filter(order => 
-            (
-            order.status === 'processing' ||
-            order.status === 'pending'  ||
-            order.status === 'confirmed'
-            )
-            && 
-            order.shipping?.method !== 'retirada_loja'
-        );
-
-    } catch (error) {
-        console.error("Error getting unassigned orders: ", error);
-        throw new Error("Failed to fetch unassigned orders.");
-    }
-}
-
-
 // Get all orders for a list of companies
 export async function getOrdersForCompanies(companyIds: string[]): Promise<Order[]> {
     if (companyIds.length === 0) {
@@ -85,6 +59,53 @@ export async function getOrdersForCompanies(companyIds: string[]): Promise<Order
     }
 }
 
+// Get all orders for a specific customer across multiple companies
+export async function getOrdersForCustomer(customerId: string, companyIds: string[]): Promise<Order[]> {
+    if (companyIds.length === 0) {
+        return [];
+    }
+    try {
+        const q = query(ordersCollection, 
+            where("customer.id", "==", customerId),
+            where("companyId", "in", companyIds)
+        );
+        const querySnapshot = await getDocs(q);
+        const orders: Order[] = [];
+        querySnapshot.forEach((doc) => {
+            orders.push(convertOrderTimestamps({ id: doc.id, ...doc.data() }));
+        });
+        orders.sort((a, b) => new Date(b.createdAt as string).getTime() - new Date(a.createdAt as string).getTime());
+        return orders;
+    } catch (error) {
+        console.error("Error getting orders for customer: ", error);
+        throw new Error("Failed to fetch customer orders.");
+    }
+}
+
+
+// Get all orders that are ready to be assigned to a route
+export async function getUnassignedOrders(companyIds: string[]): Promise<Order[]> {
+    if (companyIds.length === 0) return [];
+    try {
+        // Fetch all orders for the given companies
+        const allOrders = await getOrdersForCompanies(companyIds);
+        
+        // Filter locally
+        return allOrders.filter(order => 
+            (
+            order.status === 'processing' ||
+            order.status === 'pending'  ||
+            order.status === 'confirmed'
+            )
+            && 
+            order.shipping?.method !== 'retirada_loja'
+        );
+
+    } catch (error) {
+        console.error("Error getting unassigned orders: ", error);
+        throw new Error("Failed to fetch unassigned orders.");
+    }
+}
 
 // Add a new order
 export async function addOrder(orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>): Promise<Order> {
@@ -125,5 +146,3 @@ export async function updateOrder(orderId: string, dataToUpdate: Partial<Order>)
         throw new Error("Failed to update order.");
     }
 }
-
-    

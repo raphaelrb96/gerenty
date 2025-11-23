@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { Customer, Stage } from "@/lib/types";
+import type { Customer, Order, Stage } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,9 @@ import { useCurrency } from "@/context/currency-context";
 import { Separator } from "../ui/separator";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
+import { useState, useEffect } from "react";
+import { getOrdersForCustomer } from "@/services/order-service";
+import { useCompany } from "@/context/company-context";
 
 type ConsumerProfileProps = {
     customer: Customer | null;
@@ -18,8 +21,54 @@ type ConsumerProfileProps = {
     onEdit: () => void;
 }
 
-export function ConsumerProfile({ customer, stages, onEdit }: ConsumerProfileProps) {
+function OrderHistory({ customer }: { customer: Customer }) {
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [loading, setLoading] = useState(true);
     const { formatCurrency } = useCurrency();
+    const { companies } = useCompany();
+    const companyIds = companies.map(c => c.id);
+
+    useEffect(() => {
+        if (customer) {
+            setLoading(true);
+            getOrdersForCustomer(customer.id, companyIds)
+                .then(setOrders)
+                .catch(console.error)
+                .finally(() => setLoading(false));
+        }
+    }, [customer, companyIds]);
+
+    const totalSpent = orders.reduce((sum, order) => sum + order.total, 0);
+
+    if (loading) {
+        return <p className="text-xs text-muted-foreground">Carregando histórico...</p>
+    }
+
+    return (
+        <div className="space-y-2">
+            <div className="flex justify-between font-medium">
+                <span className="text-muted-foreground">Pedidos:</span>
+                <span>{orders.length}</span>
+            </div>
+             <div className="flex justify-between font-medium">
+                <span className="text-muted-foreground">Total Gasto:</span>
+                <span>{formatCurrency(totalSpent)}</span>
+            </div>
+            {orders.length > 0 && <Separator className="my-2"/>}
+            {orders.slice(0, 3).map(order => (
+                 <div key={order.id} className="flex justify-between items-center text-xs">
+                    <div>
+                        <p className="font-medium">#{order.id.substring(0, 7)}</p>
+                        <p className="text-muted-foreground">{new Date(order.createdAt as string).toLocaleDateString()}</p>
+                    </div>
+                    <p className="font-semibold">{formatCurrency(order.total)}</p>
+                </div>
+            ))}
+        </div>
+    );
+}
+
+export function ConsumerProfile({ customer, stages, onEdit }: ConsumerProfileProps) {
 
     if (!customer) {
         return (
@@ -74,19 +123,8 @@ export function ConsumerProfile({ customer, stages, onEdit }: ConsumerProfilePro
                                 Histórico de Compras
                             </CardTitle>
                         </CardHeader>
-                         <CardContent className="text-sm space-y-2">
-                             <div className="flex justify-between font-medium">
-                                <span className="text-muted-foreground">Pedidos:</span>
-                                <span>{/* consumer.ordersCount */} 0</span>
-                            </div>
-                             <div className="flex justify-between font-medium">
-                                <span className="text-muted-foreground">Total Gasto:</span>
-                                <span>{formatCurrency(0 /* consumer.totalSpent */)}</span>
-                            </div>
-                             <Separator className="my-2"/>
-                            <p className="text-xs text-muted-foreground text-center pt-2">
-                                Lista de pedidos em breve.
-                            </p>
+                         <CardContent className="text-sm">
+                           <OrderHistory customer={customer} />
                         </CardContent>
                     </Card>
                 </div>
