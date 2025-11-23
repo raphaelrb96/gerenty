@@ -1,5 +1,8 @@
 
 {
+  "functions": {
+    "source": "functions"
+  },
   "hosting": {
     "source": ".",
     "site": "gerenty-app",
