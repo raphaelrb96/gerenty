@@ -600,11 +600,10 @@ async function processIncomingMessage(
         const db = admin.firestore();
         const phoneNumber = message.from;
 
-        // Find contact name from the webhook payload
         const contactProfile = contacts.find(c => c.wa_id === phoneNumber);
         const contactName = contactProfile?.profile?.name || 'Unknown';
 
-        // CORREÇÃO: Processa a URL da mídia ANTES de qualquer operação de escrita
+        // Processa a URL da mídia ANTES de qualquer operação de escrita
         if (message.video?.id) {
             message.video.url = await whatsAppService.fetchMediaVideoUrl(message.video.id, companyId);
         } else if (message.image?.id) {
@@ -615,38 +614,41 @@ async function processIncomingMessage(
             message.document.url = await whatsAppService.fetchMediaUrl(message.document.id, companyId);
         }
 
+        // Busca ou cria o cliente
+        const companyDoc = await db.collection('companies').doc(companyId).get();
+        const ownerId = companyDoc.data()?.ownerId;
+        if (!ownerId) {
+            functions.logger.error(`Owner not found for company ${companyId}`);
+            return;
+        }
 
-        // Busca ou cria o consumer
-        const consumerQuery = await db.collection('companies')
-            .doc(companyId)
-            .collection('consumers')
+        const customerQuery = await db.collection('customers')
+            .where('ownerId', '==', ownerId)
             .where('phone', '==', phoneNumber)
             .limit(1)
             .get();
 
-        let consumerId: string;
-        let consumerRef: admin.firestore.DocumentReference;
+        let customerId: string;
+        let customerRef: admin.firestore.DocumentReference;
 
-        if (consumerQuery.empty) {
-            // Cria novo consumer
-            consumerRef = db.collection('companies')
-                .doc(companyId)
-                .collection('consumers')
-                .doc();
-            await consumerRef.set({
+        if (customerQuery.empty) {
+            // Cria novo cliente
+            customerRef = db.collection('customers').doc();
+            await customerRef.set({
+                ownerId,
                 name: contactName,
                 phone: phoneNumber,
-                type: 'lead',
+                status: 'lead', // ou um estágio inicial padrão
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),
                 updatedAt: admin.firestore.FieldValue.serverTimestamp(),
             });
-            consumerId = consumerRef.id;
+            customerId = customerRef.id;
         } else {
-            consumerRef = consumerQuery.docs[0].ref;
-            consumerId = consumerRef.id;
-            // Update name if it was 'Unknown' before
-            if (consumerQuery.docs[0].data().name === 'Unknown' && contactName !== 'Unknown') {
-                await consumerRef.update({ name: contactName });
+            customerRef = customerQuery.docs[0].ref;
+            customerId = customerRef.id;
+            // Atualiza o nome se era 'Unknown'
+            if (customerQuery.docs[0].data().name === 'Unknown' && contactName !== 'Unknown') {
+                await customerRef.update({ name: contactName });
             }
         }
 
@@ -654,7 +656,7 @@ async function processIncomingMessage(
         const conversationQuery = await db.collection('companies')
             .doc(companyId)
             .collection('conversations')
-            .where('consumerId', '==', consumerId)
+            .where('consumerId', '==', customerId) // Usa customerId
             .where('status', 'in', ['open', 'pending'])
             .limit(1)
             .get();
@@ -667,7 +669,7 @@ async function processIncomingMessage(
             conversationRef = conversationQuery.docs[0].ref;
         }
 
-        // START: Lógica de Fluxo de Automação
+        // Lógica de Fluxo de Automação (não modificada)
         const conversationDoc = await conversationRef.get();
         const conversationData = conversationDoc.data() as Conversation | undefined;
         let activeFlowId = conversationData?.activeFlowId;
@@ -675,7 +677,6 @@ async function processIncomingMessage(
         
         let flowTriggered = false;
 
-        // Se NÃO há fluxo ativo, verifica se a mensagem aciona um novo fluxo
         if (!activeFlowId && message.text?.body) {
             const userMessage = message.text.body.toLowerCase().trim();
             const flowsSnapshot = await db.collection('flows')
@@ -685,16 +686,9 @@ async function processIncomingMessage(
             
             for (const doc of flowsSnapshot.docs) {
                 const flow = { id: doc.id, ...doc.data() } as Flow;
-                const triggerNode = flow.nodes.find(n => n.id === '1'); // O gatilho é sempre o nó 1
-                
-                if (!triggerNode) continue;
+                const triggerNodes = flow.nodes.filter(n => n.data.type === 'keywordTrigger');
 
-                if (triggerNode.data.triggerType === 'product') {
-                     activeFlowId = doc.id;
-                     currentStepId = triggerNode.id; // Começa pelo nó de gatilho
-                     flowTriggered = true;
-                     break;
-                } else if (triggerNode.data.triggerType === 'keyword') {
+                for (const triggerNode of triggerNodes) {
                     const keywords = triggerNode?.data.triggerKeywords || [];
                     const isMatch = keywords.some((kw: { value: string, matchType: string }) => {
                         const keyword = kw.value.toLowerCase().trim();
@@ -702,13 +696,16 @@ async function processIncomingMessage(
                         if (kw.matchType === 'contains') return userMessage.includes(keyword);
                         return false;
                     });
+
                     if (isMatch) {
+                        functions.logger.info(`[Flow] Matched flow "${flow.name}" (ID: ${doc.id}) from trigger node ${triggerNode.id}`);
                         activeFlowId = doc.id;
                         currentStepId = triggerNode.id;
                         flowTriggered = true;
                         break; 
                     }
                 }
+                if (flowTriggered) break;
             }
         }
         
@@ -719,7 +716,7 @@ async function processIncomingMessage(
                 
                 functions.logger.info(`[Flow] processFlowStep message "${JSON.stringify(message)}"`);
                 
-                const nextStep = await processFlowStep(companyId, consumerRef, activeFlow, currentStepId, message);
+                const nextStep = await processFlowStep(companyId, customerRef, activeFlow, currentStepId, message);
                 
                 if (!nextStep) {
                     activeFlowId = null;
@@ -733,9 +730,8 @@ async function processIncomingMessage(
                  currentStepId = null;
              }
         }
-        // END: Lógica de Fluxo de Automação
-
-        // Determine a friendly last message summary based on message type
+        
+        // Resumo da última mensagem
         let lastMessageText = '[Mensagem desconhecida]';
         switch (message.type) {
             case 'text':
@@ -773,7 +769,7 @@ async function processIncomingMessage(
 
         // Cria ou atualiza a conversa
         await conversationRef.set({
-            consumerId,
+            consumerId: customerId, // Usa o ID do cliente
             status: 'open',
             unreadMessagesCount: admin.firestore.FieldValue.increment(1),
             lastMessage: lastMessageText,
@@ -783,9 +779,6 @@ async function processIncomingMessage(
             currentStepId: currentStepId || null, 
             ...(conversationQuery.empty && { createdAt: admin.firestore.FieldValue.serverTimestamp() }) 
         }, { merge: true });
-
-
-        functions.logger.info('Salvando a Mensagem: ', JSON.stringify(message));
 
         // Salva a mensagem completa
         await db.collection('companies')
@@ -797,7 +790,7 @@ async function processIncomingMessage(
                 id: message.id,
                 direction: 'inbound',
                 type: message.type,
-                content: message, // O objeto message agora contém a URL
+                content: message,
                 timestamp: messageTimestamp,
                 status: 'delivered',
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -809,6 +802,7 @@ async function processIncomingMessage(
         throw error;
     }
 }
+
 
 /**
  * Processa a etapa atual de um fluxo e executa la próxima ação.
@@ -862,9 +856,9 @@ async function processFlowStep(
             if (userMessage?.type === 'text') {
                 userInput = userMessage.text?.body.toLowerCase().trim();
             } else if (userMessage?.type === 'interactive' && userMessage.interactive.type === 'button_reply') {
-                userInput = userMessage.interactive.button_reply.id.toLowerCase().trim();
+                userInput = userMessage.interactive.button_reply.title.toLowerCase().trim();
             } else if (userMessage?.type === 'interactive' && userMessage.interactive.type === 'list_reply') {
-                userInput = userMessage.interactive.list_reply.id.toLowerCase().trim();
+                userInput = userMessage.interactive.list_reply.title.toLowerCase().trim();
             }
 
             let satisfiedEdgeId: string | null = null;
