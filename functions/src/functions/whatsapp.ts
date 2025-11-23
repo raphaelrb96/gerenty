@@ -823,7 +823,7 @@ async function processFlowStep(
         return null;
     }
 
-    const startNodeTypes = ['keywordTrigger', 'captureData', 'waitForResponse'];
+    const startNodeTypes = ['keywordTrigger', 'captureData', 'waitForResponse', 'productSearch'];
     if (startNodeTypes.includes(currentNode.data.type)) {
         if (currentNode.data.type === 'captureData' && userMessage?.text?.body) {
             const variableName = currentNode.data.captureVariable;
@@ -844,7 +844,7 @@ async function processFlowStep(
         functions.logger.info(`[Flow] Executing loop for node ${currentNode.id} of type ${currentNode.data.type}`);
         userMessage = userMessageSave;
         
-        let nextNode: FlowNode | null = await findNextNode(currentNode, flow, consumerRef, userMessage);
+        const nextNode: FlowNode | null = await findNextNode(currentNode, flow, consumerRef, userMessage, companyId);
         
         // --- 2. STOPPING POINT CHECK ---
         if (!nextNode) {
@@ -1017,7 +1017,13 @@ function sanitizeMetaPatterns(text: string): string {
     return text.replace(/\[\[.*?\]\]/g, '').trim();
 }
 
-async function findNextNode(currentNode: FlowNode, flow: Flow, consumerRef: admin.firestore.DocumentReference, userMessage: IncomingMessage | null): Promise<FlowNode | null> {
+async function findNextNode(
+    currentNode: FlowNode, 
+    flow: Flow, 
+    consumerRef: admin.firestore.DocumentReference, 
+    userMessage: IncomingMessage | null,
+    companyId: string // Adicionado companyId para buscar produtos
+): Promise<FlowNode | null> {
     if (currentNode.data.type === 'conditional') {
         const conditions = currentNode.data.conditions || [];
         const consumerDoc = await consumerRef.get();
@@ -1068,9 +1074,15 @@ async function findNextNode(currentNode: FlowNode, flow: Flow, consumerRef: admi
         const buttonId = userMessage.interactive.button_reply.id;
         const nextEdge = flow.edges.find(e => e.source === currentNode?.id && e.sourceHandle === buttonId);
         if (nextEdge) return flow.nodes.find(n => n.id === nextEdge.target) || null;
+    } else if (currentNode.data.type === 'productSearch') {
+        const productWasFound = (await consumerRef.get()).data()?.flowData?.foundProduct;
+        const handle = productWasFound ? 'found' : 'not-found';
+        const nextEdge = flow.edges.find(e => e.source === currentNode?.id && e.sourceHandle === handle);
+        if (nextEdge) return flow.nodes.find(n => n.id === nextEdge.target) || null;
     }
 
-    const defaultEdge = flow.edges.find(e => e.source === currentNode?.id);
+
+    const defaultEdge = flow.edges.find(e => e.source === currentNode?.id && !e.sourceHandle);
     if (defaultEdge) return flow.nodes.find(n => n.id === defaultEdge.target) || null;
 
     return null;
@@ -1150,30 +1162,32 @@ async function executeCaptureDataNode(companyId: string, consumerRef: admin.fire
 
 async function executeProductSearchNode(companyId: string, consumerRef: admin.firestore.DocumentReference, node: FlowNode, userMessage: IncomingMessage | null) {
     const userInput = userMessage?.text?.body?.toLowerCase().trim();
-    if (userInput) {
-        const productsQuery = db.collection('products')
-            .where('ownerId', '==', companyId)
-            .where('name', '>=', userInput)
-            .where('name', '<=', userInput + '\uf8ff');
+    if (!userInput) return;
 
-        const productSnapshot = await productsQuery.limit(1).get();
+    // Limpa o produto encontrado anteriormente
+    await consumerRef.update({ 'flowData.foundProduct': null });
+    
+    const productsQuery = db.collection('products')
+        .where('ownerId', '==', (await consumerRef.get()).data()?.ownerId) // Garante que busca no catálogo do dono do cliente
+        .where('name', '>=', userInput)
+        .where('name', '<=', userInput + '\uf8ff');
 
-        if (!productSnapshot.empty) {
-            const product = { id: productSnapshot.docs[0].id, ...productSnapshot.docs[0].data() } as Product;
-            await consumerRef.update({ 'flowData.foundProduct': product });
-            
-            const phoneNumber = (await consumerRef.get()).data()?.phone;
-            if(phoneNumber) {
-                await whatsAppService.sendProductInteractiveMessage(companyId, phoneNumber, product, node.data.actionButtons);
-            }
+    const productSnapshot = await productsQuery.limit(1).get();
+
+    if (!productSnapshot.empty) {
+        const product = { id: productSnapshot.docs[0].id, ...productSnapshot.docs[0].data() } as Product;
+        await consumerRef.update({ 'flowData.foundProduct': product });
+        
+        const phoneNumber = (await consumerRef.get()).data()?.phone;
+        if(phoneNumber) {
+            await whatsAppService.sendProductInteractiveMessage(companyId, phoneNumber, product, node.data.actionButtons);
         }
+    } else {
+        functions.logger.info(`[Flow] Product not found for search term: "${userInput}"`);
     }
 }
     
 
-```
-- src/services/whatsAppService.ts
-- `src/components/automation/custom-node.tsx`
-- `src/components/automation/node-config-panel.tsx`
-- `src/app/dashboard/automation/flows/edit/[id]/page.tsx`
-- `src/functions/src/types/whatsapp.ts`
+    
+
+
