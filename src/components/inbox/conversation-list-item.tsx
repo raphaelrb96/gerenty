@@ -7,7 +7,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { User } from "lucide-react";
-import { CustomerProfile } from "./customer-profile";
+import { ConsumerProfile } from "./consumer-profile";
 import { motion, AnimatePresence } from "framer-motion";
 
 type ConversationListItemProps = {
@@ -94,7 +94,7 @@ export function ConversationListItem({ conversation, customer, stages, isSelecte
                         transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
                         className="overflow-hidden"
                     >
-                        <CustomerProfile 
+                        <ConsumerProfile 
                             customer={customer || null} 
                             stages={stages} 
                             onEdit={() => onEditCustomer(customer || null)} 
