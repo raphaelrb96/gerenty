@@ -1,5 +1,3 @@
-
-
 // src/functions/whatsapp.ts
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
@@ -823,7 +821,7 @@ async function processFlowStep(
         return null;
     }
 
-    const startNodeTypes = ['keywordTrigger', 'captureData', 'waitForResponse', 'productSearch'];
+    const startNodeTypes = ['keywordTrigger', 'captureData', 'waitForResponse'];
     if (startNodeTypes.includes(currentNode.data.type)) {
         if (currentNode.data.type === 'captureData' && userMessage?.text?.body) {
             const variableName = currentNode.data.captureVariable;
@@ -1189,5 +1187,4 @@ async function executeProductSearchNode(companyId: string, consumerRef: admin.fi
     
 
     
-
 

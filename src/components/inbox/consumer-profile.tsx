@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { Customer, Order, Stage } from "@/lib/types";
@@ -132,3 +131,4 @@ export function ConsumerProfile({ customer, stages, onEdit }: ConsumerProfilePro
         </div>
     );
 }
+

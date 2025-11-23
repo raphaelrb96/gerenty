@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { Conversation, Customer, Stage } from "@/lib/types";
@@ -105,3 +104,4 @@ export function ConversationListItem({ conversation, customer, stages, isSelecte
         </motion.div>
     );
 }
+

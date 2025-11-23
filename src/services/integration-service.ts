@@ -1,4 +1,3 @@
-
 // src/services/integration-service.ts
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '@/lib/firebase';
@@ -9,7 +8,7 @@ const validateAndSaveCredentialsCallable = httpsCallable<WhatsAppCredentials & {
   message: string;
   webhookUrl: string;
   companyId: string;
-}>(functions, 'apiValidateAndSaveCredentials');
+}>(functions, 'validateAndSaveCredentials');
 
 const sendMessageCallable = httpsCallable<{
   phoneNumber: string;
@@ -46,8 +45,7 @@ const syncWhatsAppTemplatesCallable = httpsCallable<{
   updated: number;
 }>(functions, 'apiSyncWhatsAppTemplates');
 
-export const integrationService = {
-  async saveWhatsAppCredentials(companyId: string, credentials: WhatsAppCredentials) {
+export async function saveWhatsAppCredentials(companyId: string, credentials: WhatsAppCredentials) {
     try {
       const result = await validateAndSaveCredentialsCallable({ ...credentials, companyId });
       return result.data;
@@ -66,9 +64,9 @@ export const integrationService = {
         throw new Error(error.message || 'Erro ao salvar credenciais.');
       }
     }
-  },
+}
 
-  async sendMessage(
+export async function sendMessage(
     phoneNumber: string, 
     companyId: string, 
     payload: SendMessagePayload
@@ -97,9 +95,23 @@ export const integrationService = {
         throw new Error(error.message || 'Erro ao enviar mensagem.');
       }
     }
-  },
+}
 
-  async checkWhatsAppIntegration(companyId: string) {
+export async function sendTestMessage(
+    phoneNumber: string, 
+    companyId: string, 
+    message: string
+): Promise<TestMessageResponse> {
+    return sendMessage(phoneNumber, companyId, {
+        phoneNumber,
+        companyId,
+        type: 'text',
+        message: message,
+        content: { text: { body: message } }
+    });
+}
+
+export async function checkWhatsAppIntegration(companyId: string) {
     try {
       const result = await checkWhatsAppIntegrationCallable({ companyId });
       return result.data;
@@ -107,9 +119,9 @@ export const integrationService = {
       console.error('Error checking WhatsApp integration:', error);
       throw new Error(error.message || 'Erro ao verificar integração');
     }
-  },
+}
 
-  async getWhatsAppIntegrationStatus(companyId: string) {
+export async function getWhatsAppIntegrationStatus(companyId: string) {
     try {
       const result = await getWhatsAppIntegrationStatusCallable({ companyId });
       return result.data;
@@ -117,9 +129,9 @@ export const integrationService = {
       console.error('Error getting WhatsApp integration status:', error);
       throw new Error(error.message || 'Erro ao obter status da integração');
     }
-  },
+}
 
-  async syncWhatsAppTemplates(companyId: string) {
+export async function syncWhatsAppTemplates(companyId: string) {
     try {
       const result = await syncWhatsAppTemplatesCallable({ companyId });
       return result.data;
@@ -127,12 +139,4 @@ export const integrationService = {
       console.error('Error syncing WhatsApp templates:', error);
       throw new Error(error.message || 'Erro ao sincronizar templates');
     }
-  }
-};
-
-// Aliases para compatibilidade com o código existente
-export const saveWhatsAppCredentials = integrationService.saveWhatsAppCredentials;
-export const checkWhatsAppIntegration = integrationService.checkWhatsAppIntegration;
-export const getWhatsAppIntegrationStatus = integrationService.getWhatsAppIntegrationStatus;
-export const syncWhatsAppTemplates = integrationService.syncWhatsAppTemplates;
-export const sendMessage = integrationService.sendMessage;
+}

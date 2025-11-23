@@ -15,10 +15,12 @@
   "main": "lib/index.js",
   "dependencies": {
     "firebase-admin": "^12.0.0",
-    "firebase-functions": "^5.0.0"
+    "firebase-functions": "^5.0.0",
+    "reactflow": "^11.11.4"
   },
   "devDependencies": {
     "typescript": "^5.0.0"
   },
   "private": true
 }
+
