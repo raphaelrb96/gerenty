@@ -72,7 +72,7 @@ export async function signInWithEmail(email: string, password: string): Promise<
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     return userCredential.user;
   } catch (error) {
-    console.error("Error signing in: ", error);
+    // We just re-throw the error to be handled by the calling component
     throw error;
   }
 }

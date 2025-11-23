@@ -59,7 +59,6 @@ export function LoginForm() {
       });
       router.push("/dashboard");
     } catch (error: any) {
-      console.error(error);
       toast({
         variant: "destructive",
         title: t("auth.error.loginFailed"),
