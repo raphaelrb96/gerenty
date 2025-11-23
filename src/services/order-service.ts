@@ -61,7 +61,7 @@ export async function getOrdersForCompanies(companyIds: string[]): Promise<Order
 
 // Get all orders for a specific customer across multiple companies
 export async function getOrdersForCustomer(customerId: string, companyIds: string[]): Promise<Order[]> {
-    if (companyIds.length === 0) {
+    if (!customerId || companyIds.length === 0) {
         return [];
     }
     try {
