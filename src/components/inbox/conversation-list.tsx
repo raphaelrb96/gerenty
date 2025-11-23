@@ -4,28 +4,28 @@
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search } from "lucide-react";
-import type { Conversation, Consumer, Stage } from "@/lib/types";
+import type { Conversation, Customer, Stage } from "@/lib/types";
 import { ConversationListItem } from "./conversation-list-item";
 import { useState } from "react";
 import { AnimatePresence } from "framer-motion";
 
 type ConversationListProps = {
     conversations: Conversation[];
-    consumers: Record<string, Consumer>;
+    customers: Record<string, Customer>;
     stages: Stage[];
     onSelectConversation: (conversation: Conversation) => void;
     selectedConversationId?: string | null;
-    onEditConsumer: (consumer: Consumer | null) => void;
+    onEditCustomer: (customer: Customer | null) => void;
 }
 
-export function ConversationList({ conversations, consumers, stages, onSelectConversation, selectedConversationId, onEditConsumer }: ConversationListProps) {
+export function ConversationList({ conversations, customers, stages, onSelectConversation, selectedConversationId, onEditCustomer }: ConversationListProps) {
     const [searchTerm, setSearchTerm] = useState("");
 
     const filteredConversations = conversations.filter(convo => {
-        const consumer = consumers[convo.consumerId];
-        if (!consumer) return false;
-        const name = consumer.name?.toLowerCase() || '';
-        const phone = consumer.phone || '';
+        const customer = customers[convo.consumerId];
+        if (!customer) return false;
+        const name = customer.name?.toLowerCase() || '';
+        const phone = customer.phone || '';
         const term = searchTerm.toLowerCase();
 
         return name.includes(term) || phone.includes(term);
@@ -51,11 +51,11 @@ export function ConversationList({ conversations, consumers, stages, onSelectCon
                             <ConversationListItem
                                 key={convo.id}
                                 conversation={convo}
-                                consumer={consumers[convo.consumerId]}
+                                customer={customers[convo.consumerId]}
                                 stages={stages}
                                 isSelected={selectedConversationId === convo.id}
                                 onSelect={() => onSelectConversation(convo)}
-                                onEditConsumer={onEditConsumer}
+                                onEditCustomer={onEditCustomer}
                             />
                         ))}
                     </AnimatePresence>

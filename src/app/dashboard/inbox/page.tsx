@@ -4,9 +4,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useCompany } from "@/context/company-context";
-import type { Conversation, Consumer, Stage, Customer } from "@/lib/types";
+import type { Conversation, Customer, Stage } from "@/lib/types";
 import { getConversations, markConversationAsRead } from "@/services/conversation-service";
-import { getConsumersByCompany } from "@/services/consumer-service";
+import { getCustomersByUser } from "@/services/customer-service"; 
 import { getStagesByUser } from "@/services/stage-service";
 
 import { LoadingSpinner } from "@/components/common/loading-spinner";
@@ -22,7 +22,7 @@ export default function InboxPage() {
     const { effectiveOwnerId } = useAuth();
     const [loading, setLoading] = useState(true);
     const [conversations, setConversations] = useState<Conversation[]>([]);
-    const [consumers, setConsumers] = useState<Record<string, Consumer>>({});
+    const [customers, setCustomers] = useState<Record<string, Customer>>({});
     const [stages, setStages] = useState<Stage[]>([]);
     const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
     const [isCustomerModalOpen, setCustomerModalOpen] = useState(false);
@@ -34,8 +34,6 @@ export default function InboxPage() {
             const unsubscribeConvos = getConversations(activeCompany.id, (convos) => {
                 setConversations(convos);
                 
-                // Auto-select the first conversation only if no conversation is currently selected.
-                // This prevents the selection from changing on new messages.
                 setSelectedConversationId(prevId => {
                     if (prevId && convos.some(c => c.id === prevId)) {
                         return prevId;
@@ -52,23 +50,23 @@ export default function InboxPage() {
                 setLoading(false);
             });
 
-            const unsubscribeConsumers = getConsumersByCompany(activeCompany.id, (consumerList) => {
-                 const consumerMap = consumerList.reduce((acc, consumer) => {
-                    acc[consumer.id] = consumer;
+            // Fetch all customers for the owner once
+            getCustomersByUser(effectiveOwnerId).then(customerList => {
+                 const customerMap = customerList.reduce((acc, customer) => {
+                    acc[customer.id] = customer;
                     return acc;
-                }, {} as Record<string, Consumer>);
-                setConsumers(consumerMap);
+                }, {} as Record<string, Customer>);
+                setCustomers(customerMap);
             });
 
             getStagesByUser(effectiveOwnerId).then(setStages);
 
             return () => {
                 unsubscribeConvos();
-                unsubscribeConsumers();
             };
         } else {
             setConversations([]);
-            setConsumers({});
+            setCustomers({});
             setStages([]);
             setSelectedConversationId(null);
             setLoading(false);
@@ -78,7 +76,6 @@ export default function InboxPage() {
     const handleSelectConversation = (conversation: Conversation) => {
         const newId = conversation.id;
         
-        // If clicking the same conversation, close it. Otherwise, open the new one.
         if (selectedConversationId === newId) {
             setSelectedConversationId(null);
         } else {
@@ -89,38 +86,17 @@ export default function InboxPage() {
         }
     };
     
-    const handleEditConsumer = (consumer: Consumer | null) => {
-        if (!consumer || !activeCompany) return;
-        // The modal expects a Customer object. We need to map the Consumer to it.
-        const customerData: Customer = {
-            id: consumer.id,
-            ownerId: activeCompany.ownerId,
-            name: consumer.name,
-            email: consumer.email,
-            phone: consumer.phone,
-            status: consumer.type, // Map consumer type to a default status if needed
-            document: '',
-            tags: [],
-            createdAt: consumer.createdAt as any,
-            updatedAt: new Date().toISOString(),
-        };
-        setCustomerToEdit(customerData);
+    const handleEditConsumer = (customer: Customer | null) => {
+        if (!customer) return;
+        setCustomerToEdit(customer);
         setCustomerModalOpen(true);
     };
 
     const handleCustomerSave = (savedCustomer: Customer) => {
-        // Update the consumer map in state to reflect the changes
-        const updatedConsumer: Consumer = {
-            ...consumers[savedCustomer.id],
-            id: savedCustomer.id,
-            name: savedCustomer.name,
-            email: savedCustomer.email,
-            phone: savedCustomer.phone,
-            type: savedCustomer.status as any, // Update type from customer status
-        };
-        setConsumers(prev => ({
+        // Update the customers map in state to reflect the changes
+        setCustomers(prev => ({
             ...prev,
-            [savedCustomer.id]: updatedConsumer
+            [savedCustomer.id]: savedCustomer
         }));
         
         setCustomerModalOpen(false);
@@ -130,9 +106,9 @@ export default function InboxPage() {
         return conversations.find(c => c.id === selectedConversationId) || null;
     }, [conversations, selectedConversationId]);
 
-    const selectedConsumer = useMemo(() => {
-        return selectedConversation ? consumers[selectedConversation.consumerId] : null;
-    }, [selectedConversation, consumers]);
+    const selectedCustomer = useMemo(() => {
+        return selectedConversation ? customers[selectedConversation.consumerId] : null;
+    }, [selectedConversation, customers]);
 
     if (loading) {
         return <LoadingSpinner />;
@@ -168,18 +144,18 @@ export default function InboxPage() {
                 <ResizablePanel defaultSize={35} minSize={25} maxSize={40}>
                     <ConversationList
                         conversations={conversations}
-                        consumers={consumers}
+                        customers={customers}
                         onSelectConversation={handleSelectConversation}
                         selectedConversationId={selectedConversationId}
                         stages={stages}
-                        onEditConsumer={handleEditConsumer}
+                        onEditCustomer={handleEditConsumer}
                     />
                 </ResizablePanel>
                 <ResizableHandle withHandle />
                 <ResizablePanel defaultSize={65} minSize={30}>
                     <ChatArea 
                         conversation={selectedConversation} 
-                        consumer={selectedConsumer}
+                        customer={selectedCustomer}
                     />
                 </ResizablePanel>
             </ResizablePanelGroup>

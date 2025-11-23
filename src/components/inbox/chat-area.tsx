@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import type { Conversation, Consumer, Message, MessageTemplate, LibraryMessage, SendMessagePayload } from "@/lib/types";
+import type { Conversation, Customer, Message, MessageTemplate, SendMessagePayload } from "@/lib/types";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
 import { LoadingSpinner } from "../common/loading-spinner";
@@ -19,13 +19,13 @@ import { AlertCircle } from "lucide-react";
 
 type ChatAreaProps = {
     conversation: Conversation | null;
-    consumer: Consumer | null;
+    customer: Customer | null;
 }
 
 // 24 hours in milliseconds
 const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
 
-export function ChatArea({ conversation, consumer }: ChatAreaProps) {
+export function ChatArea({ conversation, customer }: ChatAreaProps) {
     const { activeCompany } = useCompany();
     const { toast } = useToast();
     const [messages, setMessages] = useState<Message[]>([]);
@@ -97,11 +97,11 @@ export function ChatArea({ conversation, consumer }: ChatAreaProps) {
     }, [messages, loading, scrollToBottom]);
 
     const handleSendMessage = useCallback(async (payload: SendMessagePayload) => {
-        if (!consumer || !activeCompany) return;
+        if (!customer || !activeCompany) return;
 
         setIsSending(true);
         try {
-            await sendMessage(consumer.phone, activeCompany.id, payload);
+            await sendMessage(customer.phone, activeCompany.id, payload);
         } catch (error: any) {
             console.error("Error sending message:", error);
             toast({
@@ -112,10 +112,10 @@ export function ChatArea({ conversation, consumer }: ChatAreaProps) {
         } finally {
             setIsSending(false);
         }
-    }, [consumer, activeCompany, toast]);
+    }, [customer, activeCompany, toast]);
 
 
-    if (!conversation || !consumer) {
+    if (!conversation || !customer) {
         return (
             <div className="h-full flex flex-col items-center justify-center text-center p-6 text-muted-foreground bg-background">
                 <MessageSquare className="h-12 w-12 mb-4" />
@@ -125,15 +125,15 @@ export function ChatArea({ conversation, consumer }: ChatAreaProps) {
         );
     }
     
-    const displayName = consumer.name && consumer.name.toLowerCase() !== 'unknown' 
-        ? consumer.name 
-        : consumer.phone;
+    const displayName = customer.name && customer.name.toLowerCase() !== 'unknown' 
+        ? customer.name 
+        : customer.phone;
 
     return (
         <div className="flex flex-col h-full bg-background border rounded-lg">
             <header className="p-4 border-b flex-shrink-0">
                 <h2 className="font-semibold">{displayName}</h2>
-                <p className="text-xs text-muted-foreground">{consumer.phone}</p>
+                <p className="text-xs text-muted-foreground">{customer.phone}</p>
             </header>
 
             <div className="flex-1 overflow-hidden relative">

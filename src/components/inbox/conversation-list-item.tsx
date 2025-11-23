@@ -1,25 +1,25 @@
 
 "use client";
 
-import type { Conversation, Consumer, Stage } from "@/lib/types";
+import type { Conversation, Customer, Stage } from "@/lib/types";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { User } from "lucide-react";
-import { ConsumerProfile } from "./consumer-profile";
+import { CustomerProfile } from "./customer-profile";
 import { motion, AnimatePresence } from "framer-motion";
 
 type ConversationListItemProps = {
     conversation: Conversation;
-    consumer?: Consumer;
+    customer?: Customer;
     stages: Stage[];
     isSelected: boolean;
     onSelect: () => void;
-    onEditConsumer: (consumer: Consumer | null) => void;
+    onEditCustomer: (customer: Customer | null) => void;
 }
 
-export function ConversationListItem({ conversation, consumer, stages, isSelected, onSelect, onEditConsumer }: ConversationListItemProps) {
+export function ConversationListItem({ conversation, customer, stages, isSelected, onSelect, onEditCustomer }: ConversationListItemProps) {
     const getInitials = (name: string) => {
         if (!name || name.trim().toLowerCase() === 'unknown') return '?';
         const names = name.split(' ');
@@ -29,26 +29,19 @@ export function ConversationListItem({ conversation, consumer, stages, isSelecte
         return name.substring(0, 2).toUpperCase();
     }
     
-    const displayName = consumer?.name && consumer.name.toLowerCase() !== 'unknown' 
-        ? consumer.name 
-        : consumer?.phone || "Desconhecido";
+    const displayName = customer?.name && customer.name.toLowerCase() !== 'unknown' 
+        ? customer.name 
+        : customer?.phone || "Desconhecido";
 
-    const lastMessageDate = conversation.lastMessageTimestamp ? new Date(conversation.lastMessageTimestamp) : new Date();
+    const lastMessageDate = conversation.lastMessageTimestamp ? new Date(conversation.lastMessageTimestamp as any) : new Date();
 
-    const getTypeConfig = (type: Consumer['type'] | undefined) => {
-        switch (type) {
-            case 'lead':
-                return { color: 'text-blue-500' };
-            case 'buyer':
-                return { color: 'text-green-500' };
-            case 'contact':
-                return { color: 'text-purple-500' };
-            default:
-                return { color: 'text-gray-500' };
-        }
+    const getStageConfig = (stageId: string | undefined) => {
+        const stage = stages.find(s => s.id === stageId);
+        // Add logic for color based on stage if you have it in your stage object
+        return { color: 'text-gray-500' };
     };
     
-    const typeConfig = getTypeConfig(consumer?.type);
+    const stageConfig = getStageConfig(customer?.status);
 
     return (
        <motion.div
@@ -66,7 +59,7 @@ export function ConversationListItem({ conversation, consumer, stages, isSelecte
                 <div className="flex items-start gap-3">
                     <Avatar className="h-10 w-10 border-2 border-background ring-1 ring-border">
                         <AvatarFallback>
-                            {consumer ? <User className={cn("h-5 w-5", typeConfig.color)} /> : '?'}
+                            {customer ? <User className={cn("h-5 w-5", stageConfig.color)} /> : '?'}
                         </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 overflow-hidden">
@@ -101,10 +94,10 @@ export function ConversationListItem({ conversation, consumer, stages, isSelecte
                         transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
                         className="overflow-hidden"
                     >
-                        <ConsumerProfile 
-                            consumer={consumer || null} 
+                        <CustomerProfile 
+                            customer={customer || null} 
                             stages={stages} 
-                            onEdit={() => onEditConsumer(consumer || null)} 
+                            onEdit={() => onEditCustomer(customer || null)} 
                         />
                     </motion.section>
                 )}
