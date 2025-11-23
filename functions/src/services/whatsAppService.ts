@@ -2,7 +2,7 @@
 
 // src/services/whatsAppService.ts
 import { SecretManagerService } from './secretManager';
-import { MessageResult, SendMessagePayload, TemplateErrorInfo, WhatsAppApiResponse, LibraryMessage } from '../types/whatsapp';
+import { MessageResult, SendMessagePayload, TemplateErrorInfo, WhatsAppApiResponse, LibraryMessage, Product } from '../types/whatsapp';
 import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
 import fetch, { RequestInfo, RequestInit, Response } from 'node-fetch';
@@ -454,6 +454,80 @@ export class WhatsAppService {
       };
     }
   }
+
+  async sendProductInteractiveMessage(
+    companyId: string,
+    phoneNumber: string,
+    product: Product,
+    actionButtons: { id: string; label: string }[]
+  ): Promise<MessageResult> {
+      try {
+          const accessToken = await this.secretManager.getWhatsAppToken(companyId);
+          const integration = await this.getCompanyIntegration(companyId);
+          if (!integration?.phoneNumberId) {
+              return { success: false, error: 'WhatsApp integration not found.' };
+          }
+  
+          let uploadedHeaderImageId: string | null = null;
+          if (product.images?.mainImage) {
+              const url = product.images.mainImage;
+              const filename = url.split('/').pop()?.split('?')[0] || `product_image_${product.id}.jpg`;
+              const response = await fetch(url);
+              const contentType = response.headers.get('content-type') || 'image/jpeg';
+              uploadedHeaderImageId = await this.uploadMediaToMeta(companyId, url, contentType, filename);
+              if (!uploadedHeaderImageId) {
+                  functions.logger.warn(`[sendProductInteractiveMessage] Could not upload header image for product ${product.id}`);
+              }
+          }
+  
+          const messageData = {
+              messaging_product: 'whatsapp',
+              to: phoneNumber,
+              type: 'interactive',
+              interactive: {
+                  type: 'product',
+                  ...(uploadedHeaderImageId && { header: { type: 'image', image: { id: uploadedHeaderImageId } } }),
+                  body: { text: product.description || product.name },
+                  footer: { text: `Ref: ${product.sku || product.id}` },
+                  action: {
+                      catalog_id: 'YOUR_CATALOG_ID', // You need a way to get this
+                      product_retailer_id: product.id,
+                  }
+              }
+          };
+
+            // This part is a bit tricky, WhatsApp doesn't officially support buttons on 'product' type message.
+            // A common workaround is to send a 'button' type message immediately after.
+            // For now, let's just log this and we can implement the multi-message send later.
+            if(actionButtons && actionButtons.length > 0) {
+                 functions.logger.info(`[sendProductInteractiveMessage] Action buttons requested, but not directly supported on 'product' messages. Follow-up message would be needed.`, { buttons: actionButtons});
+            }
+
+          const response = await fetch(
+              `https://graph.facebook.com/v17.0/${integration.phoneNumberId}/messages`,
+              {
+                  method: 'POST',
+                  headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+                  body: JSON.stringify(messageData),
+              }
+          );
+  
+          const result: WhatsAppApiResponse = await response.json();
+  
+          if (response.ok && result.messages?.[0]?.id) {
+              await this.saveOutboundMessage(companyId, { phoneNumber, type: 'interactive', content: messageData.interactive as any }, result.messages[0].id);
+              return { success: true, messageId: result.messages[0].id, messageType: 'conversation' };
+          } else {
+              functions.logger.error('[sendProductInteractiveMessage] API rejected message:', result.error);
+              return { success: false, error: result.error?.message || 'Failed to send product message.' };
+          }
+  
+      } catch (error: any) {
+          functions.logger.error('[sendProductInteractiveMessage] Exception:', error);
+          return { success: false, error: error.message || 'Failed to send product message.' };
+      }
+  }
+
 
   async getCompanyIntegration(companyId: string): Promise<any> {
     try {

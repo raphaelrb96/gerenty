@@ -676,7 +676,7 @@ async function processIncomingMessage(
         let flowTriggered = false;
 
         // Se NÃO há fluxo ativo, verifica se a mensagem aciona um novo fluxo
-        if (!activeFlowId && message.type === 'text' && message.text?.body) {
+        if (!activeFlowId && message.text?.body) {
             const userMessage = message.text.body.toLowerCase().trim();
             const flowsSnapshot = await db.collection('flows')
                 .where('companyId', '==', companyId)
@@ -685,9 +685,16 @@ async function processIncomingMessage(
             
             for (const doc of flowsSnapshot.docs) {
                 const flow = { id: doc.id, ...doc.data() } as Flow;
-                const triggerNodes = flow.nodes.filter(n => n.data.type === 'keywordTrigger');
+                const triggerNode = flow.nodes.find(n => n.id === '1'); // O gatilho é sempre o nó 1
+                
+                if (!triggerNode) continue;
 
-                for (const triggerNode of triggerNodes) {
+                if (triggerNode.data.triggerType === 'product') {
+                     activeFlowId = doc.id;
+                     currentStepId = triggerNode.id; // Começa pelo nó de gatilho
+                     flowTriggered = true;
+                     break;
+                } else if (triggerNode.data.triggerType === 'keyword') {
                     const keywords = triggerNode?.data.triggerKeywords || [];
                     const isMatch = keywords.some((kw: { value: string, matchType: string }) => {
                         const keyword = kw.value.toLowerCase().trim();
@@ -695,16 +702,13 @@ async function processIncomingMessage(
                         if (kw.matchType === 'contains') return userMessage.includes(keyword);
                         return false;
                     });
-
                     if (isMatch) {
-                        functions.logger.info(`[Flow] Matched flow "${flow.name}" (ID: ${doc.id}) from trigger node ${triggerNode.id}`);
                         activeFlowId = doc.id;
                         currentStepId = triggerNode.id;
                         flowTriggered = true;
                         break; 
                     }
                 }
-                if (flowTriggered) break;
             }
         }
         
@@ -714,12 +718,9 @@ async function processIncomingMessage(
                 const activeFlow = { id: flowDoc.id, ...flowDoc.data() } as Flow;
                 
                 functions.logger.info(`[Flow] processFlowStep message "${JSON.stringify(message)}"`);
-
                 
-                // Se o fluxo acabou de ser acionado ou a conversa está esperando uma resposta
                 const nextStep = await processFlowStep(companyId, consumerRef, activeFlow, currentStepId, message);
                 
-                // Se o próximo passo for null, o fluxo terminou
                 if (!nextStep) {
                     activeFlowId = null;
                     currentStepId = null;
@@ -728,7 +729,6 @@ async function processIncomingMessage(
                     currentStepId = nextStep.id;
                 }
              } else {
-                 // O fluxo referenciado não existe mais, limpa o estado
                  activeFlowId = null;
                  currentStepId = null;
              }
@@ -821,8 +821,6 @@ async function processFlowStep(
     currentStepId: string,
     userMessage: IncomingMessage | any | null
 ): Promise<FlowNode | null> {
-
-    functions.logger.info(`[Flow] processFlowStep userMessage1 "${JSON.stringify(userMessage)}"`);
     
     let currentNode = flow.nodes.find(n => n.id === currentStepId);
 
@@ -831,12 +829,8 @@ async function processFlowStep(
         return null;
     }
 
-    functions.logger.info(`[Flow] processFlowStep userMessage2 "${JSON.stringify(userMessage)}"`);
-
-
     const startNodeTypes = ['keywordTrigger', 'captureData', 'waitForResponse'];
     if (startNodeTypes.includes(currentNode.data.type)) {
-         // If the current node is for capturing data, save the user's response before continuing
         if (currentNode.data.type === 'captureData' && userMessage?.text?.body) {
             const variableName = currentNode.data.captureVariable;
             if (variableName) {
@@ -849,114 +843,64 @@ async function processFlowStep(
         }
     }
 
-    functions.logger.info(`[Flow] processFlowStep userMessage3 "${JSON.stringify(userMessage)}"`);
-
     const userMessageSave = userMessage;
 
     // EXECUTION LOOP: Starts from the current node and executes until it finds a stopping point.
     while (currentNode) {
         functions.logger.info(`[Flow] Executing loop for node ${currentNode.id} of type ${currentNode.data.type}`);
-
         userMessage = userMessageSave;
-
-    functions.logger.info(`[Flow] processFlowStep userMessage4 "${JSON.stringify(userMessage)}"`);
-
         
         let nextNode: FlowNode | null = null;
         
         // --- 1. NEXT NODE DECISION LOGIC ---
         if (currentNode.data.type === 'conditional') {
             const conditions = currentNode.data.conditions || [];
-            functions.logger.info(`[Flow] conditions "${JSON.stringify(conditions)}"`);
-
             const consumerDoc = await consumerRef.get();
             const consumerData = consumerDoc.data() || {};
-
-            functions.logger.info(`[Flow] userMessage "${userMessage}"`);
-            functions.logger.info(`[Flow] userMessage.type "${userMessage?.type}"`);
-            functions.logger.info(`[Flow] userMessage.text?.body "${userMessage?.text?.body}"`);
-            functions.logger.info(`[Flow] userMessage.interactive?.type "${userMessage?.interactive?.type}"`);
-
             
             let userInput: string | undefined;
             if (userMessage?.type === 'text') {
-                functions.logger.info(`[Flow] userInput text`);
                 userInput = userMessage.text?.body.toLowerCase().trim();
             } else if (userMessage?.type === 'interactive' && userMessage.interactive.type === 'button_reply') {
-                functions.logger.info(`[Flow] userInput interactive button_reply`);
-                userInput = userMessage.interactive.button_reply.title.toLowerCase().trim(); // USE TITLE, NOT ID
+                userInput = userMessage.interactive.button_reply.id.toLowerCase().trim();
             } else if (userMessage?.type === 'interactive' && userMessage.interactive.type === 'list_reply') {
-                functions.logger.info(`[Flow] userInput interactive list_reply`);
-                userInput = userMessage.interactive.list_reply.title.toLowerCase().trim(); // USE TITLE, NOT ID
-                userInput = userMessage.text?.body?.toLowerCase().trim();
-            } else if (userMessage?.type === 'interactive' && userMessage.interactive?.type === 'button_reply' && userMessage.interactive.button_reply) {
-                userInput = userMessage.interactive.button_reply.title?.toLowerCase().trim();
-            } else if (userMessage?.type === 'interactive' && userMessage.interactive?.type === 'list_reply' && userMessage.interactive.list_reply) {
-                userInput = userMessage.interactive.list_reply.title?.toLowerCase().trim();
+                userInput = userMessage.interactive.list_reply.id.toLowerCase().trim();
             }
 
-            functions.logger.info(`[Flow] userInput "${userInput}"`);
-            
             let satisfiedEdgeId: string | null = null;
             for (const cond of conditions) {
                 let valueToCheck: any;
-                // Prioritize checking against the current user input if the condition is response-based
                 if (cond.type === 'response_text') {
                     valueToCheck = userInput;
                 } else if (cond.type === 'variable') {
                     valueToCheck = consumerData.flowData?.[cond.variable];
-                } else { // Fallback for other or undefined types
+                } else {
                     valueToCheck = userInput;
                 }
+                
+                if (valueToCheck === undefined) continue;
+
                 const comparisonValue = String(cond.value).toLowerCase().trim();
-                functions.logger.debug(`[Flow] Comparing: valueToCheck="${valueToCheck}", operator="${cond.operator}", comparisonValue="${comparisonValue}"`);
-                
-                if (valueToCheck === undefined)
-                    continue;
-                
                 let isMatch = false;
 
-                // Lógica de comparação aprimorada
-                if (cond.operator === '>' || cond.operator === '<') {
-                    const numValueToCheck = Number(valueToCheck);
-                    const numComparisonValue = Number(cond.value);
-                    if (!isNaN(numValueToCheck) && !isNaN(numComparisonValue)) {
-                        if (cond.operator === '>') isMatch = numValueToCheck > numComparisonValue;
-                        if (cond.operator === '<') isMatch = numValueToCheck < numComparisonValue;
-                    }
-                } else {
-                    const strValueToCheck = String(valueToCheck).toLowerCase().trim();
-                    const strComparisonValue = String(cond.value).toLowerCase().trim();
-                    if (cond.operator === '==') isMatch = strValueToCheck === strComparisonValue;
-                    if (cond.operator === '!=') isMatch = strValueToCheck !== strComparisonValue;
-                    if (cond.operator === 'contains') isMatch = strValueToCheck.includes(strComparisonValue);
-
-                    functions.logger.info(`[Flow] cond.value "${cond.value}"`);
-                    functions.logger.info(`[Flow] strValueToCheck "${strValueToCheck}"`);
-                    functions.logger.info(`[Flow] strComparisonValue "${strComparisonValue}"`);
-                    functions.logger.info(`[Flow] cond.operator "${cond.operator}"`);
-                    functions.logger.info(`[Flow] isMatch "${isMatch}"`);
+                switch (cond.operator) {
+                    case '==': isMatch = String(valueToCheck).toLowerCase().trim() === comparisonValue; break;
+                    case '!=': isMatch = String(valueToCheck).toLowerCase().trim() !== comparisonValue; break;
+                    case '>': isMatch = Number(valueToCheck) > Number(comparisonValue); break;
+                    case '<': isMatch = Number(valueToCheck) < Number(comparisonValue); break;
+                    case 'contains': isMatch = String(valueToCheck).toLowerCase().includes(comparisonValue); break;
+                    default: isMatch = false;
                 }
+                
+                functions.logger.debug(`[Flow] Condition Check: valueToCheck='${valueToCheck}', operator='${cond.operator}', comparisonValue='${comparisonValue}', isMatch=${isMatch}`);
 
                 if (isMatch) {
-                    functions.logger.info(`[Fluxo] Condição satisfeita: tipo=${cond.type}, operador=${cond.operator}, valor=${cond.value}, variável=${cond.variable || 'N/A'}`);
-                    // Encontra todas as conexões que saem do nó atual para depuração
-                    const outgoingEdges = flow.edges.filter(e => e.source === currentNode?.id);
-                    functions.logger.debug(`[Flow] Conexões de saída do nó ${currentNode?.id}:`, JSON.stringify(outgoingEdges.map(e => ({ target: e.target, handle: e.sourceHandle }))));
-                    functions.logger.debug(`[Fluxo] Conexões de saída do nó ${currentNode?.id}:`, JSON.stringify(outgoingEdges.map(e => ({ target: e.target, handle: e.sourceHandle }))));
-
-                    // Agora, encontra a conexão específica que corresponde à condição
-                    const satisfiedEdge = outgoingEdges.find(e => e.sourceHandle === cond.id);
+                    const satisfiedEdge = flow.edges.find(e => e.source === currentNode?.id && e.sourceHandle === cond.id);
                     if (satisfiedEdge) {
                         satisfiedEdgeId = satisfiedEdge.target;
-                        functions.logger.info(`[Fluxo] Conexão satisfeita encontrada para o handle ${cond.id}. Próximo nó: ${satisfiedEdgeId}`);
+                        functions.logger.info(`[Flow] Condition met for handle ${cond.id}. Next node: ${satisfiedEdgeId}`);
                         break;
-                    } else {
-                        functions.logger.warn(`[Fluxo] Condição satisfeita para o handle ${cond.id}, mas nenhuma conexão de saída foi encontrada a partir do nó ${currentNode?.id}. Isso pode indicar um fluxo mal configurado.`);
                     }
-                } else {
-                    functions.logger.debug(`[Fluxo] Condição não satisfeita para o handle ${cond.id}: tipo=${cond.type}, operador=${cond.operator}, valor=${cond.value}, variável=${cond.variable || 'N/A'}`);
-                    functions.logger.debug(`[Fluxo] Condição não satisfeita para o handle ${cond.id}.`);
                 }
             }
 
@@ -966,7 +910,7 @@ async function processFlowStep(
                 const elseTargetId = flow.edges.find(e => e.source === currentNode?.id && e.sourceHandle === 'else')?.target;
                 if (elseTargetId) {
                     nextNode = flow.nodes.find(n => n.id === elseTargetId) || null;
-                    functions.logger.info(`[Fluxo] Nenhuma condição foi satisfeita. Seguindo o caminho 'else'. Próximo nó: ${elseTargetId}`);
+                    functions.logger.info(`[Flow] No condition matched. Following 'else' path. Next node: ${elseTargetId}`);
                 }
             }
         } else if (currentNode.data.type === 'productSearch') {
@@ -984,22 +928,37 @@ async function processFlowStep(
                 if (!productSnapshot.empty) {
                     const product = { id: productSnapshot.docs[0].id, ...productSnapshot.docs[0].data() } as Product;
                     await consumerRef.update({ 'flowData.foundProduct': product });
-                    nextEdgeId = flow.edges.find(e => e.source === currentNode?.id && e.sourceHandle === 'found')?.target || null;
-                    functions.logger.info(`[Flow] Product found: ${product.name}. Following 'found' path.`);
+                    
+                    const phoneNumber = (await consumerRef.get()).data()?.phone;
+                    if(phoneNumber) {
+                        await whatsAppService.sendProductInteractiveMessage(companyId, phoneNumber, product, currentNode.data.actionButtons);
+                    }
+                    
+                    return currentNode;
                 }
             }
-        
-            if (!nextEdgeId) {
-                await consumerRef.update({ 'flowData.foundProduct': null });
-                nextEdgeId = flow.edges.find(e => e.source === currentNode?.id && e.sourceHandle === 'not-found')?.target || null;
-                functions.logger.info(`[Flow] Product not found. Following 'not-found' path.`);
-            }
-        
+            
+            // If product not found
+            nextEdgeId = flow.edges.find(e => e.source === currentNode?.id && e.sourceHandle === 'not-found')?.target || null;
+            functions.logger.info(`[Flow] Product not found. Following 'not-found' path.`);
             if (nextEdgeId) {
                 nextNode = flow.nodes.find(n => n.id === nextEdgeId) || null;
             }
-        }
-        else {
+
+        } else if (userMessage?.type === 'interactive' && userMessage.interactive.type === 'button_reply') {
+            const buttonId = userMessage.interactive.button_reply.id;
+            const nextEdge = flow.edges.find(e => e.source === currentNode?.id && e.sourceHandle === buttonId);
+            if (nextEdge) {
+                nextNode = flow.nodes.find(n => n.id === nextEdge.target) || null;
+            } else {
+                // If no edge matches the button, check for a default edge
+                const defaultEdge = flow.edges.find(e => e.source === currentNode?.id && !e.sourceHandle);
+                if (defaultEdge) {
+                    nextNode = flow.nodes.find(n => n.id === defaultEdge.target) || null;
+                }
+            }
+
+        } else {
             // For all other nodes (including triggers and actions)
             const nextEdge = flow.edges.find(e => e.source === currentNode?.id);
             if (nextEdge) {
@@ -1240,5 +1199,7 @@ function sanitizeMetaPatterns(text: string): string {
     // Replace problematic patterns like [[...]] but keep valid template variables like {{1}}
     return text.replace(/\[\[.*?\]\]/g, '').trim();
 }
+
+    
 
     
