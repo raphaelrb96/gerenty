@@ -4,7 +4,6 @@ import { httpsCallable } from 'firebase/functions';
 import { functions } from '@/lib/firebase';
 import { WhatsAppCredentials, TestMessageResponse, SendMessagePayload } from '@/lib/types';
 
-// Atualiza as referências para os novos nomes de endpoint das Cloud Functions
 const validateAndSaveCredentialsCallable = httpsCallable<WhatsAppCredentials & { companyId: string }, {
   success: boolean;
   message: string;
@@ -12,13 +11,14 @@ const validateAndSaveCredentialsCallable = httpsCallable<WhatsAppCredentials & {
   companyId: string;
 }>(functions, 'apiValidateAndSaveCredentials');
 
-const sendTestMessageCallable = httpsCallable<{
+const sendMessageCallable = httpsCallable<{
   phoneNumber: string;
   message?: string;
   type?: 'text' | 'template';
   templateName?: string;
+  content?: any; 
   companyId: string;
-}, TestMessageResponse>(functions, 'sendTestMessage');
+}, TestMessageResponse>(functions, 'sendMessage');
 
 const checkWhatsAppIntegrationCallable = httpsCallable<{
   companyId: string;
@@ -26,7 +26,7 @@ const checkWhatsAppIntegrationCallable = httpsCallable<{
   exists: boolean;
   status?: string;
   webhookUrl?: string;
-}>(functions, 'checkWhatsAppIntegration'); // Este nome não mudou no backend, mas mantemos o padrão 'api' na chamada para consistência.
+}>(functions, 'checkWhatsAppIntegration');
 
 const getWhatsAppIntegrationStatusCallable = httpsCallable<{
   companyId: string;
@@ -37,6 +37,14 @@ const getWhatsAppIntegrationStatusCallable = httpsCallable<{
   whatsAppId?: string;
   phoneNumberId?: string;
 }>(functions, 'getWhatsAppIntegrationStatus');
+
+const syncWhatsAppTemplatesCallable = httpsCallable<{
+  companyId: string;
+}, {
+  success: boolean;
+  added: number;
+  updated: number;
+}>(functions, 'apiSyncWhatsAppTemplates');
 
 export const integrationService = {
   async saveWhatsAppCredentials(companyId: string, credentials: WhatsAppCredentials) {
@@ -111,10 +119,20 @@ export const integrationService = {
     }
   },
 
+  async syncWhatsAppTemplates(companyId: string) {
+    try {
+      const result = await syncWhatsAppTemplatesCallable({ companyId });
+      return result.data;
+    } catch (error: any) {
+      console.error('Error syncing WhatsApp templates:', error);
+      throw new Error(error.message || 'Erro ao sincronizar templates');
+    }
+  }
 };
 
 // Aliases para compatibilidade com o código existente
 export const saveWhatsAppCredentials = integrationService.saveWhatsAppCredentials;
-export const sendTestMessage = integrationService.sendTestMessage;
 export const checkWhatsAppIntegration = integrationService.checkWhatsAppIntegration;
 export const getWhatsAppIntegrationStatus = integrationService.getWhatsAppIntegrationStatus;
+export const syncWhatsAppTemplates = integrationService.syncWhatsAppTemplates;
+export const sendMessage = integrationService.sendMessage;
