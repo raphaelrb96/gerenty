@@ -546,15 +546,13 @@ export class WhatsAppService {
 
   private async saveOutboundMessage(companyId: string, payload: SendMessagePayload, messageId: string): Promise<void> {
     try {
-      const consumerQuery = await this.db.collection('companies')
-        .doc(companyId)
-        .collection('consumers')
+      const consumerQuery = await this.db.collection('customers') // Changed from 'consumers'
         .where('phone', '==', payload.phoneNumber)
         .limit(1)
         .get();
 
       if (consumerQuery.empty) {
-        functions.logger.warn(`[saveOutboundMessage] Consumer not found for phone ${payload.phoneNumber}. Cannot save message.`);
+        functions.logger.warn(`[saveOutboundMessage] Customer not found for phone ${payload.phoneNumber}. Cannot save message.`);
         return;
       }
 
@@ -569,7 +567,8 @@ export class WhatsAppService {
 
       let conversationId: string;
       const now = admin.firestore.Timestamp.now();
-      const lastMessageText = payload.message || `[Template: ${payload.templateName}]`;
+      const lastMessageText = payload.message || (payload.templateName ? `[Template: ${payload.templateName}]` : '[Mensagem Interativa]');
+
 
       if (conversationQuery.empty) {
         const conversationRef = await this.db.collection('companies')
@@ -626,3 +625,4 @@ export class WhatsAppService {
     }
   }
 }
+

@@ -134,7 +134,7 @@ export async function addOrder(orderData: Omit<Order, 'id' | 'createdAt' | 'upda
 }
 
 // Update an existing order (e.g., to change its status)
-export async function updateOrder(orderId: string, dataToUpdate: Partial<Order>): Promise<void> {
+export async function updateOrder(orderId: string, dataToUpdate: Partial<Omit<Order, 'id'>>): Promise<void> {
     try {
         const orderDoc = doc(db, "orders", orderId);
         await updateDoc(orderDoc, {

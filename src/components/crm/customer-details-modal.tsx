@@ -38,6 +38,8 @@ function OrderHistory({ customer }: { customer: Customer }) {
         }
     }, [customer, companyIds]);
 
+    const totalSpent = orders.reduce((sum, order) => sum + order.total, 0);
+
     if (loading) {
         return <p className="text-sm text-muted-foreground">Carregando histórico...</p>
     }
@@ -48,8 +50,12 @@ function OrderHistory({ customer }: { customer: Customer }) {
 
     return (
         <div className="space-y-2">
+            <div className="flex justify-between items-center text-sm p-2 rounded-md bg-muted/50">
+                <span className="font-medium text-muted-foreground">Total Gasto:</span>
+                <span className="font-bold text-base">{formatCurrency(totalSpent)}</span>
+            </div>
             {orders.map(order => (
-                <div key={order.id} className="flex justify-between items-center text-sm p-2 rounded-md bg-muted/50">
+                <div key={order.id} className="flex justify-between items-center text-sm p-2 rounded-md hover:bg-muted/50">
                     <div>
                         <p className="font-medium">Pedido #{order.id.substring(0, 7)}</p>
                         <p className="text-xs text-muted-foreground">{new Date(order.createdAt as string).toLocaleDateString()}</p>

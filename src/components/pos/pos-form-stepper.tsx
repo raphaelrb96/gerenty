@@ -349,7 +349,7 @@ export function PosFormStepper({ products, cart, onAddToCart, onUpdateCartQuanti
             phone: values.customerPhone, 
             document: values.customerDocument 
         },
-        items: cart.map(({...item}) => item),
+        items: cart.map(({imageUrl, ...item}) => item),
         status: orderStatus,
         payment: { 
             method: values.paymentMethod as PaymentMethod, 

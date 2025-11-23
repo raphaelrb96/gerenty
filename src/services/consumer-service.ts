@@ -2,9 +2,9 @@
 
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where, doc, getDoc, onSnapshot, Unsubscribe } from "firebase/firestore";
-import type { Consumer } from "@/lib/types";
+import type { Customer as Consumer } from "@/lib/types";
 
-const getConsumersCollection = (companyId: string) => collection(db, `companies/${companyId}/consumers`);
+const getConsumersCollection = (companyId: string) => collection(db, `customers`);
 
 const convertConsumerTimestamps = (data: any): Consumer => {
     const consumer = { id: data.id, ...data };
@@ -16,10 +16,11 @@ const convertConsumerTimestamps = (data: any): Consumer => {
     return consumer as Consumer;
 }
 
-export function getConsumersByCompany(companyId: string, callback: (consumers: Consumer[]) => void): Unsubscribe {
+export function getConsumersByCompany(companyId: string, ownerId: string, callback: (consumers: Consumer[]) => void): Unsubscribe {
     const consumersCollection = getConsumersCollection(companyId);
+    const q = query(consumersCollection, where("ownerId", "==", ownerId));
     
-    const unsubscribe = onSnapshot(consumersCollection, (querySnapshot) => {
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const consumers: Consumer[] = [];
         querySnapshot.forEach((doc) => {
             consumers.push(convertConsumerTimestamps({ id: doc.id, ...doc.data() }));
@@ -33,9 +34,9 @@ export function getConsumersByCompany(companyId: string, callback: (consumers: C
     return unsubscribe;
 }
 
-export async function getConsumerById(companyId: string, consumerId: string): Promise<Consumer | null> {
+export async function getConsumerById(consumerId: string): Promise<Consumer | null> {
     try {
-        const consumerDocRef = doc(db, `companies/${companyId}/consumers`, consumerId);
+        const consumerDocRef = doc(db, `customers`, consumerId);
         const consumerDoc = await getDoc(consumerDocRef);
 
         if (!consumerDoc.exists()) {
