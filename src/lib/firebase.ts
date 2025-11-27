@@ -1,3 +1,4 @@
+
 // Example file: lib/firebase/config.js or similar
 
 import { getFirestore } from "firebase/firestore";
@@ -17,12 +18,16 @@ const firebaseConfig = {
 
 // Initialize Firebase
 let app;
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
+// Check if all necessary environment variables are set
+if (firebaseConfig.apiKey) {
+    if (!getApps().length) {
+      app = initializeApp(firebaseConfig);
+    } else {
+      app = getApps()[0];
+    }
 } else {
-  app = getApps()[0];
+    console.error("Firebase config is missing or incomplete. Please check your .env file.");
 }
-
 
 
 const auth = getAuth(app);
