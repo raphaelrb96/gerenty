@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/common/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Shield, ArrowRight, Puzzle, XCircle, AlertCircle } from "lucide-react";
+import { CheckCircle, Shield, ArrowRight, Puzzle, XCircle, AlertCircle, ShoppingCart } from "lucide-react";
 import Image from "next/image";
 import { usePermissions } from "@/context/permissions-context";
 import { useCompany } from "@/context/company-context";
@@ -133,6 +133,34 @@ const WhatsAppIntegrationCard = ({ status }: { status: WhatsAppIntegration['stat
     );
 };
 
+const ExternalSaaSIntegrationCard = () => {
+  // No futuro, o status virá do banco de dados
+  const status = { isConnected: false };
+
+  return (
+    <Card className="flex flex-col md:flex-row items-center justify-between p-6 transition-transform transform hover:-translate-y-1 hover:shadow-lg">
+       <div className="flex items-center gap-6">
+          <div className="relative w-16 h-16 bg-muted rounded-lg flex items-center justify-center">
+              <ShoppingCart className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <div>
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                  Gestor de Lojas Externo
+                  <span className="flex items-center gap-1 text-sm font-medium text-muted-foreground">
+                    {status.isConnected ? <CheckCircle className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4" />}
+                    {status.isConnected ? 'Conectado' : 'Desconectado'}
+                  </span>
+              </h3>
+              <p className="text-muted-foreground">Sincronize produtos, revendedores e lojas do seu outro SaaS.</p>
+          </div>
+       </div>
+       <Button disabled className="mt-4 md:mt-0">
+          Configurar (em breve)
+       </Button>
+    </Card>
+  );
+};
+
 
 const AvailableIntegrationCard = ({ integration }: { integration: Integration }) => (
   <Card className="flex flex-col h-full transition-shadow hover:shadow-md">
@@ -192,7 +220,10 @@ export default function IntegrationsPage() {
       <div className="space-y-8">
         <div>
           <h2 className="text-2xl font-bold font-headline mb-4">Integrações Disponíveis</h2>
-          <WhatsAppIntegrationCard status={whatsAppStatus} />
+          <div className="space-y-4">
+            <WhatsAppIntegrationCard status={whatsAppStatus} />
+            <ExternalSaaSIntegrationCard />
+          </div>
         </div>
 
         <div>

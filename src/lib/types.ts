@@ -1,4 +1,5 @@
 
+
 import type { FieldValue, Timestamp } from "firebase/firestore";
 import type { Node, Edge } from "reactflow";
 
@@ -1041,4 +1042,12 @@ export interface WhatsAppApiResponse {
 export type CallableRequest<T = any> = {
     auth?: { uid: string; token: string; };
     data: T;
+};
+
+export type Reseller = {
+    id: string;
+    name: string;
+    email: string;
+    storeId: string;
+    totalSales: number;
 };
