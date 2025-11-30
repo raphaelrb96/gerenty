@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -133,7 +132,7 @@ const WhatsAppIntegrationCard = ({ status }: { status: WhatsAppIntegration['stat
     );
 };
 
-const ExternalSaaSIntegrationCard = () => {
+const RevendyIntegrationCard = () => {
   // No futuro, o status virá do banco de dados
   const status = { isConnected: false };
 
@@ -145,7 +144,7 @@ const ExternalSaaSIntegrationCard = () => {
           </div>
           <div>
               <h3 className="text-xl font-bold flex items-center gap-2">
-                  Gestor de Lojas Externo
+                  Revendy
                   <span className="flex items-center gap-1 text-sm font-medium text-muted-foreground">
                     {status.isConnected ? <CheckCircle className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4" />}
                     {status.isConnected ? 'Conectado' : 'Desconectado'}
@@ -154,9 +153,12 @@ const ExternalSaaSIntegrationCard = () => {
               <p className="text-muted-foreground">Sincronize produtos, revendedores e lojas do seu outro SaaS.</p>
           </div>
        </div>
-       <Button disabled className="mt-4 md:mt-0">
-          Configurar (em breve)
-       </Button>
+       <Button asChild className="mt-4 md:mt-0">
+            <Link href={'/dashboard/integrations/revendy'}>
+                Configurar
+                <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+         </Button>
     </Card>
   );
 };
@@ -222,7 +224,7 @@ export default function IntegrationsPage() {
           <h2 className="text-2xl font-bold font-headline mb-4">Integrações Disponíveis</h2>
           <div className="space-y-4">
             <WhatsAppIntegrationCard status={whatsAppStatus} />
-            <ExternalSaaSIntegrationCard />
+            <RevendyIntegrationCard />
           </div>
         </div>
 
