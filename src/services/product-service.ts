@@ -2,8 +2,9 @@
 'use server';
 
 import { db } from "@/lib/firebase";
-import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, query, where, serverTimestamp, Timestamp } from "firebase/firestore";
+import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, query, where, serverTimestamp, Timestamp, writeBatch } from "firebase/firestore";
 import type { Product } from "@/lib/types";
+import { getRevendyApiKey, getRevendyProducts } from "./revendy-service";
 
 const productsCollection = collection(db, "products");
 
@@ -15,6 +16,44 @@ const convertProductTimestamps = (product: any) => {
         publishedAt: product.publishedAt?.toDate ? product.publishedAt.toDate().toISOString() : undefined,
     };
 };
+
+export async function syncProductsWithRevendy(companyId: string, ownerId: string): Promise<{ synced: number }> {
+    const apiKey = await getRevendyApiKey(companyId);
+    if (!apiKey) {
+        throw new Error("API Key do Revendy não configurada para esta empresa.");
+    }
+
+    const revendyProducts = await getRevendyProducts(apiKey);
+    
+    if (revendyProducts.length === 0) {
+        return { synced: 0 };
+    }
+
+    const gerentyProductsQuery = query(productsCollection, where("companyIds", "array-contains", companyId));
+    const gerentySnapshot = await getDocs(gerentyProductsQuery);
+    const existingGerentyProducts = gerentySnapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as Product) }));
+
+    const batch = writeBatch(db);
+
+    for (const revendyProduct of revendyProducts) {
+        // Usa o SKU do Revendy como identificador único
+        const existingProduct = existingGerentyProducts.find(p => p.sku === revendyProduct.sku);
+
+        if (existingProduct) {
+            // Se o produto já existe, atualiza
+            const productRef = doc(db, "products", existingProduct.id);
+            batch.update(productRef, { ...revendyProduct, ownerId, updatedAt: serverTimestamp() });
+        } else {
+            // Se não existe, cria um novo
+            const newProductRef = doc(productsCollection);
+            batch.set(newProductRef, { ...revendyProduct, ownerId, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+        }
+    }
+
+    await batch.commit();
+
+    return { synced: revendyProducts.length };
+}
 
 
 export async function addProduct(productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<Product> {

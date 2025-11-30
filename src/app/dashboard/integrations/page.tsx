@@ -133,8 +133,20 @@ const WhatsAppIntegrationCard = ({ status }: { status: WhatsAppIntegration['stat
 };
 
 const RevendyIntegrationCard = () => {
-  // No futuro, o status virá do banco de dados
-  const status = { isConnected: false };
+  const { activeCompany } = useCompany();
+  const [isConnected, setIsConnected] = useState(false);
+
+  useEffect(() => {
+    const checkConnection = async () => {
+      if (activeCompany) {
+        const apiKey = await getRevendyApiKey(activeCompany.id);
+        setIsConnected(!!apiKey);
+      } else {
+        setIsConnected(false);
+      }
+    };
+    checkConnection();
+  }, [activeCompany]);
 
   return (
     <Card className="flex flex-col md:flex-row items-center justify-between p-6 transition-transform transform hover:-translate-y-1 hover:shadow-lg">
@@ -146,8 +158,8 @@ const RevendyIntegrationCard = () => {
               <h3 className="text-xl font-bold flex items-center gap-2">
                   Revendy
                   <span className="flex items-center gap-1 text-sm font-medium text-muted-foreground">
-                    {status.isConnected ? <CheckCircle className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4" />}
-                    {status.isConnected ? 'Conectado' : 'Desconectado'}
+                    {isConnected ? <CheckCircle className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4" />}
+                    {isConnected ? 'Conectado' : 'Desconectado'}
                   </span>
               </h3>
               <p className="text-muted-foreground">Sincronize produtos, revendedores e lojas do seu outro SaaS.</p>

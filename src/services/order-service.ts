@@ -4,8 +4,10 @@
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where, addDoc, serverTimestamp, doc, updateDoc, Timestamp, and, getDoc } from "firebase/firestore";
 import type { Order, OrderStatus } from "@/lib/types";
+import { getRevendyApiKey, pushStockLevelToRevendy } from "./revendy-service"; // Importar pushStockLevelToRevendy
 
 const ordersCollection = collection(db, "orders");
+const productsCollection = collection(db, "products");
 
 const convertOrderTimestamps = (data: any): Order => {
     const order = { id: data.id, ...data };
@@ -121,6 +123,23 @@ export async function addOrder(orderData: Omit<Order, 'id' | 'createdAt' | 'upda
         // Fetch the newly created document to get the server-generated timestamps
         const newDocSnap = await getDoc(docRef);
         const newDocData = newDocSnap.data();
+
+        // ** INICIO DA INTEGRAÇÃO - ATUALIZAÇÃO DE ESTOQUE **
+        const apiKey = await getRevendyApiKey(orderData.companyId);
+        if (apiKey) {
+            for (const item of orderData.items) {
+                const productRef = doc(productsCollection, item.productId);
+                const productSnap = await getDoc(productRef);
+                if (productSnap.exists()) {
+                    const product = productSnap.data();
+                    if (typeof product.availableStock === 'number' && product.sku) {
+                        const newStock = product.availableStock - item.quantity;
+                        await pushStockLevelToRevendy(apiKey, product.sku, newStock);
+                    }
+                }
+            }
+        }
+        // ** FIM DA INTEGRAÇÃO **
 
         return convertOrderTimestamps({
             id: docRef.id,
