@@ -10,6 +10,8 @@ import { mapRevendyToGerentyProduct } from '@/mappers/revendy-mapper';
 import { db } from "@/lib/firebase";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 
+// URL base da API do Revendy. Em um cenário real, isso viria de uma variável de ambiente.
+const REVENDY_API_BASE_URL = 'https://api.revendy.com/v1';
 
 /**
  * Salva a chave de API do Revendy de forma segura para uma empresa.
@@ -46,28 +48,37 @@ export async function getRevendyApiKey(companyId: string): Promise<string | unde
  * @returns Uma promessa que resolve para uma lista de produtos no formato do Gerenty.
  */
 export async function getRevendyProducts(apiKey: string): Promise<GerentyProduct[]> {
-  console.log('Buscando produtos do Revendy com a chave:', apiKey ? 'CHAVE_FORNECIDA' : 'SEM_CHAVE');
+  console.log('Buscando produtos do Revendy...');
   
   if (!apiKey) {
     throw new Error("API Key do Revendy não fornecida.");
   }
   
-  // Simula uma chamada de rede para a API do Revendy
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  // Exemplo de retorno da API do Revendy
-  const MOCK_REVERY_PRODUCTS: RevendyProduct[] = [
-    { id: 'rev-prod-001', storeId: 'revendy-store-1', ownerUid: 'revendy-owner-1', name: 'Camiseta Revendy Modelo A', description: 'Descrição da camiseta A vinda do Revendy.', category: 'Roupas', price: 120, commission: { type: 'percentage', value: 10 }, productType: 'physical', visibility: 'public', isAvailable: true, stock: 50, createdAt: new Date(), updatedAt: new Date() },
-    { id: 'rev-prod-002', storeId: 'revendy-store-1', ownerUid: 'revendy-owner-1', name: 'Caneca Exclusiva Revendy', description: 'Descrição da caneca B vinda do Revendy.', category: 'Acessórios', price: 45, commission: { type: 'fixed', value: 5 }, productType: 'physical', visibility: 'public', isAvailable: true, stock: 100, createdAt: new Date(), updatedAt: new Date() },
-  ];
+  try {
+    const response = await fetch(`${REVENDY_API_BASE_URL}/products`, {
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+    });
 
-  // Simula a validação da chave de API
-  if (apiKey !== "revendy_api_key_valid") {
-      throw new Error("Chave de API do Revendy inválida.");
+    if (response.status === 401) {
+        throw new Error("Chave de API do Revendy inválida ou não autorizada.");
+    }
+    if (!response.ok) {
+        throw new Error(`Erro na API do Revendy: ${response.statusText}`);
+    }
+
+    const revendyProducts: RevendyProduct[] = await response.json();
+    
+    // Mapeia os produtos do Revendy para o formato do Gerenty
+    return revendyProducts.map(mapRevendyToGerentyProduct);
+
+  } catch (error: any) {
+      console.error("Erro ao buscar produtos do Revendy:", error);
+      // Repassa o erro para ser tratado pela UI
+      throw error;
   }
-
-  // Mapeia os produtos do Revendy para o formato do Gerenty
-  return MOCK_REVERY_PRODUCTS.map(mapRevendyToGerentyProduct);
 }
 
 
@@ -81,9 +92,21 @@ export async function getRevendyProducts(apiKey: string): Promise<GerentyProduct
  */
 export async function pushStockLevelToRevendy(apiKey: string, productSku: string, stockLevel: number): Promise<{ success: boolean }> {
   console.log(`Enviando atualização de estoque para Revendy. Produto SKU ${productSku}: ${stockLevel}`);
-  // Lógica da chamada `fetch` para a API do Revendy viria aqui
-  // Ex: await fetch(`https://api.revendy.com/v1/products/${productSku}/stock`, { method: 'POST', body: JSON.stringify({ stock: stockLevel }), headers: {'Authorization': `Bearer ${apiKey}`} })
-  await new Promise(resolve => setTimeout(resolve, 300));
+  
+  const response = await fetch(`${REVENDY_API_BASE_URL}/products/${productSku}/stock`, {
+      method: 'POST', // ou 'PUT' / 'PATCH' dependendo da API do Revendy
+      headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ stock: stockLevel }),
+  });
+
+  if (!response.ok) {
+      console.error("Falha ao atualizar estoque no Revendy:", await response.text());
+      return { success: false };
+  }
+  
   console.log("Estoque atualizado no Revendy com sucesso.");
   return { success: true };
 }
@@ -92,13 +115,25 @@ export async function pushStockLevelToRevendy(apiKey: string, productSku: string
  * Envia uma atualização de status de pedido do Gerenty para o Revendy.
  * @param apiKey A chave de API para autenticação no Revendy.
  * @param orderId O ID do pedido no Revendy.
- * @param status O novo status do pedido (ex: 'em_transito', 'entregue').
+ * @param status O novo status do pedido (ex: 'out_for_delivery', 'delivered').
  */
 export async function pushOrderStatusToRevendy(apiKey: string, orderId: string, status: OrderStatus): Promise<{ success: boolean }> {
   console.log(`Enviando atualização de status de pedido para Revendy. Pedido ${orderId}: ${status}`);
-  // Lógica da chamada `fetch` para a API do Revendy viria aqui
-  // Ex: await fetch(`https://api.revendy.com/v1/orders/${orderId}/status`, { method: 'POST', body: JSON.stringify({ status }), headers: {'Authorization': `Bearer ${apiKey}`} })
-  await new Promise(resolve => setTimeout(resolve, 300));
+
+  const response = await fetch(`${REVENDY_API_BASE_URL}/orders/${orderId}/status`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ status: status }),
+  });
+
+   if (!response.ok) {
+      console.error("Falha ao atualizar status do pedido no Revendy:", await response.text());
+      return { success: false };
+  }
+
   console.log("Status do pedido atualizado no Revendy com sucesso.");
   return { success: true };
 }
