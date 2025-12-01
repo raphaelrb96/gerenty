@@ -1,17 +1,16 @@
 
-// Estrutura de dados do Revendy
-import type { DocumentData, DocumentReference, Timestamp } from "firebase/firestore";
+import type { DocumentData, Timestamp } from "firebase/firestore";
 
-export interface Product extends DocumentData {
+export interface RevendyProduct extends DocumentData {
   id: string;
   storeId: string;
   ownerUid: string;
   name: string;
   description: string;
-  isAvailable?: boolean; // New field
+  isAvailable?: boolean;
   category: string;
   price: number;
-  cmv?: number; // Custo da Mercadoria Vendida
+  cmv?: number;
   impostosNacionais?: number;
   logisticaEntrega?: number;
   custosFixos?: number;
@@ -29,5 +28,5 @@ export interface Product extends DocumentData {
   updatedAt?: Timestamp | Date;
   isBoosted?: boolean;
   boostExpiresAt?: Timestamp;
-  sku?: string; // Adicionado para servir como identificador único
+  sku?: string;
 }

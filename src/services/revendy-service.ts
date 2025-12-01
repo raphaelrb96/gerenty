@@ -4,14 +4,14 @@
 // Este serviço é responsável por se comunicar com a API do Revendy.
 // Ele estabelece as funções para uma integração mútua.
 
-import type { Product as GerentyProduct, OrderStatus } from '@/lib/types';
-import type { Product as RevendyProduct } from '@/lib/revendy-types';
+import type { GerentyProduct, OrderStatus } from '@/lib/types';
+import type { RevendyProduct } from '@/lib/revendy-types';
 import { mapRevendyToGerentyProduct } from '@/mappers/revendy-mapper';
 import { db } from "@/lib/firebase";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 
-// URL base da API do Revendy. Em um cenário real, isso viria de uma variável de ambiente.
-const REVENDY_API_BASE_URL = 'https://api.revendy.com/v1';
+// URL base da API do Revendy.
+const REVENDY_API_BASE_URL = 'https://www.revendy.com.br/api';
 
 /**
  * Salva a chave de API do Revendy de forma segura para uma empresa.
@@ -41,6 +41,27 @@ export async function getRevendyApiKey(companyId: string): Promise<string | unde
 
 
 // --- Funções de PUXAR dados do Revendy (Revendy -> Gerenty) ---
+
+/**
+ * Testa a conexão com a API do Revendy.
+ * @param apiKey - A chave de API para autenticação.
+ */
+export async function testRevendyConnection(apiKey: string): Promise<void> {
+    if (!apiKey) {
+        throw new Error("API Key do Revendy não fornecida.");
+    }
+    const response = await fetch(`${REVENDY_API_BASE_URL}/test`, {
+        method: 'GET',
+        headers: { 'Authorization': `Bearer ${apiKey}` }
+    });
+    if (!response.ok) {
+        if (response.status === 401) {
+            throw new Error("Chave de API do Revendy inválida ou não autorizada.");
+        }
+        throw new Error(`Erro na API do Revendy: ${response.statusText}`);
+    }
+}
+
 
 /**
  * Busca a lista completa de produtos da API do Revendy e os mapeia para o formato do Gerenty.
@@ -94,7 +115,7 @@ export async function pushStockLevelToRevendy(apiKey: string, productSku: string
   console.log(`Enviando atualização de estoque para Revendy. Produto SKU ${productSku}: ${stockLevel}`);
   
   const response = await fetch(`${REVENDY_API_BASE_URL}/products/${productSku}/stock`, {
-      method: 'POST', // ou 'PUT' / 'PATCH' dependendo da API do Revendy
+      method: 'POST',
       headers: {
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',

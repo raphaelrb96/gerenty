@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { getRevendyProducts, saveRevendyConfig, getRevendyApiKey } from "@/services/revendy-service";
+import { saveRevendyConfig, getRevendyApiKey, testRevendyConnection } from "@/services/revendy-service";
 import { syncProductsWithRevendy } from "@/services/product-service";
 import { useState, useEffect } from "react";
 import { useCompany } from "@/context/company-context";
@@ -67,7 +67,7 @@ export default function RevendyIntegrationPage() {
         }
         setIsTesting(true);
         try {
-            await getRevendyProducts(apiKey);
+            await testRevendyConnection(apiKey);
             toast({ title: "Conexão bem-sucedida!", description: "A chave de API é válida e a comunicação foi estabelecida." });
         } catch (e: any) {
             toast({ variant: "destructive", title: "Falha na conexão.", description: e.message || "Verifique sua chave de API." });
@@ -132,7 +132,7 @@ export default function RevendyIntegrationPage() {
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent className="max-w-xs">
-                                    <p>Este botão simula uma chamada à API do Revendy usando a chave fornecida. Ele verifica se a chave é válida e se é possível obter dados (neste caso, a lista de produtos) como resposta.</p>
+                                    <p>Este botão faz uma chamada real à API do Revendy (`/api/test`) usando a chave fornecida para verificar se ela é válida.</p>
                                 </TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
