@@ -11,7 +11,14 @@ import { getRevendyProducts, saveRevendyConfig, getRevendyApiKey } from "@/servi
 import { syncProductsWithRevendy } from "@/services/product-service";
 import { useState, useEffect } from "react";
 import { useCompany } from "@/context/company-context";
-import { Loader2 } from "lucide-react";
+import { Loader2, Info } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
 
 export default function RevendyIntegrationPage() {
     const { toast } = useToast();
@@ -108,7 +115,7 @@ export default function RevendyIntegrationPage() {
                             onChange={(e) => setApiKey(e.target.value)}
                         />
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex items-center gap-2">
                         <Button onClick={handleSave} disabled={isSaving || !apiKey}>
                             {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Salvar Chave
@@ -117,6 +124,18 @@ export default function RevendyIntegrationPage() {
                             {isTesting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Testar Conexão
                         </Button>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon">
+                                        <Info className="h-4 w-4 text-muted-foreground" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                    <p>Este botão simula uma chamada à API do Revendy usando a chave fornecida. Ele verifica se a chave é válida e se é possível obter dados (neste caso, a lista de produtos) como resposta.</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                     </div>
                 </CardContent>
             </Card>
