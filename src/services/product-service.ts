@@ -5,6 +5,7 @@ import { db } from "@/lib/firebase";
 import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, query, where, serverTimestamp, Timestamp, writeBatch } from "firebase/firestore";
 import type { Product } from "@/lib/types";
 import { getRevendyApiKey, getRevendyProducts } from "./revendy-service";
+import { mapRevendyToGerentyProduct } from "@/mappers/revendy-mapper";
 
 const productsCollection = collection(db, "products");
 
@@ -23,7 +24,7 @@ export async function syncProductsWithRevendy(companyId: string, ownerId: string
         throw new Error("API Key do Revendy não configurada para esta empresa.");
     }
 
-    const revendyProducts = await getRevendyProducts(apiKey);
+    const revendyGerentyProducts = await getRevendyProducts(apiKey);
     
     if (revendyProducts.length === 0) {
         return { synced: 0 };
@@ -35,7 +36,7 @@ export async function syncProductsWithRevendy(companyId: string, ownerId: string
 
     const batch = writeBatch(db);
 
-    for (const revendyProduct of revendyProducts) {
+    for (const revendyProduct of revendyGerentyProducts) {
         // Usa o SKU do Revendy como identificador único
         const existingProduct = existingGerentyProducts.find(p => p.sku === revendyProduct.sku);
 

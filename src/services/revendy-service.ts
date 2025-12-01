@@ -61,6 +61,7 @@ export async function getRevendyProducts(apiKey: string): Promise<GerentyProduct
     { id: 'rev-prod-002', storeId: 'revendy-store-1', ownerUid: 'revendy-owner-1', name: 'Caneca Exclusiva Revendy', description: 'Descrição da caneca B vinda do Revendy.', category: 'Acessórios', price: 45, commission: { type: 'fixed', value: 5 }, productType: 'physical', visibility: 'public', isAvailable: true, stock: 100, createdAt: new Date(), updatedAt: new Date() },
   ];
 
+  // Simula a validação da chave de API
   if (apiKey !== "revendy_api_key_valid") {
       throw new Error("Chave de API do Revendy inválida.");
   }

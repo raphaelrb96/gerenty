@@ -29,4 +29,5 @@ export interface Product extends DocumentData {
   updatedAt?: Timestamp | Date;
   isBoosted?: boolean;
   boostExpiresAt?: Timestamp;
+  sku?: string; // Adicionado para servir como identificador único
 }
