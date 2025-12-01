@@ -14,6 +14,7 @@ import Link from "next/link";
 import { onSnapshot, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { WhatsAppIntegration } from "@/lib/types";
+import { getRevendyApiKey } from "@/services/revendy-service";
 
 type Integration = {
   name: string;
