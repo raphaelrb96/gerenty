@@ -7,10 +7,11 @@ import type { RevendyProduct } from '@/lib/revendy-types';
  * @param revendyProduct O produto vindo da API do Revendy.
  * @returns O produto no formato esperado pelo Gerenty.
  */
-export function mapRevendyToGerentyProduct(revendyProduct: RevendyProduct): Omit<GerentyProduct, 'id'> {
+export function mapRevendyToGerentyProduct(revendyProduct: RevendyProduct): GerentyProduct {
     
     // Constrói o objeto base no formato do Gerenty
-    const gerentyProduct: Omit<GerentyProduct, 'id'> = {
+    const gerentyProduct: GerentyProduct = {
+        id: '',
         ownerId: revendyProduct.ownerUid,
         companyIds: [revendyProduct.storeId],
         name: revendyProduct.name,

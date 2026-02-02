@@ -12,7 +12,7 @@ import { doc, setDoc, getDoc } from "firebase/firestore";
 import axios, { AxiosRequestConfig } from 'axios';
 import type { Product as GerentyProduct } from '@/lib/types';
 
-const REVENDY_API_BASE_URL = 'https://www.revendy.com.br/api';
+const REVENDY_API_BASE_URL = 'https://revendy.com.br/api';
 
 /**
  * Função interna que executa a chamada fetch no lado do servidor.
@@ -45,11 +45,11 @@ async function serverFetch(apiKey: string, endpoint: string, options: AxiosReque
             }
             const errorBody = typeof error.response.data === 'string' ? error.response.data : JSON.stringify(error.response.data);
             console.error(`Erro na API do Revendy (${error.response.status}): ${errorBody}`);
-            throw new Error(`Erro na API do Revendy: ${error.response.statusText}`);
+            throw new Error(`Erro na API do Revendy (${error.response.status}): ${errorBody}`);
         }
         // Para outros tipos de erro (ex: rede)
         console.error('Erro ao se comunicar com a API do Revendy:', error);
-        throw new Error('Não foi possível se comunicar com a API do Revendy.');
+        throw new Error('Não foi possível se comunicar com a API do Revendy:' + error);
     }
 }
 
