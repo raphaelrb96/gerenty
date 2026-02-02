@@ -1,16 +1,17 @@
-# Guia Técnico: CRM e Integração WhatsApp no Gerenty
+# Guia Técnico: CRM, Integração WhatsApp e Automações no Gerenty
 
-Este documento detalha a arquitetura, o fluxo de dados e os principais diretórios das funcionalidades de CRM e da integração com a API do WhatsApp no sistema Gerenty.
+Este documento detalha a arquitetura, o fluxo de dados e os principais diretórios das funcionalidades de CRM, da integração com a API do WhatsApp e do construtor de fluxos de automação no sistema Gerenty.
 
 ---
 
 ## **Visão Geral da Interação**
 
-O CRM e a Integração com o WhatsApp são projetados para funcionar em conjunto. O objetivo é transformar cada conversa do WhatsApp em uma oportunidade de negócio gerenciável.
+O CRM, a Integração com o WhatsApp e as Automações são projetados para funcionar em conjunto. O objetivo é transformar cada conversa do WhatsApp em uma oportunidade de negócio gerenciável e automatizada.
 
--   **Recebimento:** Quando uma mensagem chega via WhatsApp, o sistema automaticamente busca ou cria um **Cliente** no CRM.
+-   **Recebimento:** Quando uma mensagem chega via WhatsApp, o sistema automaticamente busca ou cria um **Cliente** no CRM e inicia a verificação de **Automações**.
 -   **Gerenciamento:** Uma **Conversa** é criada e vinculada a esse cliente, aparecendo no Inbox.
--   **Contexto:** Ao visualizar a conversa no Inbox, o usuário tem acesso rápido aos dados do cliente no CRM, seu estágio no funil de vendas e seu histórico.
+-   **Execução de Fluxo:** Se a mensagem do cliente aciona um gatilho (como uma palavra-chave), um fluxo de conversa automatizado é iniciado para interagir com ele.
+-   **Contexto:** Ao visualizar a conversa no Inbox, o usuário tem acesso rápido aos dados do cliente no CRM, seu estágio no funil e o histórico da conversa, incluindo as interações automáticas.
 
 ---
 
@@ -33,9 +34,9 @@ A lógica de dados do CRM está definida principalmente nos seguintes tipos:
 
 -   **/src/app/dashboard/crm/page.tsx**: É a página principal do CRM. Ela renderiza o quadro Kanban, busca os dados iniciais e gerencia os estados de arrastar e soltar (Drag and Drop).
 
--   **/src/services/customer-service.ts**: Contém toda a lógica de back-end para interagir com a coleção `customers` no Firestore. Inclui funções para criar, ler, atualizar e deletar clientes (`CRUD`).
+-   **/src/services/customer-service.ts**: Contém toda a lógica de front-end para interagir com a coleção `customers` no Firestore. Inclui funções para criar, ler, atualizar e deletar clientes (`CRUD`).
 
--   **/src/services/stage-service.ts**: Contém a lógica de back-end para gerenciar os estágios do funil, interagindo com a coleção `stages` no Firestore.
+-   **/src/services/stage-service.ts**: Contém a lógica de front-end para gerenciar os estágios do funil, interagindo com a coleção `stages` no Firestore.
 
 -   **/src/components/crm/**: Este diretório abriga todos os componentes de interface do CRM:
     -   `customer-list.tsx`: Renderiza a lista de clientes dentro de uma coluna.
@@ -95,3 +96,48 @@ A mágica acontece na função `processIncomingMessage` dentro de `/functions/sr
 6.  Finalmente, a nova mensagem é salva como um subdocumento dentro da conversa correspondente.
 
 Esse processo garante que toda interação via WhatsApp seja automaticamente registrada e associada a um perfil de cliente no CRM.
+
+---
+
+## **Módulo de Automação de Conversas (Flow Builder)**
+
+Esta funcionalidade permite a criação de fluxos de conversa automatizados para o WhatsApp, permitindo que o sistema responda a clientes, capture informações e execute ações sem intervenção humana.
+
+### **1. Objetivo**
+
+Automatizar o atendimento inicial, qualificar leads, responder a perguntas frequentes e guiar os clientes através de processos (como rastreamento de pedidos ou coleta de feedback) de forma visual e intuitiva.
+
+### **2. Arquitetura e Conceitos**
+
+O Flow Builder é construído sobre a integração com o WhatsApp e utiliza a mesma infraestrutura de Cloud Functions para sua execução.
+
+*   **Fluxo (Flow):** Um fluxograma visual composto por **Nós (Nodes)** e **Conexões (Edges)**. Cada fluxo representa uma conversa automatizada.
+*   **Nós (Nodes):** Representam as ações ou "tarefas" que o robô executa. Exemplos:
+    *   **Gatilho de Palavra-Chave:** Inicia o fluxo se a mensagem do cliente corresponde a uma palavra (ex: "cardápio").
+    *   **Enviar Mensagem:** Envia uma resposta pré-definida da **Biblioteca de Respostas**.
+    *   **Capturar Dados:** Faz uma pergunta e salva a resposta do cliente (ex: "Qual o seu CPF?").
+    *   **Condição Lógica:** Cria ramificações no fluxo (ex: se a resposta do cliente contém "sim", siga por um caminho; senão, por outro).
+*   **Biblioteca de Respostas:** Um repositório de mensagens prontas (texto, imagens, botões, etc.) que podem ser reutilizadas em diferentes fluxos.
+
+### **3. Estrutura de Diretórios Relevante**
+
+*   **/src/app/dashboard/automation/flows/edit/[id]/page.tsx**: A interface principal do Flow Builder, onde o usuário constrói visualmente o fluxograma. Utiliza a biblioteca `ReactFlow`.
+*   **/src/components/automation/**: Contém os componentes da interface do construtor:
+    *   `flow-builder.tsx`: O componente principal que renderiza a área de arrastar e soltar.
+    *   `custom-node.tsx`: Define a aparência e o comportamento de cada tipo de nó no fluxograma.
+    *   `node-config-panel.tsx`: O painel lateral que aparece quando um nó é selecionado, permitindo a sua configuração.
+*   **/src/services/flow-service.ts**: Lógica de front-end para salvar, carregar e atualizar as definições dos fluxos no Firestore, na coleção `/flows`.
+*   **/src/services/library-message-service.ts**: Gerencia o CRUD (Criar, Ler, Atualizar, Deletar) das respostas rápidas salvas na coleção `/libraryMessages` de uma empresa.
+*   **/functions/src/functions/whatsapp.ts**: **O motor de execução dos fluxos.** A função `processIncomingMessage` foi expandida para:
+    1.  Verificar se a mensagem recebida aciona algum fluxo publicado.
+    2.  Se sim, ela atualiza o documento da `/conversations` com o `activeFlowId` e o passo atual.
+    3.  Chama a função `processFlowStep`, que executa a lógica do nó atual e determina o próximo passo.
+
+### **4. Fluxo de Execução de uma Automação**
+
+1.  Uma mensagem do WhatsApp chega ao `whatsappWebhookListener`.
+2.  `processIncomingMessage` é chamada. Ela primeiro verifica se já existe um fluxo ativo para aquela conversa.
+3.  **Se não há fluxo ativo**, ela verifica se a mensagem do usuário (ex: "quero o cardápio") corresponde a um `keywordTrigger` de algum fluxo publicado.
+4.  **Se um gatilho é encontrado**, o sistema armazena o `activeFlowId` e o `currentStepId` (o ID do nó de gatilho) no documento da conversa no Firestore.
+5.  A função `processFlowStep` é invocada. Ela lê o nó atual, executa sua ação (ex: `message` -> envia uma mensagem da biblioteca; `captureData` -> envia uma pergunta) e segue as conexões (edges) para encontrar o próximo nó.
+6.  O processo se repete, com o `currentStepId` na conversa sendo atualizado a cada passo, até que o fluxo chegue a um nó de "Finalizar Fluxo" ou um ponto de espera por uma nova resposta do usuário.
